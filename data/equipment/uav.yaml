@@ -1,0 +1,92 @@
+# 无人机型号
+# 小型无人机随营采购（设计文档 2.1），大型无人机按组采购。
+
+models:
+  # ======================= 美国 =======================
+  - id: rq28_skydio_x2
+    name: RQ-28（Skydio X2）
+    category: uav_micro
+    family: skydio
+    origin: USA
+    specs: {mtow_kg: 1.375, endurance_min: 35, ceiling_km: 3.4, cost_usd: 2000, processor: Nvidia Tegra X2}
+    notes: 2022 年起配到步兵班，2024 年已普遍换装；参数类似大疆 Phantom 4。将由 Red Cat Black Widow 替换。
+  - {id: black_widow, name: Red Cat Black Widow, category: uav_micro, family: red_cat, origin: USA, notes: 2024 年签约替换 RQ-28。}
+  - id: rq11
+    name: RQ-11 渡鸦
+    category: uav_hand_launched
+    family: raven
+    origin: USA
+    specs: {mtow_kg: 1.9, speed_kph: 30, range_km: 10, endurance_h: [1, 1.5]}
+    notes: 已普遍配到连。
+  - id: rq20
+    name: RQ-20 美洲狮
+    category: uav_hand_launched
+    family: puma
+    origin: USA
+    specs: {mtow_kg: 5.9, speed_kph: 83, endurance_h: 2, range_km: 15}
+    notes: RQ-11 升级版，将逐步全部替代 RQ-11。
+  - id: stalker_blk30
+    name: Stalker Block 30
+    category: uav_small_vtol
+    family: stalker
+    origin: USA
+    specs: {mtow_kg: 22, payload_kg: 2.5, endurance_h: 8, max_speed_kph: 93, ceiling_km: 3.6, launch: 弹射或垂直起降}
+    notes: 陆战队 2030 改革在连一级增配。
+  - id: rq7
+    name: RQ-7 影子
+    category: uav_tactical
+    family: shadow
+    origin: USA
+    specs: {mtow_kg: 170, endurance_h: [6, 9], cruise_kph: 130, ceiling_m: 4600, launch: 弹射}
+  - id: rq21
+    name: RQ-21 黑杰克
+    category: uav_tactical
+    family: blackjack
+    origin: USA
+    specs: {mtow_kg: 61, cruise_kph: 100, max_speed_kph: 170, endurance_h: 16, range_km: 93, ceiling_km: 5.9}
+    notes: 可从圣安东尼奥级甲板起飞。
+  - id: mq1c
+    name: MQ-1C 灰鹰
+    category: uav_male
+    family: predator
+    origin: USA
+    specs: {mtow_t: 1.3, max_speed_kph: 309, ceiling_km: 8.8, endurance_h: 25, weapons: 4 × 地狱火 或 8 × 毒刺}
+  - id: mq9a
+    name: MQ-9A 死神
+    category: uav_male
+    family: predator
+    origin: USA
+    specs: {mtow_t: 4.76, cruise_kph: 313, max_speed_kph: 482, ceiling_km: 7.5, endurance_h: 27, internal_payload_kg: 360, external_payload_kg: 1400, max_payload_t: 1.7, weapons: [8 × 地狱火, GBU-12, GBU-38]}
+
+  # ======================= 中国 =======================
+  - id: pla_coaxial_micro
+    name: 微型共轴双旋翼无人机（“保温杯”）
+    category: uav_micro
+    family: pla_coaxial
+    origin: CHN
+    specs: {cost: 千元级, launch: 榴弹发射器发射或手持发射}
+    notes: 今年起在步兵班普遍装备，可侦察也可投掷手榴弹。
+  - {id: pla_quadcopter, name: 微型多旋翼无人机, category: uav_micro, family: pla_quad, origin: CHN}
+  - id: ch902
+    name: CH-902
+    category: uav_hand_launched
+    family: ch902
+    origin: CHN
+    specs: {mtow_kg: 3.7, cruise_kph: 80, range_km: 20, endurance_h: 1}
+    notes: 介于 RQ-11 与 RQ-20 之间。
+  - {id: pla_vehicle_launched_small_uav, name: 车载弹射小型无人机, category: uav_hand_launched, family: pla_small_uav, origin: CHN, notes: 重型/中型旅营侦察排一般 2 架。}
+  - {id: pla_vtol_fixed_wing, name: 四旋翼垂起固定翼无人机（炮兵营）, category: uav_small_vtol, family: pla_vtol, origin: CHN, confidence: estimated, notes: 原文猜测类似 Stalker Blk 30。}
+  - id: asn209
+    name: ASN-209
+    category: uav_tactical
+    family: asn209
+    origin: CHN
+    specs: {mtow_kg: 320, payload_kg: 50, cruise_kph: 180, combat_radius_km: 200, endurance_h: 10, launch: 发射车}
+    notes: 明显强于 RQ-7。
+  - id: wz6_ch4
+    name: 无侦-6 / 彩虹-4
+    category: uav_male
+    family: ch4
+    origin: CHN
+    specs: {mtow_t: 1.25, payload_kg: 150, cruise_kph: 180, endurance_h: 40, ceiling_km: 8}
+    notes: 原文把两型合并给出一组参数。陆航旅无人机营 12 架。

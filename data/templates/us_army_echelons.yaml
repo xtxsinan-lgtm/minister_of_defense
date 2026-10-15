@@ -1,0 +1,481 @@
+# 美国陆军师、军、集团军、独立兵种旅（原文 1.1、1.3.5.1）
+# 包括现行编制和 2028 航路点改革后的编制。
+
+templates:
+
+  # ##################################################################
+  # 通用航空器 / 发射车“班”（乘员原文未给，只记装备）
+  # ##################################################################
+  - {id: us_vsq_ah64, level: squad, granularity: aggregate, slots: {attack_helicopter: 1}}
+  - {id: us_vsq_uh60, level: squad, granularity: aggregate, slots: {utility_helicopter: 1}}
+  - {id: us_vsq_ch47, level: squad, granularity: aggregate, slots: {transport_helicopter: 1}}
+  - {id: us_vsq_mq1c, level: squad, granularity: aggregate, slots: {uav_male: 1}}
+  - {id: us_vsq_mlrs, level: squad, granularity: aggregate, slots: {mrl_long_range: 1}}
+  - {id: us_vsq_sam_long, level: squad, granularity: aggregate, slots: {sam_long: 1}}
+  - {id: us_vsq_sam_medium, level: squad, granularity: aggregate, slots: {sam_medium: 1}}
+  - {id: us_vsq_spaag, level: squad, granularity: aggregate, slots: {spaag: 1}}
+  - {id: us_vsq_avenger, level: squad, granularity: aggregate, slots: {sam_vehicle_manpads: 1}}
+  - {id: us_vsq_c_ram, level: squad, granularity: aggregate, slots: {c_ram: 1}}
+
+  # ##################################################################
+  # 战斗航空旅
+  # ##################################################################
+  - id: us_cab_air_cav_sqn
+    name: 空中骑兵侦察中队
+    level: battalion
+    children: [{template: us_vsq_rq7, count: 12}, {template: us_vsq_ah64, count: 24}]
+    notes: 12 架 RQ-7 中型无人机 + 24 架 AH-64E。
+  - {id: us_cab_attack_bn, name: 攻击侦察营, level: battalion, children: [{template: us_vsq_ah64, count: 24}]}
+  - {id: us_cab_assault_bn, name: 突击直升机营, level: battalion, children: [{template: us_vsq_uh60, count: 30}]}
+  - id: us_cab_gsab
+    name: 通用支援航空营
+    level: battalion
+    children: [{template: us_vsq_ch47, count: 12}, {template: us_vsq_uh60, count: 23}]
+    notes: 12 架 CH-47F、15 架 HH-60 医疗救援、8 架 UH-60 航空指挥（后两者实例中分别绑定 hh60 / uh60_c2）。
+  - {id: us_cab_uav_coy, name: 无人机连, level: company, children: [{template: us_vsq_mq1c, count: 12}]}
+  - {id: us_cab_asb, name: 航空支援营, level: battalion, role: support, children: [{template: us_sq_generic, count: 1}], notes: 负责后勤。}
+  - id: us_combat_aviation_brigade
+    name: 战斗航空旅（CAB）
+    level: brigade
+    children:
+      - {template: us_cab_air_cav_sqn, count: 1}
+      - {template: us_cab_attack_bn, count: 1}
+      - {template: us_cab_assault_bn, count: 1}
+      - {template: us_cab_gsab, count: 1}
+      - {template: us_cab_uav_coy, count: 1}
+      - {template: us_cab_asb, count: 1}
+    default_bindings: {attack_helicopter: ah64e, utility_helicopter: uh60, transport_helicopter: ch47f, uav_tactical: rq7, uav_male: mq1c}
+    expected_equipment: {attack_helicopter: 48, utility_helicopter: 53, transport_helicopter: 12}
+    notes: 每个现役师 1 个，另有 1 个现役独立航空旅；国民警卫队 8 个师属 + 4 个独立，预备役 2 个。
+
+  # ##################################################################
+  # 野战炮兵旅
+  # ##################################################################
+  - {id: us_himars_bn, name: 海马斯营, level: battalion, children: [{template: us_vsq_mlrs, count: 18}], default_bindings: {mrl_long_range: m142_himars}, notes: 原文战力计算按每营 18 辆。}
+  - {id: us_m270_bn, name: M270 营, level: battalion, children: [{template: us_vsq_mlrs, count: 18}], default_bindings: {mrl_long_range: m270}}
+  - {id: us_m777_bn, name: M777 营, level: battalion, children: [{template: us_sbct_fa_battery, count: 3}, {template: us_abct_fa_hhb, count: 1}], default_bindings: {howitzer_heavy_towed: m777a2}}
+  - {id: us_m109_bn, name: M109 营, level: battalion, children: [{template: us_abct_fa_battery, count: 3}, {template: us_abct_fa_hhb, count: 1}], default_bindings: {howitzer_heavy_sp: m109a6}}
+  - id: us_field_artillery_brigade
+    name: 野战炮兵旅
+    level: brigade
+    children: [{template: us_himars_bn, count: 2}, {template: us_m270_bn, count: 1}, {template: us_sq_generic, count: 1}]
+    confidence: estimated
+    notes: 主要为 M270 和 M142，也有少量 155mm 火炮；各旅营配置原文未给（全军扣去预备役：15 个海马斯营、11 个 M270 营、6 个 M777 营、4 个 M109 营；12 个旅中 5 个现役、7 个国民警卫队）。
+
+  # ##################################################################
+  # 防空炮兵（每营 4 连）
+  # ##################################################################
+  - {id: us_patriot_battery, name: 爱国者连, level: company, children: [{template: us_vsq_sam_long, count: 6}], notes: 每连 6 辆发射车，每车 4 联。}
+  - id: us_patriot_bn_spt
+    level: squad
+    role: support
+    granularity: aggregate
+    notes: 2 辆发电车、2 辆通信中继车、1 辆雷达车、1 辆控制车。
+  - id: us_patriot_bn
+    name: 爱国者营
+    level: battalion
+    children: [{template: us_patriot_battery, count: 4}, {template: us_patriot_bn_spt, count: 1}]
+    default_bindings: {sam_long: pac3}
+    notes: 要地防空为主，有时兼顾野战防空；展开需 1 小时。每营 2.4 亿美元。
+  - {id: us_nasams_battery, name: NASAMS 连, level: company, children: [{template: us_vsq_sam_medium, count: 4}], notes: 每连 4 辆，每车 6 或 4 联。}
+  - {id: us_nasams_bn, name: NASAMS 营, level: battalion, children: [{template: us_nasams_battery, count: 4}], default_bindings: {sam_medium: nasams}}
+  - {id: us_mshorad_battery, name: M-SHORAD 连（8 车）, level: company, children: [{template: us_vsq_spaag, count: 8}]}
+  - {id: us_mshorad_battery_12, variant_of: us_mshorad_battery, name: M-SHORAD 连（航路点 12 车）, level: company, children: [{template: us_vsq_spaag, count: 12}]}
+  - {id: us_mshorad_bn, name: M-SHORAD 营, level: battalion, children: [{template: us_mshorad_battery, count: 4}], default_bindings: {spaag: m_shorad}, notes: 美军目前共 18 个 M-SHORAD 连。}
+  - {id: us_avenger_battery, name: 复仇者连, level: company, children: [{template: us_vsq_avenger, count: 12}], notes: 每连 12 车，每车 2 个旋转发射装置。}
+  - {id: us_avenger_bn, name: 复仇者营, level: battalion, children: [{template: us_avenger_battery, count: 4}], default_bindings: {sam_vehicle_manpads: avenger}}
+  - {id: us_thaad_battery, name: 萨德连（独立）, level: company, children: [{template: us_vsq_sam_long, count: 1}], default_bindings: {sam_long: thaad}, notes: 美陆军 7 个独立萨德连；发射车数原文未给。}
+  - {id: us_c_ram_battery, name: C-RAM 连, level: company, children: [{template: us_vsq_c_ram, count: 1}], notes: 数量原文未给。}
+
+  # ##################################################################
+  # 现行师（2016 年后“由虚变实”）
+  # ##################################################################
+  - {id: us_division_hq, name: 师部, level: battalion, role: hq, children: [{template: us_sq_generic, count: 1}]}
+  - id: us_divarty_hq
+    name: 师炮兵旅（架子）
+    level: brigade
+    children: [{template: us_sq_generic, count: 1}]
+    notes: 指挥、管理、训练部分固定化；大规模作战时集中管理各 BCT 炮兵营和加强来的野战炮兵旅的营（整旅加强时野战炮兵旅直接受师部领导）。加强的防空部队有时也由师炮兵旅管辖。
+  - {id: us_sustainment_brigade, name: 保障旅, level: brigade, role: support, children: [{template: us_sq_generic, count: 1}]}
+  - id: us_armored_division
+    name: 装甲师（第 1 装甲师 / 第 1 骑兵师）
+    level: division
+    children:
+      - {template: us_division_hq, count: 1}
+      - {template: us_abct, count: 3}
+      - {template: us_divarty_hq, count: 1}
+      - {template: us_combat_aviation_brigade, count: 1}
+      - {template: us_sustainment_brigade, count: 1}
+  - id: us_infantry_division
+    name: 步兵师（现役）
+    level: division
+    children:
+      - {template: us_division_hq, count: 1}
+      - {template: us_ibct, count: 2}
+      - {template: us_sbct, count: 1}
+      - {template: us_divarty_hq, count: 1}
+      - {template: us_combat_aviation_brigade, count: 1}
+      - {template: us_sustainment_brigade, count: 1}
+    confidence: estimated
+    notes: 可能包含各种 BCT；“大部分师固定了 3 个左右的下属旅级战斗队”，组合为示例。现役 5 个步兵师。
+  - id: us_air_assault_division
+    name: 第 101 空降师（空中突击）
+    level: division
+    children:
+      - {template: us_division_hq, count: 1}
+      - {template: us_mbct, count: 3}
+      - {template: us_divarty_hq, count: 1}
+      - {template: us_combat_aviation_brigade, count: 1}
+      - {template: us_sustainment_brigade, count: 1}
+    confidence: estimated
+    notes: 换装 MBCT 已基本完成；BCT 数按“3 个左右”。
+  - id: us_82nd_airborne_division
+    name: 第 82 空降师
+    level: division
+    children:
+      - {template: us_division_hq, count: 1}
+      - {template: us_ibct, count: 3}
+      - {template: us_divarty_hq, count: 1}
+      - {template: us_combat_aviation_brigade, count: 1}
+      - {template: us_sustainment_brigade, count: 1}
+    confidence: estimated
+    notes: 空降 IBCT（准备度 ready_high）；BCT 数按“3 个左右”。
+  - id: us_11th_airborne_division
+    name: 第 11 空降师（新组建）
+    level: division
+    children:
+      - {template: us_division_hq, count: 1}
+      - {template: us_ibct, count: 2}
+      - {template: us_combat_aviation_brigade, count: 1}
+    notes: 1 个空降 IBCT + 1 个极地 IBCT。
+  - id: us_mountain_division
+    name: 山地师（第 10 山地师）
+    level: division
+    children:
+      - {template: us_division_hq, count: 1}
+      - {template: us_ibct, count: 3}
+      - {template: us_divarty_hq, count: 1}
+      - {template: us_combat_aviation_brigade, count: 1}
+      - {template: us_sustainment_brigade, count: 1}
+    confidence: estimated
+    notes: 山地旅属 LBCT。
+  - id: us_2nd_infantry_division
+    name: 第 2 步兵师（驻韩）
+    level: division
+    children:
+      - {template: us_division_hq, count: 1}
+      - {template: us_divarty_hq, count: 1}
+      - {template: us_combat_aviation_brigade, count: 1}
+      - {template: us_sustainment_brigade, count: 1}
+    notes: 目前只配炮兵旅、战斗航空旅和后勤支援旅，没有作战单位。
+  - id: us_ng_infantry_division
+    name: 国民警卫队步兵师
+    level: division
+    children:
+      - {template: us_division_hq, count: 1}
+      - {template: us_ibct, count: 3}
+      - {template: us_combat_aviation_brigade, count: 1}
+    confidence: estimated
+    notes: 共 8 个；国民警卫队 BCT 都为 LBCT（另有 5 个 ABCT、2 个 SBCT 的编制装备量）。原文战力计算中国民警卫队对半折算。
+
+  # ##################################################################
+  # MBCT（航路点改革中的机动步兵旅）
+  # ##################################################################
+  - id: us_mbct_rifle_plt
+    variant_of: us_ibct_rifle_plt
+    name: MBCT 步兵排（配 ISV）
+    level: platoon
+    children:
+      - {template: us_ibct_rifle_squad, count: 3}
+      - {template: us_ibct_plt_weapons_sq, count: 1}
+      - {template: us_sbct_plt_hq, count: 1}
+      - {template: us_mbct_isv_pool, count: 1}
+    notes: 在战术单位中把 ISV（无防护、可载 9 人、C-130 可伞降、CH-47 可机内装载）装备到排；其余编制与 IBCT 相同。
+  - {id: us_mbct_isv_pool, level: squad, role: equipment_pool, slots: {utility_vehicle: 5}, confidence: estimated, notes: 每排 ISV 数量原文未给，按 43 人 / 9 座推算。}
+  - id: us_mbct_rifle_coy
+    level: company
+    children:
+      - {template: us_mbct_rifle_plt, count: 3}
+      - {template: us_m224_squad, count: 2}
+      - {template: us_ibct_coy_hq_sec, count: 1}
+  - id: us_mbct_inf_bn
+    level: battalion
+    children:
+      - {template: us_mbct_rifle_coy, count: 3}
+      - {template: us_ibct_weapons_coy, count: 1}
+      - {template: us_ibct_bn_hhc, count: 1}
+    default_bindings: {utility_vehicle: isv}
+  - id: us_mbct
+    name: 机动步兵旅 MBCT
+    level: brigade
+    children:
+      - {template: us_mbct_inf_bn, count: 3}
+      - {template: us_ibct_cav_sqn, count: 1}
+      - {template: us_ibct_fa_bn, count: 1}
+      - {template: us_abct_beb, count: 1}
+      - {template: us_abct_bsb, count: 1}
+      - {template: us_ibct_hhc, count: 1}
+    unit_ratings: {mechanization: mech_tracked_slow, informatization: info_us_standard, logistics: log_us, readiness: ready_high}
+    notes: 空突、空降旅为 MBCT（准备度 ready_high）；也可能减少辅助单位的封闭车辆需求和驾驶员数量。
+
+  # ##################################################################
+  # 2028 航路点改革后的 BCT
+  # ##################################################################
+  - id: us_bct_signal_coy
+    name: BCT 直属信号连
+    level: company
+    children: [{template: us_beb_hq_net_plt, count: 1}, {template: us_beb_net_ext_plt, count: 1}]
+    notes: 旅属工兵营撤销后，各 BCT 只保留 1 个直属信号连（内部沿用原工兵营信号连结构）。
+  - id: us_armored_cav_troop_2028
+    name: 装甲骑兵连（ABCT 保留）
+    level: company
+    children:
+      - {template: us_abct_cav_scout_plt, count: 1}
+      - {template: us_tank_plt, count: 1}
+      - {template: us_cav_troop_hq_m3, count: 1}
+    confidence: estimated
+    notes: 原文只说“ABCT 保留的是使用坦克的装甲骑兵连”，内部组成为推测。
+  - id: us_abct_2028
+    name: ABCT（航路点 2028）
+    level: brigade
+    children:
+      - {template: us_abct_armor_bn, count: 2}
+      - {template: us_abct_inf_bn, count: 1}
+      - {template: us_armored_cav_troop_2028, count: 1}
+      - {template: us_bct_signal_coy, count: 1}
+      - {template: us_abct_bsb, count: 1}
+      - {template: us_abct_hhc, count: 1}
+    notes: 撤骑兵营（留 1 个装甲骑兵连）、撤旅属炮兵营（集中到师）、撤工兵营（只留信号连）。
+  - id: us_sbct_2028
+    name: SBCT（航路点 2028）
+    level: brigade
+    children:
+      - {template: us_sbct_inf_bn, count: 3}
+      - {template: us_sbct_cav_troop, count: 1}
+      - {template: us_bct_signal_coy, count: 1}
+      - {template: us_abct_bsb, count: 1}
+      - {template: us_sbct_hhc, count: 1}
+  - id: us_lbct_2028
+    name: LBCT（航路点 2028）
+    level: brigade
+    children:
+      - {template: us_ibct_inf_bn, count: 3}
+      - {template: us_ibct_cav_troop, count: 1}
+      - {template: us_bct_signal_coy, count: 1}
+      - {template: us_abct_bsb, count: 1}
+      - {template: us_ibct_hhc, count: 1}
+  - id: us_mbct_2028
+    name: MBCT（航路点 2028）
+    level: brigade
+    children:
+      - {template: us_mbct_inf_bn, count: 3}
+      - {template: us_ibct_cav_troop, count: 1}
+      - {template: us_bct_signal_coy, count: 1}
+      - {template: us_abct_bsb, count: 1}
+      - {template: us_ibct_hhc, count: 1}
+
+  # ##################################################################
+  # 2028 航路点改革后的师属单位
+  # ##################################################################
+  - {id: us_cross_domain_troop, name: Cross Domain Troop, level: company, children: [{template: us_sq_generic, count: 1}], notes: 主要用无人机等仪器做远程侦察。}
+  - id: us_div_cav_sqn_2028
+    name: 师骑兵营（航路点 2028）
+    level: battalion
+    children: [{template: us_abct_cav_troop, count: 3}, {template: us_cross_domain_troop, count: 1}]
+    notes: 3 个骑兵连 + 1 个 cross domain troop，规模比原 BCT 骑兵营大幅缩减。轻型师用 us_ibct_cav_troop。
+  - id: us_div_cav_sqn_2028_light
+    variant_of: us_div_cav_sqn_2028
+    level: battalion
+    children: [{template: us_ibct_cav_troop, count: 3}, {template: us_cross_domain_troop, count: 1}]
+  - {id: us_m777_battery_div, name: 牵引 155 炮连, level: company, children: [{template: us_m777_section, count: 6}]}
+  - {id: us_m119_battery_div, name: 牵引 105 炮连, level: company, children: [{template: us_m119_section, count: 6}]}
+  - {id: us_sp155_bn, name: 自行 155 营, level: battalion, children: [{template: us_abct_fa_battery, count: 3}, {template: us_abct_fa_hhb, count: 1}], default_bindings: {howitzer_heavy_sp: m109a7}}
+  - {id: us_towed155_bn, name: 牵引 155 营, level: battalion, children: [{template: us_m777_battery_div, count: 3}, {template: us_abct_fa_hhb, count: 1}], default_bindings: {howitzer_heavy_towed: m777a2}}
+  - {id: us_towed105_bn, name: 牵引 105 营, level: battalion, children: [{template: us_m119_battery_div, count: 3}, {template: us_ibct_fa_hhb, count: 1}], default_bindings: {howitzer_light_towed: m119}}
+  - id: us_divarty_2028_enhanced
+    name: 师炮兵（加强装甲师）
+    level: brigade
+    children: [{template: us_divarty_hq, count: 1}, {template: us_sp155_bn, count: 3}]
+    notes: 原计划再加一个 58 倍径 M1299 自行炮营，已取消。每营 3 连 18 门为推测。
+  - id: us_divarty_2028_armored
+    name: 师炮兵（装甲师）
+    level: brigade
+    children: [{template: us_divarty_hq, count: 1}, {template: us_sp155_bn, count: 2}, {template: us_towed155_bn, count: 1}]
+  - id: us_divarty_2028_light
+    name: 师炮兵（其他师）
+    level: brigade
+    children: [{template: us_divarty_hq, count: 1}, {template: us_towed155_bn, count: 1}, {template: us_towed105_bn, count: 2}]
+  - {id: us_eng_coy_2028, name: 工兵连, level: company, children: [{template: us_sapper_plt, count: 2}, {template: us_eng_spt_plt_a, count: 1}], confidence: estimated, notes: 内部沿用原 BEB 战斗工兵连结构。}
+  - {id: us_bridge_coy, name: 架桥连, level: company, children: [{template: us_bridge_team, count: 1}]}
+  - {id: us_construction_coy, name: 工事连, level: company, children: [{template: us_construction_team, count: 1}]}
+  - {id: us_route_clearance_coy, name: 道路清障连, level: company, children: [{template: us_route_clearance_plt, count: 1}]}
+  - id: us_eng_bn_heavy_2028
+    name: 加强装甲师工兵营
+    level: battalion
+    children:
+      - {template: us_eng_coy_2028, count: 7}
+      - {template: us_bridge_coy, count: 5}
+      - {template: us_construction_coy, count: 2}
+      - {template: us_route_clearance_coy, count: 1}
+  - id: us_div_engineer_brigade_2028
+    name: 师属工兵旅（加强装甲师）
+    level: brigade
+    children: [{template: us_eng_bn_heavy_2028, count: 4}]
+    notes: 将工兵极大程度集中到拳头部队。
+  - id: us_div_engineer_bn_2028
+    name: 师属工兵营（其他师）
+    level: battalion
+    children: [{template: us_eng_coy_2028, count: 5}]
+  - {id: us_counter_uas_battery, name: 反无人机连, level: company, children: [{template: us_sq_generic, count: 1}]}
+  - {id: us_ifpc_battery, name: 曲射火力保护连, level: company, children: [{template: us_vsq_c_ram, count: 1}], notes: 大概装备铁穹或 C-RAM。}
+  - id: us_div_ada_bn_2028
+    name: 保护旅防空营
+    level: battalion
+    children:
+      - {template: us_mshorad_battery_12, count: 3}
+      - {template: us_counter_uas_battery, count: 1}
+      - {template: us_ifpc_battery, count: 1}
+    default_bindings: {spaag: m_shorad}
+    notes: 要求 M-SHORAD 翻三倍、每连 8 车增至 12 车，基本需要把所有复仇者替换掉。
+  - {id: us_mp_bn, name: 宪兵营, level: battalion, children: [{template: us_sq_generic, count: 1}]}
+  - {id: us_cbrn_bn, name: 防化营, level: battalion, children: [{template: us_sq_generic, count: 1}]}
+  - {id: us_brigade_spt_bn_generic, name: 旅支援营, level: battalion, role: support, children: [{template: us_sq_generic, count: 1}]}
+  - {id: us_brigade_hq_generic, name: 旅部, level: battalion, role: hq, children: [{template: us_sq_generic, count: 1}]}
+  - id: us_protection_brigade_2028
+    name: 师保护旅（航路点 2028 新增）
+    level: brigade
+    children:
+      - {template: us_brigade_hq_generic, count: 1}
+      - {template: us_brigade_spt_bn_generic, count: 1}
+      - {template: us_mp_bn, count: 1}
+      - {template: us_cbrn_bn, count: 1}
+      - {template: us_div_ada_bn_2028, count: 1}
+
+  # ##################################################################
+  # 2028 航路点改革后的师
+  # ##################################################################
+  - id: us_enhanced_armored_division_2028
+    name: 加强装甲师（航路点 2028）
+    level: division
+    children:
+      - {template: us_division_hq, count: 1}
+      - {template: us_abct_2028, count: 3}
+      - {template: us_div_cav_sqn_2028, count: 1}
+      - {template: us_divarty_2028_enhanced, count: 1}
+      - {template: us_div_engineer_brigade_2028, count: 1}
+      - {template: us_protection_brigade_2028, count: 1}
+      - {template: us_combat_aviation_brigade, count: 1}
+      - {template: us_sustainment_brigade, count: 1}
+    notes: 共 3 个。结构上更像解放军集团军。
+  - id: us_armored_division_2028
+    name: 装甲师（航路点 2028）
+    level: division
+    children:
+      - {template: us_division_hq, count: 1}
+      - {template: us_abct_2028, count: 2}
+      - {template: us_sbct_2028, count: 1}
+      - {template: us_div_cav_sqn_2028, count: 1}
+      - {template: us_divarty_2028_armored, count: 1}
+      - {template: us_div_engineer_bn_2028, count: 1}
+      - {template: us_protection_brigade_2028, count: 1}
+      - {template: us_combat_aviation_brigade, count: 1}
+      - {template: us_sustainment_brigade, count: 1}
+    notes: 共 4 个（其中 1 个国民警卫队）。
+  - id: us_light_infantry_division_2028
+    name: 轻步兵师（航路点 2028）
+    level: division
+    children:
+      - {template: us_division_hq, count: 1}
+      - {template: us_lbct_2028, count: 3}
+      - {template: us_div_cav_sqn_2028_light, count: 1}
+      - {template: us_divarty_2028_light, count: 1}
+      - {template: us_div_engineer_bn_2028, count: 1}
+      - {template: us_protection_brigade_2028, count: 1}
+      - {template: us_combat_aviation_brigade, count: 1}
+      - {template: us_sustainment_brigade, count: 1}
+    confidence: estimated
+    notes: 共 9 个（其中 6 个国民警卫队）；下辖 IBCT（LBCT 或 MBCT），BCT 数按 3 个。
+  - id: us_air_assault_division_2028
+    name: 空中突击师（航路点 2028）
+    level: division
+    children:
+      - {template: us_division_hq, count: 1}
+      - {template: us_mbct_2028, count: 3}
+      - {template: us_div_cav_sqn_2028_light, count: 1}
+      - {template: us_divarty_2028_light, count: 1}
+      - {template: us_div_engineer_bn_2028, count: 1}
+      - {template: us_protection_brigade_2028, count: 1}
+      - {template: us_combat_aviation_brigade, count: 1}
+      - {template: us_sustainment_brigade, count: 1}
+    confidence: estimated
+  - id: us_airborne_division_2028
+    name: 空降师（航路点 2028）
+    level: division
+    children:
+      - {template: us_division_hq, count: 1}
+      - {template: us_mbct_2028, count: 3}
+      - {template: us_div_cav_sqn_2028_light, count: 1}
+      - {template: us_divarty_2028_light, count: 1}
+      - {template: us_div_engineer_bn_2028, count: 1}
+      - {template: us_protection_brigade_2028, count: 1}
+      - {template: us_combat_aviation_brigade, count: 1}
+      - {template: us_sustainment_brigade, count: 1}
+    confidence: estimated
+    notes: 另有 1 个独立空降旅（us_mbct_2028）、2 个独立骑兵旅（实为 SBCT，us_sbct_2028）。
+
+  # ##################################################################
+  # 军 / 集团军 / 战区（原文 1.1）
+  # ##################################################################
+  - id: us_corps
+    name: 军（Corps，挂靠部队示例）
+    level: corps
+    children:
+      - {template: us_brigade_hq_generic, count: 1}
+      - {template: us_armored_division, count: 1}
+      - {template: us_infantry_division, count: 2}
+    confidence: estimated
+    notes: 没有固定下辖的作战单位，也没有战区常设的指挥部架子；和平时期师旅挂靠在某个军下面。共 4 个：1 个在美国境内（主要阿拉斯加和夏威夷，归陆军太平洋司令部），1 个归欧非司令部，2 个归陆军部队司令部（挂靠大部分师旅）。
+  - id: us_v_corps_europe
+    name: 欧非司令部所属的军
+    level: corps
+    children:
+      - {template: us_brigade_hq_generic, count: 1}
+      - {template: us_abct, count: 1}
+      - {template: us_sbct, count: 1}
+      - {template: us_field_artillery_brigade, count: 1}
+      - {template: us_combat_aviation_brigade, count: 1}
+    confidence: estimated
+    notes: 下面没有任何师级单位，只有 2 个 BCT、1 个野战炮兵旅和 1 个战斗航空旅（BCT 类型原文未给）。
+  - {id: us_intel_brigade, name: 情报旅, level: brigade, children: [{template: us_sq_generic, count: 1}]}
+  - {id: us_signal_brigade, name: 通信旅, level: brigade, children: [{template: us_sq_generic, count: 1}]}
+  - {id: us_medical_brigade, name: 医疗旅, level: brigade, role: support, children: [{template: us_sq_generic, count: 1}]}
+  - {id: us_esc, name: 远征后勤指挥部, level: brigade, role: support, children: [{template: us_sq_generic, count: 1}]}
+  - id: us_ada_brigade
+    name: 防空旅
+    level: brigade
+    children: [{template: us_patriot_bn, count: 1}, {template: us_avenger_bn, count: 1}]
+    confidence: estimated
+    notes: 营组成原文未给。
+  - id: us_eighth_army
+    name: 第 8 集团军（驻韩）
+    level: corps
+    children:
+      - {template: us_intel_brigade, count: 1}
+      - {template: us_signal_brigade, count: 1}
+      - {template: us_medical_brigade, count: 1}
+      - {template: us_esc, count: 1}
+      - {template: us_ada_brigade, count: 1}
+      - {template: us_2nd_infantry_division, count: 1}
+    notes: 唯一真正的作战集团军。
+  - {id: us_first_army_training_brigade, name: 第 1 集团军训练旅, level: brigade, children: [{template: us_sq_generic, count: 1}], notes: 每旅不到 1000 名现役，负责国民警卫队和预备役训练，战时可完成一个旅的动员（类似苏联动员师）。}
+  - {id: us_first_army_division, name: 第 1 集团军师, level: division, children: [{template: us_first_army_training_brigade, count: 5}]}
+  - id: us_first_army
+    name: 第 1 集团军
+    level: corps
+    children: [{template: us_first_army_division, count: 2}]
+    notes: 2 个师 10 个旅。
+  - id: us_theater_command
+    name: 战区司令部
+    level: corps
+    children: [{template: us_intel_brigade, count: 1}]
+    notes: 没有固定编制的战斗单位，几乎没有固定支援单位，只有一个常设情报旅；下属后勤、防空等指挥部也没有固定编制单位，按战争需要灵活部署。5 个 Army 中有 3 个实为战区司令部的另一块牌子。

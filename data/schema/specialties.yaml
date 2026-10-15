@@ -1,0 +1,57 @@
+# 人员专业 Specialty
+# 练度按“旅 × 专业”记录，训练学校产能按专业计算（设计文档 4.3）。
+# school 字段把细分岗位归并到同一个训练体系，便于计算训练产能。
+
+specialties:
+  # 指挥
+  - {id: officer,              name: 军官/指挥员,           school: officer}
+  - {id: political_officer,    name: 指导员,               school: officer}
+  - {id: nco_senior,           name: 高级士官（排军士/一级军士长）, school: nco}
+  - {id: squad_leader,         name: 班长,                 school: nco}
+  - {id: team_leader,          name: 组长/副班长,           school: nco}
+  - {id: staff,                name: 参谋/文书/勤务,        school: staff}
+  # 步兵
+  - {id: rifleman,             name: 步枪手,               school: infantry}
+  - {id: automatic_rifleman,   name: 班用机枪手/自动步枪手,  school: infantry}
+  - {id: grenadier,            name: 榴弹手,               school: infantry}
+  - {id: marksman,             name: 精确射手,             school: infantry}
+  - {id: at_gunner,            name: 反坦克射手（火箭筒/导弹/无后坐力炮）, school: infantry}
+  - {id: assistant_gunner,     name: 副射手/弹药手,         school: infantry}
+  - {id: mg_gunner,            name: 机枪射手（通用/重机枪/榴弹发射器）, school: infantry}
+  - {id: sniper,               name: 狙击手,               school: sniper}
+  - {id: spotter,              name: 观察员,               school: sniper}
+  - {id: scout,                name: 侦察兵,               school: recon}
+  - {id: manpads_gunner,       name: 便导射手,             school: air_defense}
+  - {id: special_operator,     name: 特战队员,             school: special_forces}
+  # 车组
+  - {id: tank_commander,       name: 坦克车长,             school: armor}
+  - {id: tank_gunner,          name: 坦克炮长,             school: armor}
+  - {id: tank_driver,          name: 坦克驾驶员,           school: armor}
+  - {id: tank_loader,          name: 坦克装填手,           school: armor}
+  - {id: vehicle_commander,    name: 战车车长,             school: mech}
+  - {id: vehicle_gunner,       name: 战车炮长/武器站操作员,  school: mech}
+  - {id: vehicle_driver,       name: 战车驾驶员,           school: mech}
+  - {id: driver,               name: 汽车驾驶员,           school: motor}
+  # 火力支援
+  - {id: mortarman,            name: 迫击炮手,             school: artillery}
+  - {id: artilleryman,         name: 炮手,                 school: artillery}
+  - {id: rocket_artilleryman,  name: 火箭炮手,             school: artillery}
+  - {id: forward_observer,     name: 火炮前观员/火援官,     school: artillery}
+  - {id: jtac,                 name: 空中管制/联合火力协调员, school: jtac}
+  - {id: radar_operator,       name: 雷达操作员,           school: sensor}
+  - {id: ad_crew,              name: 防空兵,               school: air_defense}
+  # 保障
+  - {id: medic,                name: 卫生员/医护兵,         school: medical}
+  - {id: signaler,             name: 通信兵,               school: signal}
+  - {id: uav_operator,         name: 无人机操作员,         school: uav}
+  - {id: ew_operator,          name: 电子战操作员,         school: ew}
+  - {id: intel,                name: 情报分析员,           school: intel}
+  - {id: engineer,             name: 工兵,                 school: engineer}
+  - {id: cbrn,                 name: 防化兵,               school: cbrn}
+  - {id: mechanic,             name: 维修兵/军械员,         school: maintenance}
+  - {id: supply,               name: 补给/运输兵,           school: logistics}
+  - {id: cook,                 name: 炊事兵,               school: logistics}
+  - {id: military_police,      name: 宪兵/警卫,             school: mp}
+  # 航空
+  - {id: pilot,                name: 飞行员,               school: aviation}
+  - {id: aircrew,              name: 机组/地勤,             school: aviation}

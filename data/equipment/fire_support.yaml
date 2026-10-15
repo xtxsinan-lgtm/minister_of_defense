@@ -1,0 +1,313 @@
+# 火力支援型号：迫击炮、身管火炮、火箭炮、反坦克导弹车、侦察校射雷达、岸舰导弹
+# 原文火炮战力评估用到的参数：装药量、射程、CEP、展开方式、回旋角、火控、底盘、装填方式。
+# 这里统一用 specs.deploy（sp=自行 | truck_spade=需放驻锄的车载炮 | towed=牵引）、
+# specs.traverse_deg、specs.fire_control（auto_lay=数字化全自动调炮 | manual_lay=解算后手动调炮）、
+# specs.loading（semi_auto | auto | manual | module=模块化装填火箭炮 | non_module=非模块化火箭炮）记录。
+
+models:
+  # ======================= 迫击炮 · 美国 =======================
+  - id: m224a1
+    name: M224A1 60mm 迫击炮
+    category: mortar_light
+    family: m224
+    origin: USA
+    specs: {caliber_mm: 60, weight_kg: 21, effective_range_km: 3.5}
+    notes: A1 型加装激光测距仪、火控计算机和 GPS，精度大幅提高。
+  - {id: m224, name: M224 60mm 迫击炮, category: mortar_light, family: m224, origin: USA, specs: {caliber_mm: 60, weight_kg: 21, effective_range_km: 3.5}}
+  - id: m252
+    name: M252 81mm 迫击炮
+    category: mortar_medium
+    family: m252
+    origin: USA
+    crew: 5
+    specs: {caliber_mm: 81, weight_kg: 41.3, range_km: 5.9}
+  - {id: m120, name: M120 120mm 牵引迫击炮, category: mortar_heavy, family: m120, origin: USA, specs: {caliber_mm: 120, range_km: 7.2}}
+  - id: m1064
+    name: M1064 车载 120mm 迫击炮
+    category: mortar_vehicle
+    family: m113
+    origin: USA
+    specs: {caliber_mm: 120, range_km: 7.2, chassis: M113, fire_control: manual_lay}
+    notes: 操作和火控完全依赖人工；可较容易拆下下车使用。
+  - id: m1129
+    name: M1129 / M1252 斯崔克车载迫击炮
+    category: mortar_vehicle
+    family: stryker
+    origin: USA
+    crew: 5
+    specs: {caliber_mm: 120, range_km: 7.2, mortar: 以色列 K6, fire_control: auto_lay}
+    notes: Cardom 炮座，接收坐标后火控计算机自动装表；M1252 为双 V 底。SBCT 营迫击炮排每车另配一门 M252 下车用。
+  - id: m327
+    name: M327 120mm 重型迫击炮
+    category: mortar_heavy
+    family: m327
+    origin: USA
+    specs: {caliber_mm: 120, weight_kg: 582, range_km: 8.14, range_rap_km: 12.85, prime_mover: M1163 Growler}
+    notes: 法国研发，陆战队炮兵连装备。
+
+  # ======================= 迫击炮 · 中国 =======================
+  - id: pp89_60
+    name: PP-89 60mm 迫击炮
+    category: mortar_light
+    family: pp89
+    origin: CHN
+    crew: 5
+    specs: {caliber_mm: 60, weight_kg: 14.5, range_km: 2.7, shell_kg: 1.33}
+    notes: 原文另一处写 14.3kg。
+  - id: pbp201
+    name: PBP-201 60mm 迫击炮
+    category: mortar_light
+    family: pbp201
+    origin: CHN
+    crew: 4
+    specs: {caliber_mm: 60, weight_kg: 8.5, guided_shell_range_km: 5, material: 钛合金}
+    notes: 光电一体瞄具，火控计算机可接收外部坐标、气象、地形；可发射卫星制导炮弹。山地和空突部队优先换装。
+  - {id: pp93, name: PP-93 长管 60mm 迫击炮, category: mortar_light, family: pp93, origin: CHN, specs: {caliber_mm: 60, weight_kg: 22, range_km: 5.5}}
+  - {id: pp87, name: PP-87 82mm 迫击炮, category: mortar_medium, family: pp87, origin: CHN, specs: {caliber_mm: 82, weight_kg: 39.7, range_km: [4.7, 5.7]}}
+  - {id: pp89_100, name: PP-89 100mm 迫击炮, category: mortar_medium, family: pp89, origin: CHN, specs: {caliber_mm: 100, weight_kg: 73, range_km: 6.4}, notes: 必要时可平射充当直瞄火力。}
+  - id: pbp172
+    name: PBP-172 120mm 迫击炮
+    category: mortar_heavy
+    family: pbp172
+    origin: CHN
+    specs: {caliber_mm: 120, weight_kg: 170, range_km: 8, range_er_km: 9.8}
+    notes: 空突旅部分原文写作 PBP-171（山猫 4x4 牵引），视为同一型号。
+  - id: pcp001
+    name: PCP-001 82mm 车载速射迫击炮
+    category: mortar_vehicle
+    family: pcp001
+    origin: CHN
+    specs: {caliber_mm: 82, range_km: 6, chassis: 一代猛士, feed: 4 发弹夹, rof_sustained_rpm: 40, burst: 2 秒 4 发, fire_control: manual_lay}
+    notes: 仿制苏联矢车菊；火控简易，可靠性问题使同车另配一门 87 式 82 迫。可伞降。
+  - {id: pla_82_towed_auto_mortar, name: 82mm 牵引速射迫击炮, category: mortar_medium, family: pcp001, origin: CHN}
+  - id: ctl181_120_mortar
+    name: 三代猛士卡车 120mm 半自动装填车载迫击炮
+    category: mortar_vehicle
+    family: ctl181_mortar
+    origin: CHN
+    specs: {caliber_mm: 120, chassis: CTL-181, loading: semi_auto, fire_control: auto_lay}
+    status: not_yet_fielded
+    notes: 技术水平相当于斯崔克车载迫击炮。
+  - id: pld10
+    name: PLD-10 120mm 自行迫榴炮
+    category: sp_mortar_howitzer
+    family: pld10
+    origin: CHN
+    crew: 4
+    specs: {caliber_mm: 120, range_km: 9, rof_max_rpm: 10, chassis: 89 装输, loading: 后膛自动装填, fire_control: auto_lay}
+    notes: 可发射迫击榴弹、榴弹、反坦克榴弹，可直瞄自卫；有炮塔，转入射击状态快。
+  - id: pll05a
+    name: PLL-05A 120mm 自行迫榴炮
+    category: sp_mortar_howitzer
+    family: pll05
+    origin: CHN
+    specs: {caliber_mm: 120, water_speed_kph: 8, propulsion: 螺旋桨, fire_control: auto_lay}
+    notes: 数字化火控与 10 式一致。
+  - {id: pll05, name: PLL-05（白板）, category: sp_mortar_howitzer, family: pll05, origin: CHN, specs: {caliber_mm: 120, water_speed_kph: 8, fire_control: manual_lay}, notes: 无炮塔稳定，需人工输入坐标后电动调炮。}
+  - {id: zbd03_mortar, name: 03 伞兵战车底盘 120mm 自行迫榴炮, category: sp_mortar_howitzer, family: zbd03, origin: CHN}
+  - {id: zbd05_mortar, name: 05 底盘两栖迫榴炮, category: sp_mortar_howitzer, family: zbd05, origin: CHN, notes: 两栖旅正在换装。}
+
+  # ======================= 身管火炮 · 美国 =======================
+  - id: m109a6
+    name: M109A6 155mm 自行榴弹炮
+    category: howitzer_heavy_sp
+    family: m109
+    origin: USA
+    specs:
+      caliber_mm: 155
+      barrel_cal: 39
+      range_km: {he: 22, bb: 28.5, rap: 30, rap_guided: 40}
+      cep_m: {he: 139, guided: 4}
+      rof_max_rpm: 4
+      rof_sustained_rpm: 1
+      road_speed_kph: 56
+      deploy: sp
+      traverse_deg: 360
+      loading: semi_auto
+      cost_musd: 7.5
+    notes: 原文火炮战力基准（=1）。液压炮塔。
+  - id: m109a7
+    name: M109A7 155mm 自行榴弹炮
+    category: howitzer_heavy_sp
+    family: m109
+    origin: USA
+    specs: {caliber_mm: 155, barrel_cal: 39, road_speed_kph: 61, deploy: sp, loading: semi_auto, fire_control: auto_lay}
+    notes: 换装布雷德利底盘、电动炮塔、改进悬挂、数字化火控，调炮时间大幅缩短，可快打快撤。美军 A6/A7 约各半。
+  - id: m777a2
+    name: M777A2 155mm 牵引榴弹炮
+    category: howitzer_heavy_towed
+    family: m777
+    origin: USA
+    specs: {caliber_mm: 155, rof_max_rpm: 8, rof_sustained_rpm: 2, deploy: towed, traverse_deg: 45, loading: manual, fire_control: auto_lay}
+    notes: 水平回旋仅 ±22.5°。
+  - id: m119
+    name: M119 105mm 牵引榴弹炮
+    category: howitzer_light_towed
+    family: m119
+    origin: USA
+    specs: {caliber_mm: 105, weight_t: 2, range_km: {he: 17.5, rap: 19.5}, rof_sustained_rpm: 3, rof_max_rpm: 8, deploy: towed}
+    notes: 可由 CH-47 甚至 UH-60 吊运。
+  - {id: m1299, name: M1299 58 倍径 155mm 自行榴弹炮, category: howitzer_heavy_sp, family: m109, origin: USA, status: cancelled}
+
+  # ======================= 火箭炮 · 美国 =======================
+  - id: m142_himars
+    name: M142 海马斯
+    category: mrl_long_range
+    family: mlrs
+    origin: USA
+    specs:
+      pods: 1
+      pod_loads: {gmlrs_227mm: 6, atacms_610mm: 1, prsm_430mm: 2}
+      range_km: {rocket: 45, guided_rocket: 92, missile: 500}
+      cep_m: {rocket: 200, guided_rocket: 2}
+      he_per_rocket_kg: 20
+      deploy: sp
+      loading: module
+  - id: m270
+    name: M270 MLRS
+    category: mrl_long_range
+    family: mlrs
+    origin: USA
+    specs:
+      pods: 2
+      pod_loads: {gmlrs_227mm: 6, atacms_610mm: 1, prsm_430mm: 2}
+      range_km: {rocket: 45, guided_rocket: 92, missile: 500}
+      cep_m: {rocket: 200, guided_rocket: 2}
+      he_per_rocket_kg: 20
+      deploy: sp
+      loading: module
+
+  # ======================= 身管火炮 · 中国 =======================
+  - id: plz07a
+    name: PLZ-07A 122mm 自行加榴炮
+    category: howitzer_light_sp
+    family: plz07
+    origin: CHN
+    specs: {caliber_mm: 122, range_km: {base_bleed_hollow: 18, bb: 22}, he_fill_kg: [3, 5], rof_max_rpm: [6, 8], rof_sustained_rpm: [3, 5], road_speed_kph: 65, chassis: 04A, deploy: sp, fire_control: auto_lay}
+    notes: 源自苏联 D-30，可曲射也可平射自卫；威力明显大于北约 105。底凹弹 18km、底排弹 22km。
+  - {id: plz07b, name: PLZ-07B 122mm 两栖自行榴弹炮, category: howitzer_light_sp, family: plz07, origin: CHN, specs: {caliber_mm: 122, chassis: 04, deploy: sp}, notes: 两栖旅、陆战队用。}
+  - {id: plz07_05chassis, name: 05 底盘 122mm 两栖自行榴弹炮, category: howitzer_light_sp, family: plz07, origin: CHN, specs: {water_speed_kph: 32.5}, notes: 两栖旅正在换装。}
+  - {id: plz89, name: PLZ-89 122mm 自行榴弹炮, category: howitzer_light_sp, family: plz89, origin: CHN, specs: {caliber_mm: 122, loading: semi_auto, deploy: sp}, notes: 火控较落后，约半数二线重型旅仍装备。}
+  - {id: pll09, name: PLL-09 122mm 自行加榴炮, category: howitzer_light_sp, family: plz07, origin: CHN, specs: {caliber_mm: 122, chassis: 08, deploy: sp}, notes: 除底盘外与 PLZ-07 类似。}
+  - {id: pcl171, name: PCL-171 122mm 车载加榴炮, category: howitzer_light_truck, family: pcl171, origin: CHN, specs: {caliber_mm: 122, chassis: CTL-181, deploy: truck_spade}, notes: 无炮塔，发射前需放驻锄。}
+  - {id: pcl161, name: PCL-161 122mm 车载加榴炮, category: howitzer_light_truck, family: pcl161, origin: CHN, specs: {caliber_mm: 122, chassis: MV3, deploy: truck_spade}}
+  - {id: pcl09, name: PCL-09 122mm 车载加榴炮, category: howitzer_light_truck, family: pcl09, origin: CHN, specs: {caliber_mm: 122, chassis: SX2150, deploy: truck_spade}, notes: 全向射击能力较差；可由直-8 或米-17/171 吊运。}
+  - {id: pl96, name: PL-96 122mm 牵引榴弹炮, category: howitzer_light_towed, family: d30, origin: CHN, specs: {caliber_mm: 122, weight_t: 3, deploy: towed}, notes: 可由直-8 吊运。空降、空军空突旅用。}
+  - {id: type66_152, name: 66 式 152mm 牵引加榴炮, category: howitzer_heavy_towed, family: type66, origin: CHN, specs: {caliber_mm: 152, deploy: towed}}
+  - {id: type59_130, name: 59 式 130mm 牵引加农炮, category: howitzer_heavy_towed, family: type59_130, origin: CHN, specs: {caliber_mm: 130, weight_t: 8.45, range_km: {he: 27, bb: 38}, deploy: towed}}
+  - id: plz05
+    name: PLZ-05 155mm 自行榴弹炮
+    category: howitzer_heavy_sp
+    family: plz05
+    origin: CHN
+    specs:
+      caliber_mm: 155
+      barrel_cal: 52
+      range_km: {he: 23, bb: 30, rap_bb: 53, rap_guided: 60}
+      cep_m: {guided: 40}
+      he_fill_kg: 6
+      rof_sustained_rpm: 8
+      burst: 15 秒 4 发
+      deploy: sp
+      traverse_deg: 360
+      loading: auto
+  - id: pcl181
+    name: PCL-181 155mm 车载榴弹炮
+    category: howitzer_heavy_truck
+    family: plz05
+    origin: CHN
+    specs:
+      caliber_mm: 155
+      barrel_cal: 52
+      range_km: {he: 23, bb: 30, rap_bb: 53, rap_guided: 60}
+      cep_m: {guided: 40}
+      he_fill_kg: 6
+      rof_sustained_rpm: [4, 6]
+      deploy: truck_spade
+      traverse_deg: 360
+
+  # ======================= 火箭炮 · 中国 =======================
+  - id: phz11
+    name: PHZ-11 122mm 自行火箭炮
+    category: mrl_light
+    family: phl11
+    origin: CHN
+    specs: {caliber_mm: 122, tubes: 40, range_km: [40, 50], cep_m: {guided: 30}, he_per_rocket_kg: 6, reload_min: 10, chassis: 第二代炮兵通用底盘（履带）, deploy: sp, loading: module}
+    notes: 一车齐射 240kg 装药，相当于 10 门 M109。
+  - {id: phl11, name: PHL-11 122mm 车载火箭炮, category: mrl_light, family: phl11, origin: CHN, specs: {caliber_mm: 122, tubes: 40, range_km: [40, 50], he_per_rocket_kg: 6, chassis: SX2150, loading: module}}
+  - {id: phz89, name: PHZ-89 122mm 履带火箭炮, category: mrl_light, family: phz89, origin: CHN, specs: {caliber_mm: 122, tubes: 40, loading: non_module}, notes: 可自动装填但非模块化；无浮渡能力。}
+  - {id: type81_mrl, name: 81 式 122mm 车载火箭炮, category: mrl_light, family: type81_mrl, origin: CHN, specs: {caliber_mm: 122, tubes: 40, loading: manual}}
+  - {id: ctl181_mrl, name: CTL-181 底盘 20 管 122mm 火箭炮, category: mrl_light, family: phl11, origin: CHN, specs: {tubes: 20, loading: module}}
+  - id: mv3_mrl
+    name: MV3 底盘 122mm 火箭炮
+    category: mrl_light
+    family: phl11
+    origin: CHN
+    specs: {tubes: 20, loading: module}
+    confidence: uncertain
+    notes: 摩步旅一节写 20 管模块化，山地旅一节写“40 管”。
+  - id: type11_80tube
+    name: 11 式 80 管火箭炮
+    category: mrl_light
+    family: phl11
+    origin: CHN
+    confidence: uncertain
+    notes: 原文山地旅一节原话，管数存疑。
+  - {id: type63_107, name: 63 式 107mm 牵引火箭炮, category: mrl_light, family: type63, origin: CHN, specs: {caliber_mm: 107, range_km: 8, weight_kg: 613, deploy: towed}}
+  - id: phl03
+    name: PHL-03 300mm 远程火箭炮
+    category: mrl_long_range
+    family: phl03
+    origin: CHN
+    specs: {caliber_mm: 300, tubes: 12, range_km: {rocket: 70, guided_rocket: 160}, cep_m: {rocket: 100, guided_rocket: 10}, he_per_rocket_kg: 72.5, deploy: sp}
+  - id: phl191
+    name: PHL-191 模块化远程火箭炮
+    category: mrl_long_range
+    family: phl191
+    origin: CHN
+    specs:
+      pods: 3
+      pod_loads: {rocket_300mm: 5, rocket_370mm: 4, missile_750mm: 1}
+      range_km: {guided_rocket_370mm: 300, missile_750mm: 500}
+      cep_m: {guided_rocket: 30}
+      he_per_rocket_370mm_kg: 85
+      deploy: sp
+      loading: module
+
+  # ======================= 反坦克导弹车 =======================
+  - id: hj10_04a
+    name: 红箭-10 导弹发射车（04A 底盘）
+    category: atgm_vehicle
+    family: hj10
+    origin: CHN
+    specs: {range_km: 10, penetration_mm: 1400, guidance: 光纤图像（人在回路，可射后不管）}
+    notes: 抗干扰，可隐蔽发射后中途选目标。
+  - {id: hj10_04, name: 红箭-10（04 底盘）, category: atgm_vehicle, family: hj10, origin: CHN, specs: {range_km: 10, penetration_mm: 1400, water_speed_kph: 20}}
+  - {id: hj10_05, name: 红箭-10（05 底盘）, category: atgm_vehicle, family: hj10, origin: CHN, specs: {range_km: 10, penetration_mm: 1400}}
+  - {id: hj10_mv3, name: 红箭-10（MV3 底盘）, category: atgm_vehicle, family: hj10, origin: CHN, specs: {range_km: 10, penetration_mm: 1400}}
+  - {id: hj10_ctl181, name: 红箭-10（CTL-181 底盘）, category: atgm_vehicle, family: hj10, origin: CHN, specs: {range_km: 10, penetration_mm: 1400}}
+  - {id: hj9_wz550, name: 红箭-9 导弹车（WZ550 底盘）, category: atgm_vehicle, family: hj9, origin: CHN, specs: {range_km: 5, penetration_mm: 1200, guidance: 激光驾束}}
+  - {id: hj8_89, name: 红箭-8 导弹车（89 底盘）, category: atgm_vehicle, family: hj8, origin: CHN, notes: 技术参数接近 TOW。}
+  - {id: hj8_212, name: 红箭-8（212 吉普）, category: atgm_vehicle, family: hj8, origin: CHN}
+  - {id: m1134_atgm, name: M1134 斯崔克 TOW 导弹车, category: atgm_vehicle, family: stryker, origin: USA, specs: {range_km: 3.75}}
+  - {id: hmmwv_tow, name: 悍马/JLTV TOW 导弹车, category: atgm_vehicle, family: hmmwv, origin: USA, specs: {range_km: 3.75}}
+
+  # ======================= 侦察 / 雷达 =======================
+  - {id: lras3, name: AN/TAS-8 LRAS3 远程光电侦察系统, category: eo_recon_suite, family: lras3, origin: USA}
+  - {id: an_tpq50, name: AN/TPQ-50 反迫击炮雷达, category: radar_counter_battery, family: tpq, origin: USA, specs: {detect_range_km: 10, carrier: 悍马单排皮卡}}
+  - {id: an_tpq36, name: AN/TPQ-36 反炮兵雷达, category: radar_counter_battery, family: tpq, origin: USA, specs: {detect_range_km: 24, carrier: 悍马单排皮卡}}
+  - {id: an_tpq37, name: AN/TPQ-37 反炮兵雷达, category: radar_counter_battery, family: tpq, origin: USA, specs: {detect_range_km: 50, carrier: 拖车}}
+  - {id: pla_aesa_arty_radar, name: 营属有源相控阵炮兵雷达（一代猛士）, category: radar_counter_battery, family: pla_arty_radar, origin: CHN}
+  - {id: pla_battlefield_radar, name: 战场监视雷达, category: radar_battlefield, family: pla_bsr, origin: CHN}
+  - {id: plz04a_eo_recon, name: 04A 底盘无炮塔光电侦察车（炮兵）, category: eo_recon_suite, family: zbd04, origin: CHN}
+
+  # ======================= 岸舰导弹 =======================
+  - {id: yj12b, name: 鹰击-12B 岸舰导弹车, category: coastal_ashm_launcher, family: yj12, origin: CHN, specs: {missiles_per_launcher: 4, range_km: [200, 500], speed: 超音速}}
+  - {id: yj62, name: 鹰击-62 岸舰导弹车, category: coastal_ashm_launcher, family: yj62, origin: CHN, specs: {missiles_per_launcher: 3, range_km: 300}}
+  - id: nmesis
+    name: NMESIS（NSM 海军打击导弹）
+    category: coastal_ashm_launcher
+    family: nsm
+    origin: USA
+    specs: {range_km: [200, 300], missile_cost_musd: 2}
+    notes: 陆战队濒海战斗团导弹连每连 8 辆；8 具导弹 1600 万美元。

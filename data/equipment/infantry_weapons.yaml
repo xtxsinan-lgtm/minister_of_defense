@@ -1,0 +1,154 @@
+# 步兵武器型号：枪械、榴弹发射器、火箭筒、便携反坦克/防空导弹
+
+models:
+  # ======================= 美国 =======================
+  - {id: m4a1, name: M4A1 卡宾枪, category: rifle, family: ar15, origin: USA, specs: {weight_kg: 2.92, caliber_mm: 5.56}}
+  - {id: m7, name: M7 步枪, category: rifle, family: ngsw, origin: USA, specs: {weight_kg: 3.8, caliber_mm: 6.8}, notes: 美陆军正在换装。}
+  - id: m27_iar
+    name: M27 IAR
+    category: lmg
+    family: hk416
+    origin: USA
+    specs: {weight_kg: 4.4, caliber_mm: 5.56, feed: 30 发弹匣}
+    notes: 陆战队全员装备，比 M4 重 0.9kg，连发精度高；只有 30 发弹匣，班内无持续火力。
+  - {id: m38_dmr, name: M38 精确射手步枪, category: dmr, family: hk416, origin: USA}
+  - {id: m110_sdmr, name: M110 SDMR, category: dmr, family: m110, origin: USA, notes: 美陆军班内并未普遍编制。}
+  - {id: m249, name: M249 班用机枪, category: lmg, family: m249, origin: USA, specs: {weight_kg: 7.5, caliber_mm: 5.56}, notes: 射程和精度略好于 QJB-201，但携行压力大。}
+  - {id: m240, name: M240 通用机枪, category: gpmg, family: m240, origin: USA, specs: {caliber_mm: 7.62}}
+  - {id: m2_hmg, name: M2 重机枪, category: hmg, family: m2, origin: USA, specs: {weight_kg: 58, caliber_mm: 12.7}, notes: 主要车载，下车使用实用性有限。}
+  - {id: mk19, name: Mk19 自动榴弹发射器, category: agl, family: mk19, origin: USA, specs: {weight_kg: 62, caliber_mm: 40}, notes: 主要车载。}
+  - {id: m320, name: M320 榴弹发射器, category: underbarrel_gl, family: m320, origin: USA, specs: {caliber_mm: 40}, notes: 可下挂也可单独使用。}
+  - {id: m500, name: M500 霰弹枪, category: shotgun, family: m500, origin: USA}
+  - {id: m24, name: M24 狙击步枪, category: sniper_rifle, family: m24, origin: USA, specs: {caliber_mm: 7.62}}
+  - {id: m40, name: M40 狙击步枪, category: sniper_rifle, family: m40, origin: USA, specs: {caliber_mm: 7.62}}
+  - {id: mk13_mod5, name: Mk13 Mod 5 狙击步枪, category: sniper_rifle, family: mk13, origin: USA, specs: {caliber_mm: 7.62}}
+  - {id: us_86mm_sniper, name: 8.6mm 反人员狙击步枪, category: sniper_rifle, family: us_338, origin: USA, specs: {caliber_mm: 8.6}}
+  - {id: m82, name: M82 巴雷特, category: anti_materiel_rifle, family: m82, origin: USA, specs: {caliber_mm: 12.7}}
+  - id: javelin
+    name: FGM-148 标枪
+    category: atgm_portable
+    family: javelin
+    origin: USA
+    specs: {range_km: 2.75, system_weight_kg: 22, guidance: 红外成像射后不管, attack_mode: 攻顶}
+    notes: 每具备弹 2-3 枚。
+  - id: tow
+    name: BGM-71 TOW
+    category: atgm_heavy
+    family: tow
+    origin: USA
+    specs: {range_km: 3.75, guidance: 半主动视线指令（SACLOS）}
+  - {id: at4, name: AT-4, category: disposable_launcher, family: at4, origin: USA, specs: {caliber_mm: 84}}
+  - id: m3a1_carl_gustaf
+    name: M3A1 古斯塔夫无后坐力炮
+    category: reusable_launcher
+    family: carl_gustaf
+    origin: USA
+    specs: {caliber_mm: 84, weight_kg: 6.6, range_heat_m: 500, range_he_m: 1000}
+  - {id: m3e1_carl_gustaf, name: M3E1 古斯塔夫, category: reusable_launcher, family: carl_gustaf, origin: USA, specs: {caliber_mm: 84}}
+  - id: smaw
+    name: SMAW 火箭筒
+    category: reusable_launcher
+    family: smaw
+    origin: USA
+    specs: {weight_kg: 13.3, range_m: 500, penetration_heat_mm: 600}
+  - id: stinger
+    name: FIM-92 毒刺
+    category: manpads
+    family: stinger
+    origin: USA
+    specs: {range_km: 8, ceiling_km: 3.8, speed_mach: 2.2, guidance: 红外}
+
+  # ======================= 中国 · 枪械 =======================
+  - {id: qbz95, name: QBZ-95 自动步枪, category: rifle, family: qbz95, origin: CHN, specs: {caliber_mm: 5.8}}
+  - {id: qbz191, name: QBZ-191 自动步枪, category: rifle, family: qbz191, origin: CHN, specs: {caliber_mm: 5.8}, notes: 正在替换 95 枪族。}
+  - {id: qbz03, name: QBZ-03 自动步枪, category: rifle, family: qbz03, origin: CHN, notes: 边防、海防步兵班装备。}
+  - {id: qcw171, name: 171 式冲锋枪, category: smg, family: qbz191, origin: CHN}
+  - {id: pla_shotgun, name: 霰弹枪, category: shotgun, family: pla_shotgun, origin: CHN, notes: 班长有时额外配备，用于 CQB 或防无人机。}
+  - {id: qbu88, name: QBU-88 狙击步枪, category: dmr, family: qbu88, origin: CHN, notes: 精度差，正优先替换。}
+  - {id: qbu191, name: QBU-191 精准射手步枪（19 精准射手步枪）, category: dmr, family: qbz191, origin: CHN}
+  - {id: qbb95, name: QBB-95 班用机枪, category: lmg, family: qbz95, origin: CHN, notes: 弹鼓射击不便。}
+  - {id: qjb201, name: QJB-201 班用机枪, category: lmg, family: qjb201, origin: CHN, specs: {weight_kg: 4.4, feed: 可散弹链}}
+  - {id: type67_gpmg, name: 67 式通用机枪, category: gpmg, family: type67, origin: CHN, specs: {effective_range_m: [800, 1000], caliber_mm: 7.62}}
+  - {id: type88_gpmg, name: 88 式通用机枪, category: gpmg, family: type88_gpmg, origin: CHN, specs: {caliber_mm: 5.8}}
+  - {id: qjy201, name: QJY-201 通用机枪, category: gpmg, family: qjy201, origin: CHN, specs: {caliber_mm: 7.62}}
+  - {id: qjz89, name: 89 式重机枪, category: hmg, family: qjz89, origin: CHN, specs: {weight_kg: 26, caliber_mm: 12.7}}
+  - id: qjz171
+    name: QJZ-171 重机枪
+    category: hmg
+    family: qjz171
+    origin: CHN
+    specs: {weight_kg: 17.8, caliber_mm: 12.7, dispersion_vs_type89_at_200m: 0.2}
+    notes: 世界上最先进的重机枪之一。
+  - {id: type88_aamg, name: 88 式 12.7mm 高射机枪, category: hmg, family: type88_aamg, origin: CHN}
+  - id: qjg02
+    name: 02 式 14.5mm 高射机枪
+    category: aa_mg
+    family: qjg02
+    origin: CHN
+    crew: 10
+    specs: {weight_kg: 75, range_m: 2000, caliber_mm: 14.5}
+    notes: 坐姿射击，可高射、平射或超越射击。
+  - {id: qbu202, name: QBU-202 狙击步枪, category: sniper_rifle, family: qbu202, origin: CHN, specs: {caliber_mm: 7.62}}
+  - {id: qbu10, name: QBU-10 反器材步枪, category: anti_materiel_rifle, family: qbu10, origin: CHN, specs: {caliber_mm: 12.7}}
+
+  # ======================= 中国 · 榴弹发射器 =======================
+  - {id: qlg10, name: QLG-10 枪挂榴弹发射器, category: underbarrel_gl, family: qlg10, origin: CHN}
+  - {id: qlu11, name: 11 式狙击榴弹发射器, category: sniper_gl, family: qlu11, origin: CHN, specs: {caliber_mm: 35}, notes: 美军无同类列装武器。原文一处写作“131 式”，应为同一型号。}
+  - id: qlz87
+    name: QLZ-87 自动榴弹发射器
+    category: agl
+    family: qlz87
+    origin: CHN
+    specs: {caliber_mm: 35, weight_bipod_kg: 12, weight_tripod_kg: 20, effective_range_m: 600}
+  - {id: qlz04, name: QLZ-04 自动榴弹发射器, category: agl, family: qlz04, origin: CHN, specs: {caliber_mm: 35, weight_kg: 24}, notes: 比 87 式重但精度更高；也用于三代猛士遥控武器站。}
+  - {id: qlz201, name: QLZ-201 自动榴弹发射器, category: agl, family: qlz201, origin: CHN, specs: {weight_kg: 15.6}, notes: 山地部队正在换装。}
+
+  # ======================= 中国 · 火箭筒 / 无后坐力炮 =======================
+  - id: pf98
+    name: PF-98 120mm 火箭筒（连用型）
+    category: reusable_launcher
+    family: pf98
+    origin: CHN
+    specs: {caliber_mm: 120, system_weight_kg: 15}
+    notes: 班组火力核心，每次带两发；反装甲远不如标枪，但反工事好。重量数据原文写“98A 的 15kg”。
+  - {id: pf98_bn, name: PF-98 营用型火箭筒, category: reusable_launcher, family: pf98, origin: CHN}
+  - {id: pf89, name: PF-89 80mm 一次性火箭筒, category: disposable_launcher, family: pf89, origin: CHN}
+  - {id: pf08, name: 08 式 80mm 一次性火箭筒, category: disposable_launcher, family: pf89, origin: CHN}
+  - id: pf97
+    name: PF-97 93mm 云爆火箭筒
+    category: thermobaric_launcher
+    family: pf97
+    origin: CHN
+    specs: {effective_range_m: 200}
+    notes: 仿制苏俄 RPO，对掩体建筑内人员效能好。
+  - {id: pbw001, name: PBW-001 82mm 无后坐力炮, category: reusable_launcher, family: pbw001, origin: CHN, notes: 未来可能替换排火力班的 120 火。}
+
+  # ======================= 中国 · 便携反坦克 / 防空导弹 =======================
+  - id: hj73d
+    name: 红箭-73D
+    category: atgm_portable
+    family: hj73
+    origin: CHN
+    specs: {range_km: 3, penetration_mm: 800, guidance: 半主动视线指令}
+  - {id: hj73c, name: 红箭-73C, category: atgm_portable, family: hj73, origin: CHN, notes: ZBD-05 车载。}
+  - id: hj12
+    name: 红箭-12
+    category: atgm_portable
+    family: hj12
+    origin: CHN
+    specs: {range_km: 4, penetration_mm: 1100, guidance: 射后不管, attack_mode: 攻顶}
+    notes: 先进程度反超标枪，但尚未普遍换装。
+  - {id: hj8_portable, name: 红箭-8（步兵携带）, category: atgm_heavy, family: hj8, origin: CHN, notes: 技术参数接近 TOW。}
+  - id: qw2
+    name: 前卫-2
+    category: manpads
+    family: qw
+    origin: CHN
+    specs: {range_km: 6, ceiling_km: 4, weight_kg: 18, guidance: 红外}
+  - id: hn6
+    name: 红缨-6
+    category: manpads
+    family: hn6
+    origin: CHN
+    specs: {range_km: 6, ceiling_km: 3.5, weight_kg: 16, guidance: 红外}
+  - {id: hn6b, name: 红缨-6B, category: manpads, family: hn6, origin: CHN, notes: 中型旅 6 管 25mm 转膛高炮上搭配 4 具。}

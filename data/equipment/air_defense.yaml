@@ -1,0 +1,123 @@
+# 防空型号：高炮、弹炮合一、防空导弹
+# 原文防空评估指标：最大射程、最大射高、导弹速度、每车发射架数（各 25%），
+# 再以制导方式和展开时间修正。制导档位从高到低：
+#   cmd_arh（指令+主动雷达）> cmd_sarh_or_ir（指令+半主动雷达或红外）> sarh（半主动雷达）> ir（被动红外）
+
+models:
+  # ======================= 美国 =======================
+  - id: pac2
+    name: 爱国者 PAC-2
+    category: sam_long
+    family: patriot
+    origin: USA
+    specs: {range_km: 160, ceiling_km: 32, speed_mach: 3.5, guidance: sarh, rails_per_launcher: 4, deploy_min: 60}
+  - id: pac3
+    name: 爱国者 PAC-3
+    category: sam_long
+    family: patriot
+    origin: USA
+    specs: {range_km: 80, ceiling_km: 24, guidance: cmd_arh, rails_per_launcher: 4, deploy_min: 60}
+    notes: 美国目前装备最多的是性能最差的 PAC-3 低成本版本。
+  - id: pac3_mse
+    name: 爱国者 PAC-3 MSE
+    category: sam_long
+    family: patriot
+    origin: USA
+    specs: {range_km: 120, ceiling_km: 36, guidance: cmd_arh, rails_per_launcher: 4, deploy_min: 60, cost_musd_per_launcher: 4}
+    notes: 原文防空导弹战力基准；每营 2.4 亿美元，按发射车折算每车 400 万美元。
+  - id: nasams
+    name: NASAMS
+    category: sam_medium
+    family: nasams
+    origin: USA
+    specs: {range_km: [30, 60], ceiling_km: 21, speed_mach: 4, rails_per_launcher: [4, 6], guidance: cmd_arh}
+    notes: 陆基发射 AIM-120。
+  - id: m_shorad
+    name: M-SHORAD 斯崔克防空车
+    category: spaag
+    family: stryker
+    origin: USA
+    specs: {missile: stinger, rails_per_launcher: 2, missile_range_km: 8, missile_ceiling_km: 3.8, cost_musd: 6}
+    notes: 原文高炮/弹炮战力基准，每车 600 万美元。
+  - id: avenger
+    name: 复仇者车载便导
+    category: sam_vehicle_manpads
+    family: avenger
+    origin: USA
+    specs: {missile: stinger, launch_pods: 2, missile_range_km: 8, missile_ceiling_km: 3.8, speed_mach: 2.2}
+  - {id: c_ram, name: C-RAM, category: c_ram, family: phalanx, origin: USA}
+  - {id: thaad, name: 萨德, category: sam_long, family: thaad, origin: USA, notes: 美陆军有 7 个独立萨德连。}
+  - {id: gmd, name: 陆基中段反导系统, category: sam_long, family: gmd, origin: USA, notes: 国民警卫队 1 个营。}
+
+  # ======================= 中国 · 野战高炮 / 弹炮 =======================
+  - {id: pgz09, name: PGZ-09 双管 35mm 自行高炮, category: spaag, family: pgz09, origin: CHN, specs: {caliber_mm: 35, barrels: 2, chassis: 第二代炮兵通用底盘}, notes: 技术源自厄利空，威力大，主要对飞机。}
+  - id: pgz04
+    name: PGZ-04 四管 25mm 弹炮合一
+    category: spaag
+    family: pgz04
+    origin: CHN
+    specs: {caliber_mm: 25, barrels: 4, missiles: 4 × 前卫-2, chassis: 04}
+    notes: 苏联石勒喀河 ZSU-23-4 的口径增大版，更多针对导弹。
+  - {id: pgz95, name: PGZ-95 弹炮合一, category: spaag, family: pgz04, origin: CHN, notes: 采用 PLZ-45 外贸火炮底盘，二线部队用。}
+  - id: pgl625
+    name: PGL-625 弹炮合一
+    category: spaag
+    family: pgl625
+    origin: CHN
+    specs: {caliber_mm: 25, barrels: 6, missiles: 4 × 红缨-6B, chassis: 08, water_speed_kph: 11}
+    notes: 原文中型旅防空营的“08 底盘 25mm 6 管转膛高炮 + 4 具红缨-6B”应即此型。
+  - {id: pg99, name: PG-99 牵引双联 35mm 高炮, category: aa_gun_towed, family: pg99, origin: CHN, specs: {caliber_mm: 35, barrels: 2}}
+  - {id: pg87, name: PG-87 牵引双联 25mm 高炮, category: aa_gun_towed, family: pg87, origin: CHN, specs: {caliber_mm: 25, barrels: 2}}
+  - id: ld2000
+    name: 陆盾-2000 弹炮合一近防系统
+    category: c_ram
+    family: type730
+    origin: CHN
+    specs: {caliber_mm: 30, barrels: 7, rof_rpm: 4000, range_km: 3}
+    notes: 源自海军 730 近防炮，与红旗-6D 搭配要地防空。
+
+  # ======================= 中国 · 陆军野战防空导弹 =======================
+  - id: tor_m1
+    name: 道尔-M1
+    category: sam_short
+    family: tor
+    origin: RUS
+    specs: {range_km: [1.5, 25], ceiling_km: 10, deploy: 短停或行进间发射}
+    notes: 原文“射程 1.5-25/20km”，25 对应道尔、20 对应红旗-17。
+  - {id: hq17, name: 红旗-17, category: sam_short, family: tor, origin: CHN, specs: {range_km: [1.5, 20], ceiling_km: 10}, notes: 道尔本地化，履带底盘。}
+  - {id: hq17a, name: 红旗-17A, category: sam_short, family: tor, origin: CHN, specs: {range_km: [1.5, 20], ceiling_km: 10, chassis: 6x6 轮式装甲车}}
+  - {id: hq7, name: 红旗-7/7B, category: sam_short, family: hq7, origin: CHN, specs: {range_km: 15, ceiling_km: 6, deploy_min: 10, chassis: 4x4 或 6x6 轮式装甲车}, notes: 每连比红旗-17 少一辆发射车，雷达较落后。}
+  - id: hq16
+    name: 红旗-16
+    category: sam_medium
+    family: hq16
+    origin: CHN
+    specs: {range_km: 40, ceiling_km: 18, speed_mach: 3, guidance: sarh, rails_per_launcher: 6, deploy_min: [15, 20]}
+  - {id: hq16a, name: 红旗-16A, category: sam_medium, family: hq16, origin: CHN, specs: {range_km: 70, ceiling_km: 18, speed_mach: 3, guidance: sarh, rails_per_launcher: 6, deploy_min: [15, 20]}}
+  - {id: hq16b, name: 红旗-16B, category: sam_medium, family: hq16, origin: CHN, specs: {range_km: 160, ceiling_km: 18, speed_mach: 3, guidance: sarh, rails_per_launcher: 6, deploy_min: [15, 20]}}
+
+  # ======================= 中国 · 空军地导 =======================
+  - id: hq19
+    name: 红旗-19
+    category: sam_long
+    family: hq19
+    origin: CHN
+    specs: {range_km: [400, 500], ceiling_km: [100, 150], speed_mach: 8, rails_per_launcher: 4}
+    notes: 中段反导，可拦截高超音速飞行器。
+  - {id: hq9, name: 红旗-9, category: sam_long, family: hq9, origin: CHN, specs: {range_km: 120, ceiling_km: 30, speed_mach: 4.2, guidance: cmd_arh, rails_per_launcher: 4}}
+  - {id: hq9b, name: 红旗-9B, category: sam_long, family: hq9, origin: CHN, specs: {range_km: 300, ceiling_km: 50, speed_mach: 6, guidance: cmd_arh, rails_per_launcher: 4}}
+  - {id: hq22, name: 红旗-22, category: sam_long, family: hq22, origin: CHN, specs: {range_km: 100, ceiling_km: 27, speed_mach: 6, guidance: cmd_sarh_or_ir, rails_per_launcher: 4}, notes: 制导方式类似 PAC-2。}
+  - {id: hq22a, name: 红旗-22A, category: sam_long, family: hq22, origin: CHN, specs: {range_km: 170, ceiling_km: 27, speed_mach: 6, guidance: cmd_sarh_or_ir, rails_per_launcher: 4}}
+  - id: s400
+    name: S-400
+    category: sam_long
+    family: s300
+    origin: RUS
+    specs: {range_km: 400, ceiling_km: 30, bm_intercept_range_km: 60, speed_mach: [11.3, 5.9, 3.3], guidance: cmd_arh, rails_per_launcher: 4, deploy_min: [8, 15]}
+    notes: 三种导弹分别适合远、中、近程；可拦截高超音速飞行器。制导为 TVM + 主动雷达寻的。
+  - {id: s300pmu, name: S-300PMU, category: sam_long, family: s300, origin: RUS, specs: {range_km: 90, ceiling_km: 27, speed_mach: 6, guidance: cmd_sarh_or_ir, rails_per_launcher: 4}}
+  - {id: s300pmu1, name: S-300PMU1, category: sam_long, family: s300, origin: RUS, specs: {range_km: 120, ceiling_km: 27, speed_mach: 6, guidance: cmd_sarh_or_ir, rails_per_launcher: 4, abm: true}}
+  - {id: s300pmu2, name: S-300PMU2, category: sam_long, family: s300, origin: RUS, specs: {range_km: 195, ceiling_km: 27, speed_mach: 6, guidance: cmd_sarh_or_ir, rails_per_launcher: 4, abm: true}}
+  - {id: hq12, name: 红旗-12, category: sam_medium, family: hq12, origin: CHN, specs: {range_km: 42, ceiling_km: 25, rails_per_launcher: 2}}
+  - {id: hq12a, name: 红旗-12A, category: sam_medium, family: hq12, origin: CHN, specs: {range_km: 70, ceiling_km: 25, rails_per_launcher: 2}}
+  - {id: hq6d, name: 红旗-6D, category: sam_short, family: hq6, origin: CHN, specs: {range_km: 18, ceiling_km: 12, rails_per_launcher: 2}}

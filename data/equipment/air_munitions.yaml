@@ -1,0 +1,128 @@
+# 空中弹药：空空导弹、空地导弹、反辐射导弹、反舰导弹、制导炸弹、改装套件、布撒器
+# 设计文档 5.2：海空军按具体弹药型号采购、存放、挂载。
+# 原文表格空白处即未给出，不填。
+
+models:
+  # ======================= 格斗弹 =======================
+  - {id: pl8,  name: 霹雳-8,  category: aam_short, family: pl8,  origin: CHN, specs: {range_km: 20, speed_mach: 3.5, weight_kg: 115, guidance: 单波段红外, off_boresight_deg: 20}}
+  - {id: pl9,  name: 霹雳-9,  category: aam_short, family: pl9,  origin: CHN, specs: {range_km: 15, speed_mach: 3.5, weight_kg: 123, guidance: 多波段红外, off_boresight_deg: [30, 40], helmet_cueing: true}}
+  - {id: pl9c, name: 霹雳-9C, category: aam_short, family: pl9,  origin: CHN, specs: {range_km: 22, speed_mach: 3.5, weight_kg: 115, guidance: 多波段红外, off_boresight_deg: [30, 40], helmet_cueing: true}}
+  - {id: pl10, name: 霹雳-10, category: aam_short, family: pl10, origin: CHN, specs: {range_km: 20, speed_mach: 3.5, weight_kg: 105, guidance: 红外成像+惯导, off_boresight_deg: 80, helmet_cueing: true}, notes: 与 AIM-9X 大体相近。}
+  - {id: pl5,  name: 霹雳-5,  category: aam_short, family: pl5,  origin: CHN, specs: {range_km: 16}, notes: 直-10 挂载。}
+  - {id: r73,  name: R-73,    category: aam_short, family: r73,  origin: RUS, specs: {range_km: 30, speed_mach: 2.5, weight_kg: 105, guidance: 单波段红外, off_boresight_deg: 40}}
+  - {id: aim9x, name: AIM-9X 响尾蛇, category: aam_short, family: aim9, origin: USA, specs: {range_km: 26, speed_mach: 2.5, weight_kg: 82.5, guidance: 红外成像, off_boresight_deg: 90, helmet_cueing: true}, notes: 阿帕奇挂载时原文写射程 35km。}
+  - {id: ty90, name: 天燕-90, category: aam_short, family: ty90, origin: CHN, specs: {range_km: 6, speed_mach: 2, guidance: 红外}, notes: 专门用于直升机空战。}
+
+  # ======================= 中远距空空弹 =======================
+  - {id: r77,  name: R-77,   category: aam_medium, family: r77,  origin: RUS, specs: {range_km: 80,  speed_mach: 4, weight_kg: 175, guidance: 惯导+半主动雷达}}
+  - {id: pl11, name: 霹雳-11, category: aam_medium, family: pl11, origin: CHN, specs: {range_km: 75,  speed_mach: 4, weight_kg: 310, guidance: 半主动雷达}}
+  - {id: pl12, name: 霹雳-12, category: aam_medium, family: pl12, origin: CHN, specs: {range_km: 100, speed_mach: 4, weight_kg: 180, guidance: 主动雷达}}
+  - {id: pl15, name: 霹雳-15, category: aam_medium, family: pl15, origin: CHN, specs: {range_km: 200, speed_mach: 4, weight_kg: 230, guidance: 主动雷达+数据链修正}}
+  - {id: pl17, name: 霹雳-17, category: aam_medium, family: pl17, origin: CHN, specs: {range_km: 400, speed_mach: 4, weight_kg: 500, guidance: 主动雷达}, notes: 歼-16 氮化镓型挂载时携弹量降到 2 枚。}
+  - {id: aim7f, name: AIM-7F 麻雀, category: aam_medium, family: aim7, origin: USA, specs: {range_km: 70, speed_mach: 4, weight_kg: 230, guidance: 半主动雷达}}
+  - {id: aim120, name: AIM-120, category: aam_medium, family: aim120, origin: USA, specs: {range_km: 90, speed_mach: 4, weight_kg: 161.5, guidance: 惯导+主动雷达+数据链修正}}
+  - {id: aim120d, name: AIM-120D, category: aam_medium, family: aim120, origin: USA, specs: {range_km: 160, speed_mach: 4, weight_kg: 161.5, guidance: 惯导+主动雷达+数据链修正}}
+  - {id: aim174b, name: AIM-174B, category: aam_medium, family: sm6, origin: USA, specs: {range_km: 240, speed_mach: 3.5, weight_kg: 860, guidance: 惯导+主动雷达+数据链修正}, notes: 美军只匹配 F/A-18E/F。}
+
+  # ======================= 空地 / 空射巡航导弹 =======================
+  - {id: kd88,  name: 空地-88,  category: asm, family: kd88, origin: CHN, specs: {range_km: 200, weight_kg: 600, warhead_kg: 165, guidance: 电视}}
+  - {id: kd88a, name: 空地-88A, category: asm, family: kd88, origin: CHN, specs: {range_km: 200, weight_kg: 600, warhead_kg: 165, guidance: 红外热成像}}
+  - {id: akf98, name: AKF-98,   category: asm, family: akf98, origin: CHN, specs: {range_km: [500, 1000], weight_kg: 1000, warhead_kg: 500, guidance: 红外热成像+卫星+惯导+地形匹配}}
+  - {id: hn3,   name: 红鸟-3,   category: asm, family: hn, origin: CHN, specs: {range_km: [2000, 3000], weight_kg: 1400, warhead_kg: 300, guidance: 电视+红外热成像+卫星+惯导+地形匹配}}
+  - {id: cj20,  name: 长剑-20,  category: asm, family: cj, origin: CHN, specs: {range_km: [1500, 2500], weight_kg: 2500, warhead_kg: 500, guidance: 环境匹配+卫星+惯导+地形匹配, nuclear_capable: true}, notes: 仅轰-6。}
+  - {id: kh55,  name: Kh-55,    category: asm, family: kh55, origin: RUS, specs: {range_km: 2500, weight_kg: 1210, warhead_kg: 410, guidance: 地形匹配+惯导, nuclear_capable: true}, notes: 仅轰-6。}
+  - {id: jassm_a,  name: JASSM-A,  category: asm, family: jassm, origin: USA, specs: {range_km: 370, weight_kg: 1045, warhead_kg: 136, guidance: 红外热成像+卫星+惯导}}
+  - {id: jassm_er, name: JASSM-ER, category: asm, family: jassm, origin: USA, specs: {range_km: 926, weight_kg: 1200, warhead_kg: 450, guidance: 红外热成像+卫星+惯导}}
+  - {id: kd10,  name: 空地-10,  category: asm_antitank, family: kd10, origin: CHN, specs: {range_km: 6.9}, notes: 类似地狱火。}
+  - {id: kd9,   name: 空地-9,   category: asm_antitank, family: kd9, origin: CHN}
+  - {id: kd21,  name: 空地-21,  category: asm_antitank, family: kd21, origin: CHN, specs: {range_km: 21, guidance: 毫米波雷达}}
+  - {id: agm65, name: AGM-65 小牛, category: asm_antitank, family: agm65, origin: USA, specs: {range_km: 22, weight_kg: 306, warhead_kg: 136, guidance: 半主动激光/红外/电视}, notes: 中国自用装备未给固定翼匹配同类导弹。}
+  - {id: hellfire, name: AGM-114 地狱火, category: asm_antitank, family: hellfire, origin: USA, specs: {range_km: 8, guidance: 激光}}
+  - {id: jagm,  name: JAGM 联合空地导弹, category: asm_antitank, family: hellfire, origin: USA, specs: {range_km: 8, guidance: 半主动激光+雷达}}
+
+  # ======================= 反辐射 =======================
+  - {id: ld10, name: 雷电-10, category: arm, family: ld10, origin: CHN, specs: {range_km: 80, speed_mach: 4, weight_kg: 200, warhead_kg: 20, guidance: 被动+主动雷达}}
+  - {id: yj91_arm, name: 鹰击-91（反辐射）, category: arm, family: yj91, origin: CHN, specs: {range_km: 150, speed_mach: 3.5, weight_kg: 600, guidance: 被动雷达}, notes: 原文表格该行数据错位，按反舰表数据取重量 600kg。}
+  - {id: harm, name: AGM-88 HARM, category: arm, family: harm, origin: USA, specs: {range_km: {low: 25, mid: 80, high: 148}, speed_mach: 2.9, weight_kg: 368, warhead_kg: 68, guidance: 被动雷达+干扰源归向+毫米波雷达+卫星+惯导}}
+  - {id: harm_er, name: HARM 改（AARGM-ER）, category: arm, family: harm, origin: USA, specs: {range_km: 300, speed_mach: 2.9, weight_kg: 467, warhead_kg: 68, guidance: 被动雷达+干扰源归向+毫米波雷达+卫星+惯导}}
+
+  # ======================= 反舰 =======================
+  - {id: yj83k, name: 鹰击-83K, category: ashm_air, family: yj83, origin: CHN, specs: {range_km: 180, profile: 掠海, speed_mach: [0.4, 1.4], weight_kg: 850, warhead_kg: 165, guidance: 被动+主动雷达}}
+  - {id: yj91,  name: 鹰击-91（反舰）, category: ashm_air, family: yj91, origin: CHN, specs: {range_km: 150, profile: 高空, speed_mach: 3.5, weight_kg: 600, warhead_kg: 165, guidance: 被动+主动雷达}}
+  - {id: yj12,  name: 鹰击-12, category: ashm_air, family: yj12, origin: CHN, specs: {range_km: {sea_skim: 200, high: 500}, speed_mach: [2, 4], weight_kg: 3000, warhead_kg: 300, guidance: 卫星+主动雷达}, notes: 仅轰-6 与歼-16 可挂。全程超音速掠海。}
+  - {id: yj20,  name: 鹰击-20, category: ashm_air, family: yj20, origin: CHN, specs: {range_km: 1200, speed_mach: [6, 10], weight_kg: 2000, warhead_kg: 800, guidance: 卫星+主动雷达}, notes: 歼-16、轰-6、歼-20 可挂。}
+  - {id: kh22,  name: Kh-22,   category: ashm_air, family: kh22, origin: RUS, specs: {range_km: 600, profile: 高空, speed_mach: 4.6, weight_kg: 5320, warhead_kg: 1000, guidance: 主动雷达+惯导}, notes: 仅轰-6。}
+  - {id: harpoon, name: 鱼叉,   category: ashm_air, family: harpoon, origin: USA, specs: {range_km: 143, profile: 掠海, speed_mach: 0.71, weight_kg: 691, warhead_kg: 221, guidance: 主动雷达}}
+  - {id: jsm,   name: JSM,     category: ashm_air, family: nsm, origin: NOR, specs: {range_km: {sea_skim: 185, high: 555}, speed_mach: 0.9, weight_kg: 416, warhead_kg: 120, guidance: 卫星+惯导+地形匹配+红外成像+被动雷达}}
+  - {id: yj7,   name: 鹰击-7,  category: ashm_air, family: yj7, origin: CHN, specs: {range_km: 25}, notes: 直-10 挂载。}
+  - {id: yj9,   name: 鹰击-9,  category: ashm_air, family: yj9, origin: CHN, specs: {range_km: 20}}
+  - {id: cm501ga, name: CM-501GA, category: asm, family: cm501, origin: CHN, specs: {range_km: 40}, notes: 直-10 最多挂 8 枚。}
+  - {id: cm501g,  name: CM-501G,  category: asm, family: cm501, origin: CHN, specs: {range_km: 70}, notes: 直-10 最多挂 4 枚。}
+
+  # ======================= 制导炸弹 =======================
+  # range_km / weight_class_kg / warhead_kg / concrete_pen_m / cep_m / boost / guidance
+  - {id: kab500kr,  name: KAB-500KR, category: guided_bomb, family: kab, origin: RUS, specs: {range_km: 15, weight_class_kg: 500, concrete_pen_m: 1.5, cep_m: 8.8, boost: none, guidance: 电视}}
+  - {id: kab500l,   name: KAB-500L,  category: guided_bomb, family: kab, origin: RUS, specs: {range_km: 15, weight_class_kg: 500, cep_m: 7, boost: none, guidance: 半主动激光}}
+  - {id: kab1500kr, name: KAB-1500KR, category: guided_bomb, family: kab, origin: RUS, specs: {range_km: 15, weight_class_kg: 1500, boost: none, guidance: 电视}}
+  - {id: ft1,  name: 飞腾-1, category: guided_bomb, family: ft, origin: CHN, specs: {range_km: 18, weight_class_kg: 500, boost: none, guidance: 卫星+惯导}}
+  - {id: ft3,  name: 飞腾-3, category: guided_bomb, family: ft, origin: CHN, specs: {range_km: 18, weight_class_kg: 250, boost: none, guidance: 卫星+惯导}}
+  - {id: ft4,  name: 飞腾-4, category: guided_bomb, family: ft, origin: CHN, specs: {range_km: 18, weight_class_kg: 100, boost: none, guidance: 卫星+惯导}}
+  - {id: ft5,  name: 飞腾-5, category: guided_bomb, family: ft, origin: CHN, specs: {range_km: [5, 20], weight_class_kg: 50, cep_m: 1, boost: none, guidance: 半主动激光+毫米波雷达+红外成像+卫星+惯导}}
+  - {id: ft9,  name: 飞腾-9, category: guided_bomb, family: ft9, origin: CHN, specs: {range_km: [5, 20], weight_class_kg: 50, boost: none, guidance: 卫星+惯导}}
+  - {id: ft9_laser, name: 飞腾-9 激光型, category: guided_bomb, family: ft9, origin: CHN, specs: {range_km: [5, 20], weight_class_kg: 50, cep_m: 3, boost: none, guidance: 半主动激光+卫星+惯导}}
+  - {id: ft9_tv,    name: 飞腾-9 电视型, category: guided_bomb, family: ft9, origin: CHN, specs: {range_km: [5, 20], weight_class_kg: 50, cep_m: 5, boost: none, guidance: 电视+卫星+惯导}}
+  - {id: ft9_ir,    name: 飞腾-9 红外型, category: guided_bomb, family: ft9, origin: CHN, specs: {range_km: [5, 20], weight_class_kg: 50, cep_m: 5, boost: none, guidance: 红外成像+卫星+惯导}}
+  - {id: lt5,  name: 天戈-5（雷霆-5）, category: guided_bomb, family: lt, origin: CHN, specs: {range_km: 25, weight_class_kg: 1000, cep_m: 3, boost: none, guidance: 半主动激光}}
+  - {id: lt5i, name: 天戈-5I, category: guided_bomb, family: lt, origin: CHN, specs: {range_km: 25, weight_class_kg: 1000, warhead_kg: 241, cep_m: 3.6, boost: none, guidance: 半主动激光}}
+  - {id: ft2,  name: 飞腾-2, category: guided_bomb, family: ft, origin: CHN, specs: {range_km: 60, weight_class_kg: 500, cep_m: 30, boost: glide, guidance: 卫星+惯导}}
+  - {id: lt3a, name: 天戈-3A（雷霆-3A）, category: guided_bomb, family: lt, origin: CHN, specs: {range_km: 80, weight_class_kg: 250, boost: glide, guidance: 半主动激光}}
+  - {id: ft6,  name: 飞腾-6, category: guided_bomb, family: ft, origin: CHN, specs: {range_km: 90, boost: glide, guidance: 卫星+惯导}}
+  - {id: ft6a, name: 飞腾-6A, category: guided_bomb, family: ft, origin: CHN, specs: {range_km: 90, boost: glide, guidance: 半主动激光+卫星+惯导}}
+  - {id: ft12, name: 飞腾-12, category: guided_bomb, family: ft, origin: CHN, specs: {range_km: 150, weight_class_kg: 700, boost: rocket_glide, guidance: 卫星+惯导}}
+  - {id: ls6,  name: 雷石-6, category: guided_bomb, family: ls6, origin: CHN, specs: {range_km: 300, cep_m: 10, boost: turbojet_glide, guidance: 卫星+惯导}}
+  - {id: gb25, name: GB25 激光制导炸弹, category: guided_bomb, family: gb, origin: CHN, notes: 直-10 挂载。}
+  - {id: gb50, name: GB50 激光制导炸弹, category: guided_bomb, family: gb, origin: CHN, notes: 直-10 挂载。}
+  - {id: gbu8,  name: GBU-8,  category: guided_bomb, family: gbu8, origin: USA, specs: {range_km: [1.5, 24.5], weight_class_kg: 950, boost: none, guidance: 光电}}
+  - {id: gbu10, name: GBU-10, category: guided_bomb, family: paveway, origin: USA, specs: {range_km: 15, weight_class_kg: 910, cep_m: 5, boost: none, guidance: 半主动激光}}
+  - {id: gbu12, name: GBU-12, category: guided_bomb, family: paveway, origin: USA, specs: {range_km: 15, weight_class_kg: 230, cep_m: 5, boost: none, guidance: 半主动激光}}
+  - {id: gbu15, name: GBU-15, category: guided_bomb, family: gbu15, origin: USA, specs: {range_km: [9, 28], weight_class_kg: 1111, warhead_kg: 910, cep_m: 5, boost: none, guidance: 数据链+电视或红外成像}}
+  - {id: gbu24, name: GBU-24, category: guided_bomb, family: paveway, origin: USA, specs: {range_km: 18, weight_class_kg: 1050, warhead_kg: 910, cep_m: 3, boost: none, guidance: 半主动激光}}
+  - {id: gbu27, name: GBU-27, category: guided_bomb, family: paveway, origin: USA, specs: {range_km: 19, weight_class_kg: 900, concrete_pen_m: 2.4, cep_m: 3, boost: none, guidance: 半主动激光}}
+  - {id: gbu28, name: GBU-28, category: guided_bomb, family: paveway, origin: USA, specs: {range_km: 10, weight_class_kg: [1800, 2300], warhead_kg: 306.2, concrete_pen_m: 6, cep_m: 6, boost: none, guidance: 半主动激光+卫星+惯导}}
+  - {id: gbu57, name: GBU-57 巨型钻地弹, category: guided_bomb, family: mop, origin: USA, specs: {range_km: 28, weight_class_kg: 12304, warhead_kg: {stage1: 2082, stage2: 341}, concrete_pen_m: 18, cep_m: 6, boost: none, guidance: 卫星+惯导}, notes: 只能由战略轰炸机搭载。}
+  - {id: gbu39,  name: GBU-39 SDB,  category: guided_bomb, family: sdb, origin: USA, specs: {range_km: 111, weight_class_kg: 129, warhead_kg: 93, cep_m: 1, boost: glide, guidance: 卫星+惯导}}
+  - {id: gbu39a, name: GBU-39A,     category: guided_bomb, family: sdb, origin: USA, specs: {range_km: 111, weight_class_kg: 129, warhead_kg: 62, cep_m: 1, boost: glide, guidance: 卫星+惯导}}
+  - {id: gbu39b, name: GBU-39B,     category: guided_bomb, family: sdb, origin: USA, specs: {range_km: 111, weight_class_kg: 129, warhead_kg: 16, cep_m: 1, boost: glide, guidance: 半主动激光+卫星+惯导}}
+  - {id: gbu53,  name: GBU-53 SDB II, category: guided_bomb, family: sdb, origin: USA, specs: {range_km: 111, weight_class_kg: 93, warhead_kg: 48, cep_m: 1, boost: glide, guidance: 半主动激光+毫米波雷达+红外成像+卫星+惯导+数据链}}
+  - {id: gbu44,  name: GBU-44 蝰蛇打击, category: guided_bomb, family: gbu44, origin: USA, specs: {range_km: 10, weight_class_kg: 20, warhead_kg: 1.05, cep_m: 1, boost: none, guidance: 半主动激光+卫星}, notes: 主要用于无人机和 AC-130 反装甲。}
+
+  # ======================= 改装套件 =======================
+  - {id: jdam,     name: JDAM,     category: guidance_kit, family: jdam, origin: USA, specs: {range_km: 28, weight_class_lb: [500, 2000], cep_m: 3, boost: none, guidance: 卫星+惯导}, notes: 普通航弹改装。}
+  - {id: jdam_er,  name: JDAM-ER,  category: guidance_kit, family: jdam, origin: USA, specs: {range_km: 80, weight_class_lb: [500, 2000], cep_m: 3, boost: glide, guidance: 卫星+惯导}}
+  - {id: wcmd,     name: WCMD,     category: guidance_kit, family: wcmd, origin: USA, specs: {range_km: 20, weight_class_lb: 1000, cep_m: 26, boost: none, guidance: 卫星+惯导}, notes: 集束炸弹改装。}
+  - {id: wcmd_er,  name: WCMD-ER,  category: guidance_kit, family: wcmd, origin: USA, specs: {range_km: 65, weight_class_lb: 1000, cep_m: 26, boost: glide, guidance: 卫星+惯导}}
+
+  # ======================= 布撒器 =======================
+  - {id: tl_gb6,  name: 天雷 GB6,  category: dispenser, family: gb6, origin: CHN, specs: {range_km: 68, weight_class_kg: 540, cep_m: 35, boost: glide, guidance: 卫星+惯导}}
+  - {id: tl_gb6a, name: 天雷 GB6A, category: dispenser, family: gb6, origin: CHN, specs: {range_km: 280, weight_class_kg: 680, cep_m: 250, boost: turbojet_glide, guidance: 卫星+惯导}, notes: 原文 CEP 250m 疑为笔误。}
+  - {id: jsow,    name: JSOW,      category: dispenser, family: jsow, origin: USA, specs: {range_km: [22, 130], weight_class_kg: 500, cep_m: 1.2, boost: glide, guidance: 红外+卫星+惯导}}
+
+# ======================= 非制导航弹（原文定性描述）=======================
+unguided_bombs:
+  CHN:
+    low_drag_he: 3 型低阻杀爆航弹（战斗机用，低威胁低空投弹）
+    retarded_he: 4 型减速杀爆航弹
+    high_drag_he_kg: [250, 500, 1000, 3000]   # 3000kg 为轰炸机用
+    anti_runway: [200-4 型（200kg 级，减速伞）, BETAB-500（500kg 级，俄引进）]
+    cluster: [集束-3（反装甲，250kg 级）, 集束-4（反跑道，250kg 级）]
+    incendiary: [1 型、2 型高阻燃烧弹, 3 型低阻燃烧弹（250kg 级）]
+    fuel_air: 250-1000kg 级战术云爆弹
+    penetrator: 无（制导炸弹有）
+  USA:
+    high_drag_he_lb: [500, 1000, 2000]        # 低阻杀爆弹只剩制导版本
+    penetrator: [BLU-109, BLU-116]            # 1000kg 级
+    anti_runway: [Durandal（法制，减速伞）]
+    cluster: [CBU-87（反装甲/反跑道，1000 磅级）, CBU-89（布雷，1000 磅级）]
+    sensor_fuzed: [CBU-97（1000 磅级末敏弹）]
+    incendiary: [Mk 77（500 磅级高阻）]
+    fuel_air: [MOAB（10 吨级，仅轰炸机）]

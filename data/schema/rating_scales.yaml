@@ -1,0 +1,111 @@
+# 评级档位（原文 1.5.2）
+# 从低到高排列，index 0 为最低档。原文规则：防护/火力/火控每升一档 ×1.05，
+# 装备总技术水平 = 三者几何平均；机械化、信息化、后勤每档 ×1.1。
+# 装备的 ratings 字段引用下面的 id。
+
+protection_vehicle:            # 班组机动载具防护
+  step_multiplier: 1.05
+  levels:
+    - {id: prot_none,            desc: 无防护, examples: [山猫全地形车, ISV]}
+    - {id: prot_762ap_front,     desc: 前向防 7.62mm 穿甲弹，侧后防 7.62mm 普通弹, examples: [89式装甲车族, 92式装甲车族, 03式伞兵战车, 轮式伞兵突击车, 猛士, LAV-25]}
+    - {id: prot_127ap_front,     desc: 前向防 12.7mm 穿甲弹，侧后防 7.62mm 普通弹, examples: [86式步战车, 装甲悍马]}
+    - {id: prot_145_all,         desc: 全向防 14.5mm 普通弹, examples: [斯崔克, 加装附加装甲的 JLTV, ACV]}
+    - {id: prot_25mm_front_762ap, desc: 前向防 25mm 机炮，侧后防 7.62mm 穿甲弹, examples: [04式步战车, 08式装甲车族]}
+    - {id: prot_25mm_front_127ap, desc: 前向防 25mm 机炮，侧后防 12.7mm 穿甲弹, examples: [M2 步战车, 05式两栖装甲车族]}
+    - {id: prot_30mm_front_127ap, desc: 前向防 30mm 机炮，侧后防 12.7mm 穿甲弹, examples: [04A 步战车]}
+    - {id: prot_30mm_front_25mm, desc: 前向防 30mm 机炮，侧后防 25mm 机炮, examples: [加装附加装甲的 M2]}
+  notes: 美军附加装甲配备水平较高，有附加装甲的车型按附加装甲计算。
+
+protection_mbt:
+  step_multiplier: 1.05
+  levels:
+    - {id: mbt_59d,       examples: [59D, 15式低配]}
+    - {id: mbt_88b,       examples: [88B]}
+    - {id: mbt_96,        examples: [96白板, 15式高配]}
+    - {id: mbt_96a,       examples: [96A]}
+    - {id: mbt_99,        examples: [99白板]}
+    - {id: mbt_99a,       examples: [99A]}
+    - {id: mbt_m1a2_sepv2, examples: [M1A2 SEPv2], notes: 侧向和航向角防护好于 99A}
+
+firepower:
+  step_multiplier: 1.05
+  levels:
+    - {id: fp_none,          desc: 无}
+    - {id: fp_manual_mg,     desc: 手动操控机枪}
+    - {id: fp_rws,           desc: 遥控武器站}
+    - {id: fp_25mm,          desc: 25mm 机炮，或 73mm 低压炮，或加装反坦克导弹的遥控武器站}
+    - {id: fp_25mm_atgm,     desc: 25mm 机炮 + 反坦克导弹，或 30mm 机炮}
+    - {id: fp_30mm_atgm,     desc: 30mm 机炮 + 反坦克导弹}
+    - {id: fp_30mm_100mm,    desc: 30mm 机炮 + 100mm 低压炮}
+    - {id: fp_105_assault,   desc: 105mm 高压线膛炮（08式或05式突击炮）}
+    - {id: fp_105_tank,      desc: 105mm 高压线膛坦克炮（59D 或 88B）}
+    - {id: fp_96,            desc: 96白板}
+    - {id: fp_96a,           desc: 96A}
+    - {id: fp_99,            desc: 99白板}
+    - {id: fp_99a,           desc: 99A，M1A2 SEPv2}
+
+fire_control:
+  step_multiplier: 1.05
+  levels:
+    - {id: fc_optical,       desc: 简易光学瞄准, examples: [89装输]}
+    - {id: fc_single_stab,   desc: 单稳，简易光学瞄准, examples: [86白板]}
+    - {id: fc_dual_stab_ir,  desc: 双稳，主动红外夜视，合像式测距仪，机械装表，电动调炮, examples: [92B]}
+    - {id: fc_lowlight_laser, desc: 双稳，微光夜视，激光测距，扰动式火控，模拟计算机，自动装表}
+    - {id: fc_thermal_digital, desc: 双稳，热成像，光点注入式火控，数字计算机, examples: [88白板, 04白板, 86A, ZBD-05, 三代猛士遥控武器站]}
+    - {id: fc_thermal_micro_disturb, desc: 双稳，热成像，微扰动电同步火控, examples: [02式突击炮]}
+    - {id: fc_stab_sight,    desc: 双稳，热成像，上反或下反稳像式火控，单指挥仪, examples: [88B, 96白板, 99白板]}
+    - {id: fc_hunter_killer, desc: 双稳，热成像，上反稳像，双指挥仪（猎-歼）, examples: [96A, M1A2, ZBL-08]}
+    - {id: fc_auto_track,    desc: 双稳，热成像，上反稳像，猎-歼，目标自动识别跟踪, examples: [99A, 15式, M1 SEPv2, 04A, M2, ZTL-11, ZTD-05]}
+    - {id: fc_auto_track_360cam, desc: 在上一档基础上加周视摄像头, examples: [191式装甲车]}
+
+mechanization:                  # 单位级
+  step_multiplier: 1.1
+  levels:
+    - {id: mech_motorized,   desc: 纯摩托化, examples: [解放军摩步旅]}
+    - {id: mech_partial,     desc: 部分机械化（无班组载具但轻型车多）, examples: [美军 IBCT, 山地旅, 装备山猫较多的空突/空降旅]}
+    - {id: mech_tracked_slow, desc: 长途机动较差的履带机械化，或非封闭车厢轮式（ISV）}
+    - {id: mech_wheeled,     desc: 轮式机械化}
+
+informatization:                # 单位级，从低到高
+  step_multiplier: 1.1
+  levels:
+    - {id: info_pla_border,  examples: [解放军边海防部队]}
+    - {id: info_pla_motor,   examples: [解放军摩步旅]}
+    - {id: info_pla_legacy,  examples: [无步战车的老旧重型旅, 二代猛士旅]}
+    - {id: info_pla_standard, examples: [96+86 二线重型旅, 92 轮式旅, 三代猛士旅, 山地旅]}
+    - {id: info_pla_semi_elite, examples: [只有99或只有04A的重型旅, 08 大八轮旅, 空降山猫旅, 空降摩步旅]}
+    - {id: info_pla_elite,   examples: [99/99A+04A 重型旅, 191 新一代大八轮旅, 空降机械化旅, 空突旅, 海军陆战队]}
+    - {id: info_pla_hk,      examples: [驻港部队]}
+    - {id: info_us_standard, examples: [美军除 SBCT 外所有单位]}
+    - {id: info_us_sbct,     examples: [美军 SBCT]}
+
+logistics:                      # 单位级，从低到高
+  step_multiplier: 1.1
+  levels:
+    - {id: log_pla_light,    examples: [解放军空突、空降、边防、海防部队]}
+    - {id: log_pla_field,    examples: [解放军普通野战部队]}
+    - {id: log_us,           examples: [美军各部队]}
+
+readiness:                      # 单位级，从低到高
+  levels:
+    - {id: ready_border,     examples: [解放军边海防部队]}
+    - {id: ready_normal,     examples: [其他普通部队]}
+    - {id: ready_high,       examples: [美军空突/空降 IBCT, 美海军陆战队, 解放军空突/空降/驻港部队]}
+  discounts:
+    us_national_guard: 0.5
+    usmc_reserve: 0.333
+    army_reserve_both_sides: 0     # 不发生总体战时不动员
+
+squad_equivalents:              # 原文 1.5.1：各装备折合满编下车步兵班
+  two_crew_frontline_afv_rws: 0.5    # 斯崔克、猛士等遥控武器站车
+  three_crew_ifv_or_assault_gun: 1
+  mortar_120mm: 1                    # 自行/车载/步兵炮均算；100mm 以下按操作人数计入步兵
+  gun_105_130mm_or_mrl_105_122mm: 1.5
+  aa_gun_or_spaag: 1.5
+  atgm_vehicle: 1.5
+  mbt: 2
+  gun_155mm_or_mrl_227mm_plus_or_sam_non_manpads: 2.5
+
+special_forces_tiers:           # 原文 1.6.1：普通野战部队 = Tier 5，每升一档战力 ×1.5
+  multiplier_per_tier: 1.5
+  avg_company_power: {USA: 0.0579, CHN: 0.0545}

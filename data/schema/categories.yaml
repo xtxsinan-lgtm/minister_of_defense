@@ -1,0 +1,117 @@
+# 装备类别 EquipmentCategory
+# 班模板的槽位只引用这里的 id（设计文档 3.1）。同类别内的型号可以互相顶替（设计文档 3.3 替代装备规则）。
+# group 仅用于界面分组。
+
+categories:
+  # ---- 单兵 / 班组轻武器 ----
+  - {id: rifle,               name: 突击步枪/卡宾枪,        group: small_arms}
+  - {id: smg,                 name: 冲锋枪,                 group: small_arms}
+  - {id: shotgun,             name: 霰弹枪,                 group: small_arms}
+  - {id: dmr,                 name: 精确射手步枪,           group: small_arms}
+  - {id: lmg,                 name: 班用机枪/自动步枪,       group: small_arms}
+  - {id: gpmg,                name: 通用机枪,               group: small_arms}
+  - {id: hmg,                 name: 重机枪,                 group: small_arms}
+  - {id: sniper_rifle,        name: 狙击步枪,               group: small_arms}
+  - {id: anti_materiel_rifle, name: 反器材狙击步枪,         group: small_arms}
+  - {id: underbarrel_gl,      name: 枪挂榴弹发射器,         group: small_arms}
+  - {id: sniper_gl,           name: 狙击榴弹发射器,         group: small_arms}
+  - {id: agl,                 name: 自动榴弹发射器,         group: small_arms}
+  - {id: disposable_launcher, name: 一次性火箭筒,           group: anti_armor}
+  - {id: reusable_launcher,   name: 复用火箭筒/无后坐力炮,   group: anti_armor}
+  - {id: thermobaric_launcher, name: 云爆火箭筒,            group: anti_armor}
+  - {id: atgm_portable,       name: 单兵/便携反坦克导弹,     group: anti_armor}
+  - {id: atgm_heavy,          name: 重型反坦克导弹（三脚架/车载发射器）, group: anti_armor}
+  - {id: manpads,             name: 便携式防空导弹,          group: air_defense}
+  - {id: aa_mg,               name: 高射机枪,               group: air_defense}
+
+  # ---- 迫击炮 ----
+  - {id: mortar_light,        name: 60mm 迫击炮,            group: fire_support}
+  - {id: mortar_medium,       name: 81/82/100mm 迫击炮,     group: fire_support}
+  - {id: mortar_heavy,        name: 120mm 牵引/步兵迫击炮,   group: fire_support}
+  - {id: mortar_vehicle,      name: 车载迫击炮（无炮塔）,    group: fire_support}
+  - {id: sp_mortar_howitzer,  name: 自行迫榴炮（有炮塔）,    group: fire_support}
+
+  # ---- 身管火炮 / 火箭炮 ----
+  - {id: howitzer_light_towed, name: 105/122mm 牵引榴弹炮,  group: artillery}
+  - {id: howitzer_light_sp,    name: 122mm 自行加榴炮,      group: artillery}
+  - {id: howitzer_light_truck, name: 122mm 车载加榴炮,      group: artillery}
+  - {id: howitzer_heavy_towed, name: 130-155mm 牵引火炮,    group: artillery}
+  - {id: howitzer_heavy_sp,    name: 155mm 自行榴弹炮,      group: artillery}
+  - {id: howitzer_heavy_truck, name: 155mm 车载榴弹炮,      group: artillery}
+  - {id: mrl_light,            name: 107/122mm 火箭炮,      group: artillery}
+  - {id: mrl_long_range,       name: 远程/模块化火箭炮（227mm 以上）, group: artillery}
+  - {id: assault_gun,          name: 突击炮/轮式坦克,       group: armor}
+  - {id: atgm_vehicle,         name: 反坦克导弹发射车,       group: anti_armor}
+  - {id: coastal_ashm_launcher, name: 岸舰导弹发射车,       group: artillery}
+
+  # ---- 装甲 / 车辆 ----
+  - {id: mbt,                 name: 主战坦克,               group: armor}
+  - {id: ifv,                 name: 步兵战车,               group: armor}
+  - {id: recon_ifv,           name: 侦察型步战车/装甲侦察车,  group: armor}
+  - {id: apc,                 name: 装甲输送车,             group: armor}
+  - {id: amphibious_assault_vehicle, name: 两栖突击车,       group: armor}
+  - {id: light_armored_vehicle, name: 装甲轻型战术车（猛士/JLTV/悍马）, group: vehicle}
+  - {id: mrap,                name: 防雷车,                 group: vehicle}
+  - {id: utility_vehicle,     name: 无防护轻型车（ISV/吉普）, group: vehicle}
+  - {id: atv,                 name: 全地形车（山猫）,        group: vehicle}
+  - {id: motorcycle,          name: 摩托车,                 group: vehicle}
+  - {id: truck_medium,        name: 中型卡车,               group: vehicle}
+  - {id: truck_heavy,         name: 重型卡车,               group: vehicle}
+  - {id: semi_tractor,        name: 半挂牵引车,             group: vehicle}
+  - {id: trailer,             name: 挂车,                   group: vehicle}
+  - {id: ammo_carrier_tracked, name: 履带弹药补给车,         group: vehicle}
+  - {id: armored_command_vehicle, name: 装甲指挥车,         group: vehicle}
+  - {id: armored_ambulance,   name: 装甲救护车,             group: vehicle}
+  - {id: armored_recovery_vehicle, name: 装甲抢救车,         group: vehicle}
+  - {id: engineer_vehicle,    name: 工程/破障车,            group: vehicle}
+  - {id: bridge_layer,        name: 架桥车,                 group: vehicle}
+  - {id: mine_clearing_vehicle, name: 扫雷车,               group: vehicle}
+  - {id: field_kitchen,       name: 野战炊事车,             group: vehicle}
+  - {id: ugv_small,           name: 小型遥控机器车,          group: vehicle}
+  - {id: ew_vehicle,          name: 电子战车,               group: vehicle}
+
+  # ---- 传感器 / 通信 ----
+  - {id: radar_counter_battery, name: 炮位侦校/反炮兵雷达,  group: sensor}
+  - {id: radar_battlefield,   name: 战场监视雷达,           group: sensor}
+  - {id: eo_recon_suite,      name: 车载光电侦察系统,       group: sensor}
+  - {id: radio_handheld,      name: 单兵电台,               group: c4i}
+  - {id: tactical_terminal,   name: 战术终端（ATAK 等）,     group: c4i}
+
+  # ---- 无人机（小型随营采购，见设计文档 2.1）----
+  - {id: uav_micro,           name: 班组微型无人机（四轴/共轴）, group: uav}
+  - {id: uav_hand_launched,   name: 手抛小型无人机,          group: uav}
+  - {id: uav_small_vtol,      name: 小型垂起固定翼无人机,    group: uav}
+  - {id: uav_tactical,        name: 战术中型无人机（弹射）,  group: uav}
+  - {id: uav_male,            name: 中空长航时/察打一体无人机, group: uav}
+
+  # ---- 防空 ----
+  - {id: aa_gun_towed,        name: 牵引高炮,               group: air_defense}
+  - {id: spaag,               name: 自行高炮/弹炮合一,       group: air_defense}
+  - {id: sam_vehicle_manpads, name: 车载便导（复仇者等）,    group: air_defense}
+  - {id: sam_short,           name: 近程/短程防空导弹发射车, group: air_defense}
+  - {id: sam_medium,          name: 中程防空导弹发射车,      group: air_defense}
+  - {id: sam_long,            name: 远程/中远程防空导弹发射车, group: air_defense}
+  - {id: c_ram,               name: 反火箭弹/迫击炮系统,     group: air_defense}
+
+  # ---- 航空器（作为飞行编组单独采购，此处仅供引用）----
+  - {id: attack_helicopter,   name: 攻击直升机,             group: aircraft}
+  - {id: light_attack_helicopter, name: 轻型攻击/侦察直升机, group: aircraft}
+  - {id: utility_helicopter,  name: 通用/突击直升机,         group: aircraft}
+  - {id: transport_helicopter, name: 中大型运输直升机,       group: aircraft}
+  - {id: heavy_helicopter,    name: 重型运输直升机,          group: aircraft}
+  - {id: tiltrotor,           name: 倾转旋翼机,             group: aircraft}
+  - {id: ew_helicopter,       name: 电子战直升机,           group: aircraft}
+  - {id: fighter,             name: 战斗机/攻击机,          group: aircraft}
+  - {id: tanker_aircraft,     name: 加油机,                 group: aircraft}
+
+  # ---- 空中弹药 ----
+  - {id: aam_short,           name: 近距格斗空空导弹,       group: air_munition}
+  - {id: aam_medium,          name: 中远距空空导弹,         group: air_munition}
+  - {id: asm,                 name: 空地导弹/空射巡航导弹,   group: air_munition}
+  - {id: asm_antitank,        name: 空射反坦克导弹,         group: air_munition}
+  - {id: arm,                 name: 反辐射导弹,             group: air_munition}
+  - {id: ashm_air,            name: 空射反舰导弹,           group: air_munition}
+  - {id: guided_bomb,         name: 制导炸弹,               group: air_munition}
+  - {id: guidance_kit,        name: 制导/增程改装套件,       group: air_munition}
+  - {id: dispenser,           name: 滑翔/动力布撒器,         group: air_munition}
+  - {id: ashm_surface,        name: 舰/岸射反舰导弹,         group: air_munition}

@@ -1,0 +1,306 @@
+# 美国特种作战部队（原文 1.4.1.2）
+# 设计文档 16：特种部队可按连操作，这里给到连/队一级。
+
+templates:
+  # ==================================================================
+  # 陆军特种部队（绿色贝雷帽）
+  # ==================================================================
+  - id: us_sf_oda
+    name: A 队（ODA，12 人）
+    level: squad
+    personnel: {officer: 2, special_operator: 10}
+    notes: 队长、副队长、作战参谋、作战与情报助理参谋、2 名武器士官、2 名工兵士官、2 名医疗士官、2 名通信士官；一般分为 2 个作战队分头行动。各队针对特定环境训练（高空低开、战斗潜水等）。
+  - id: us_sf_odb
+    name: B 队（连部，11 人）
+    level: squad
+    role: hq
+    personnel: {officer: 2, staff: 4, medic: 1, signaler: 2, supply: 1, cbrn: 1}
+    notes: 连长 + 助理；副连长、连技师、作战士官和助理组成 4 人连参谋部；医疗、2 名通信、后勤、防化士官。
+  - id: us_sf_company
+    level: company
+    children: [{template: us_sf_oda, count: 6}, {template: us_sf_odb, count: 1}]
+    expected_personnel: 83
+  - {id: us_sf_odc, name: C 队（营部和营支援连）, level: squad, role: hq, granularity: aggregate, personnel: {staff: 25}, confidence: estimated, notes: 营长、副营长外 20-30 人，负责作战参谋、后勤、情报、通信、医疗。}
+  - id: us_sf_battalion
+    level: battalion
+    children: [{template: us_sf_company, count: 3}, {template: us_sf_odc, count: 1}]
+    expected_personnel: 270
+  - {id: us_sf_group_hq_coy, name: 群总部连, level: company, role: hq, children: [{template: us_sq_generic, count: 1}]}
+  - {id: us_sf_group_spt_coy, name: 群支援连, level: company, role: support, children: [{template: us_sq_generic, count: 1}]}
+  - id: us_sf_group
+    name: 特种作战群（团级，现役）
+    level: brigade
+    children: [{template: us_sf_battalion, count: 4}, {template: us_sf_group_hq_coy, count: 1}, {template: us_sf_group_spt_coy, count: 1}]
+    expected_personnel: 1200
+  - id: us_sf_group_3bn
+    variant_of: us_sf_group
+    name: 特种作战群（国民警卫队 / 三角洲，3 个营）
+    level: brigade
+    children: [{template: us_sf_battalion, count: 3}, {template: us_sf_group_hq_coy, count: 1}, {template: us_sf_group_spt_coy, count: 1}]
+    expected_personnel: 900
+  - {id: us_sf_cbrn_det, name: 防化队, level: company, children: [{template: us_sq_generic, count: 1}], notes: 用于加强到各作战群。}
+  - {id: us_miso_group, name: 军事资讯支援组, level: brigade, children: [{template: us_sq_generic, count: 1}], notes: 负责军事情报和信息收集。}
+  - {id: us_civil_affairs_bde, name: 民事旅, level: brigade, children: [{template: us_sq_generic, count: 1}], notes: 负责与当地政府关系。}
+  - id: us_army_sf_command
+    name: 陆军特种部队司令部（绿色贝雷帽）
+    level: division
+    children:
+      - {template: us_sf_group, count: 5}
+      - {template: us_sf_group_3bn, count: 3}
+      - {template: us_sf_cbrn_det, count: 4}
+      - {template: us_miso_group, count: 1}
+      - {template: us_civil_affairs_bde, count: 1}
+    notes: 5 个现役群、2 个国民警卫队群、1 个上调 JSOC 的群（三角洲）；4 个防化队。
+
+  # ==================================================================
+  # 第 75 游骑兵团
+  # ==================================================================
+  - id: us_ranger_squad
+    level: squad
+    personnel: {squad_leader: 1, team_leader: 2, automatic_rifleman: 2, grenadier: 2, rifleman: 2}
+    slots: {rifle: 7, lmg: 2, underbarrel_gl: 2}
+    notes: 编制类似陆军普通步兵班。
+  - {id: us_ranger_plt_hq, level: squad, role: hq, personnel: {officer: 1, nco_senior: 1, signaler: 1, medic: 1}, confidence: estimated}
+  - {id: us_ranger_plt, level: platoon, children: [{template: us_ranger_squad, count: 3}, {template: us_ranger_plt_hq, count: 1}], expected_personnel: 31}
+  - id: us_ranger_weapons_sq
+    level: squad
+    personnel: {squad_leader: 1, mg_gunner: 3, assistant_gunner: 4, at_gunner: 1}
+    slots: {gpmg: 3, reusable_launcher: 1}
+    notes: 班长 + 3 个 2 人 M240 小组 + 1 个 2 人 M3 无后坐力炮小组。
+  - id: us_ranger_sniper_sec
+    level: squad
+    personnel: {squad_leader: 1, sniper: 3, spotter: 3}
+    slots: {sniper_rifle: 3}
+    notes: Mk13 Mod 5。
+  - {id: us_ranger_weapons_plt, level: platoon, children: [{template: us_ranger_weapons_sq, count: 1}, {template: us_ranger_sniper_sec, count: 1}], expected_personnel: 18}
+  - id: us_ranger_coy
+    level: company
+    children: [{template: us_ranger_plt, count: 3}, {template: us_ranger_weapons_plt, count: 1}, {template: us_ranger_coy_hq, count: 1}]
+    expected_personnel: 116
+  - {id: us_ranger_coy_hq, level: squad, role: hq, personnel: {officer: 2, nco_senior: 2, signaler: 1}, confidence: estimated}
+  - id: us_ranger_specialty_coy
+    name: 游骑兵营专业连（火力连）
+    level: company
+    children:
+      - {template: us_ranger_81_plt, count: 1}
+      - {template: us_ranger_recon_sniper_plt, count: 1}
+      - {template: us_ranger_javelin_team, count: 1}
+      - {template: us_ranger_mg_sec, count: 1}
+      - {template: us_ranger_eng_sec, count: 1}
+      - {template: us_ranger_uav_sec, count: 1}
+      - {template: us_ranger_k9_sigint, count: 1}
+  - {id: us_ranger_81_plt, name: 81mm 迫击炮排, level: platoon, children: [{template: us_sq_generic, count: 1}]}
+  - {id: us_ranger_recon_sniper_plt, name: 侦察狙击排, level: platoon, children: [{template: us_sq_generic, count: 1}], notes: 装备反器材狙击枪。}
+  - {id: us_ranger_javelin_team, name: 标枪反装甲组, level: squad, granularity: aggregate, notes: 据说已撤销。}
+  - {id: us_ranger_mg_sec, name: 机枪分队, level: squad, granularity: aggregate}
+  - {id: us_ranger_eng_sec, name: 工兵分队, level: squad, granularity: aggregate}
+  - {id: us_ranger_uav_sec, name: 无人机分队, level: squad, granularity: aggregate}
+  - {id: us_ranger_k9_sigint, name: 军犬和手机情报提取员, level: squad, granularity: aggregate}
+  - {id: us_ranger_support_coy, name: 支援连, level: company, role: support, children: [{template: us_sq_generic, count: 1}]}
+  - id: us_ranger_special_troops_bn
+    name: 团特战营
+    level: battalion
+    children:
+      - {template: us_ranger_recon_coy, count: 1}
+      - {template: us_ranger_comm_coy, count: 1}
+      - {template: us_ranger_selection_coy, count: 1}
+  - {id: us_ranger_recon_coy, name: 团侦察连, level: company, children: [{template: us_sq_generic, count: 1}], notes: 精锐中的精锐，可负责敌后渗透侦察，可被 JSOC 直接调遣（Tier 1）。}
+  - {id: us_ranger_comm_coy, name: 通信连, level: company, children: [{template: us_sq_generic, count: 1}]}
+  - {id: us_ranger_selection_coy, name: 筛选训练连, level: company, children: [{template: us_sq_generic, count: 1}], notes: 在全陆军挑选和培训游骑兵。}
+  - id: us_ranger_mi_bn
+    name: 团军事情报营
+    level: battalion
+    children: [{template: us_ranger_mi_coy, count: 1}, {template: us_ranger_cyber_ew_coy, count: 1}]
+  - {id: us_ranger_mi_coy, name: 军事情报连, level: company, children: [{template: us_sq_generic, count: 1}]}
+  - {id: us_ranger_cyber_ew_coy, name: 网络和电子战连, level: company, children: [{template: us_sq_generic, count: 1}]}
+  - id: us_ranger_bn
+    level: battalion
+    children: [{template: us_ranger_coy, count: 3}, {template: us_ranger_specialty_coy, count: 1}, {template: us_ranger_support_coy, count: 1}]
+    expected_personnel: 600
+  - id: us_75th_ranger_regiment
+    name: 第 75 游骑兵团
+    level: brigade
+    children: [{template: us_ranger_bn, count: 3}, {template: us_ranger_special_troops_bn, count: 1}, {template: us_ranger_mi_bn, count: 1}]
+    expected_personnel: 3000
+    notes: >
+      原文写“1 个游骑兵营、1 个团特战营和 1 个团军事情报营，总共 3000 多人”；600 人的营只有 1 个对不上总数，此处按 3 个营记（待核）。
+      适合较大编制的高强度、恶劣环境轻步兵作战，如成建制动力伞、滑翔伞渗透后夺取机场。
+    confidence: uncertain
+
+  # ==================================================================
+  # 第 160 特种作战航空团
+  # ==================================================================
+  - id: us_160th_1st_bn
+    name: 160 团 1 营（侦察攻击）
+    level: battalion
+    children: [{template: us_160th_1st_bn_agg, count: 1}]
+  - id: us_160th_1st_bn_agg
+    level: squad
+    granularity: aggregate
+    slots: {light_attack_helicopter: 48, attack_helicopter: 24, utility_helicopter: 12}
+    notes: 24 架 MH-6M、24 架 AH-6M、24 架 MH-60L DAP、12 架 MH-60L。
+  - id: us_160th_lift_bn
+    name: 160 团 2-4 营（运输）
+    level: battalion
+    children: [{template: us_160th_lift_agg, count: 1}]
+  - {id: us_160th_lift_agg, level: squad, granularity: aggregate, slots: {utility_helicopter: 12, transport_helicopter: 24}, notes: 12 架 MH-60L + 24 架 MH-47G；其中一个营另有 12 架 MQ-1C。}
+  - id: us_160th_soar
+    level: brigade
+    children: [{template: us_160th_1st_bn, count: 1}, {template: us_160th_lift_bn, count: 3}]
+
+  # ==================================================================
+  # 海豹部队
+  # ==================================================================
+  - id: us_seal_platoon
+    level: platoon
+    children: [{template: us_seal_platoon_agg, count: 1}]
+    expected_personnel: 16
+  - id: us_seal_platoon_agg
+    level: squad
+    personnel: {officer: 2, special_operator: 14}
+    notes: 全排技能涵盖狙击、爆破、通信、海上作战/工兵、近距空中支援引导、战斗军医、导航、驾驶、重武器、敏感目标勘察、空中作战指挥、攀登、水下潜行导航、审讯、爆炸物处理、技术侦察等；可拆为 2 个 8 人队、4 个 4 人队或 8 个狙击小组。
+  - id: us_seal_troop
+    name: 海豹任务单元（连）
+    level: company
+    children: [{template: us_seal_platoon, count: 2}, {template: us_seal_troop_hq, count: 1}]
+    expected_personnel: 40
+  - {id: us_seal_troop_hq, level: squad, role: hq, personnel: {staff: 8}}
+  - id: us_seal_team
+    name: 海豹突击队（营级）
+    level: battalion
+    children: [{template: us_seal_troop, count: 4}, {template: us_seal_support_coy, count: 1}]
+    expected_personnel: 300
+  - {id: us_seal_support_coy, level: company, role: support, children: []}
+  - {id: us_nsw_group_1_2, name: 海军特战群（第 1/2 群）, level: brigade, children: [{template: us_seal_team, count: 4}]}
+  - {id: us_sbt, name: 特别舟艇队, level: battalion, children: [{template: us_sq_generic, count: 1}], notes: Mark V 特别行动艇（57 吨、90kph）和可由 C-130/C-17/CH-47 空投的硬壳充气快艇。}
+  - {id: us_nsw_group_3, name: 第 3 特战群, level: brigade, children: [{template: us_sbt, count: 3}]}
+  - {id: us_sdv_team, name: SDV 队, level: battalion, children: [{template: us_sq_generic, count: 1}], notes: 低声呐、电池驱动的小型水下航行器，从潜艇秘密运送海豹上岸。}
+  - {id: us_nsw_recon_team, name: 特种侦察队, level: battalion, children: [{template: us_sq_generic, count: 1}]}
+  - {id: us_nsw_generic_unit, level: battalion, children: [{template: us_sq_generic, count: 1}]}
+  - id: us_nsw_group_4
+    name: 第 4 特战群
+    level: brigade
+    children: [{template: us_sdv_team, count: 2}, {template: us_nsw_recon_team, count: 2}, {template: us_nsw_generic_unit, count: 3}]
+    notes: 2 个 SDV 队、2 个特种侦察队、1 个后勤支援队、1 个训练队、1 个任务支援中心。
+  - {id: us_nsw_group_5, name: 第 5 特战群（预备役）, level: brigade, children: [{template: us_seal_team, count: 2}]}
+  - {id: us_devgru, name: 海豹六队（特种作战发展群）, level: brigade, children: [{template: us_seal_team, count: 6}], expected_personnel: 1800, notes: 6 个突击中队，猜测每个类似普通海豹突击队；直属 JSOC（Tier 1）。}
+  - {id: us_nsw_parachute_team, name: 海军特种伞降队, level: squad, granularity: aggregate, notes: 15 人，由普通海豹队员抽调。}
+  - id: us_naval_special_warfare
+    name: 海军特种作战司令部
+    level: division
+    children:
+      - {template: us_nsw_group_1_2, count: 2}
+      - {template: us_nsw_group_3, count: 1}
+      - {template: us_nsw_group_4, count: 1}
+      - {template: us_nsw_group_5, count: 1}
+      - {template: us_devgru, count: 1}
+      - {template: us_nsw_parachute_team, count: 1}
+    notes: >
+      专精由空到海到陆或由潜到陆的三栖特种作战。
+
+  # ==================================================================
+  # 空军特种作战司令部
+  # ==================================================================
+  - id: us_af_sts
+    name: 特种战术中队（STS）
+    level: battalion
+    children: [{template: us_af_sts_agg, count: 1}]
+  - id: us_af_sts_agg
+    level: squad
+    granularity: aggregate
+    personnel: {special_operator: 150, staff: 75}
+    notes: 约 150 名特战队员编成约 20 个 4-12 人小组（伞降救援、战斗空中管制、派驻陆军 TACP、特种侦察等），另 50-100 名支援人员。共 8 个 STS（含 JSOC 的 24 STS 和 2 个国民警卫队中队）。
+  - {id: us_vsq_sof_aircraft, level: squad, granularity: aggregate, notes: 特战固定翼/倾转旋翼/无人机（类别未细分）。}
+  - {id: us_af_air_sqn, name: 空军特战飞行中队（12 架）, level: battalion, children: [{template: us_vsq_sof_aircraft, count: 12}], notes: AC-130J/W、MC-130H/J、U-28A、CV-22B、MQ-9、OA-1A、C-146A 等，每中队 12 架。}
+  - {id: us_af_generic_group, level: brigade, children: [{template: us_sq_generic, count: 1}]}
+  - id: us_af_ops_group_1
+    name: 第 1 联队作战大队
+    level: brigade
+    children: [{template: us_af_air_sqn, count: 7}]
+    notes: 2 个 AC-130J、1 个 MC-130H、2 个 U-28A、1 个 CV-22B、1 个 MQ-9A 中队。
+  - id: us_af_ops_group_27
+    name: 第 27 联队作战大队
+    level: brigade
+    children: [{template: us_af_air_sqn, count: 8}]
+    notes: 1 个 AC-130W、1 个 MC-130J、2 个 U-28A、1 个 CV-22B、3 个 MQ-9 中队。
+  - id: us_af_air_wing
+    name: 第 1 特种作战联队
+    level: division
+    children:
+      - {template: us_af_ops_group_1, count: 1}
+      - {template: us_af_generic_group, count: 3}
+  - id: us_af_27th_wing
+    name: 第 27 特种作战联队
+    level: division
+    children:
+      - {template: us_af_ops_group_27, count: 1}
+      - {template: us_af_generic_group, count: 3}
+    notes: 作战大队 + 维护维修大队 + 医疗大队 + 任务支援大队（土木工程、通信、装备选购、安保、后勤、人事支援中队）。
+  - id: us_af_720_stg
+    name: 720 特种战术大队
+    level: brigade
+    children: [{template: us_af_sts, count: 4}, {template: us_sq_generic, count: 1}]
+    notes: 4 个特种战术中队 + 1 个战术支援中队。
+  - id: us_af_724_stg
+    name: 724 特种战术大队
+    level: brigade
+    children: [{template: us_af_sts, count: 2}, {template: us_sq_generic, count: 2}]
+    notes: 上调 JSOC 的 24 STS + 1 个特种战术中队 + 1 个战术支援中队 + 1 个作战行动支援中队。
+  - id: us_af_24th_wing
+    name: 第 24 特种作战联队（地面）
+    level: division
+    children: [{template: us_af_720_stg, count: 1}, {template: us_af_724_stg, count: 1}]
+    notes: 另有 2 个国民警卫队特种战术中队；共 8 个 STS。
+  - id: us_af_forward_wing
+    name: 驻外特战联队（第 352 驻英 / 第 353 驻日）
+    level: division
+    children: [{template: us_af_air_sqn, count: 2}, {template: us_af_sts, count: 1}, {template: us_af_generic_group, count: 2}]
+    notes: 作战大队（1 个 MC-130J、1 个 CV-22B、1 个地面战术中队、1 个行动支援中队）+ 维护大队。
+  - id: us_af_492_wing
+    name: 第 492 特种作战联队（训练）
+    level: division
+    children: [{template: us_af_air_sqn, count: 3}, {template: us_af_generic_group, count: 5}]
+    notes: 2 个特战机型训练中队、1 个地面作战训练中队、1 个飞行试验中队、空军特种作战学校，以及 OA-1A、U-28A、C-146A（300 米跑道即可起降）各 1 个中队。
+  - id: us_af_ang_sof_wing
+    name: 空军国民警卫队特战联队（193 / 191）
+    level: division
+    children: [{template: us_af_air_sqn, count: 1}, {template: us_af_generic_group, count: 1}]
+    notes: 各只有 1 个飞机中队，多一些情报支援中队。
+  - id: us_afsoc
+    name: 空军特种作战司令部
+    level: corps
+    children:
+      - {template: us_af_air_wing, count: 1}
+      - {template: us_af_27th_wing, count: 1}
+      - {template: us_af_24th_wing, count: 1}
+      - {template: us_af_forward_wing, count: 2}
+      - {template: us_af_492_wing, count: 1}
+      - {template: us_af_ang_sof_wing, count: 2}
+    notes: 主要负责伞降救援、空中打击地面引导、敌后伞降渗透侦察、机场夺取等，往往通过空降执行。
+
+  # ==================================================================
+  # 陆战队特种作战司令部
+  # ==================================================================
+  - id: us_marsoc_team
+    name: 陆战队特战队 MSOT（14 人）
+    level: squad
+    personnel: {officer: 2, staff: 1, signaler: 1, team_leader: 2, special_operator: 6, medic: 2}
+    notes: 4 人指挥部（指挥官、小组指挥官、分队指挥官兼作战士官、通信士官）+ 2 个作战小组（组长、3 名关键技能操作员、1 名特种两栖侦察医疗兵）。
+  - {id: us_marsoc_coy, level: company, children: [{template: us_marsoc_team, count: 4}]}
+  - {id: us_marsoc_bn, level: battalion, children: [{template: us_marsoc_coy, count: 4}]}
+  - {id: us_marsoc_spt_bn, name: 突袭兵团支援营, level: battalion, role: support, children: [{template: us_sq_generic, count: 1}]}
+  - {id: us_marine_raider_support_group, name: 突袭兵团支援群, level: brigade, role: support, children: [{template: us_marsoc_spt_bn, count: 3}]}
+  - id: us_marine_raider_regiment
+    name: 陆战突袭兵团
+    level: brigade
+    children: [{template: us_marsoc_bn, count: 3}]
+    expected_personnel: 1500
+    notes: 突袭兵团支援群（us_marine_raider_support_group）的 3 个支援营分别支援 3 个突袭营。作战方式类似绿色贝雷帽，更强调游泳潜水，精锐度不及三大军种特战。
+
+# ======================================================================
+# 美军特种部队分级（原文 1.4.1.2.5）
+# ======================================================================
+special_forces_tiers:
+  tier1: [三角洲特种部队, 75 游骑兵团团属侦察连, 情报支援办公室, 海豹六队, 空军 24 STS]   # JSOC 直辖，24 小时内可部署全球
+  tier2: [各军种其他特战部队]
+  tier3: [82 空降师, 101 空中突击师, 陆战队 FORECON, 海军河川部队, 空军 142 航空联队]

@@ -1,0 +1,98 @@
+# 美军全军数量级数据（原文各章，截至 2025-08）
+# 用于剧本初始化：多少个某模板的单位、装备总库存等。
+
+country: USA
+
+budget_fy2025_busd: {army: 185.8, marine_corps: 53.7, air_force: 233.1, navy: 203.9, space_force: 30.0}
+# 原文写“陆军预算 1858 亿元”，应为美元。
+
+army:
+  active_divisions:
+    total: 11
+    breakdown: {armored: 1, cavalry: 1, air_assault: 1, airborne: 2, mountain: 1, infantry: 5}
+    notes: 第 1 装甲师、第 1 骑兵师各 3 个 ABCT；101 空降师（空突）；82 空降师、11 空降师（1 个空降 IBCT + 1 个极地 IBCT）；第 2 步兵师在韩国只有炮兵旅、航空旅和后勤旅。
+  national_guard_divisions: 8
+  bct_counts:
+    active_abct_tanks_in_toe: 1044    # 编制内坦克，87/旅 → 12 个 ABCT
+    ng_abct_tanks_in_toe: 435         # → 5 个 ABCT
+    active_sbct_strykers_in_toe: 1281 # 183/旅 → 7 个 SBCT
+    ng_sbct_strykers_in_toe: 366      # → 2 个 SBCT
+  equipment_inventory:
+    m1_abrams: 2640          # 现役 ABCT 平均双重备份（本土一套 + 德国或韩国一套）
+    m1_variant_share: {m1a2_sepv2: ">0.5", m1a1_sa: 0.25, m1a2_sepv3: 0.25}
+    stryker: 4214            # 现役约三重备份
+    hmmwv: 125000            # 编制表内现役 13000 多、国民警卫队 14000 多
+    jltv: 12500
+    m109_variant_share: {m109a6: 0.5, m109a7: 0.5}
+  combat_aviation_brigades: {active_divisional: 11, active_independent: 1, ng_divisional: 8, ng_independent: 4, reserve: 2}
+  field_artillery_brigades: {active: 5, national_guard: 7, reserve: 1}
+  field_artillery_battalions:
+    active: {himars: 7, m270: 6}
+    national_guard: {himars: 14, m270: 1, m109: 8, m777: 6}
+    article_power_calc: {himars: 14.0, m270: 7.0, m777: 3.5, m109a6: 4.0}   # 国民警卫队对半折算后的等效营数
+    article_power_calc_per_gun: {himars: 6.0, m270: 6.8, m777: 0.5, m109a6: 1.0}
+    article_brigade_equivalents: 33.3
+  air_defense:
+    active_battalions: 27     # 爱国者、复仇者、M-SHORAD、少量毒刺、C-RAM
+    thaad_batteries: 7
+    ng_battalions: 9          # 1 个中段反导、主要为复仇者、个别毒刺和 NASAMS
+    m_shorad_companies: 18
+  special_operations_aviation: {ah_mh6: 47, mh47: 61, mh60: 44, eh60_mi_brigades: 64}
+  waypoint_2028_target:
+    divisions: {enhanced_armored: 3, armored: 4, light_infantry: 9, air_assault: 1, airborne: 1}
+    national_guard_share: {armored: 1, light_infantry: 6}
+    independent: {airborne_brigade: 1, cavalry_brigade_sbct: 2}
+    division_composition:
+      enhanced_armored: 3 × ABCT
+      armored: 2 × ABCT + 1 × SBCT
+      others: IBCT（LBCT 或 MBCT；空降、空突全部 MBCT，101 已基本换装完成）
+    changes: >
+      BCT 撤骑兵营（只留 1 个骑兵连，ABCT 为坦克骑兵连）、撤旅属炮兵营和工兵营（只留信号连）。
+      师骑兵营 = 3 个骑兵连 + 1 个 cross domain troop（无人机远程侦察）。
+      师炮兵 3 个营：加强装甲师 3 个自行 155 营；装甲师 2 自行 155 + 1 牵引 155；其他师 1 牵引 155 + 2 牵引 105（M1299 营已取消）。
+      装甲增强师师属工兵旅 4 个营（每营 7 工兵连、5 架桥连、2 工事连、1 道路清障连）；其他师 1 个工兵营（5 个工兵连）。
+      师新增保护旅：旅部、旅支援营、宪兵营、防化营、防空营（3 个 M-SHORAD 连各 12 车、1 个反无人机连、1 个曲射火力保护连）。
+      M-SHORAD 需要增加到现在的 3 倍。
+
+navy_shipborne_helicopters:
+  carriers: {count: 11, mh60_combat_per_ship: 8, mh60_sar_per_ship: 4}
+  burke_flight_iia_plus: {count: 48, mh60_per_ship: 2}
+  ticonderoga: {count: 9, mh60_per_ship: 2}
+  zumwalt: {count: 3, mh60_per_ship: 1}
+  independence_lcs: {count: 16, mh60_per_ship: 1}
+  freedom_lcs: {count: 10, mh60_per_ship: 1}
+  total_mh60_combat: 231
+
+amphibious_ships: {wasp: 7, america: 2, san_antonio: 13, whidbey_island: 6}
+
+overseas_basing:
+  major_host_countries: [日本, 韩国, 德国, 意大利, 英国]
+  ground_forces: 驻韩、驻德陆军；驻日陆战队
+  troops_per_country: 2-4 万（含大量文职、后勤和管理人员）
+  strategic_lift_origins: {air_home: 波士顿, air_forward: 海德堡, sea_home: 诺福克, sea_forward: 那不勒斯}
+  airlift_distance_km:
+    kyiv: {home: 7255, forward: 1592}
+    jerusalem: {home: 8863, forward: 3043}
+    damascus: {home: 8830, forward: 2873}
+    tehran: {home: 9569, forward: 3763}
+    average: {home: 8629, forward: 2818}
+  sealift_distance_nm:
+    odesa: {home: 5504, forward: 1316}
+    haifa: {home: 5362, forward: 1185}
+    latakia: {home: 5364, forward: 1182}
+    bandar_abbas: {home: 8117, forward: 3950}
+    average: {home: 6087, forward: 1908}
+  lift_capacity_24h_t: {air: 67355, sea: 5158, total: 72513}
+
+article_assessment:   # 原文结论（不含核力量），美军地面力量 = 100
+  ground: 100.0
+  ground_power_projection: 100.0
+  air: 200.0
+  sea: 100.0
+  space: 21.5
+  total: 521.5
+  by_service: {army: 117.1, marines: 34.7, navy: 142.5, air_force: 172.3, space_force: 22.18, overseas_base_bonus: 33.3}
+  ground_detail: {combat_brigades: 146.2, special_forces: 17.3, artillery_brigades: 33.3, air_defense: 49.7, helicopters: 124.2, total: 370.8}
+  projection_detail: {air: 92.9, sea: 7.1}
+  air_detail: {fighter_a2a: 82.2, aew: 7.8, ew: 4.8, fighter_a2g: 45.4, bomber_attack: 15.2, tanker: 24.0, c2: 0.3, psyop: 0.2, recon: 4.6, asw: 7.2, uav: 8.3}
+  sea_detail: {surface_combatants: 36.7, carriers: 44.7, submarines: 18.6}

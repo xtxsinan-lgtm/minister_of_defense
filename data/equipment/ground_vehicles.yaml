@@ -1,0 +1,524 @@
+# 地面车辆型号：坦克、步战车、装输、突击炮、轻型战术车、卡车
+# ratings 引用 schema/rating_scales.yaml；未注明的数值即原文未给出。
+
+models:
+  # ======================= 美国 · 坦克 =======================
+  - id: m1a1_sa
+    name: M1A1 SA
+    category: mbt
+    family: m1_abrams
+    origin: USA
+    crew: 4            # 车长、炮长、驾驶员、装填手
+    notes: 美军现役约 1/4。
+  - id: m1a2_sepv2
+    name: M1A2 SEPv2
+    category: mbt
+    family: m1_abrams
+    origin: USA
+    crew: 4
+    ratings: {protection: mbt_m1a2_sepv2, firepower: fp_99a, fire_control: fc_auto_track}
+    notes: 美军现役一半以上。相比 A1 SA 装甲更好、车长独立热成像火控（猎-歼），可连续对两个目标射击，车内显示改善。原文战力计算中美军重型旅统一按此型。
+  - id: m1a2_sepv3
+    name: M1A2 SEPv3
+    category: mbt
+    family: m1_abrams
+    origin: USA
+    crew: 4
+    notes: 约占 1/4。大幅改善发电和数字化能力，装甲进一步改善。技术水平与 99A 类似。
+
+  # ======================= 美国 · 步战车 / 装输 =======================
+  - id: m2a2
+    name: M2A2 布雷德利
+    category: ifv
+    family: m2_bradley
+    origin: USA
+    crew: 3
+    capacity: 6
+    armament: [25mm M242 大毒蛇机炮, 双联 TOW 发射器（备弹 7 发）, 同轴机枪]
+    ratings: {protection: prot_25mm_front_127ap}
+    specs: {front_protection: 30mm 脱壳穿甲弹及 RPG}
+    notes: 相比之前型号增强装甲和外挂爆反能力，增强动力。TOW 装填需打开乘员舱上方舱门，装填慢且有破片风险。
+  - id: m2a3
+    name: M2A3 布雷德利
+    category: ifv
+    family: m2_bradley
+    origin: USA
+    crew: 3
+    capacity: 6
+    armament: [25mm M242 机炮, 双联 TOW（备弹 7）, 同轴机枪]
+    ratings: {protection: prot_30mm_front_25mm, firepower: fp_25mm_atgm, fire_control: fc_auto_track}
+    notes: 进一步增强装甲，大幅改善火控、观瞄和信息化；车长独立观瞄、导航地图，乘员舱显示屏可看全车观瞄图像。保护档按美军普遍加装附加装甲计。
+  - id: m2a4
+    name: M2A4 布雷德利
+    category: ifv
+    family: m2_bradley
+    origin: USA
+    crew: 3
+    capacity: 6
+    notes: 增强动力和悬挂以适应更大重量，增加 IED 干扰器。少量装备。
+  - id: m2a3_scout
+    name: M2A3（营侦察排，加装 LRAS3）
+    category: recon_ifv
+    family: m2_bradley
+    origin: USA
+    crew: 3
+    capacity: 3
+    sensors: [lras3]
+  - id: m3a3
+    name: M3 布雷德利骑兵战车
+    category: recon_ifv
+    family: m2_bradley
+    origin: USA
+    crew: 3
+    capacity: 3
+    sensors: [lras3]
+    notes: 带 LRAS3 光电侦察设备，TOW 备弹更多。
+  - id: m113a3
+    name: M113A3
+    category: apc
+    family: m113
+    origin: USA
+    notes: 仍为大部分单位的勤务装甲车；AMPV 替换不到 1/10，且 AMPV 项目已取消。
+  - id: ampv
+    name: AMPV
+    category: apc
+    family: ampv
+    origin: USA
+    notes: 基于布雷德利底盘的 M113 替代品，项目已取消。
+  - id: m1126_icv
+    name: M1126 斯崔克步兵输送车
+    category: apc
+    family: stryker
+    origin: USA
+    crew: 2            # 车长兼武器站操作员 + 驾驶员
+    capacity: 9
+    armament: [遥控武器站：M2 重机枪 或 Mk19 40mm 自动榴弹发射器, 4 具烟雾弹发射器]
+    ratings: {protection: prot_145_all, firepower: fp_rws}
+  - id: m1126_dragoon
+    name: 斯崔克 30mm 机炮型（Dragoon）
+    category: ifv
+    family: stryker
+    origin: USA
+    crew: 2
+    capacity: 9
+    armament: [30mm 机炮]
+    ratings: {protection: prot_145_all, firepower: fp_25mm_atgm}
+    notes: 仅第二骑兵团（实为 SBCT）换装作为班组载具，每旅 81 辆。
+  - id: m1126_javelin_rws
+    name: 斯崔克 标枪遥控武器站型
+    category: apc
+    family: stryker
+    origin: USA
+    crew: 2
+    capacity: 9
+    ratings: {protection: prot_145_all, firepower: fp_25mm}
+    notes: 一个旅在武器站上加装标枪发射器；SBCT 骑兵连连部也有 1 辆双 V 底加装标枪的版本。
+  - id: m1127_rv
+    name: 斯崔克侦察车
+    category: recon_ifv
+    family: stryker
+    origin: USA
+    crew: 2
+    capacity: 4
+    sensors: [lras3]
+  - id: m1128_mgs
+    name: M1128 斯崔克机动火炮系统
+    category: assault_gun
+    family: stryker
+    origin: USA
+    status: retired
+    notes: 产量一直不足，先集中到骑兵营，现已整体撤编。
+  - id: m1252_dvh
+    name: 斯崔克双 V 底车型（通用）
+    category: apc
+    family: stryker
+    origin: USA
+    notes: 双层 V 底，防雷更强。
+
+  # ======================= 美国 · 两栖 / 陆战队 =======================
+  - id: aav7
+    name: AAV-7
+    category: amphibious_assault_vehicle
+    family: aav7
+    origin: USA
+    crew: 3
+    capacity: 21
+    armament: [Mk19 40mm 自动榴弹发射器, M2 重机枪]
+    ratings: {protection: prot_762ap_front}
+    specs: {water_speed_kph: 13, base_protection: 全向 7.62mm（部分改进型加附加装甲可防 14.5mm）}
+    notes: 武器操作员无防护。
+  - id: acv
+    name: ACV 两栖战车
+    category: amphibious_assault_vehicle
+    family: acv
+    origin: USA
+    capacity: 13
+    armament: [遥控武器站 Mk19, M2]
+    ratings: {protection: prot_145_all, firepower: fp_rws}
+    specs: {drive: 8x8, water_speed_kph: 11, mine_protection: 3b 级}
+    notes: 意大利依维柯 SuperAV 衍生。
+  - id: lav25
+    name: LAV-25
+    category: ifv
+    family: lav
+    origin: USA
+    crew: 3
+    capacity: 6
+    armament: [25mm M242 机炮（手动装填）]
+    ratings: {protection: prot_762ap_front, fire_control: fc_stab_sight}
+    specs: {weight_t: 14, road_speed_kph: 100, water_speed_kph: 10, swim_prep_min: 3}
+    notes: 前向防 12.7mm、侧后防 7.62mm（原文正文写法）；双稳+热成像，无猎-歼。
+  - {id: lav_m,   name: LAV-M 车载迫击炮, category: mortar_vehicle, family: lav, origin: USA, notes: 敞篷，车内手动发射 81mm 迫击炮。}
+  - {id: lav_at,  name: LAV-AT, category: atgm_vehicle, family: lav, origin: USA, armament: [TOW]}
+  - {id: lav_c2,  name: LAV-C2 指挥车, category: armored_command_vehicle, family: lav, origin: USA}
+  - {id: lav_l,   name: LAV-L 后勤车, category: apc, family: lav, origin: USA}
+  - {id: lav_r,   name: LAV-R 救援车, category: armored_recovery_vehicle, family: lav, origin: USA}
+  - {id: lav_mewss, name: LAV-MEWSS 电子战车, category: ew_vehicle, family: lav, origin: USA}
+
+  # ======================= 美国 · 轻型战术车 / 卡车 =======================
+  - id: m1165a1
+    name: M1165A1 装甲增强悍马
+    category: light_armored_vehicle
+    family: hmmwv
+    origin: USA
+    ratings: {protection: prot_127ap_front}
+  - id: jltv
+    name: JLTV
+    category: light_armored_vehicle
+    family: jltv
+    origin: USA
+    ratings: {protection: prot_145_all}
+    notes: 加装附加装甲可防 14.5mm。美军总装备约 12500 辆（悍马约 12.5 万辆）。
+  - {id: m_atv, name: M-ATV 防雷车, category: mrap, family: m_atv, origin: USA}
+  - id: isv
+    name: ISV 步兵班组车
+    category: utility_vehicle
+    family: isv
+    origin: USA
+    capacity: 9
+    ratings: {protection: prot_none}
+    notes: 无防护；可 C-130 伞降、CH-47 机内装载。MBCT 用。
+  - id: m1163_growler
+    name: M1163 Growler
+    category: utility_vehicle
+    family: growler
+    origin: USA
+    notes: 敞篷吉普，防滚架可折叠，可装入 CH-53 和 V-22；牵引 M327 迫击炮。
+  - id: lmtv
+    name: LMTV（FMTV 4x4）
+    category: truck_medium
+    family: fmtv
+    origin: USA
+    specs: {empty_weight_t: 10, payload_t: 2.3, tow_t: 5.4}
+    notes: 定位类似 MV3，但更依赖拖挂。
+  - id: mtv
+    name: MTV（FMTV 6x6）
+    category: truck_medium
+    family: fmtv
+    origin: USA
+    specs: {empty_weight_t: 11.2, payload_t: 4.5, tow_t: 9.5}
+    notes: 定位接近 6x6 HMV3。
+  - id: mtvr
+    name: MTVR
+    category: truck_medium
+    family: mtvr
+    origin: USA
+    notes: 陆战队中型卡车。
+  - id: hemtt
+    name: HEMTT
+    category: truck_heavy
+    family: hemtt
+    origin: USA
+    specs: {empty_weight_t: 19.3, payload_t: [10.7, 14.9], tow_t: 29.7}
+  - {id: m1082_trailer, name: M1082 挂车, category: trailer, family: fmtv, origin: USA}
+  - {id: m88, name: M88 坦克抢救车, category: armored_recovery_vehicle, family: m88, origin: USA}
+  - {id: avlb, name: AVLB 架桥车, category: bridge_layer, family: avlb, origin: USA}
+  - {id: m109_ammo_carrier, name: M992 履带弹药补给车, category: ammo_carrier_tracked, family: m109, origin: USA}
+
+  # ======================= 中国 · 坦克 =======================
+  - id: ztz99a
+    name: ZTZ-99A（99大改）
+    category: mbt
+    family: ztz99
+    origin: CHN
+    crew: 3
+    ratings: {protection: mbt_99a, firepower: fp_99a, fire_control: fc_auto_track}
+    notes: 火控、信息化、火力、机动世界一流，与 M1A2 SEPv3 类似；有激光主动对抗系统，航向角防护有短板。
+  - id: ztz99
+    name: ZTZ-99
+    category: mbt
+    family: ztz99
+    origin: CHN
+    crew: 3
+    ratings: {protection: mbt_99, firepower: fp_99, fire_control: fc_stab_sight}
+    notes: 上反稳像火控，综合水平与 M1A1 类似。
+  - id: ztz96a
+    name: ZTZ-96A
+    category: mbt
+    family: ztz96
+    origin: CHN
+    crew: 3
+    ratings: {protection: mbt_96a, firepower: fp_96a, fire_control: fc_hunter_killer}
+    notes: 整体类似 T-72；火控换为上反式但信息化不足。
+  - id: ztz96
+    name: ZTZ-96
+    category: mbt
+    family: ztz96
+    origin: CHN
+    crew: 3
+    ratings: {protection: mbt_96, firepower: fp_96, fire_control: fc_stab_sight}
+  - id: ztq15
+    name: ZTQ-15 轻型坦克
+    category: mbt
+    family: ztq15
+    origin: CHN
+    crew: 3
+    armament: [105mm 线膛炮]
+    ratings: {protection: mbt_96, firepower: fp_105_tank, fire_control: fc_auto_track}
+    notes: 加挂附加装甲后防护与 96 类似（低配档为 mbt_59d）；火控、机动、信息化先进，部分方面超过 99A。少数重型旅装备。
+  - id: ztz88b
+    name: ZTZ-88B
+    category: mbt
+    family: ztz88
+    origin: CHN
+    ratings: {protection: mbt_88b, firepower: fp_105_tank, fire_control: fc_stab_sight}
+  - id: ztz88
+    name: ZTZ-88
+    category: mbt
+    family: ztz88
+    origin: CHN
+    ratings: {protection: mbt_88b, firepower: fp_105_tank, fire_control: fc_thermal_digital}
+    notes: 个别单位仍在用；无双稳、无稳像火控，火力防护机动都很落后（原文火控档位表又把“88白板”放在光点注入档，存在出入）。
+    confidence: uncertain
+  - id: ztz59d
+    name: ZTZ-59D
+    category: mbt
+    family: ztz59
+    origin: CHN
+    ratings: {protection: mbt_59d, firepower: fp_105_tank}
+    notes: 可能尚未完全退役。
+
+  # ======================= 中国 · 履带步战车 / 装输 =======================
+  - id: zbd04a
+    name: ZBD-04A
+    category: ifv
+    family: zbd04
+    origin: CHN
+    crew: 3
+    capacity: 6    # 下车步兵 6 人（班长为车长）
+    armament: [30mm 机炮, 100mm 低压炮（可发射炮射导弹，射程 5.5km，仰角 70°可间瞄）, 同轴机枪]
+    ratings: {protection: prot_30mm_front_127ap, firepower: fp_30mm_100mm, fire_control: fc_auto_track}
+    specs: {engine_hp: 670, front_protection: 1000m 防 30mm 穿甲燃烧弹, side_protection: 14.5mm 穿甲弹}
+    notes: 防护与 M2A2 后型号类似，火控接近或同等 M2A3。重量与 M2 相近，机动性更好。
+  - id: zbd04
+    name: ZBD-04（白板）
+    category: ifv
+    family: zbd04
+    origin: CHN
+    crew: 3
+    capacity: 6
+    armament: [30mm 机炮, 100mm 低压炮, 同轴机枪]
+    ratings: {protection: prot_25mm_front_762ap, firepower: fp_30mm_100mm, fire_control: fc_thermal_digital}
+    specs: {water_speed_kph: 20}
+    notes: 只能防 25mm 机炮；有防浪板和喷水推进器，更适合两栖登陆。火控落后主流。
+  - id: zbd86a
+    name: ZBD-86A
+    category: ifv
+    family: zbd86
+    origin: CHN
+    crew: 3
+    armament: [30mm 机炮]
+    ratings: {protection: prot_127ap_front, firepower: fp_25mm_atgm, fire_control: fc_thermal_digital}
+    notes: 只有基本自动装表火控，无双稳上反，只能静对静；正面不能全部位防 12.7mm，侧后只防 7.62mm 普通弹和破片。重量轻，战略机动有一定优势。
+  - id: zbd86
+    name: ZBD-86（白板）
+    category: ifv
+    family: zbd86
+    origin: CHN
+    crew: 3
+    armament: [73mm 滑膛炮, 红箭-73 导弹]
+    ratings: {protection: prot_127ap_front, firepower: fp_25mm_atgm, fire_control: fc_single_stab}
+    notes: 仿制 BMP-1，乘员舱狭窄。少量未退役。
+  - id: zsd89_ifv
+    name: 89式步战车型
+    category: ifv
+    family: zsd89
+    origin: CHN
+    armament: [25mm 机炮]
+    ratings: {protection: prot_762ap_front, firepower: fp_25mm, fire_control: fc_optical}
+    notes: 无红箭-73，火力不足；只全向防 7.62mm 普通弹和破片。
+  - id: zsd89
+    name: ZSD-89 装甲输送车
+    category: apc
+    family: zsd89
+    origin: CHN
+    capacity: 13   # 原文：可坐 13 人
+    ratings: {protection: prot_762ap_front, firepower: fp_manual_mg, fire_control: fc_optical}
+  - id: zsd89a_recon
+    name: 89A 装甲侦察车
+    category: recon_ifv
+    family: zsd89
+    origin: CHN
+    capacity: 4
+    armament: [30mm 机炮]
+    sensors: [光电转塔, 毫米波雷达伸缩桅杆, 车尾小型无人机发射器]
+    notes: 重型旅仪器侦察连用；不执行火力侦察。
+  - id: zbd04a_recon
+    name: 04A 光电侦察车
+    category: recon_ifv
+    family: zbd04
+    origin: CHN
+    sensors: [光电侦察设备, 可载 1 架小型无人机]
+    notes: 合成营支保连侦察排用。
+
+  # ======================= 中国 · 轮式装甲 =======================
+  - id: zbl08
+    name: ZBL-08
+    category: ifv
+    family: zbl08
+    origin: CHN
+    crew: 3
+    capacity: 6
+    armament: [30mm 机炮, 红箭-73 导弹, 12.7mm 防空机枪, 7.62mm 同轴机枪]
+    ratings: {protection: prot_25mm_front_762ap, firepower: fp_30mm_atgm, fire_control: fc_hunter_killer}
+    specs: {front_protection: 25mm, side_rear_protection: 12.7mm}
+    notes: 无稳像式火控，以短停射击为主；机动明显强于斯崔克。
+  - id: ztl11
+    name: ZTL-11 轮式突击炮
+    category: assault_gun
+    family: zbl08
+    origin: CHN
+    armament: [105mm 线膛炮（可发射炮射导弹）]
+    ratings: {protection: prot_25mm_front_762ap, firepower: fp_105_assault, fire_control: fc_auto_track}
+    notes: 火控与 99A 一致：车长炮长独立热成像、上反稳像猎-歼、目标识别自动跟踪；穿甲接近 15 式。
+  - id: ptl02
+    name: PTL-02 轮式突击炮
+    category: assault_gun
+    family: wz551
+    origin: CHN
+    armament: [100mm 炮]
+    ratings: {protection: prot_762ap_front, fire_control: fc_thermal_micro_disturb}
+    notes: 引进英国 IFCS 的电同步微扰动火控，只有火炮稳定无炮塔稳定，微光夜视（档位表按热成像档）。已从中型旅撤装，现装备摩步旅反坦克连。
+  - id: zsl92b
+    name: ZSL-92B 轮式步战车
+    category: ifv
+    family: wz551
+    origin: CHN
+    armament: [30mm 机炮, 红箭-73]
+    ratings: {protection: prot_762ap_front, firepower: fp_30mm_atgm, fire_control: fc_dual_stab_ir}
+    specs: {protection_detail: 正面 100m/侧面 200m 防 7.62mm 穿甲弹，顶后只防 7.62 普通弹和破片}
+  - id: zsl92
+    name: ZSL-92 轮式装甲输送车
+    category: apc
+    family: wz551
+    origin: CHN
+    armament: [25mm 机炮]
+    ratings: {protection: prot_762ap_front, firepower: fp_25mm}
+  - id: wz550
+    name: WZ550（92 式 4x4）
+    category: apc
+    family: wz551
+    origin: CHN
+    notes: 红箭-9 反坦克导弹车底盘。
+  - id: zbl191
+    name: 191 式新一代 8x8 装甲车
+    category: ifv
+    family: zbl191
+    origin: CHN
+    ratings: {fire_control: fc_auto_track_360cam}
+    notes: 原文仅在火控档位中提到。
+
+  # ======================= 中国 · 两栖 / 空降 =======================
+  - id: zbd05
+    name: ZBD-05 两栖步战车
+    category: ifv
+    family: zbd05
+    origin: CHN
+    crew: 3
+    capacity: 8
+    armament: [ZPT-99 30mm 机炮, 红箭-73C, 7.62mm 同轴机枪, 12.7mm 防空机枪]
+    ratings: {protection: prot_25mm_front_127ap, firepower: fp_30mm_atgm, fire_control: fc_thermal_digital}
+    specs: {weight_t: 26, water_speed_kph: 30}
+  - id: ztd05
+    name: ZTD-05 两栖突击车
+    category: assault_gun
+    family: zbd05
+    origin: CHN
+    armament: [105mm 线膛炮]
+    ratings: {protection: prot_25mm_front_127ap, firepower: fp_105_assault, fire_control: fc_auto_track}
+    notes: 下反式稳像、猎-歼，稳定系统出色，可水上航行射击。
+  - {id: zbd05_apc, name: 05 式两栖装甲输送车, category: apc, family: zbd05, origin: CHN, ratings: {protection: prot_25mm_front_127ap}}
+  - {id: zbd05_cmd, name: 05 式装甲指挥车, category: armored_command_vehicle, family: zbd05, origin: CHN}
+  - {id: zbd05_eng, name: 05 式工兵破障车, category: engineer_vehicle, family: zbd05, origin: CHN}
+  - {id: zbd05_arv, name: 05 式装甲抢救车, category: armored_recovery_vehicle, family: zbd05, origin: CHN}
+  - {id: zbd05_amb, name: 05 式装甲救护车, category: armored_ambulance, family: zbd05, origin: CHN}
+  - id: zbd03
+    name: ZBD-03 伞兵战车
+    category: ifv
+    family: zbd03
+    origin: CHN
+    crew: 3
+    capacity: 4     # 推测：3 名下车步兵 + 排长车 4 名
+    armament: [ZPT-99 30mm 机炮, 红箭-73D, 7.62mm 同轴机枪]
+    ratings: {protection: prot_762ap_front, firepower: fp_30mm_atgm}
+    notes: 去年已有空降旅换装加装 APS 主动防御的新型号。
+    confidence: estimated
+  - id: airborne_wheeled_ifv
+    name: 轮式伞兵突击车（步战型）
+    category: ifv
+    family: vn3_airborne
+    origin: CHN
+    crew: 3
+    capacity: 7
+    armament: [30mm 机炮, 红箭-73D]
+    ratings: {protection: prot_762ap_front, firepower: fp_30mm_atgm}
+    notes: 基于 VN-3 发展。
+  - id: airborne_wheeled_apc
+    name: 轮式伞兵突击车（装输型）
+    category: apc
+    family: vn3_airborne
+    origin: CHN
+    crew: 3
+    capacity: 7
+    armament: [88 式 12.7mm 高射机枪]
+    ratings: {protection: prot_762ap_front, firepower: fp_manual_mg}
+
+  # ======================= 中国 · 轻型战术车 / 卡车 =======================
+  - id: csk181
+    name: CSK-181 三代装甲猛士
+    category: light_armored_vehicle
+    family: mengshi
+    origin: CHN
+    capacity: 9    # 含驾驶员、武器站操作员
+    armament: [遥控武器站：89 式 12.7mm 重机枪 或 04 式 35mm 自动榴弹发射器]
+    ratings: {protection: prot_762ap_front, firepower: fp_rws, fire_control: fc_thermal_digital}
+    specs: {protection_detail: 正面 100m 防 7.62 穿甲弹，侧面 100m 防 7.62 普通弹，底盘防雷}
+    notes: 一般每排 2 辆重机枪型 + 1 辆榴弹发射器型。防护大体类似增强装甲悍马。
+  - id: csk141
+    name: CSK-141 二代猛士
+    category: light_armored_vehicle
+    family: mengshi
+    origin: CHN
+    armament: [人工操作 12.7mm 机枪]
+    ratings: {protection: prot_762ap_front, firepower: fp_manual_mg}
+  - {id: mengshi_gen1, name: 一代猛士, category: light_armored_vehicle, family: mengshi, origin: CHN, notes: PCP-001 速射迫击炮与炮兵雷达的底盘。}
+  - {id: ctl181, name: CTL-181 三代猛士卡车, category: truck_medium, family: mengshi, origin: CHN, notes: 轻高机连补给车；PCL-171、20管122火箭炮、红箭-10 底盘。}
+  - {id: mv3, name: MV3 4x4 卡车, category: truck_medium, family: mv3, origin: CHN}
+  - {id: hmv3_6x6, name: HMV3 6x6 卡车, category: truck_heavy, family: mv3, origin: CHN}
+  - {id: sx2150, name: SX2150 6x6 卡车, category: truck_heavy, family: sx2150, origin: CHN}
+  - {id: yongshi_jeep, name: 勇士越野车, category: utility_vehicle, family: yongshi, origin: CHN}
+  - {id: bj212, name: 212 吉普, category: utility_vehicle, family: bj212, origin: CHN}
+  - id: lynx_8x8
+    name: 山猫 8x8 全地形车
+    category: atv
+    family: lynx
+    origin: CHN
+    capacity: 6
+    ratings: {protection: prot_none}
+    specs: {empty_weight_t: 1, road_speed_kph: 65, water_speed_kph: 4, export_name: CS/VP-4}
+    notes: 可原地转向，无减震。广泛装备山地、边防、海防、陆战队、空突、空降部队。可被米-171、直-8L 装载或吊运。
+  - {id: lynx_6x6, name: 山猫 6x6 混动全地形车, category: atv, family: lynx, origin: CHN, specs: {export_name: CS/VP-16}, notes: 主要特战部队用。}
+  - {id: lynx_4x4, name: 山猫 4x4 全地形车, category: atv, family: lynx, origin: CHN, specs: {export_name: CS/VP-11}, notes: 主要空突部队用；牵引 PBP-171 120 迫。}
+  - {id: sidecar_motorcycle, name: 侧三轮摩托, category: motorcycle, family: sidecar, origin: CHN, notes: 警卫 1 师车队护送用。}
+  - {id: field_kitchen_pla, name: 野战炊事车, category: field_kitchen, family: pla_kitchen, origin: CHN}
+  - {id: ztz96_engineer, name: 96 底盘工程/破障车, category: engineer_vehicle, family: ztz96, origin: CHN}

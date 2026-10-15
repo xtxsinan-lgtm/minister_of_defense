@@ -1,0 +1,1018 @@
+# 美国陆军 BCT 编制模板（原文 1.3.1–1.3.4；以 2021 年前后编制表为准）
+#
+# 字段速查（详见 data/README.md）：
+#   level: squad | platoon | company | battalion | brigade
+#   personnel / slots / slots_unassigned：{id: 数量}
+#   children / attached：[{template, count}]
+#   role: hq | support | equipment_pool（只放排/连共用装备、不占人员的伪班）
+#   granularity: aggregate —— 原文只给到该级总数，内部未细分
+#   expected_personnel / expected_equipment —— 原文给出的总数，供校验
+#   confidence: estimated —— 为凑齐原文总数而推算的细节
+
+templates:
+
+  # ==================================================================
+  # 通用：加强到下级的人员（来自营医护排、旅炮兵营火力支援单元）
+  # ==================================================================
+  - {id: us_att_medic, level: squad, role: support, personnel: {medic: 1}}
+  - {id: us_att_fo,    level: squad, role: support, personnel: {forward_observer: 1}}
+  - {id: us_att_fso,   level: squad, role: support, personnel: {forward_observer: 1}, notes: 连火援官（FSO），来自炮兵营。}
+
+  # ==================================================================
+  # ABCT · 班
+  # ==================================================================
+  - id: us_tank_crew
+    name: M1 坦克车组
+    level: squad
+    personnel: {tank_commander: 1, tank_gunner: 1, tank_driver: 1, tank_loader: 1}
+    slots: {mbt: 1}
+
+  - id: us_rifle_squad
+    name: 美陆军 9 人下车步兵班（ABCT/SBCT/IBCT 通用）
+    level: squad
+    personnel: {squad_leader: 1, team_leader: 2, automatic_rifleman: 2, grenadier: 2, marksman: 1, rifleman: 1}
+    slots: {rifle: 7, lmg: 2, underbarrel_gl: 2, dmr: 1, uav_micro: 1, tactical_terminal: 1}
+    notes: >
+      班长 + 2 个火力组，每组 1 名 M249 机枪手、1 名 M320 榴弹手。一个火力组有精确射手（M110 SDMR，
+      并未普遍编制）；另一组有 1 人受过反坦克导弹训练。2022 年起每班 1 架 RQ-28。班组普及 ATAK。
+      单兵负重要求 53kg。
+
+  - id: us_abct_rifle_squad
+    variant_of: us_rifle_squad
+    level: squad
+    personnel: {squad_leader: 1, team_leader: 2, automatic_rifleman: 2, grenadier: 2, marksman: 1, rifleman: 1}
+    slots: {rifle: 7, lmg: 2, underbarrel_gl: 2, dmr: 1, uav_micro: 1, tactical_terminal: 1}
+    notes: 分散乘坐排内 4 辆 M2（拼车），不带车。
+
+  - id: us_bradley_crew
+    name: M2 步战车车组（3 人）
+    level: squad
+    personnel: {vehicle_commander: 1, vehicle_gunner: 1, vehicle_driver: 1}
+    slots: {ifv: 1}
+
+  - id: us_bradley_crew_led
+    name: M2 车组（车长由排长/排军士担任）
+    level: squad
+    personnel: {vehicle_gunner: 1, vehicle_driver: 1}
+    slots: {ifv: 1}
+
+  - id: us_abct_mech_plt_hq
+    name: ABCT 机步排排部
+    level: squad
+    role: hq
+    personnel: {officer: 1, nco_senior: 1, vehicle_gunner: 1}
+    slots_unassigned: {atgm_portable: 2}
+    notes: 排长行车时任一车车长，下车时由炮长替代、候补车组乘员补位；排军士不下车，指挥 4 车。每排 2 具标枪不占编制，每具备弹 2-3 枚。
+
+  - id: us_abct_tank_coy_hq_sec
+    name: ABCT 装甲连连部（除坦克外）
+    level: squad
+    role: hq
+    personnel: {nco_senior: 1, vehicle_driver: 1, supply: 2, signaler: 2}
+    slots: {apc: 1, truck_medium: 1, light_armored_vehicle: 2}
+    notes: 一级军士长乘 M113A3（不到 1/10 换 AMPV），负责军纪士气人事（类似指导员）；2 名补给员 LMTV（原拖 1.5 吨淡水挂车，现改车内装载）；2 辆装甲悍马/JLTV，一辆兼连长勤务车，一辆乘通信士官和无线电员。
+
+  - id: us_abct_mech_coy_hq_sec
+    name: ABCT 机步连连部（除步战车外）
+    level: squad
+    role: hq
+    personnel: {nco_senior: 1, vehicle_driver: 1, supply: 2, signaler: 2}
+    slots: {apc: 1, truck_medium: 1, light_armored_vehicle: 1, trailer: 1, uav_hand_launched: 1}
+    slots_unassigned: {shotgun: 18}
+    notes: 补给车上 18 支 M500 霰弹枪不占编制；通信悍马牵引 M1082 挂车；连级普遍配 RQ-11。
+
+  # ==================================================================
+  # ABCT · 排 / 连
+  # ==================================================================
+  - id: us_tank_plt
+    name: M1 坦克排
+    level: platoon
+    children: [{template: us_tank_crew, count: 4}]
+    expected_personnel: 16
+
+  - id: us_abct_mech_plt
+    name: ABCT 机械化步兵排
+    level: platoon
+    children:
+      - {template: us_abct_rifle_squad, count: 3}
+      - {template: us_bradley_crew, count: 2}
+      - {template: us_bradley_crew_led, count: 2}
+      - {template: us_abct_mech_plt_hq, count: 1}
+    attached: [{template: us_att_medic, count: 1}, {template: us_att_fo, count: 1}]
+    expected_personnel: 40
+    expected_equipment: {ifv: 4}
+    notes: 战时加强的医护兵和前观员按编制表没有座位，实践中因不满编一般有空座。
+
+  - id: us_abct_tank_coy
+    name: ABCT 装甲连
+    level: company
+    children:
+      - {template: us_tank_plt, count: 3}
+      - {template: us_tank_crew, count: 2}        # 连长、副连长车
+      - {template: us_abct_tank_coy_hq_sec, count: 1}
+    expected_personnel: 62
+    expected_equipment: {mbt: 14}
+
+  - id: us_abct_mech_coy
+    name: ABCT 机械化步兵连
+    level: company
+    children:
+      - {template: us_abct_mech_plt, count: 3}
+      - {template: us_bradley_crew, count: 2}     # 连长、副连长车
+      - {template: us_abct_mech_coy_hq_sec, count: 1}
+    attached: [{template: us_att_fso, count: 1}]
+    expected_personnel: 132
+    expected_equipment: {ifv: 14}
+    notes: 原文“共 132 人（不含加强部分为 126 人），连部 12 人”，两数自相矛盾。
+
+  # ==================================================================
+  # ABCT · 联兵营营部连
+  # ==================================================================
+  - id: us_m1064_squad
+    name: M1064 车载 120 迫击炮班
+    level: squad
+    personnel: {squad_leader: 1, vehicle_driver: 1, mortarman: 3}
+    slots: {mortar_vehicle: 1}
+    confidence: estimated
+    notes: 原文只给迫击炮排 23 人 / 4 车，每车 5 人参照 SBCT。
+
+  - id: us_mortar_plt_hq
+    level: squad
+    role: hq
+    personnel: {officer: 1, nco_senior: 1, forward_observer: 1}
+    confidence: estimated
+
+  - id: us_abct_bn_scout_brad_sq
+    name: 营侦察排 M2A3 侦察班
+    level: squad
+    personnel: {vehicle_commander: 1, vehicle_gunner: 1, vehicle_driver: 1, scout: 3}
+    slots: {recon_ifv: 1, eo_recon_suite: 1, uav_micro: 1}
+
+  - id: us_abct_bn_scout_jltv_sq
+    name: 营侦察排 JLTV 侦察班
+    level: squad
+    personnel: {vehicle_driver: 1, vehicle_gunner: 1, scout: 2}
+    slots: {light_armored_vehicle: 1, hmg: 1, eo_recon_suite: 1}
+    notes: JLTV 一般装 M2 机枪或 Mk19 榴弹发射器（此处槽位写 hmg，可替换为 agl）。
+
+  - id: us_abct_bn_scout_plt_hq
+    level: squad
+    role: hq
+    personnel: {officer: 1, nco_senior: 1, vehicle_driver: 2, scout: 2}
+    slots: {light_armored_vehicle: 2, eo_recon_suite: 2, uav_hand_launched: 1, uav_micro: 2}
+    slots_unassigned: {atgm_portable: 2}
+    notes: 排部 2 台 JLTV；全排 1 台 RQ-20、5 台 RQ-28，实现每车有无人机。
+
+  - id: us_abct_bn_scout_plt
+    name: ABCT 营侦察排（轻重混编）
+    level: platoon
+    children:
+      - {template: us_abct_bn_scout_brad_sq, count: 3}
+      - {template: us_abct_bn_scout_jltv_sq, count: 3}
+      - {template: us_abct_bn_scout_plt_hq, count: 1}
+    expected_personnel: 36
+
+  - id: us_bn_sniper_sq_3team
+    name: 营狙击班（3 组）
+    level: squad
+    personnel: {squad_leader: 1, sniper: 6, spotter: 3}
+    slots: {anti_materiel_rifle: 3, sniper_rifle: 3}
+    notes: 每组 M82 + M24 各一名狙击手和一名观察员。
+
+  - id: us_bn_staff_cell
+    name: 营指挥部（情报、作战、火援、协调官、空军战术空中管制组）
+    level: squad
+    role: hq
+    granularity: aggregate
+    personnel: {staff: 36}
+    notes: 含空军派驻的 TACP，负责对地支援计划和引导；人数细分原文未给。
+
+  - id: us_abct_bn_medical_plt
+    name: 营医护排
+    level: squad
+    role: support
+    granularity: aggregate
+    personnel: {medic: 32}
+    slots: {armored_ambulance: 4}
+    notes: 医疗班、战场救护班（4 辆 M113/AMPV 救护车，每车 1 驾驶 2 救护）、前线医护班（每个机步连 4 人小组，高级医护兵在连部，3 人下到排）。
+
+  - id: us_abct_bn_hq_log
+    name: 营后勤部（补给、人事、通信、管理）
+    level: squad
+    role: support
+    granularity: aggregate
+    personnel: {staff: 27}
+    slots: {apc: 16, light_armored_vehicle: 14, truck_medium: 6, truck_heavy: 1, trailer: 6}
+    confidence: estimated
+    notes: 营部车辆总数（20 AMPV/M113、19 JLTV、4 LMTV、2 MTV、1 HEMTT、6 挂车）扣除已分配到各排后放在这里。
+
+  - {id: us_comm_relay_team, level: squad, role: support, personnel: {signaler: 3}}
+  - {id: us_abct_mine_clear_team, level: squad, role: support, personnel: {engineer: 2}, slots: {mine_clearing_vehicle: 2}}
+
+  - id: us_abct_cab_hhc
+    name: ABCT 联兵营营部连
+    level: company
+    role: hq
+    children:
+      - {template: us_m1064_squad, count: 4}
+      - {template: us_mortar_plt_hq, count: 1}
+      - {template: us_abct_bn_scout_plt, count: 1}
+      - {template: us_bn_sniper_sq_3team, count: 1}
+      - {template: us_bn_staff_cell, count: 1}
+      - {template: us_abct_bn_medical_plt, count: 1}
+      - {template: us_abct_bn_hq_log, count: 1}
+      - {template: us_comm_relay_team, count: 1}
+      - {template: us_abct_mine_clear_team, count: 1}
+      - {template: us_tank_crew, count: 1}         # 营长坦克
+    expected_personnel: 181
+    expected_equipment: {mbt: 1, mortar_vehicle: 4, light_armored_vehicle: 19, truck_medium: 6, truck_heavy: 1}
+    notes: 另有加强自炮兵营的 7 人火力支援排和 24 人火力支援单元（分配前观小组、连 FIST、排火援官）。
+
+  - id: us_fa_fire_support_elem
+    name: 火力支援排 + 火力支援单元（加强到联兵营）
+    level: squad
+    role: support
+    personnel: {forward_observer: 31}
+
+  # ==================================================================
+  # ABCT · 联兵营
+  # ==================================================================
+  - id: us_abct_armor_bn
+    name: ABCT 装甲联兵营（2 坦 1 步）
+    level: battalion
+    children:
+      - {template: us_abct_tank_coy, count: 2}
+      - {template: us_abct_mech_coy, count: 1}
+      - {template: us_abct_cab_hhc, count: 1}
+    attached: [{template: us_fa_fire_support_elem, count: 1}, {template: us_abct_fsc_cab, count: 1}]
+    default_bindings: {mbt: m1a2_sepv2, ifv: m2a3, recon_ifv: m2a3_scout, apc: m113a3, light_armored_vehicle: jltv, mortar_vehicle: m1064, truck_medium: lmtv, truck_heavy: hemtt, rifle: m4a1, lmg: m249, underbarrel_gl: m320, dmr: m110_sdmr, atgm_portable: javelin, uav_micro: rq28_skydio_x2, uav_hand_launched: rq20}
+    expected_personnel: 431
+
+  - id: us_abct_inf_bn
+    name: ABCT 步兵联兵营（2 步 1 坦）
+    level: battalion
+    children:
+      - {template: us_abct_mech_coy, count: 2}
+      - {template: us_abct_tank_coy, count: 1}
+      - {template: us_abct_cab_hhc, count: 1}
+    attached: [{template: us_fa_fire_support_elem, count: 1}, {template: us_abct_fsc_cab, count: 1}]
+    expected_personnel: 495
+
+  # ==================================================================
+  # ABCT · 骑兵营
+  # ==================================================================
+  - id: us_abct_cav_scout_sq
+    name: ABCT 骑兵连侦察班（M3）
+    level: squad
+    personnel: {vehicle_commander: 1, vehicle_gunner: 1, vehicle_driver: 1, scout: 3}
+    slots: {recon_ifv: 1, eo_recon_suite: 1, gpmg: 1, underbarrel_gl: 1, rifle: 3}
+
+  - id: us_abct_cav_scout_pool
+    level: squad
+    role: equipment_pool
+    slots: {atgm_portable: 2, ugv_small: 3, uav_hand_launched: 1, uav_micro: 5}
+    notes: 排共用：2 具标枪、3 台遥控机器车、1 台 RQ-11、5 台 RQ-28。
+
+  - id: us_abct_cav_scout_plt
+    name: ABCT 骑兵连侦察排（6 车）
+    level: platoon
+    children: [{template: us_abct_cav_scout_sq, count: 6}, {template: us_abct_cav_scout_pool, count: 1}]
+    expected_personnel: 36
+    notes: 排部 2 车 + 4 个班各 1 车；排长、排军士任车长（未单列）。
+
+  - id: us_cav_troop_hq_m3
+    level: squad
+    role: hq
+    personnel: {officer: 1, vehicle_gunner: 1, vehicle_driver: 1}
+    slots: {recon_ifv: 1, uav_hand_launched: 1}
+    confidence: estimated
+    notes: 连部 1 辆 M3 + 1 台 RQ-20；连部其余人员原文未给。
+
+  - id: us_abct_cav_troop
+    name: ABCT 骑兵连
+    level: company
+    children:
+      - {template: us_abct_cav_scout_plt, count: 2}
+      - {template: us_m1064_squad, count: 2}
+      - {template: us_cav_troop_hq_m3, count: 1}
+    expected_equipment: {recon_ifv: 13, mortar_vehicle: 2}
+
+  - id: us_abct_cav_hht
+    name: ABCT 骑兵营营部连
+    level: company
+    role: hq
+    children: [{template: us_abct_cav_hht_agg, count: 1}]
+    notes: 原文未展开营部连；人数按骑兵营 398 人倒推。
+  - {id: us_abct_cav_hht_agg, level: squad, role: hq, granularity: aggregate, personnel: {staff: 81}, confidence: estimated}
+
+  - id: us_abct_cav_sqn
+    name: ABCT 骑兵营（中队）
+    level: battalion
+    children:
+      - {template: us_abct_cav_troop, count: 3}
+      - {template: us_abct_tank_coy, count: 1}
+      - {template: us_abct_cav_hht, count: 1}
+    attached: [{template: us_abct_fsc_cav, count: 1}]
+    expected_personnel: 398
+    notes: 火力更强、下车步兵更少、更快、感知更强的步兵营；任务是火力侦察。
+
+  # ==================================================================
+  # ABCT · 炮兵营
+  # ==================================================================
+  - id: us_m109_section
+    name: M109 炮班（含弹药车、HEMTT）
+    level: squad
+    personnel: {squad_leader: 1, artilleryman: 12, driver: 2}
+    slots: {howitzer_heavy_sp: 1, ammo_carrier_tracked: 1, truck_heavy: 1}
+    confidence: estimated
+    notes: 炮连 90 人 / 6 门，按每门 15 人平摊。
+
+  - id: us_abct_fa_battery
+    name: M109 炮连
+    level: company
+    children: [{template: us_m109_section, count: 6}]
+    expected_personnel: 90
+
+  - id: us_fa_target_acq_plt
+    name: 炮兵营目标获取排
+    level: squad
+    role: support
+    slots: {radar_counter_battery: 6, light_armored_vehicle: 5, trailer: 1}
+    notes: 4 部 TPQ-50（10km）+ 1 部 TPQ-36（24km）+ 1 部 TPQ-37（50km）；前两者装在悍马单排皮卡上，后者装拖车。
+
+  - {id: us_sq_generic, level: squad, granularity: aggregate, notes: 原文只给出班/组名称，人员和装备未给。}
+  - {id: us_fa_comm_plt, name: 炮兵营通信排, level: platoon, children: [{template: us_sq_generic, count: 1}]}
+  - {id: us_fa_medical_plt, name: 炮兵营医疗排, level: platoon, children: [{template: us_sq_generic, count: 1}]}
+  - {id: us_fa_survey_sec, name: 测量分队, level: squad, granularity: aggregate}
+  - {id: us_fa_counterfire_cell, name: 反炮兵计划组, level: squad, granularity: aggregate}
+  - id: us_abct_fa_hhb
+    name: 炮兵营营部连
+    level: company
+    role: hq
+    children:
+      - {template: us_fa_comm_plt, count: 1}
+      - {template: us_fa_medical_plt, count: 1}
+      - {template: us_fa_target_acq_plt, count: 1}
+      - {template: us_fa_survey_sec, count: 1}
+      - {template: us_fa_counterfire_cell, count: 1}
+    notes: 原文“除了通讯排和医疗排外，有一个通信排和一个目标获取排”，另有测量分队和反炮兵计划组。人数原文未给（营 503 − 3×90 = 233，可能含加强到各营的火力支援人员）。
+  - id: us_ibct_fa_hhb
+    variant_of: us_abct_fa_hhb
+    level: company
+    role: hq
+    children:
+      - {template: us_fa_comm_plt, count: 1}
+      - {template: us_fa_medical_plt, count: 1}
+      - {template: us_fa_target_acq_plt_light, count: 1}
+      - {template: us_fa_survey_sec, count: 1}
+      - {template: us_fa_counterfire_cell, count: 1}
+    notes: 目标获取排少一部 TPQ-37。
+
+  - id: us_abct_fa_bn
+    name: ABCT 炮兵营
+    level: battalion
+    children: [{template: us_abct_fa_battery, count: 3}, {template: us_abct_fa_hhb, count: 1}]
+    attached: [{template: us_abct_fsc_fa, count: 1}]
+    default_bindings: {howitzer_heavy_sp: m109a6, ammo_carrier_tracked: m109_ammo_carrier, truck_heavy: hemtt}
+    expected_personnel: 503
+    notes: 美军炮兵似乎以反炮兵为首要任务，火力支援更多由航空兵承担。
+
+  # ==================================================================
+  # ABCT · 工兵营
+  # ==================================================================
+  - {id: us_beb_cp_spt_sq, name: 指挥部支援班, level: squad, granularity: aggregate}
+  - {id: us_beb_relay_team, name: 中继组, level: squad, granularity: aggregate}
+  - {id: us_beb_node_sq, name: 网络节点班, level: squad, granularity: aggregate}
+  - {id: us_beb_hq_net_plt, name: 总部和网络支持排, level: platoon, children: [{template: us_beb_cp_spt_sq, count: 1}, {template: us_beb_relay_team, count: 1}]}
+  - {id: us_beb_net_ext_plt, name: 网络延伸排, level: platoon, children: [{template: us_beb_node_sq, count: 1}, {template: us_beb_relay_team, count: 1}]}
+  - id: us_beb_signal_coy
+    name: 信号连
+    level: company
+    role: support
+    children: [{template: us_beb_hq_net_plt, count: 1}, {template: us_beb_net_ext_plt, count: 1}]
+  - {id: us_beb_collection_plt, name: 信息收集排, level: platoon, children: [{template: us_sq_generic, count: 1}]}
+  - {id: us_beb_ew_sec, name: 电子战分队, level: squad, granularity: aggregate}
+  - {id: us_beb_multifunction_plt, name: 多功能排, level: platoon, children: [{template: us_sq_generic, count: 1}]}
+  - {id: us_vsq_rq7, level: squad, granularity: aggregate, slots: {uav_tactical: 1}}
+  - {id: us_beb_uav_plt, name: 无人机排, level: platoon, children: [{template: us_vsq_rq7, count: 4}], notes: 4 架弹射起飞的 RQ-7。}
+  - {id: us_af_weather_team, name: 空军气象组, level: squad, granularity: aggregate}
+  - id: us_beb_mi_coy
+    name: 情报连
+    level: company
+    role: support
+    children:
+      - {template: us_beb_collection_plt, count: 1}
+      - {template: us_beb_ew_sec, count: 1}
+      - {template: us_beb_multifunction_plt, count: 1}
+      - {template: us_beb_uav_plt, count: 1}
+      - {template: us_af_weather_team, count: 1}
+  - {id: us_sapper_team, name: 战斗工兵组, level: squad, granularity: aggregate, notes: 会使用喷火武器参与前线攻坚战斗。}
+  - {id: us_sapper_plt, name: 战斗工兵排, level: platoon, children: [{template: us_sapper_team, count: 3}]}
+  - {id: us_construction_team, name: 工事组, level: squad, granularity: aggregate}
+  - {id: us_breach_team, name: 突破组, level: squad, granularity: aggregate}
+  - {id: us_bridge_team, name: 舟桥组, level: squad, granularity: aggregate}
+  - {id: us_bridge_sq, name: 架桥班, level: squad, granularity: aggregate}
+  - {id: us_eng_spt_plt_a, name: 支援工兵排（A 连）, level: platoon, children: [{template: us_construction_team, count: 1}, {template: us_breach_team, count: 1}]}
+  - {id: us_eng_spt_plt_b, name: 支援工兵排（B 连，多舟桥组）, level: platoon, children: [{template: us_construction_team, count: 1}, {template: us_breach_team, count: 1}, {template: us_bridge_team, count: 1}]}
+  - {id: us_eng_spt_plt_a_sbct, name: 支援工兵排（SBCT A 连，多架桥班）, level: platoon, children: [{template: us_construction_team, count: 1}, {template: us_breach_team, count: 1}, {template: us_bridge_sq, count: 1}]}
+  - {id: us_route_clearance_plt, name: 机动保障排, level: platoon, children: [{template: us_sq_generic, count: 1}], notes: 负责道路排障。}
+  - id: us_beb_engineer_coy_a
+    name: 战斗工兵 A 连
+    level: company
+    children: [{template: us_sapper_plt, count: 2}, {template: us_eng_spt_plt_a, count: 1}]
+  - id: us_beb_engineer_coy_b
+    name: 战斗工兵 B 连
+    level: company
+    children: [{template: us_sapper_plt, count: 2}, {template: us_eng_spt_plt_b, count: 1}, {template: us_route_clearance_plt, count: 1}]
+  - id: us_beb_engineer_coy_a_sbct
+    variant_of: us_beb_engineer_coy_a
+    name: SBCT 战斗工兵 A 连
+    level: company
+    children: [{template: us_sapper_plt, count: 2}, {template: us_eng_spt_plt_a_sbct, count: 1}]
+  - {id: us_beb_hq, name: 工兵营营部, level: company, role: hq, children: [{template: us_sq_generic, count: 1}]}
+  - id: us_abct_beb
+    name: 旅工兵营（BEB）
+    level: battalion
+    children:
+      - {template: us_beb_hq, count: 1}
+      - {template: us_beb_signal_coy, count: 1}
+      - {template: us_beb_mi_coy, count: 1}
+      - {template: us_beb_engineer_coy_a, count: 1}
+      - {template: us_beb_engineer_coy_b, count: 1}
+    attached: [{template: us_abct_fsc_beb, count: 1}]
+    expected_personnel: 487
+    notes: ABCT 和 IBCT 共用；SBCT 见 us_sbct_beb。
+
+  # ==================================================================
+  # 旅后勤营（BSB）与前线支援连（FSC）
+  # ==================================================================
+  - {id: us_fsc_ammo_sq, name: 弹药班, level: squad, granularity: aggregate}
+  - {id: us_fsc_fuel_sq, name: 油料班, level: squad, granularity: aggregate}
+  - {id: us_fsc_supply_sq, name: 供应班, level: squad, granularity: aggregate}
+  - {id: us_fsc_maint_sq, name: 维护班, level: squad, granularity: aggregate}
+  - {id: us_fsc_recovery_sq, name: 战场抢救班, level: squad, granularity: aggregate}
+  - {id: us_fsc_field_maint_sq, name: 战场维护班, level: squad, granularity: aggregate}
+  - id: us_fsc_distribution_plt
+    name: 配给排
+    level: platoon
+    children: [{template: us_fsc_ammo_sq, count: 1}, {template: us_fsc_fuel_sq, count: 1}, {template: us_fsc_supply_sq, count: 1}]
+  - id: us_fsc_maint_plt
+    name: 维护排
+    level: platoon
+    children: [{template: us_fsc_maint_sq, count: 1}, {template: us_fsc_recovery_sq, count: 1}, {template: us_fsc_field_maint_sq, count: 3}]
+  - id: us_abct_fsc_cab
+    name: 联兵营前线支援连
+    level: company
+    role: support
+    children: [{template: us_fsc_distribution_plt, count: 1}, {template: us_fsc_maint_plt, count: 1}]
+    notes: 编制属旅后勤营，战时加强到营（原文以联兵营 FSC 为例给出编制，其余 FSC 结构相同）。
+  - {id: us_abct_fsc_cav, variant_of: us_abct_fsc_cab, name: 骑兵营前线支援连, level: company, role: support, children: [{template: us_fsc_distribution_plt, count: 1}, {template: us_fsc_maint_plt, count: 1}]}
+  - {id: us_abct_fsc_fa,  variant_of: us_abct_fsc_cab, name: 炮兵营前线支援连, level: company, role: support, children: [{template: us_fsc_distribution_plt, count: 1}, {template: us_fsc_maint_plt, count: 1}]}
+  - {id: us_abct_fsc_beb, variant_of: us_abct_fsc_cab, name: 工兵营前线支援连, level: company, role: support, children: [{template: us_fsc_distribution_plt, count: 1}, {template: us_fsc_maint_plt, count: 1}]}
+  - id: us_bsb_maint_coy
+    name: 维护连
+    level: company
+    role: support
+    children: [{template: us_bsb_maint_mgmt_plt, count: 1}, {template: us_bsb_maint_plt, count: 1}]
+  - {id: us_bsb_maint_mgmt_plt, name: 维护管理排, level: platoon, children: [{template: us_sq_generic, count: 1}]}
+  - {id: us_bsb_maint_plt, name: 维护排, level: platoon, children: [{template: us_sq_generic, count: 1}]}
+  - id: us_bsb_medical_coy
+    name: 医疗连
+    level: company
+    role: support
+    children:
+      - {template: us_bsb_treatment_plt, count: 1}
+      - {template: us_bsb_evac_plt, count: 1}
+      - {template: us_bsb_behavioral_sec, count: 1}
+      - {template: us_bsb_preventive_sec, count: 1}
+      - {template: us_bsb_med_supply_sq, count: 1}
+  - {id: us_bsb_treatment_plt, name: 治疗排, level: platoon, children: [{template: us_sq_generic, count: 1}]}
+  - {id: us_bsb_evac_plt, name: 后送排, level: platoon, children: [{template: us_sq_generic, count: 1}]}
+  - {id: us_bsb_behavioral_sec, name: 行为健康分队, level: squad, granularity: aggregate}
+  - {id: us_bsb_preventive_sec, name: 预防分队, level: squad, granularity: aggregate}
+  - {id: us_bsb_med_supply_sq, name: 医疗供应班, level: squad, granularity: aggregate}
+  - id: us_bsb_distribution_coy
+    name: 配给连
+    level: company
+    role: support
+    children: [{template: us_bsb_transport_plt, count: 1}, {template: us_bsb_supply_plt, count: 1}, {template: us_bsb_fuel_water_plt, count: 1}]
+  - {id: us_bsb_transport_plt, name: 运输排, level: platoon, children: [{template: us_sq_generic, count: 1}]}
+  - {id: us_bsb_supply_plt, name: 供应排, level: platoon, children: [{template: us_sq_generic, count: 1}]}
+  - {id: us_bsb_fuel_water_plt, name: 油料淡水排, level: platoon, children: [{template: us_sq_generic, count: 1}]}
+  - id: us_abct_bsb
+    name: ABCT 旅后勤营
+    level: battalion
+    role: support
+    children:
+      - {template: us_bsb_maint_coy, count: 1}
+      - {template: us_bsb_medical_coy, count: 1}
+      - {template: us_bsb_distribution_coy, count: 1}
+      - {template: us_abct_fsc_cab, count: 3}
+      - {template: us_abct_fsc_fa, count: 1}
+      - {template: us_abct_fsc_cav, count: 1}
+      - {template: us_abct_fsc_beb, count: 1}
+    notes: 6 个前线支援连编制属后勤营；各营 attached 字段只是标明战时加强关系（校验时不重复计数）。SBCT、IBCT 沿用此结构（原文未单列）。
+
+  - {id: us_bct_hhc, name: 旅部连, level: battalion, role: hq, children: [{template: us_sq_generic, count: 1}], notes: 原文未展开。}
+
+  # 旅级剩余装备池：原文旅总数 − 各营已建模装备。实际分布在后勤营、工兵营、旅部、各营 FIST 等处，
+  # 原文没有细分，放在这里保证全旅采购需求与原文一致。
+  - id: us_abct_residual_pool
+    level: squad
+    role: equipment_pool
+    confidence: estimated
+    slots: {ifv: 32, apc: 76, light_armored_vehicle: 297, truck_medium: 169, truck_heavy: 168, semi_tractor: 9, trailer: 337, engineer_vehicle: 65}
+  - id: us_sbct_residual_pool
+    level: squad
+    role: equipment_pool
+    confidence: estimated
+    slots: {apc: 62, light_armored_vehicle: 296, truck_medium: 177, truck_heavy: 145, semi_tractor: 21, trailer: 338, engineer_vehicle: 23}
+  - id: us_ibct_residual_pool
+    level: squad
+    role: equipment_pool
+    confidence: estimated
+    slots: {light_armored_vehicle: 331, truck_medium: 195, truck_heavy: 102, semi_tractor: 9, trailer: 219, engineer_vehicle: 22}
+  - {id: us_abct_hhc, variant_of: us_bct_hhc, level: battalion, role: hq, children: [{template: us_abct_residual_pool, count: 1}]}
+  - {id: us_sbct_hhc, variant_of: us_bct_hhc, level: battalion, role: hq, children: [{template: us_sbct_residual_pool, count: 1}]}
+  - {id: us_ibct_hhc, variant_of: us_bct_hhc, level: battalion, role: hq, children: [{template: us_ibct_residual_pool, count: 1}]}
+
+  - id: us_abct
+    name: 装甲旅战斗队 ABCT
+    level: brigade
+    children:
+      - {template: us_abct_armor_bn, count: 2}
+      - {template: us_abct_inf_bn, count: 1}
+      - {template: us_abct_cav_sqn, count: 1}
+      - {template: us_abct_fa_bn, count: 1}
+      - {template: us_abct_beb, count: 1}
+      - {template: us_abct_bsb, count: 1}
+      - {template: us_abct_hhc, count: 1}
+    expected_personnel: 4302
+    expected_equipment: {mbt: 87, "ifv+recon_ifv": 136, apc: 134, light_armored_vehicle: 375, truck_medium: 197, truck_heavy: 189, semi_tractor: 9, trailer: 360, engineer_vehicle: 65}
+    unit_ratings: {mechanization: mech_tracked_slow, informatization: info_us_standard, logistics: log_us, readiness: ready_normal}
+    notes: 原文成本表里 M113/AMPV 写作 116 辆；ABCT 总造价约 33.7 亿美元，战力 5.49 单位。
+
+  # ==================================================================
+  # SBCT
+  # ==================================================================
+  - id: us_sbct_rifle_squad
+    variant_of: us_rifle_squad
+    level: squad
+    personnel: {squad_leader: 1, team_leader: 2, automatic_rifleman: 2, grenadier: 2, marksman: 1, rifleman: 1}
+    slots: {rifle: 7, lmg: 2, underbarrel_gl: 2, dmr: 1, uav_micro: 1, tactical_terminal: 1}
+    slots_unassigned: {atgm_portable: 1, disposable_launcher: 2, gpmg: 1}
+    notes: 每排 3 具标枪（每班 1 具）、每班 2 具 AT-4 和 1 挺 M240，均不占编制。
+
+  - id: us_stryker_crew
+    name: M1126 斯崔克车组
+    level: squad
+    personnel: {vehicle_commander: 1, vehicle_driver: 1}
+    slots: {apc: 1}
+    notes: 车长兼遥控武器站操作员。
+
+  - id: us_sbct_plt_weapons_sq
+    name: SBCT 排武器班（含第 4 车车组）
+    level: squad
+    personnel: {vehicle_commander: 1, vehicle_driver: 1, mg_gunner: 2, assistant_gunner: 2}
+    slots: {apc: 1, gpmg: 2, rifle: 2}
+
+  - id: us_sbct_plt_hq
+    level: squad
+    role: hq
+    personnel: {officer: 1, nco_senior: 1, signaler: 1}
+
+  - id: us_sbct_rifle_plt
+    name: SBCT 步兵排
+    level: platoon
+    children:
+      - {template: us_sbct_rifle_squad, count: 3}
+      - {template: us_stryker_crew, count: 3}
+      - {template: us_sbct_plt_weapons_sq, count: 1}
+      - {template: us_sbct_plt_hq, count: 1}
+    attached: [{template: us_att_medic, count: 1}, {template: us_att_fo, count: 1}]
+    expected_personnel: 44
+    expected_equipment: {apc: 4}
+
+  - id: us_m1129_squad
+    name: M1129/M1252 车载 120 迫击炮班
+    level: squad
+    personnel: {squad_leader: 1, vehicle_driver: 1, mortarman: 3}
+    slots: {mortar_vehicle: 1}
+    notes: 班长兼分队长、驾驶员、炮手、2 名弹药手。
+
+  - id: us_sbct_coy_hq_sec
+    name: SBCT 步兵连连部
+    level: squad
+    role: hq
+    personnel: {officer: 2, staff: 1, signaler: 2, vehicle_driver: 2, vehicle_commander: 2, nco_senior: 1, supply: 4}
+    slots: {apc: 2, light_armored_vehicle: 1, truck_medium: 2, trailer: 3}
+    slots_unassigned: {mortar_light: 2}
+    notes: 连长、副连长各一辆 M1126（2 人车组）；通信士官和无线电员坐副连长车；连长车多一名勤务官；一级军士长自驾 JLTV（或带挂车悍马）；2 辆带挂车 LMTV、4 名补给员。迫击炮分队另有 2 门 M224 供下车用。
+
+  - id: us_sbct_coy_att_med
+    level: squad
+    role: support
+    personnel: {medic: 3}
+    slots: {apc: 1}
+    notes: 3 人战场救护小组，乘 M1126，从营加强。
+  - id: us_sbct_coy_att_fist
+    level: squad
+    role: support
+    personnel: {forward_observer: 3}
+    slots: {apc: 1}
+
+  - id: us_sbct_rifle_coy
+    name: SBCT 步兵连
+    level: company
+    children:
+      - {template: us_sbct_rifle_plt, count: 3}
+      - {template: us_m1129_squad, count: 2}
+      - {template: us_sbct_coy_hq_sec, count: 1}
+    attached: [{template: us_sbct_coy_att_med, count: 1}, {template: us_sbct_coy_att_fist, count: 1}]
+    expected_personnel: 159
+    notes: 不含加强 147 人。原编制的 MGS 突击炮排（3 车）和 3 人狙击小组均已撤编。
+
+  - id: us_sbct_bn_scout_sq
+    name: SBCT 营侦察排斯崔克侦察车
+    level: squad
+    personnel: {vehicle_commander: 1, vehicle_driver: 1, scout: 4}
+    slots: {recon_ifv: 1, eo_recon_suite: 1}
+
+  - id: us_sbct_bn_scout_pool
+    level: squad
+    role: equipment_pool
+    slots: {uav_hand_launched: 3, uav_micro: 3}
+    notes: 1 台 RQ-20 + 2 台 RQ-11；其余三车装 RQ-28。
+
+  - id: us_sbct_bn_scout_plt
+    level: platoon
+    children: [{template: us_sbct_bn_scout_sq, count: 6}, {template: us_sbct_bn_scout_pool, count: 1}]
+    expected_personnel: 36
+
+  - id: us_bn_sniper_sq_2team
+    name: 营狙击班（2 组）
+    level: squad
+    personnel: {squad_leader: 1, sniper: 4, spotter: 2}
+    slots: {anti_materiel_rifle: 2, sniper_rifle: 2}
+
+  - id: us_mortar_dismount_pool_81
+    level: squad
+    role: equipment_pool
+    slots: {mortar_medium: 4}
+    notes: SBCT 营每辆车载 120 迫另配 1 门 M252 下车用。
+
+  - id: us_sbct_bn_hhc
+    name: SBCT 步兵营营部连
+    level: company
+    role: hq
+    children:
+      - {template: us_m1129_squad, count: 4}
+      - {template: us_mortar_plt_hq, count: 1}
+      - {template: us_mortar_dismount_pool_81, count: 1}
+      - {template: us_sbct_bn_scout_plt, count: 1}
+      - {template: us_bn_sniper_sq_2team, count: 1}
+      - {template: us_bn_staff_cell, count: 1}
+      - {template: us_sbct_bn_medical_plt, count: 1}
+      - {template: us_sbct_bn_hq_log, count: 1}
+      - {template: us_comm_relay_team, count: 1}
+    expected_personnel: 180
+    expected_equipment: {light_armored_vehicle: 15}
+    notes: 共 20 辆斯崔克（含 4 辆车载迫击炮）、15 辆 JLTV/悍马、4 辆 FMTV、8 辆 MTV、8 辆挂车。
+  - {id: us_sbct_bn_medical_plt, level: squad, role: support, granularity: aggregate, personnel: {medic: 36}, slots: {armored_ambulance: 4}, confidence: estimated, notes: 比 ABCT 多一个前线医护小组（多一个步兵连）。}
+  - id: us_sbct_bn_hq_log
+    level: squad
+    role: support
+    granularity: aggregate
+    personnel: {staff: 27}
+    slots: {apc: 6, light_armored_vehicle: 15, truck_medium: 12, trailer: 8}
+    confidence: estimated
+
+  - id: us_sbct_inf_bn
+    name: SBCT 步兵营
+    level: battalion
+    children: [{template: us_sbct_rifle_coy, count: 3}, {template: us_sbct_bn_hhc, count: 1}]
+    attached: [{template: us_fa_fire_support_elem, count: 1}, {template: us_abct_fsc_cab, count: 1}]
+    default_bindings: {apc: m1126_icv, recon_ifv: m1127_rv, mortar_vehicle: m1129, mortar_medium: m252, mortar_light: m224, light_armored_vehicle: jltv, truck_medium: lmtv, rifle: m4a1, lmg: m249, gpmg: m240, underbarrel_gl: m320, dmr: m110_sdmr, atgm_portable: javelin, disposable_launcher: at4, uav_micro: rq28_skydio_x2, uav_hand_launched: rq20}
+    expected_personnel: 621
+
+  - id: us_sbct_cav_scout_sq
+    level: squad
+    personnel: {vehicle_commander: 1, vehicle_driver: 1, scout: 4}
+    slots: {recon_ifv: 1, eo_recon_suite: 1, gpmg: 1, reusable_launcher: 1, atgm_portable: 1}
+    notes: 每车 1 具标枪、1 挺 M240、1 门 84mm 无后坐力炮。
+  - id: us_sbct_cav_scout_pool
+    level: squad
+    role: equipment_pool
+    slots: {ugv_small: 3, uav_hand_launched: 3, uav_micro: 5}
+  - id: us_sbct_cav_scout_plt
+    level: platoon
+    children: [{template: us_sbct_cav_scout_sq, count: 6}, {template: us_sbct_cav_scout_pool, count: 1}]
+  - id: us_sbct_cav_troop_hq
+    level: squad
+    role: hq
+    personnel: {officer: 1, vehicle_commander: 2, vehicle_driver: 3}
+    slots: {armored_command_vehicle: 1, apc: 2, uav_hand_launched: 1}
+    confidence: estimated
+    notes: 连部 3 辆斯崔克：1 辆指挥车、2 辆双 V 底加强防护型（其一武器站加装标枪）。
+  - id: us_sbct_cav_troop
+    level: company
+    children:
+      - {template: us_sbct_cav_scout_plt, count: 2}
+      - {template: us_m1129_squad, count: 2}
+      - {template: us_sbct_cav_troop_hq, count: 1}
+  - {id: us_sbct_cav_hht, name: 骑兵营营部连, level: company, role: hq, children: [{template: us_sq_generic, count: 1}], notes: 原文未展开。}
+  - id: us_sbct_cav_sqn
+    name: SBCT 骑兵营
+    level: battalion
+    children: [{template: us_sbct_cav_troop, count: 3}, {template: us_sbct_cav_hht, count: 1}]
+    attached: [{template: us_abct_fsc_cav, count: 1}]
+    notes: 无装甲连。
+
+  - id: us_sbct_at_section
+    level: squad
+    personnel: {vehicle_commander: 1, vehicle_driver: 1, vehicle_gunner: 1}
+    slots: {atgm_vehicle: 1}
+    confidence: estimated
+  - id: us_sbct_at_plt
+    name: SBCT 反坦克排（9 辆斯崔克 TOW 车）
+    level: platoon
+    children: [{template: us_sbct_at_section, count: 9}]
+    notes: 因步兵营无 IBCT 那样的营属武器连而设；原文未说明隶属，这里挂在旅直属。
+
+  - id: us_m777_section
+    level: squad
+    personnel: {squad_leader: 1, artilleryman: 12, driver: 2}
+    slots: {howitzer_heavy_towed: 1, truck_medium: 1}
+    confidence: estimated
+  - {id: us_sbct_fa_battery, level: company, children: [{template: us_m777_section, count: 6}]}
+  - id: us_sbct_fa_bn
+    name: SBCT 炮兵营
+    level: battalion
+    children: [{template: us_sbct_fa_battery, count: 3}, {template: us_abct_fa_hhb, count: 1}]
+    default_bindings: {howitzer_heavy_towed: m777a2}
+
+  - id: us_sbct_beb
+    variant_of: us_abct_beb
+    level: battalion
+    children:
+      - {template: us_beb_hq, count: 1}
+      - {template: us_beb_signal_coy, count: 1}
+      - {template: us_beb_mi_coy, count: 1}
+      - {template: us_beb_engineer_coy_a_sbct, count: 1}
+      - {template: us_beb_engineer_coy_b, count: 1}
+    notes: A 连多一个架桥班。
+
+  - id: us_sbct
+    name: 斯崔克旅战斗队 SBCT
+    level: brigade
+    children:
+      - {template: us_sbct_inf_bn, count: 3}
+      - {template: us_sbct_cav_sqn, count: 1}
+      - {template: us_sbct_at_plt, count: 1}
+      - {template: us_sbct_fa_bn, count: 1}
+      - {template: us_sbct_beb, count: 1}
+      - {template: us_abct_bsb, count: 1}
+      - {template: us_sbct_hhc, count: 1}
+    expected_personnel: 3994
+    expected_equipment: {"apc+recon_ifv+mortar_vehicle+atgm_vehicle+armored_command_vehicle+ifv": 314, light_armored_vehicle: 355, truck_medium: 249, truck_heavy: 145, semi_tractor: 21, trailer: 390, engineer_vehicle: 23}
+    unit_ratings: {mechanization: mech_wheeled, informatization: info_us_sbct, logistics: log_us, readiness: ready_normal}
+    notes: 每旅编制 183 辆斯崔克（原文另一处）；全陆军 4214 辆，现役约三重备份。
+
+  # ==================================================================
+  # IBCT（MBCT/LBCT 编制差别不明，按 2021 年 IBCT 编制表）
+  # ==================================================================
+  - id: us_ibct_rifle_squad
+    variant_of: us_rifle_squad
+    level: squad
+    personnel: {squad_leader: 1, team_leader: 2, automatic_rifleman: 2, grenadier: 2, marksman: 1, rifleman: 1}
+    slots: {rifle: 7, lmg: 2, underbarrel_gl: 2, dmr: 1, uav_micro: 1, tactical_terminal: 1}
+    slots_unassigned: {disposable_launcher: 2}
+
+  - id: us_ibct_plt_weapons_sq
+    name: IBCT 排武器班
+    level: squad
+    personnel: {squad_leader: 1, mg_gunner: 2, assistant_gunner: 4, at_gunner: 2, rifleman: 2}
+    slots: {gpmg: 2, atgm_portable: 2, rifle: 9}
+    confidence: estimated
+    notes: 2 个通用机枪组 + 2 个反坦克组（射手 + 弹药手，装标枪或 M3A1 古斯塔夫）。机枪组按 3 人推算以凑齐排 43 人。
+
+  - id: us_ibct_rifle_plt
+    name: IBCT 步兵排
+    level: platoon
+    children:
+      - {template: us_ibct_rifle_squad, count: 3}
+      - {template: us_ibct_plt_weapons_sq, count: 1}
+      - {template: us_sbct_plt_hq, count: 1}
+    attached: [{template: us_att_medic, count: 1}, {template: us_att_fo, count: 1}]
+    expected_personnel: 43
+    notes: MBCT 会给排配 ISV（每车 9 人）。
+
+  - id: us_m224_squad
+    level: squad
+    personnel: {squad_leader: 1, mortarman: 2}
+    slots: {mortar_light: 1}
+    confidence: estimated
+
+  - id: us_ibct_coy_hq_sec
+    name: IBCT 步兵连连部
+    level: squad
+    role: hq
+    personnel: {officer: 3, nco_senior: 1, signaler: 2, supply: 2, staff: 4}
+    slots: {light_armored_vehicle: 1, truck_medium: 1, uav_hand_launched: 1}
+    notes: JLTV 乘连长、通信官、2 名无线电员；LMTV 乘副连长、一级军士长、2 名补给员、加强医护兵。原文连部 13 人，其余 4 人未说明（记为 staff）。
+  - id: us_ibct_coy_att_fist
+    level: squad
+    role: support
+    personnel: {forward_observer: 4}
+
+  - id: us_ibct_rifle_coy
+    name: IBCT 步兵连
+    level: company
+    children:
+      - {template: us_ibct_rifle_plt, count: 3}
+      - {template: us_m224_squad, count: 2}
+      - {template: us_ibct_coy_hq_sec, count: 1}
+    attached: [{template: us_att_medic, count: 1}, {template: us_ibct_coy_att_fist, count: 1}]
+    expected_personnel: 148
+    notes: 不含加强 137 人。
+
+  - id: us_m252_squad
+    level: squad
+    personnel: {squad_leader: 1, mortarman: 4}
+    slots: {mortar_medium: 1}
+    notes: 每门 5 人。
+  - id: us_ibct_bn_scout_sq
+    level: squad
+    personnel: {vehicle_driver: 2, scout: 4}
+    slots: {light_armored_vehicle: 2}
+    notes: 每班 2 车，每车 3 人（2 人下车）。
+  - id: us_ibct_bn_scout_plt_hq
+    level: squad
+    role: hq
+    personnel: {officer: 1, nco_senior: 1, vehicle_driver: 1}
+    slots: {light_armored_vehicle: 2, atgm_heavy: 2}
+    notes: 排部 2 车共 3 人；全排有 2 辆 TOW 车（这里放在排部槽位）。
+  - id: us_ibct_bn_scout_plt
+    level: platoon
+    children: [{template: us_ibct_bn_scout_sq, count: 3}, {template: us_ibct_bn_scout_plt_hq, count: 1}]
+    expected_equipment: {light_armored_vehicle: 8}
+
+  - id: us_ibct_assault_sq
+    name: IBCT 武器连突击班
+    level: squad
+    personnel: {vehicle_commander: 2, vehicle_driver: 2, vehicle_gunner: 4}
+    slots: {light_armored_vehicle: 2}
+    notes: 每班 2 车，每车车长、驾驶员、2 名武器操作员；乘车作战。
+  - id: us_ibct_assault_plt_hq
+    name: 突击排排部（2 车）
+    level: squad
+    role: hq
+    personnel: {officer: 1, vehicle_commander: 1, vehicle_driver: 2, vehicle_gunner: 4}
+    slots: {light_armored_vehicle: 2}
+    notes: 排部 2 辆车，武器与突击班相同。
+  - id: us_ibct_assault_plt
+    name: 突击排
+    level: platoon
+    children: [{template: us_ibct_assault_sq, count: 2}, {template: us_ibct_assault_plt_hq, count: 1}]
+    notes: 2 个班 + 排部，每班 2 车、排部 2 车，共 6 车。
+  - id: us_ibct_weapons_coy_pool
+    level: squad
+    role: equipment_pool
+    slots: {hmg: 8, atgm_heavy: 8, agl: 8, mrap: 1}
+    notes: 全连 24 车：8 辆 M2、8 辆 TOW、8 辆 Mk19；连部 1 辆 M-ATV。
+  - id: us_ibct_weapons_coy
+    name: IBCT 营武器连
+    level: company
+    children: [{template: us_ibct_assault_plt, count: 4}, {template: us_ibct_weapons_coy_pool, count: 1}]
+    expected_equipment: {light_armored_vehicle: 24}
+
+  - id: us_ibct_bn_hhc
+    name: IBCT 步兵营营部连
+    level: company
+    role: hq
+    children:
+      - {template: us_m252_squad, count: 4}
+      - {template: us_mortar_plt_hq, count: 1}
+      - {template: us_ibct_bn_scout_plt, count: 1}
+      - {template: us_bn_sniper_sq_2team, count: 1}
+      - {template: us_bn_staff_cell, count: 1}
+      - {template: us_sbct_bn_medical_plt, count: 1}
+      - {template: us_ibct_bn_hq_log, count: 1}
+      - {template: us_comm_relay_team, count: 1}
+    expected_personnel: 170
+    notes: 28 辆 JLTV、9 辆悍马、4 辆 LMTV、3 辆 MTV、7 辆挂车；悍马/JLTV 一般不配专职驾驶员。
+  - id: us_ibct_bn_hq_log
+    level: squad
+    role: support
+    granularity: aggregate
+    personnel: {staff: 27}
+    slots: {light_armored_vehicle: 29, truck_medium: 7, trailer: 7}
+    confidence: estimated
+
+  - id: us_ibct_inf_bn
+    name: IBCT 步兵营
+    level: battalion
+    children:
+      - {template: us_ibct_rifle_coy, count: 3}
+      - {template: us_ibct_weapons_coy, count: 1}
+      - {template: us_ibct_bn_hhc, count: 1}
+    attached: [{template: us_fa_fire_support_elem, count: 1}, {template: us_abct_fsc_cab, count: 1}]
+    default_bindings: {light_armored_vehicle: jltv, mrap: m_atv, mortar_medium: m252, mortar_light: m224a1, truck_medium: lmtv, rifle: m4a1, lmg: m249, gpmg: m240, hmg: m2_hmg, agl: mk19, atgm_heavy: tow, atgm_portable: javelin, disposable_launcher: at4, underbarrel_gl: m320, dmr: m110_sdmr, uav_micro: rq28_skydio_x2, uav_hand_launched: rq11}
+    expected_personnel: 581
+    notes: 原文各级人数（连 148、营部 170、营 581）加不拢，以营总数为准。
+
+  - id: us_ibct_cav_scout_sq
+    level: squad
+    personnel: {vehicle_commander: 1, vehicle_driver: 1, scout: 2}
+    slots: {light_armored_vehicle: 1}
+    confidence: estimated
+    notes: 每车 2 名下车步兵（三种骑兵营中最少）；车组人数原文未给。
+  - id: us_ibct_cav_scout_pool
+    level: squad
+    role: equipment_pool
+    slots: {atgm_heavy: 2, hmg: 2, agl: 2, atgm_portable: 3, ugv_small: 3, uav_hand_launched: 1, uav_micro: 5}
+    notes: 6 车中 2 辆 TOW、2 辆 M2、2 辆 Mk19；每排 3 具标枪。
+  - id: us_ibct_cav_scout_plt
+    level: platoon
+    children: [{template: us_ibct_cav_scout_sq, count: 6}, {template: us_ibct_cav_scout_pool, count: 1}]
+  - id: us_m120_squad
+    level: squad
+    personnel: {squad_leader: 1, mortarman: 4}
+    slots: {mortar_heavy: 1, light_armored_vehicle: 1}
+    confidence: estimated
+  - id: us_ibct_cav_troop
+    name: IBCT 骑兵连（乘车）
+    level: company
+    children:
+      - {template: us_ibct_cav_scout_plt, count: 2}
+      - {template: us_m120_squad, count: 2}
+  - id: us_ibct_dismount_recon_sq
+    level: squad
+    personnel: {squad_leader: 1, team_leader: 2, scout: 6}
+    slots: {rifle: 7, lmg: 2, underbarrel_gl: 2}
+    confidence: estimated
+  - id: us_ibct_dismount_recon_plt
+    level: platoon
+    children: [{template: us_ibct_dismount_recon_sq, count: 3}, {template: us_ibct_dismount_plt_hq, count: 1}]
+    notes: 3 个 9 人班，只有排部有 1 辆 JLTV；武器与骑兵连侦察排基本一致，但无遥控车。
+  - {id: us_ibct_dismount_plt_hq, level: squad, role: hq, personnel: {officer: 1, nco_senior: 1}, slots: {light_armored_vehicle: 1}, confidence: estimated}
+  - id: us_ibct_cav_sniper_sq
+    level: squad
+    personnel: {squad_leader: 1, sniper: 5, spotter: 3, uav_operator: 1}
+    slots: {sniper_rifle: 3, anti_materiel_rifle: 2, uav_hand_launched: 1}
+    notes: 10 人；8.6mm 反人员狙击步枪 2、12.7mm 反器材 2、7.62mm 1；两个“反器材 + 狙击 + 观察员”小组，第三组为 7.62 狙击枪 + RQ-11。原文 8.6mm 与 7.62 均记为 sniper_rifle。
+  - id: us_m224_squad_3
+    level: squad
+    personnel: {mortarman: 3}
+    slots: {mortar_light: 1}
+  - id: us_ibct_dismount_troop
+    name: IBCT 下车侦察连
+    level: company
+    children:
+      - {template: us_ibct_dismount_recon_plt, count: 2}
+      - {template: us_m224_squad_3, count: 2}
+      - {template: us_ibct_cav_sniper_sq, count: 1}
+  - id: us_ibct_cav_sqn
+    name: IBCT 骑兵营
+    level: battalion
+    children:
+      - {template: us_ibct_cav_troop, count: 2}
+      - {template: us_ibct_dismount_troop, count: 1}
+      - {template: us_sbct_cav_hht, count: 1}
+
+  - id: us_m119_section
+    level: squad
+    personnel: {squad_leader: 1, artilleryman: 8, driver: 1}
+    slots: {howitzer_light_towed: 1, truck_medium: 1}
+    confidence: estimated
+  - {id: us_ibct_fa_battery_105, level: company, children: [{template: us_m119_section, count: 6}]}
+  - id: us_fa_target_acq_plt_light
+    level: squad
+    role: support
+    slots: {radar_counter_battery: 5, light_armored_vehicle: 5}
+    notes: 比 ABCT 少一部 TPQ-37。
+  - id: us_ibct_fa_bn
+    name: IBCT 炮兵营
+    level: battalion
+    children:
+      - {template: us_sbct_fa_battery, count: 1}
+      - {template: us_ibct_fa_battery_105, count: 2}
+      - {template: us_ibct_fa_hhb, count: 1}
+    default_bindings: {howitzer_heavy_towed: m777a2, howitzer_light_towed: m119}
+
+  - id: us_ibct
+    name: 步兵旅战斗队 IBCT（LBCT 基准）
+    level: brigade
+    children:
+      - {template: us_ibct_inf_bn, count: 3}
+      - {template: us_ibct_cav_sqn, count: 1}
+      - {template: us_ibct_fa_bn, count: 1}
+      - {template: us_abct_beb, count: 1}
+      - {template: us_abct_bsb, count: 1}
+      - {template: us_ibct_hhc, count: 1}
+    expected_personnel: 4254
+    expected_equipment: {light_armored_vehicle: 558, truck_medium: 243, truck_heavy: 102, semi_tractor: 9, trailer: 240, engineer_vehicle: 22}
+    unit_ratings: {mechanization: mech_partial, informatization: info_us_standard, logistics: log_us, readiness: ready_normal}
+    notes: >
+      MBCT = 在排一级装备 ISV 的 IBCT（机械化档 mech_tracked_slow），空突、空降旅均为 MBCT，空降和山地旅属 LBCT。
+      空突/空降 IBCT 准备度为 ready_high。

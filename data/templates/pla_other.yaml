@@ -1,0 +1,1370 @@
+# 解放军其他陆上单位（原文 1.3.5.2、1.4.2）
+# 每个单位都拆到原文描述的最低一级；原文只给到营/连名称的，就以该级为叶子（children 为空或用 pla_generic_sq 占位）。
+# 通用车辆班 pla_vsq_* 和合成营各级模板定义在 pla_army_brigade.yaml。
+
+templates:
+
+  # ##################################################################
+  # 一、集团军直属旅
+  # ##################################################################
+
+  # ---------------- 炮兵旅 ----------------
+  - id: pla_how155_coy
+    name: 155 榴弹炮连
+    level: company
+    children: [{template: pla_vsq_howitzer_heavy_sp, count: 6}]
+    notes: 每连 6 门（新疆合成师“3 个 PCL-181 连共 18 门”）。PLZ-05 自行或 PCL-181 车载（实例中换 pla_vsq_howitzer_heavy_truck）。
+  - id: pla_how155_bn
+    name: 155 榴弹炮营
+    level: battalion
+    children: [{template: pla_how155_coy, count: 3}]
+    default_bindings: {howitzer_heavy_sp: plz05, howitzer_heavy_truck: pcl181}
+    notes: 每营 18 门 PLZ-05 或 PCL-181。
+  - id: pla_phl03_bn
+    name: PHL-03 远程火箭炮营
+    level: battalion
+    children: [{template: pla_vsq_mrl_long_range, count: 12}]
+    default_bindings: {mrl_long_range: phl03}
+    notes: 每营 12 门，每门 12 管 300mm。连级划分原文未给。
+  - id: pla_phl191_bn
+    name: PHL-191 模块化远程火箭炮营
+    level: battalion
+    children: [{template: pla_vsq_mrl_long_range, count: 16}]
+    default_bindings: {mrl_long_range: phl191}
+    notes: 每营 16 门，每门 3 个发射模块。
+  - id: pla_gun130_bn
+    name: 130 加农炮营（自海防部队转隶）
+    level: battalion
+    children: [{template: pla_vsq_howitzer_heavy_towed, count: 18}]
+    default_bindings: {howitzer_heavy_towed: type59_130}
+    confidence: estimated
+    notes: 2026-06 注：至少 1 个；门数原文未给，按 155 营 18 门类推。
+  - id: pla_arty_bde_cmd_spt_bn
+    name: 炮兵旅指挥支援营
+    level: battalion
+    role: support
+    children: [{template: pla_vsq_uav_tactical, count: 4}]
+    confidence: estimated
+    notes: 装备若干架 ASN-209 中型无人机（架数原文未给）。
+  - {id: pla_svc_bn_generic, name: 勤务保障营, level: battalion, role: support, granularity: aggregate, children: []}
+  - id: pla_ag_artillery_brigade
+    name: 集团军炮兵旅
+    level: brigade
+    children:
+      - {template: pla_how155_bn, count: 4}
+      - {template: pla_phl03_bn, count: 1}
+      - {template: pla_phl191_bn, count: 1}
+      - {template: pla_arty_bde_cmd_spt_bn, count: 1}
+      - {template: pla_svc_bn_generic, count: 1}
+    notes: 2025-08 原文编制。
+  - id: pla_ag_artillery_brigade_2026
+    variant_of: pla_ag_artillery_brigade
+    name: 集团军炮兵旅（2026-06 注）
+    level: brigade
+    children:
+      - {template: pla_how155_bn, count: 6}
+      - {template: pla_gun130_bn, count: 1}
+      - {template: pla_phl03_bn, count: 1}
+      - {template: pla_phl191_bn, count: 1}
+      - {template: pla_arty_bde_cmd_spt_bn, count: 1}
+      - {template: pla_svc_bn_generic, count: 1}
+    notes: 随 PCL-181 铺开，大量炮兵旅已有 6 个 155 营，另有至少 1 个自海防部队转隶的 130 加农炮营。
+
+  # ---------------- 防空旅 ----------------
+  - id: pla_hq16_bn_support
+    level: squad
+    role: support
+    granularity: aggregate
+    slots: {armored_command_vehicle: 1}
+    notes: 1 辆指挥车、1 辆搜索雷达车、1 辆照射雷达车，以及若干充电和后勤车辆。
+  - id: pla_hq16_bn
+    name: 红旗-16 地空导弹营
+    level: battalion
+    children: [{template: pla_vsq_sam_medium, count: 8}, {template: pla_hq16_bn_support, count: 1}]
+    default_bindings: {sam_medium: hq16a}
+    notes: 每营 8 辆发射车，每车 6 个发射架；红旗-16/16A/16B 射程 40/70/160km，展开 15-20 分钟。
+  - id: pla_hq7_bn
+    name: 红旗-7 地空导弹营（部分防空旅仍有 2 个）
+    level: battalion
+    children: [{template: pla_generic_sq, count: 1}]
+    default_bindings: {sam_short: hq7}
+    notes: 发射车数原文未给。
+  - id: pla_ad_bde_gun_bn
+    name: 防空旅高炮营
+    level: battalion
+    children: [{template: pla_vsq_aa_gun_towed, count: 18}]
+    default_bindings: {aa_gun_towed: pg99}
+    notes: 18 门 PG-99 牵引双联 35，或 18 辆 PGL-625（实例中换 pla_vsq_spaag）。
+  - {id: pla_ew_ad_bn, name: 电子防空营, level: battalion, role: support, granularity: aggregate, children: []}
+  - {id: pla_cmd_spt_bn_generic, name: 指挥支援营, level: battalion, role: support, granularity: aggregate, children: []}
+  - id: pla_ag_ad_brigade
+    name: 集团军防空旅
+    level: brigade
+    children:
+      - {template: pla_hq16_bn, count: 4}
+      - {template: pla_ad_bde_gun_bn, count: 1}
+      - {template: pla_ew_ad_bn, count: 1}
+      - {template: pla_cmd_spt_bn_generic, count: 1}
+      - {template: pla_svc_bn_generic, count: 1}
+  - id: pla_ag_ad_brigade_hq7
+    variant_of: pla_ag_ad_brigade
+    name: 集团军防空旅（2 个营仍装红旗-7）
+    level: brigade
+    children:
+      - {template: pla_hq16_bn, count: 2}
+      - {template: pla_hq7_bn, count: 2}
+      - {template: pla_ad_bde_gun_bn, count: 1}
+      - {template: pla_ew_ad_bn, count: 1}
+      - {template: pla_cmd_spt_bn_generic, count: 1}
+      - {template: pla_svc_bn_generic, count: 1}
+
+  # ---------------- 陆航旅 ----------------
+  - {id: pla_vsq_attack_heli, level: squad, granularity: aggregate, slots: {attack_helicopter: 1}}
+  - {id: pla_vsq_transport_heli, level: squad, granularity: aggregate, slots: {transport_helicopter: 1}}
+  - {id: pla_vsq_uav_male, level: squad, granularity: aggregate, slots: {uav_male: 1}}
+  - id: pla_attack_heli_bn
+    name: 攻击直升机营（16 架）
+    level: battalion
+    children: [{template: pla_vsq_attack_heli, count: 16}]
+    default_bindings: {attack_helicopter: z10}
+    notes: 直-10、直-19 或直-9。传统每营 12 架，前几年扩编到 16 架，现在可能开始仿照美军扩充到 24 架（见 _12 / _24 变体）。
+  - {id: pla_attack_heli_bn_12, variant_of: pla_attack_heli_bn, level: battalion, children: [{template: pla_vsq_attack_heli, count: 12}]}
+  - {id: pla_attack_heli_bn_24, variant_of: pla_attack_heli_bn, level: battalion, children: [{template: pla_vsq_attack_heli, count: 24}], confidence: uncertain}
+  - id: pla_transport_heli_bn
+    name: 运输直升机营（16 架）
+    level: battalion
+    children: [{template: pla_vsq_transport_heli, count: 16}]
+    default_bindings: {transport_helicopter: mi171}
+    notes: 直-20 突击运输直升机和直-8、直-8L、米-17/171。
+  - {id: pla_transport_heli_bn_12, variant_of: pla_transport_heli_bn, level: battalion, children: [{template: pla_vsq_transport_heli, count: 12}]}
+  - {id: pla_transport_heli_bn_24, variant_of: pla_transport_heli_bn, level: battalion, children: [{template: pla_vsq_transport_heli, count: 24}], confidence: uncertain}
+  - {id: pla_utility_heli_bn, name: 勤务直升机营, level: battalion, children: [{template: pla_generic_sq, count: 1}]}
+  - id: pla_aviation_uav_bn
+    name: 陆航无人机营
+    level: battalion
+    children: [{template: pla_vsq_uav_male, count: 12}]
+    default_bindings: {uav_male: wz6_ch4}
+    notes: 12 架无侦-6 或彩虹-4。
+  - {id: pla_aviation_spt_bn, name: 支援保障营, level: battalion, role: support, granularity: aggregate, children: []}
+  - id: pla_ag_aviation_brigade
+    name: 集团军陆航旅
+    level: brigade
+    children:
+      - {template: pla_attack_heli_bn, count: 2}
+      - {template: pla_transport_heli_bn, count: 2}
+      - {template: pla_utility_heli_bn, count: 1}
+      - {template: pla_aviation_uav_bn, count: 1}
+      - {template: pla_aviation_spt_bn, count: 1}
+
+  # ---------------- 特战旅 ----------------
+  - {id: pla_sof_bn, name: 特战营, level: battalion, granularity: aggregate, children: [], notes: 类似美军骑兵营的机械化侦察部队。}
+  - {id: pla_sof_recon_bn, name: 特战旅侦察营, level: battalion, granularity: aggregate, children: [], notes: 徒步侦察，大量伪装、敌后渗透作战的特种武装侦察部队。}
+  - {id: pla_sof_uav_bn, name: 无人机营, level: battalion, granularity: aggregate, children: []}
+  - {id: pla_sof_training_bn, name: 特种训练营, level: battalion, granularity: aggregate, children: [], notes: 同时负责训练各合成旅属侦察部队。}
+  - id: pla_ag_sof_brigade
+    name: 集团军特战旅（可视为侦察旅）
+    level: brigade
+    children:
+      - {template: pla_sof_bn, count: 3}
+      - {template: pla_sof_recon_bn, count: 1}
+      - {template: pla_sof_uav_bn, count: 1}
+      - {template: pla_cmd_spt_bn_generic, count: 1}
+      - {template: pla_sof_training_bn, count: 1}
+      - {template: pla_svc_bn_generic, count: 1}
+    notes: 作战支援营在此复用“指挥支援营”占位。
+
+  # ---------------- 工化旅 ----------------
+  - {id: pla_pontoon_bn, name: 舟桥营, level: battalion, granularity: aggregate, children: []}
+  - {id: pla_demolition_bn, name: 地爆营, level: battalion, granularity: aggregate, children: []}
+  - {id: pla_fort_coy, name: 筑城连, level: company, children: [{template: pla_generic_sq, count: 1}]}
+  - {id: pla_rush_repair_coy, name: 抢建抢修连, level: company, children: [{template: pla_generic_sq, count: 1}]}
+  - {id: pla_camouflage_coy, name: 伪装连, level: company, children: [{template: pla_generic_sq, count: 1}]}
+  - {id: pla_blasting_coy, name: 爆破连, level: company, children: [{template: pla_generic_sq, count: 1}]}
+  - id: pla_fortification_bn
+    name: 筑城营
+    level: battalion
+    children:
+      - {template: pla_fort_coy, count: 2}
+      - {template: pla_rush_repair_coy, count: 1}
+      - {template: pla_camouflage_coy, count: 1}
+      - {template: pla_blasting_coy, count: 1}
+  - {id: pla_cbrn_bn, name: 防化营, level: battalion, granularity: aggregate, children: []}
+  - {id: pla_flamethrower_bn, name: 喷火营, level: battalion, granularity: aggregate, children: []}
+  - id: pla_ag_engineer_cbrn_brigade
+    name: 集团军工化旅
+    level: brigade
+    children:
+      - {template: pla_pontoon_bn, count: 1}
+      - {template: pla_demolition_bn, count: 1}
+      - {template: pla_fortification_bn, count: 1}
+      - {template: pla_cbrn_bn, count: 1}
+      - {template: pla_flamethrower_bn, count: 1}
+      - {template: pla_cmd_spt_bn_generic, count: 1}
+      - {template: pla_svc_bn_generic, count: 1}
+    notes: 作战支援营在此复用“指挥支援营”占位。
+
+  # ---------------- 勤务支援旅 ----------------
+  - {id: pla_repair1_bn, name: 修理一营, level: battalion, granularity: aggregate, children: []}
+  - {id: pla_repair2_bn, name: 修理二营, level: battalion, granularity: aggregate, children: []}
+  - {id: pla_trunk_comm_bn, name: 干线网络通信营, level: battalion, granularity: aggregate, children: []}
+  - {id: pla_mobile_comm_bn, name: 机动通信营, level: battalion, granularity: aggregate, children: []}
+  - {id: pla_ew_bn, name: 电子对抗营, level: battalion, granularity: aggregate, children: []}
+  - {id: pla_medical_bn, name: 医疗营, level: battalion, granularity: aggregate, children: []}
+  - {id: pla_transport_svc_bn, name: 运输勤务营, level: battalion, granularity: aggregate, children: []}
+  - id: pla_ag_support_brigade
+    name: 集团军勤务支援旅
+    level: brigade
+    children:
+      - {template: pla_repair1_bn, count: 1}
+      - {template: pla_repair2_bn, count: 1}
+      - {template: pla_trunk_comm_bn, count: 1}
+      - {template: pla_mobile_comm_bn, count: 1}
+      - {template: pla_ew_bn, count: 1}
+      - {template: pla_medical_bn, count: 1}
+      - {template: pla_transport_svc_bn, count: 1}
+
+  # ---------------- 集团军 ----------------
+  - id: pla_group_army
+    name: 集团军（标准）
+    level: corps
+    children:
+      - {template: pla_heavy_cab_brigade, count: 2}
+      - {template: pla_medium_cab_brigade, count: 2}
+      - {template: pla_light_cab_brigade, count: 2}
+      - {template: pla_ag_sof_brigade, count: 1}
+      - {template: pla_ag_artillery_brigade, count: 1}
+      - {template: pla_ag_ad_brigade, count: 1}
+      - {template: pla_ag_aviation_brigade, count: 1}
+      - {template: pla_ag_engineer_cbrn_brigade, count: 1}
+      - {template: pla_ag_support_brigade, count: 1}
+    confidence: estimated
+    notes: 一般 6 个合成旅，构成随部署方向不同，但一般至少 1 重 1 中 1 轻；2-2-2 只是示例。
+  - id: pla_group_army_air_assault
+    variant_of: pla_group_army
+    name: 集团军（陆航旅改空突旅）
+    level: corps
+    children:
+      - {template: pla_heavy_cab_brigade, count: 2}
+      - {template: pla_medium_cab_brigade, count: 2}
+      - {template: pla_light_cab_brigade, count: 2}
+      - {template: pla_ag_sof_brigade, count: 1}
+      - {template: pla_ag_artillery_brigade, count: 1}
+      - {template: pla_ag_ad_brigade, count: 1}
+      - {template: pla_army_air_assault_brigade, count: 1}
+      - {template: pla_ag_engineer_cbrn_brigade, count: 1}
+      - {template: pla_ag_support_brigade, count: 1}
+    notes: 有 2 个集团军的陆航旅为增加 3 个步兵营后的空突旅。
+
+  # ##################################################################
+  # 二、战区陆军直属
+  # ##################################################################
+  - {id: pla_enemy_rear_recon_coy, name: 敌后侦察连, level: company, children: [{template: pla_generic_sq, count: 1}], notes: 特战 Tier 2。}
+  - id: pla_ti_armed_recon_bn
+    name: 情报侦察旅武装侦察营
+    level: battalion
+    children: [{template: pla_enemy_rear_recon_coy, count: 1}, {template: pla_armed_recon_coy, count: 1}]
+    notes: 含敌后侦察连（Tier 2）和武装侦察连（Tier 3）；其他连原文未列。
+  - {id: pla_theater_recon_intel_brigade, name: 战区侦察情报旅, level: brigade, children: [{template: pla_ti_armed_recon_bn, count: 1}]}
+  - {id: pla_theater_info_brigade, name: 战区信息保障旅, level: brigade, granularity: aggregate, children: []}
+  - {id: pla_theater_ew_brigade, name: 战区电子对抗旅, level: brigade, granularity: aggregate, children: []}
+  - {id: pla_theater_pontoon_brigade, name: 战区舟桥旅, level: brigade, granularity: aggregate, children: [], notes: 部分战区有。}
+  - id: pla_theater_lr_rocket_brigade
+    name: 战区远程火箭炮旅
+    level: brigade
+    children: [{template: pla_phl191_bn, count: 4}]
+    notes: 2025-08 时各旅似乎只有 1 个营；2026-06 注：已普遍有 4-6 个 191 箱火营。
+  - id: pla_joint_logistics_center
+    name: 战区联勤保障中心
+    level: brigade
+    role: support
+    granularity: aggregate
+    children: []
+    notes: 综合物资库、油料库、弹药库、救护所、修理所、机动保障队、警戒勤务分队等。
+  - id: pla_theater_army
+    name: 战区陆军
+    level: corps
+    children:
+      - {template: pla_group_army, count: 3}
+      - {template: pla_theater_recon_intel_brigade, count: 1}
+      - {template: pla_theater_info_brigade, count: 1}
+      - {template: pla_theater_ew_brigade, count: 1}
+      - {template: pla_theater_lr_rocket_brigade, count: 1}
+      - {template: pla_joint_logistics_center, count: 1}
+    notes: 每战区 2-3 个集团军；部分战区另有舟桥旅、海防旅、边防旅/团。
+
+  # ##################################################################
+  # 三、新疆军区：合成营 / 团 / 师
+  # ##################################################################
+  - id: pla_xj_heavy_cab_2t1m
+    name: 新疆重型合成营（1 步 2 坦）
+    level: battalion
+    children:
+      - {template: pla_tank_coy, count: 2}
+      - {template: pla_mech_coy, count: 1}
+      - {template: pla_heavy_fire_coy, count: 1}
+      - {template: pla_xj_spt_coy, count: 1}
+      - {template: pla_bn_hq_coy, count: 1}
+    notes: 作战连比普通合成营少一个；火力连与其他军区一致。
+  - id: pla_xj_heavy_cab_1t2m
+    name: 新疆重型合成营（2 步 1 坦）
+    level: battalion
+    children:
+      - {template: pla_tank_coy, count: 1}
+      - {template: pla_mech_coy, count: 2}
+      - {template: pla_heavy_fire_coy, count: 1}
+      - {template: pla_xj_spt_coy, count: 1}
+      - {template: pla_bn_hq_coy, count: 1}
+  - id: pla_xj_medium_cab
+    name: 新疆中型合成营
+    level: battalion
+    children:
+      - {template: pla_assault_gun_coy, count: 1}
+      - {template: pla_medium_mech_coy, count: 2}
+      - {template: pla_heavy_fire_coy, count: 1}
+      - {template: pla_xj_spt_coy, count: 1}
+      - {template: pla_bn_hq_coy, count: 1}
+  - id: pla_xj_light_cab
+    name: 新疆轻型合成营
+    level: battalion
+    children:
+      - {template: pla_light_coy, count: 3}
+      - {template: pla_light_fire_coy, count: 1}
+      - {template: pla_xj_spt_coy, count: 1}
+      - {template: pla_bn_hq_coy, count: 1}
+  - id: pla_xj_spt_coy
+    variant_of: pla_heavy_spt_coy
+    name: 新疆合成营支援保障连（略小）
+    level: company
+    role: support
+    children:
+      - {template: pla_bn_recon_plt_heavy, count: 1}
+      - {template: pla_bn_comm_plt, count: 1}
+      - {template: pla_bn_medical_plt, count: 1}
+      - {template: pla_bn_engineer_plt, count: 1}
+      - {template: pla_bn_maint_plt, count: 1}
+      - {template: pla_bn_transport_plt, count: 1}
+      - {template: pla_bn_cook_plt, count: 1}
+      - {template: pla_spt_coy_hq, count: 1}
+    notes: 原文只说“略小”，未给细节；结构沿用普通支保连。
+
+  - {id: pla_xj_how122_coy, name: 122 榴弹炮连, level: company, children: [{template: pla_vsq_howitzer_light_sp, count: 9}]}
+  - {id: pla_xj_at_coy, name: 反坦克连（6 辆）, level: company, children: [{template: pla_vsq_atgm_vehicle, count: 6}]}
+  - id: pla_xj_aa_gun_coy
+    name: 防空高炮连
+    level: company
+    children: [{template: pla_vsq_spaag, count: 6}]
+    confidence: estimated
+    notes: PGZ-04、PGL-625 或牵引 PG-87；门数按 6 推算。
+  - id: pla_xj_fire_bn
+    name: 合成团火力营
+    level: battalion
+    children:
+      - {template: pla_xj_how122_coy, count: 2}
+      - {template: pla_xj_at_coy, count: 1}
+      - {template: pla_xj_aa_gun_coy, count: 1}
+      - {template: pla_manpads_coy, count: 1}
+    notes: 2 个 122 榴弹炮连共 18 门；相比合成旅少 9 门 122、2-3 辆反坦克导弹车、1 个地空导弹连和 2 个防空高炮连。
+  - {id: pla_xj_recon_coy, name: 侦察连, level: company, children: [{template: pla_generic_sq, count: 1}]}
+  - {id: pla_xj_comm_coy, name: 通信连, level: company, children: [{template: pla_generic_sq, count: 1}]}
+  - {id: pla_xj_engchem_coy, name: 工化连, level: company, children: [{template: pla_generic_sq, count: 1}]}
+  - {id: pla_xj_bridge_coy, name: 桥梁连, level: company, children: [{template: pla_generic_sq, count: 1}]}
+  - {id: pla_xj_repair_coy, name: 修理连, level: company, children: [{template: pla_generic_sq, count: 1}]}
+  - {id: pla_xj_motor_coy, name: 汽车连, level: company, children: [{template: pla_generic_sq, count: 1}]}
+  - {id: pla_xj_medical_coy, name: 卫生连, level: company, children: [{template: pla_generic_sq, count: 1}]}
+  - id: pla_xj_spt_bn
+    name: 合成团支援保障营
+    level: battalion
+    role: support
+    children:
+      - {template: pla_xj_recon_coy, count: 1}
+      - {template: pla_xj_comm_coy, count: 1}
+      - {template: pla_xj_engchem_coy, count: 1}
+      - {template: pla_xj_bridge_coy, count: 1}
+      - {template: pla_xj_repair_coy, count: 1}
+      - {template: pla_xj_motor_coy, count: 1}
+      - {template: pla_xj_medical_coy, count: 1}
+    notes: 相比合成旅：侦察营缩为侦察连，3 个通信连并为 1 个，工兵防化并为 1 个，运输和供应并为 1 个，少一个修理连。
+  - id: pla_xj_heavy_regiment
+    name: 新疆重型合成团
+    level: brigade
+    children:
+      - {template: pla_xj_heavy_cab_2t1m, count: 3}
+      - {template: pla_xj_fire_bn, count: 1}
+      - {template: pla_xj_spt_bn, count: 1}
+    notes: 合成营 2 步 1 坦或 1 步 2 坦（可换 pla_xj_heavy_cab_1t2m）。
+  - id: pla_xj_medium_regiment
+    name: 新疆中型合成团
+    level: brigade
+    children:
+      - {template: pla_xj_medium_cab, count: 3}
+      - {template: pla_xj_fire_bn, count: 1}
+      - {template: pla_xj_spt_bn, count: 1}
+  - id: pla_xj_light_regiment
+    name: 新疆轻型合成团
+    level: brigade
+    children:
+      - {template: pla_xj_light_cab, count: 3}
+      - {template: pla_xj_fire_bn, count: 1}
+      - {template: pla_xj_spt_bn, count: 1}
+  - {id: pla_xj_how155_coy, name: PCL-181 炮连, level: company, children: [{template: pla_vsq_howitzer_heavy_truck, count: 6}]}
+  - {id: pla_xj_mrl_coy, name: 122 火箭炮连（9 门）, level: company, children: [{template: pla_vsq_mrl_light, count: 9}]}
+  - id: pla_xj_div_arty_bn
+    name: 合成师火力团炮兵营
+    level: battalion
+    children: [{template: pla_xj_how155_coy, count: 3}, {template: pla_xj_mrl_coy, count: 1}]
+    default_bindings: {howitzer_heavy_truck: pcl181, mrl_light: phl11}
+    notes: 3 个 PCL-181 连共 18 门 + 1 个 11 式 6x6 轮式 122 火箭炮连 9 门。
+  - {id: pla_xj_hq17_coy, name: 红旗-17 地导连, level: company, children: [{template: pla_vsq_sam_short, count: 4}]}
+  - {id: pla_xj_pgl625_coy, name: PGL-625 高炮连, level: company, children: [{template: pla_vsq_spaag, count: 6}]}
+  - id: pla_xj_div_ad_bn
+    name: 合成师火力团防空营
+    level: battalion
+    children: [{template: pla_xj_hq17_coy, count: 2}, {template: pla_xj_pgl625_coy, count: 1}]
+    default_bindings: {sam_short: hq17, spaag: pgl625}
+  - id: pla_xj_fire_regiment
+    name: 合成师火力团
+    level: brigade
+    children: [{template: pla_xj_div_arty_bn, count: 1}, {template: pla_xj_div_ad_bn, count: 1}]
+  - id: pla_xj_spt_regiment
+    name: 合成师支援保障团
+    level: brigade
+    role: support
+    children: [{template: pla_recon_bn_heavy, count: 1}]
+    notes: 合成师无侦察团，支援保障团有一个编制类似合成旅侦察营的侦察营；其他单位原文未列。
+  - id: pla_xj_cab_division
+    name: 新疆合成师
+    level: division
+    children:
+      - {template: pla_xj_heavy_regiment, count: 1}
+      - {template: pla_xj_medium_regiment, count: 1}
+      - {template: pla_xj_light_regiment, count: 1}
+      - {template: pla_xj_fire_regiment, count: 1}
+      - {template: pla_xj_spt_regiment, count: 1}
+    confidence: estimated
+    notes: 3 个合成团（重中轻组合原文未给，此处示例）+ 火力团 + 支援保障团。
+  - {id: pla_xj_engineer_regiment, name: 工兵团, level: brigade, granularity: aggregate, children: []}
+  - {id: pla_xj_cbrn_regiment, name: 防化团, level: brigade, granularity: aggregate, children: []}
+  - {id: pla_xj_comm_regiment, name: 通信团, level: brigade, granularity: aggregate, children: []}
+  - {id: pla_xj_motor_transport_brigade, name: 汽车运输旅, level: brigade, granularity: aggregate, children: []}
+  - {id: pla_xj_motor_transport_regiment, name: 汽车运输团, level: brigade, granularity: aggregate, children: []}
+  - id: pla_xinjiang_military_district
+    name: 新疆军区
+    level: corps
+    children:
+      - {template: pla_xj_cab_division, count: 2}
+      - {template: pla_ag_sof_brigade, count: 1}
+      - {template: pla_ag_artillery_brigade, count: 1}
+      - {template: pla_ag_ad_brigade, count: 1}
+      - {template: pla_ag_aviation_brigade, count: 1}
+      - {template: pla_theater_recon_intel_brigade, count: 1}
+      - {template: pla_theater_info_brigade, count: 1}
+      - {template: pla_theater_ew_brigade, count: 1}
+      - {template: pla_xj_engineer_regiment, count: 2}
+      - {template: pla_xj_cbrn_regiment, count: 1}
+      - {template: pla_xj_comm_regiment, count: 2}
+      - {template: pla_xj_motor_transport_brigade, count: 1}
+      - {template: pla_xj_motor_transport_regiment, count: 1}
+    confidence: estimated
+    notes: >
+      既有其他战区集团军下属的特战、炮兵、防空、陆航旅，也有战区下属的侦察情报、信息保障、电子对抗旅；
+      无工化旅和勤务支援旅，改为 2 个工兵团、1 个防化团（约相当 2 个工化旅规模）、2 个通信团、1 个汽车运输旅和 1 个汽车运输团。
+      合成师数量原文未给（示例 2 个）。
+
+  # ##################################################################
+  # 四、陆军两栖合成旅
+  # ##################################################################
+  - id: pla_amphib_mech_coy
+    variant_of: pla_mech_coy
+    name: 两栖机步连（ZBD-05）
+    level: company
+    children: [{template: pla_mech_plt, count: 3}, {template: pla_mech_coy_hq, count: 1}]
+    notes: ZBD-05 载员 8 人（比 04/08 多），班组编制原文未单独说明，沿用机步班。
+  - id: pla_amphib_cab
+    name: 两栖合成营
+    level: battalion
+    children:
+      - {template: pla_amphib_mech_coy, count: 3}
+      - {template: pla_assault_gun_coy, count: 1}
+      - {template: pla_heavy_fire_coy, count: 1}
+      - {template: pla_medium_spt_coy, count: 1}
+      - {template: pla_bn_hq_coy, count: 1}
+    default_bindings: {ifv: zbd05, assault_gun: ztd05, apc: zbd05_apc, sp_mortar_howitzer: pll05a, armored_command_vehicle: zbd05_cmd}
+    notes: 编制与中型合成营一致。营属迫榴炮 PLL-05（浮渡 8kph）。
+  - id: pla_arty_bn_amphib
+    name: 两栖旅炮兵营
+    level: battalion
+    children:
+      - {template: pla_how122_sp_coy, count: 3}
+      - {template: pla_mrl122_coy, count: 1}
+      - {template: pla_at_vehicle_coy_9, count: 1}
+      - {template: pla_arty_bn_cmd_coy, count: 1}
+    default_bindings: {howitzer_light_sp: plz07b, mrl_light: phz89, atgm_vehicle: hj10_04}
+    notes: 122 加榴炮 PLZ-07B（04 底盘，可喷水浮渡），正换装 05 底盘（32.5kph）；火箭炮 PHZ-89 无浮渡能力；红箭-10 为 04 底盘（>20kph），正换装 05 底盘。反坦克车数沿用重型旅。
+  - id: pla_ad_bn_amphib
+    name: 两栖旅防空营
+    level: battalion
+    children:
+      - {template: pla_aa_gun_coy_medium, count: 3}
+      - {template: pla_sam_coy_short, count: 1}
+      - {template: pla_manpads_coy, count: 1}
+      - {template: pla_ad_bn_cmd_coy, count: 1}
+    default_bindings: {spaag: pgl625, sam_short: hq17}
+    notes: 地导连履带式红旗-17；高炮连 PGL-625（浮渡 11kph）。
+  - id: pla_amphib_cab_brigade
+    name: 陆军两栖合成旅
+    level: brigade
+    children:
+      - {template: pla_amphib_cab, count: 4}
+      - {template: pla_recon_bn_heavy, count: 1}
+      - {template: pla_arty_bn_amphib, count: 1}
+      - {template: pla_ad_bn_amphib, count: 1}
+      - {template: pla_cbt_spt_bn, count: 1}
+      - {template: pla_svc_spt_bn, count: 1}
+      - {template: pla_cab_hq, count: 1}
+    default_bindings: {engineer_vehicle: zbd05_eng, armored_recovery_vehicle: zbd05_arv, armored_ambulance: zbd05_amb}
+    unit_ratings: {mechanization: mech_tracked_slow, readiness: ready_normal}
+    notes: 共 6 个。编制基本与中型旅一致，区别只在装备；旅内辅助车辆主要为 05 式两栖车族。
+
+  # ##################################################################
+  # 五、山地合成旅
+  # ##################################################################
+  - id: pla_mountain_inf_squad
+    name: 山地步兵班（8 人）
+    level: squad
+    personnel: {squad_leader: 1, team_leader: 1, at_gunner: 1, assistant_gunner: 1, automatic_rifleman: 2, marksman: 1, rifleman: 1}
+    slots: {rifle: 5, underbarrel_gl: 4, reusable_launcher: 1, lmg: 2, dmr: 1}
+    confidence: estimated
+    notes: 8 人而非 9 人；精确射手、2 名轻机枪手、120 火射手和副射手配置相同；除精确射手、轻机枪手、火箭筒手外所有人的步枪都加带 10 式枪挂榴弹发射器。其余岗位原文未细分。
+  - {id: pla_mountain_plt, level: platoon, children: [{template: pla_mountain_inf_squad, count: 3}, {template: pla_plt_hq, count: 1}]}
+  - id: pla_mountain_sniper_sq
+    name: 山地连狙击班
+    level: squad
+    granularity: aggregate
+    slots: {sniper_rifle: 3}
+    notes: QBU-202 7.62mm 狙击枪班（数量原文未给）。
+  - id: pla_mountain_fire_plt
+    name: 山地连火力排
+    level: platoon
+    children:
+      - {template: pla_motor_mortar_sq, count: 1}
+      - {template: pla_motor_hmg_sq, count: 1}
+      - {template: pla_mountain_sniper_sq, count: 1}
+      - {template: pla_motor_agl_sq, count: 1}
+    notes: 60 迫班、重机枪班、狙击枪班、自动榴弹发射器班；比摩步连多一个狙击班，榴弹班用自动榴弹发射器而非狙击榴弹。重机枪和迫击炮已优先换装 171 式和 PBP-201；榴弹班正从 87 式换装 201 式（15.6kg）。
+  - id: pla_mountain_coy
+    name: 山地步兵连
+    level: company
+    children:
+      - {template: pla_mountain_plt, count: 3}
+      - {template: pla_mountain_fire_plt, count: 1}
+      - {template: pla_motor_coy_hq, count: 1}
+  - {id: pla_lynx_mortar_sq, level: squad, granularity: aggregate, slots: {mortar_vehicle: 1}, notes: 一代猛士底盘 PCP-001 速射迫击炮（矢车菊仿制，6km，40 发/分）。}
+  - {id: pla_mountain_bn_mortar_plt, level: platoon, children: [{template: pla_lynx_mortar_sq, count: 3}], confidence: estimated}
+  - id: pla_lynx_weapon_sq_hmg
+    name: 山猫重机枪班
+    level: squad
+    personnel: {vehicle_driver: 3, vehicle_commander: 3, mg_gunner: 3}
+    slots: {atv: 3, hmg: 3}
+    notes: 3 辆山猫 8x8，每车驾驶员、车长、射手；武器 2 分钟可卸下下车发射。
+  - id: pla_lynx_weapon_sq_agl
+    name: 山猫自动榴弹发射器班
+    level: squad
+    personnel: {vehicle_driver: 3, vehicle_commander: 3, mg_gunner: 3}
+    slots: {atv: 3, agl: 3}
+  - id: pla_mountain_bn_fire_plt
+    name: 山地营火力排
+    level: platoon
+    children: [{template: pla_lynx_weapon_sq_hmg, count: 2}, {template: pla_lynx_weapon_sq_agl, count: 1}]
+  - {id: pla_lynx_at_sq, level: squad, granularity: aggregate, slots: {atv: 2, atgm_portable: 2}, notes: 每班 2 辆山猫。}
+  - {id: pla_mountain_bn_at_plt, level: platoon, children: [{template: pla_lynx_at_sq, count: 3}], confidence: estimated}
+  - {id: pla_lynx_sniper_sq, level: squad, granularity: aggregate, slots: {atv: 2, sniper_gl: 3, anti_materiel_rifle: 3}}
+  - {id: pla_mountain_bn_sniper_plt, level: platoon, children: [{template: pla_lynx_sniper_sq, count: 3}], confidence: estimated}
+  - id: pla_mountain_fire_coy
+    name: 山地合成营火力连（全部车载）
+    level: company
+    children:
+      - {template: pla_mountain_bn_mortar_plt, count: 2}
+      - {template: pla_mountain_bn_fire_plt, count: 1}
+      - {template: pla_mountain_bn_at_plt, count: 1}
+      - {template: pla_mountain_bn_sniper_plt, count: 1}
+      - {template: pla_fire_coy_hq, count: 1}
+    default_bindings: {mortar_vehicle: pcp001, atv: lynx_8x8, hmg: qjz89, agl: qlz04}
+    notes: 全部实现机械化、车载武器，类似美军 IBCT 步兵营武器连。迫击炮排数沿用其他营。
+  - id: pla_mountain_spt_coy
+    variant_of: pla_light_spt_coy
+    name: 山地合成营支援保障连
+    level: company
+    role: support
+    children:
+      - {template: pla_generic_sq, count: 1}   # 侦察排（山猫）
+      - {template: pla_bn_comm_plt, count: 1}
+      - {template: pla_bn_medical_plt, count: 1}
+      - {template: pla_bn_engineer_plt, count: 1}
+      - {template: pla_bn_transport_plt, count: 1}
+      - {template: pla_spt_coy_hq, count: 1}
+    notes: 机动载具高于摩步营：侦察排、医疗排有山猫；通信排、工兵排有猛士；运输排为卡车。
+  - id: pla_mountain_cab
+    name: 山地合成营
+    level: battalion
+    children:
+      - {template: pla_mountain_coy, count: 4}
+      - {template: pla_mountain_fire_coy, count: 1}
+      - {template: pla_mountain_spt_coy, count: 1}
+      - {template: pla_bn_hq_coy, count: 1}
+    default_bindings: {mortar_light: pbp201, hmg: qjz171, agl: qlz201, sniper_rifle: qbu202}
+  - id: pla_arty_bn_mountain
+    name: 山地旅炮兵营
+    level: battalion
+    children:
+      - {template: pla_how122_truck_coy, count: 3}
+      - {template: pla_mrl122_coy, count: 1}
+      - {template: pla_at_vehicle_coy_9, count: 1}
+      - {template: pla_arty_bn_cmd_coy, count: 1}
+    default_bindings: {howitzer_light_truck: pcl161, mrl_light: type11_80tube, atgm_vehicle: hj10_mv3}
+    notes: 普遍为 MV3 底盘 PCL-161（而非全向射击差的 PCL-09）、11 式火箭炮（原文“80 管”存疑）、MV3 底盘红箭-10（而非 PTL-02）；反坦克车数原文未给。
+  - id: pla_mountain_cab_brigade
+    name: 山地合成旅
+    level: brigade
+    children:
+      - {template: pla_mountain_cab, count: 4}
+      - {template: pla_recon_bn_motor, count: 1}
+      - {template: pla_arty_bn_mountain, count: 1}
+      - {template: pla_ad_bn_light, count: 1}
+      - {template: pla_cbt_spt_bn, count: 1}
+      - {template: pla_svc_spt_bn, count: 1}
+      - {template: pla_cab_hq, count: 1}
+    unit_ratings: {mechanization: mech_partial, informatization: info_pla_standard, logistics: log_pla_field, readiness: ready_normal}
+    notes: >
+      侦察营武装侦察连用山猫，其他单位主要猛士；炮兵、防空营以卡车居多，指挥车为猛士；作战支援营通信、电子对抗用猛士，其他用卡车；后勤营主要卡车。
+      旅级有机动车辆池（山猫、猛士），需要时可给部分步兵单位提供机动载具，更接近美军 IBCT。防空营编制原文未单独说明，沿用摩步旅。
+
+  # ##################################################################
+  # 六、空中突击旅（陆军 / 空降兵军）
+  # ##################################################################
+  - id: pla_air_assault_squad
+    name: 空突步兵班（10 人）
+    level: squad
+    personnel: {squad_leader: 1, at_gunner: 1, assistant_gunner: 1, automatic_rifleman: 2, mortarman: 3, rifleman: 2}
+    slots: {thermobaric_launcher: 2, lmg: 2, mortar_light: 1, rifle: 6}
+    confidence: estimated
+    notes: 2 具 PF-97 云爆火箭筒的射手和副射手（不配突击步枪）、2 名班用机枪手、1 个 3 人小组操作 1 门 PBP-201 60 迫（全军唯一 60 迫配到班）；其余 2 人按步枪手计。
+  - {id: pla_air_assault_plt, level: platoon, children: [{template: pla_air_assault_squad, count: 3}, {template: pla_plt_hq, count: 1}], notes: 排无火力班。}
+  - {id: pla_air_assault_coy, level: company, children: [{template: pla_air_assault_plt, count: 3}, {template: pla_motor_coy_hq, count: 1}], notes: 连无火力排。}
+  - {id: pla_aa_mortar120_sq, level: squad, granularity: aggregate, slots: {mortar_heavy: 1, atv: 1}, notes: 山猫 4x4 牵引 PBP-171（=PBP-172）120 迫。}
+  - {id: pla_aa_mortar_plt, level: platoon, children: [{template: pla_aa_mortar120_sq, count: 3}], confidence: estimated}
+  - {id: pla_aa_at_sq, level: squad, granularity: aggregate, slots: {atgm_portable: 2, atv: 1}, notes: 红箭-12。}
+  - {id: pla_aa_at_plt, level: platoon, children: [{template: pla_aa_at_sq, count: 3}], confidence: estimated}
+  - {id: pla_aa_agl_sq, level: squad, granularity: aggregate, slots: {agl: 2, atv: 1}, notes: 04 式自动榴弹发射器。}
+  - {id: pla_aa_agl_plt, level: platoon, children: [{template: pla_aa_agl_sq, count: 3}], confidence: estimated}
+  - id: pla_air_assault_fire_coy
+    name: 空突营火力连
+    level: company
+    children:
+      - {template: pla_aa_mortar_plt, count: 2}
+      - {template: pla_aa_at_plt, count: 1}
+      - {template: pla_aa_agl_plt, count: 1}
+      - {template: pla_fire_coy_hq, count: 1}
+    default_bindings: {mortar_heavy: pbp172, atv: lynx_4x4, atgm_portable: hj12, agl: qlz04}
+    notes: 不确定是否还有 1 个便携式导弹排（可加 pla_manpads_plt）。
+  - id: pla_air_assault_spt_coy
+    name: 空突营作战支援连
+    level: company
+    role: support
+    children:
+      - {template: pla_generic_sq, count: 1}   # 侦察排
+      - {template: pla_bn_comm_plt, count: 1}
+      - {template: pla_bn_engineer_plt, count: 1}
+      - {template: pla_bn_medical_plt, count: 1}
+    notes: 侦察排、通信排、工兵排、卫生排；营以下后勤运输依赖运输直升机，无后勤单位，不装备卡车。
+  - id: pla_air_assault_bn
+    name: 空突营
+    level: battalion
+    children:
+      - {template: pla_air_assault_coy, count: 3}
+      - {template: pla_air_assault_fire_coy, count: 1}
+      - {template: pla_air_assault_spt_coy, count: 1}
+      - {template: pla_bn_hq_coy, count: 1}
+    default_bindings: {thermobaric_launcher: pf97, mortar_light: pbp201}
+    notes: 营以下机动载具只有山猫 8x8 和 4x4，无猛士。
+  - id: pla_aa_fire_bn
+    name: 空突旅火力营
+    level: battalion
+    children: [{template: pla_how122_truck_coy, count: 3}]
+    default_bindings: {howitzer_light_truck: pcl09}
+    confidence: estimated
+    notes: PCL-09 122 车载炮；连数门数原文未给。
+  - id: pla_army_air_assault_brigade
+    name: 陆军空中突击旅
+    level: brigade
+    children:
+      - {template: pla_air_assault_bn, count: 3}
+      - {template: pla_attack_heli_bn, count: 2}
+      - {template: pla_transport_heli_bn, count: 2}
+      - {template: pla_utility_heli_bn, count: 1}
+      - {template: pla_aviation_uav_bn, count: 1}
+      - {template: pla_aa_fire_bn, count: 1}
+      - {template: pla_aviation_spt_bn, count: 1}
+    unit_ratings: {mechanization: mech_partial, informatization: info_pla_elite, logistics: log_pla_light, readiness: ready_high}
+    notes: 由陆航旅改编（陆航旅 + 3 个步兵营）；旅侦察、火力支援主要依赖攻击直升机；支援保障营同时保障直升机和地面部队。
+  - id: pla_af_aa_fire_bn
+    name: 空降兵空突旅炮兵
+    level: battalion
+    children: [{template: pla_vsq_howitzer_light_towed, count: 18}]
+    default_bindings: {howitzer_light_towed: pl96}
+    confidence: estimated
+    notes: PL-96 牵引超轻榴弹炮（3 吨，直-8 可吊运）；原文写“炮兵旅”，应为炮兵营；门数未给。
+  - id: pla_af_air_assault_brigade
+    name: 空降兵军空中突击旅
+    level: brigade
+    children:
+      - {template: pla_air_assault_bn, count: 3}
+      - {template: pla_af_aa_fire_bn, count: 1}
+      - {template: pla_aviation_spt_bn, count: 1}
+    default_bindings: {atv: lynx_4x4}
+    unit_ratings: {mechanization: mech_partial, informatization: info_pla_elite, logistics: log_pla_light, readiness: ready_high}
+    notes: 直升机单独属于航空兵旅；主要装备直-20 和直-8，缺米-17/171 和直-8L，因此机动载具只有 4x4 山猫；可随运-20 远程战略机动（直-20 可装入运-20），更专精机场夺取。
+
+  # ##################################################################
+  # 七、空降兵合成旅 / 空降兵军
+  # ##################################################################
+  # ---- 履带机械化 ----
+  - id: pla_abn_tracked_squad
+    name: 履带机械化空降步兵班（03 伞兵战车）
+    level: squad
+    personnel: {squad_leader: 1, vehicle_gunner: 1, vehicle_driver: 1, grenadier: 2, automatic_rifleman: 1}
+    slots: {ifv: 1, rifle: 2, underbarrel_gl: 2, lmg: 1}
+    confidence: estimated
+    notes: 猜测班组规模与载具载员相同，每班 7 人；公开报道可见 3 名下车步兵，2 人带 10 式枪挂榴弹发射器的突击步枪、1 人班用机枪。第 7 人身份不明，此处只记 6 人。
+  - id: pla_abn_tracked_plt_ldr_sq
+    name: 履带空降机步排排长车（火力班）
+    level: squad
+    personnel: {officer: 1, vehicle_gunner: 1, vehicle_driver: 1, marksman: 2, at_gunner: 1, assistant_gunner: 1}
+    slots: {ifv: 1, dmr: 2, reusable_launcher: 1}
+    confidence: estimated
+    notes: 猜测 4 名下车步兵为 2 名精确射手 + 120 火两人小组。
+  - id: pla_abn_tracked_plt
+    level: platoon
+    children: [{template: pla_abn_tracked_squad, count: 3}, {template: pla_abn_tracked_plt_ldr_sq, count: 1}]
+  - {id: pla_abn_coy_hq_veh, level: squad, role: hq, personnel: {officer: 1, vehicle_gunner: 1, vehicle_driver: 1}, slots: {ifv: 1}, confidence: estimated}
+  - id: pla_abn_tracked_coy
+    name: 履带空降机步连
+    level: company
+    children: [{template: pla_abn_tracked_plt, count: 3}, {template: pla_abn_coy_hq_veh, count: 2}]
+    expected_equipment: {ifv: 14}
+    notes: 连部 2 辆车，全连 14 车。
+  # ---- 轮式机械化 ----
+  - id: pla_abn_wheeled_squad
+    name: 轮式机械化空降步兵班
+    level: squad
+    personnel: {squad_leader: 1, vehicle_gunner: 1, vehicle_driver: 1, team_leader: 1, automatic_rifleman: 2, marksman: 1, at_gunner: 1, assistant_gunner: 1, rifleman: 1}
+    slots: {ifv: 1, lmg: 2, dmr: 1, reusable_launcher: 1, rifle: 4}
+    confidence: estimated
+    notes: 猜测每班 10 人（轮式突击车乘员 3 + 载员 7）：2 名班用机枪手、1 名精确射手、1 具 PF-98（射手 + 副射手）。
+  - id: pla_abn_wheeled_plt_ldr_sq
+    name: 轮式空降机步排排长车（火力班）
+    level: squad
+    personnel: {officer: 1, vehicle_gunner: 1, vehicle_driver: 1, mg_gunner: 2, assistant_gunner: 3, at_gunner: 1}
+    slots: {ifv: 1, agl: 1, gpmg: 1, reusable_launcher: 1}
+    confidence: estimated
+    notes: 猜测类似陆军装步排火力班：87 式榴弹发射器、201 式通用机枪、120 火（或 PBW-001 无后坐力炮）。
+  - id: pla_abn_wheeled_plt
+    level: platoon
+    children: [{template: pla_abn_wheeled_squad, count: 3}, {template: pla_abn_wheeled_plt_ldr_sq, count: 1}]
+  - id: pla_abn_wheeled_coy
+    name: 轮式空降机步连
+    level: company
+    children: [{template: pla_abn_wheeled_plt, count: 3}, {template: pla_abn_coy_hq_veh, count: 2}]
+    expected_equipment: {ifv: 14}
+  # ---- 合成营共用 ----
+  - {id: pla_abn_mortar_sq, level: squad, granularity: aggregate, slots: {mortar_vehicle: 1}}
+  - {id: pla_abn_mortar_plt, level: platoon, children: [{template: pla_abn_mortar_sq, count: 3}], confidence: estimated, notes: 轮式部队可伞降 PCP-001 82 速射迫；履带部队 03 底盘 120 自行迫榴炮（实例中类别换 sp_mortar_howitzer）。}
+  - {id: pla_abn_hmg_sq, level: squad, granularity: aggregate, slots: {hmg: 2}}
+  - {id: pla_abn_hmg_plt, level: platoon, children: [{template: pla_abn_hmg_sq, count: 3}], confidence: estimated, notes: 89 式重机枪。}
+  - {id: pla_abn_at_sq, level: squad, granularity: aggregate, slots: {atgm_portable: 2}}
+  - {id: pla_abn_at_plt, level: platoon, children: [{template: pla_abn_at_sq, count: 3}], confidence: estimated, notes: 红箭-12。}
+  - id: pla_abn_fire_coy
+    name: 空降机械化合成营火力连
+    level: company
+    children:
+      - {template: pla_abn_mortar_plt, count: 2}
+      - {template: pla_abn_hmg_plt, count: 1}
+      - {template: pla_abn_at_plt, count: 1}
+      - {template: pla_fire_coy_hq, count: 1}
+    default_bindings: {mortar_vehicle: pcp001, hmg: qjz89, atgm_portable: hj12}
+  - id: pla_abn_spt_coy
+    name: 空降合成营作战支援连
+    level: company
+    role: support
+    children:
+      - {template: pla_generic_sq, count: 1}   # 侦察排
+      - {template: pla_bn_comm_plt, count: 1}
+      - {template: pla_bn_engineer_plt, count: 1}
+      - {template: pla_bn_medical_plt, count: 1}
+    notes: 猜测类似空突旅不配后勤单位，补给依赖后续空投。
+  - id: pla_abn_tracked_cab
+    name: 履带空降合成营
+    level: battalion
+    children:
+      - {template: pla_abn_tracked_coy, count: 3}
+      - {template: pla_abn_fire_coy, count: 1}
+      - {template: pla_abn_spt_coy, count: 1}
+      - {template: pla_bn_hq_coy, count: 1}
+    default_bindings: {ifv: zbd03, sp_mortar_howitzer: zbd03_mortar}
+    notes: 无坦克或突击炮连。
+  - id: pla_abn_wheeled_cab
+    name: 轮式空降合成营
+    level: battalion
+    children:
+      - {template: pla_abn_wheeled_coy, count: 3}
+      - {template: pla_abn_fire_coy, count: 1}
+      - {template: pla_abn_spt_coy, count: 1}
+      - {template: pla_bn_hq_coy, count: 1}
+    default_bindings: {ifv: airborne_wheeled_ifv}
+  - {id: pla_pl96_coy, name: PL-96 榴弹炮连, level: company, children: [{template: pla_vsq_howitzer_light_towed, count: 6}], confidence: estimated}
+  - {id: pla_type63_coy, name: 63 式 107 火箭炮连, level: company, children: [{template: pla_vsq_mrl_light, count: 6}], confidence: estimated}
+  - id: pla_abn_arty_bn
+    name: 空降旅炮兵营
+    level: battalion
+    children: [{template: pla_pl96_coy, count: 2}, {template: pla_type63_coy, count: 1}]
+    default_bindings: {howitzer_light_towed: pl96, mrl_light: type63_107}
+    notes: 2 个连 PL-96 + 1 个连 63 式 107mm 牵引火箭炮（8km，613kg）；每连门数原文未给。
+  - {id: pla_pg87_coy_6, name: PG-87 高炮连（6 门）, level: company, children: [{template: pla_vsq_aa_gun_towed, count: 6}]}
+  - id: pla_abn_ad_bn
+    name: 空降旅防空营
+    level: battalion
+    children: [{template: pla_pg87_coy_6, count: 2}, {template: pla_manpads_coy, count: 1}]
+    default_bindings: {aa_gun_towed: pg87}
+    notes: 2 个连共 12 门 PG-87 + 1 个连 18 具便导。
+  - id: pla_abn_tracked_brigade
+    name: 履带机械化空降兵旅
+    level: brigade
+    children:
+      - {template: pla_abn_tracked_cab, count: 4}
+      - {template: pla_abn_arty_bn, count: 1}
+      - {template: pla_abn_ad_bn, count: 1}
+    unit_ratings: {mechanization: mech_tracked_slow, informatization: info_pla_elite, logistics: log_pla_light, readiness: ready_high}
+    notes: 全旅 200 多辆步战车。去年已换装加装 APS 的 03 新型号，营迫击炮连换装同底盘 120 自行迫榴炮。其他旅直属单位原文未列。
+  - id: pla_abn_wheeled_brigade
+    name: 轮式机械化空降兵旅
+    level: brigade
+    children:
+      - {template: pla_abn_wheeled_cab, count: 4}
+      - {template: pla_abn_arty_bn, count: 1}
+      - {template: pla_abn_ad_bn, count: 1}
+    unit_ratings: {mechanization: mech_wheeled, informatization: info_pla_elite, logistics: log_pla_light, readiness: ready_high}
+  # ---- 空降摩步旅 ----
+  - id: pla_abn_motor_fire_plt
+    name: 空降摩步连火力排
+    level: platoon
+    children:
+      - {template: pla_motor_hmg_sq, count: 1}
+      - {template: pla_motor_mortar_sq, count: 1}
+      - {template: pla_mountain_sniper_sq, count: 1}
+      - {template: pla_abn_sniper_gl_sq, count: 1}
+    notes: 4 个班：171 重机枪、PBP-201 60 迫、QBU-202 狙击枪、11 式狙击榴弹；配置类似山地旅火力排，每班装备数量原文未给。
+  - {id: pla_abn_sniper_gl_sq, level: squad, granularity: aggregate, slots: {sniper_gl: 3}}
+  - id: pla_abn_motor_coy
+    level: company
+    children:
+      - {template: pla_motor_plt, count: 3}
+      - {template: pla_abn_motor_fire_plt, count: 1}
+      - {template: pla_motor_coy_hq, count: 1}
+    notes: 班组猜测与普通摩步旅类似（9 人）；排无火力班，连有火力排。
+  - {id: pla_pp93_sq, level: squad, granularity: aggregate, slots: {mortar_light: 1}, notes: PP-93 长管 60 迫（22kg，5.5km）。}
+  - {id: pla_abn_motor_mortar_plt, level: platoon, children: [{template: pla_pp93_sq, count: 3}], confidence: estimated}
+  - id: pla_abn_motor_fire_coy
+    level: company
+    children:
+      - {template: pla_abn_motor_mortar_plt, count: 2}
+      - {template: pla_abn_hmg_plt, count: 1}
+      - {template: pla_abn_at_plt, count: 1}
+      - {template: pla_fire_coy_hq, count: 1}
+    notes: 重机枪排与反坦克排的配置同机械化空降旅。
+  - id: pla_abn_motor_cab
+    level: battalion
+    children:
+      - {template: pla_abn_motor_coy, count: 3}
+      - {template: pla_abn_motor_fire_coy, count: 1}
+      - {template: pla_abn_spt_coy, count: 1}
+      - {template: pla_bn_hq_coy, count: 1}
+    default_bindings: {hmg: qjz171, mortar_light: pbp201, sniper_rifle: qbu202, sniper_gl: qlu11}
+    confidence: estimated
+    notes: 连数沿用机械化空降营（3 个）。
+  - id: pla_abn_motor_brigade
+    name: 空降摩步旅
+    level: brigade
+    children:
+      - {template: pla_abn_motor_cab, count: 4}
+      - {template: pla_abn_arty_bn, count: 1}
+      - {template: pla_abn_ad_bn, count: 1}
+    unit_ratings: {mechanization: mech_motorized, informatization: info_pla_semi_elite, logistics: log_pla_light, readiness: ready_high}
+    notes: 共 2 个，其中 1 个类似山地旅，加强了更多猛士和山猫。旅直属单位沿用机械化空降旅（原文未单列）。
+  # ---- 空降山猫旅 ----
+  - id: pla_abn_lynx_squad
+    name: 空降山猫步兵班（6 人 + 山猫 8x8）
+    level: squad
+    personnel: {squad_leader: 1, rifleman: 5}
+    slots: {atv: 1}
+    confidence: estimated
+    notes: 可能是全军唯一全机械化山猫旅：每个步兵班 6 人配 1 辆山猫 8x8。岗位分工原文未给。
+  - {id: pla_abn_lynx_plt, level: platoon, children: [{template: pla_abn_lynx_squad, count: 3}, {template: pla_plt_hq, count: 1}], confidence: estimated}
+  - {id: pla_abn_lynx_coy, level: company, children: [{template: pla_abn_lynx_plt, count: 3}, {template: pla_motor_coy_hq, count: 1}], confidence: estimated}
+  - id: pla_abn_lynx_cab
+    level: battalion
+    children:
+      - {template: pla_abn_lynx_coy, count: 3}
+      - {template: pla_abn_motor_fire_coy, count: 1}
+      - {template: pla_abn_spt_coy, count: 1}
+      - {template: pla_bn_hq_coy, count: 1}
+    default_bindings: {atv: lynx_8x8}
+    confidence: estimated
+  - id: pla_abn_lynx_brigade
+    name: 空降山猫旅
+    level: brigade
+    children:
+      - {template: pla_abn_lynx_cab, count: 4}
+      - {template: pla_abn_arty_bn, count: 1}
+      - {template: pla_abn_ad_bn, count: 1}
+    unit_ratings: {mechanization: mech_partial, informatization: info_pla_semi_elite, logistics: log_pla_light, readiness: ready_high}
+    confidence: estimated
+    notes: 装备山猫全地形车、类似山地旅和空突旅、但并非全机械化（另一说法为全机械化山猫旅）；空降兵旅主要用 8x8 山猫。
+  # ---- 空降兵军 ----
+  - {id: pla_abn_sof_brigade, name: 空降兵特战旅, level: brigade, granularity: aggregate, children: [], notes: 含雷神突击队（Tier 2）、空降引导侦察连（Tier 2）。}
+  - {id: pla_abn_support_brigade, name: 空降兵支援旅, level: brigade, granularity: aggregate, children: []}
+  - {id: pla_abn_training_brigade, name: 空降兵训练旅, level: brigade, granularity: aggregate, children: []}
+  - {id: pla_abn_aviation_brigade, name: 空降兵航空兵旅, level: brigade, granularity: aggregate, children: [], notes: 含空突旅所用直-20、直-8。}
+  - id: pla_airborne_corps
+    name: 空军空降兵军
+    level: corps
+    children:
+      - {template: pla_abn_tracked_brigade, count: 1}
+      - {template: pla_abn_wheeled_brigade, count: 1}
+      - {template: pla_abn_motor_brigade, count: 2}
+      - {template: pla_abn_lynx_brigade, count: 1}
+      - {template: pla_af_air_assault_brigade, count: 1}
+      - {template: pla_abn_sof_brigade, count: 1}
+      - {template: pla_abn_support_brigade, count: 1}
+      - {template: pla_abn_training_brigade, count: 1}
+      - {template: pla_abn_aviation_brigade, count: 1}
+    notes: 既是伞降部队，也是解放军唯一有整建制机降投送能力的部队。
+
+  # ##################################################################
+  # 八、海军陆战队
+  # ##################################################################
+  - id: pla_marine_spt_coy
+    variant_of: pla_heavy_spt_coy
+    name: 陆战合成营支援保障连（无侦察排）
+    level: company
+    role: support
+    children:
+      - {template: pla_bn_comm_plt, count: 1}
+      - {template: pla_bn_medical_plt, count: 1}
+      - {template: pla_bn_engineer_plt, count: 1}
+      - {template: pla_bn_maint_plt, count: 1}
+      - {template: pla_bn_transport_plt, count: 1}
+      - {template: pla_bn_cook_plt, count: 1}
+      - {template: pla_spt_coy_hq, count: 1}
+  - id: pla_marine_fire_coy
+    variant_of: pla_heavy_fire_coy
+    name: 陆战两栖/中型营火力连（含狙击排）
+    level: company
+    children:
+      - {template: pla_sp_mortar_plt, count: 2}
+      - {template: pla_at_plt_heavy, count: 1}
+      - {template: pla_manpads_plt, count: 1}
+      - {template: pla_mountain_bn_sniper_plt, count: 1}
+      - {template: pla_fire_coy_cmd_spt_plt, count: 1}
+      - {template: pla_fire_coy_hq, count: 1}
+    notes: 营支保连无侦察排，火力连有一个类似山地合成营的狙击排。
+  - id: pla_marine_amphib_cab
+    name: 陆战两栖合成营
+    level: battalion
+    children:
+      - {template: pla_amphib_mech_coy, count: 3}
+      - {template: pla_assault_gun_coy, count: 1}
+      - {template: pla_marine_fire_coy, count: 1}
+      - {template: pla_marine_spt_coy, count: 1}
+      - {template: pla_bn_hq_coy, count: 1}
+    default_bindings: {ifv: zbd05, assault_gun: ztd05, apc: zbd05_apc, sp_mortar_howitzer: pll05a}
+  - id: pla_marine_medium_cab
+    name: 陆战中型轮式合成营
+    level: battalion
+    children:
+      - {template: pla_medium_mech_coy, count: 3}
+      - {template: pla_assault_gun_coy, count: 1}
+      - {template: pla_marine_fire_coy, count: 1}
+      - {template: pla_marine_spt_coy, count: 1}
+      - {template: pla_bn_hq_coy, count: 1}
+    default_bindings: {ifv: zbl08, assault_gun: ztl11, sp_mortar_howitzer: pll05a}
+  - id: pla_marine_air_assault_cab
+    name: 陆战空中突击营（编制类似山地营）
+    level: battalion
+    children:
+      - {template: pla_mountain_coy, count: 4}
+      - {template: pla_mountain_fire_coy, count: 1}
+      - {template: pla_marine_spt_coy, count: 1}
+      - {template: pla_bn_hq_coy, count: 1}
+    default_bindings: {atv: lynx_8x8}
+    notes: 机动车辆池主要为山猫 8x8（可 4kph 浮渡，可被米-171、直-8L 装载或吊运）；也可不带载具，以摩步形式由 726 气垫艇或直升机登陆。
+  - {id: pla_marine_how_sp_coy, name: PLZ-07B 连, level: company, children: [{template: pla_vsq_howitzer_light_sp, count: 9}], confidence: estimated}
+  - {id: pla_marine_how181_coy, name: PCL-181 连, level: company, children: [{template: pla_vsq_howitzer_heavy_truck, count: 9}], confidence: estimated, notes: 不能两栖。}
+  - {id: pla_marine_how66_coy, name: 66 式 152 牵引加榴炮连, level: company, children: [{template: pla_vsq_howitzer_heavy_towed, count: 9}], confidence: estimated}
+  - {id: pla_marine_mrl_coy, name: 63 式 107 牵引火箭炮连, level: company, children: [{template: pla_vsq_mrl_light, count: 9}], confidence: estimated}
+  - id: pla_marine_arty_bn
+    name: 陆战旅炮兵营
+    level: battalion
+    children:
+      - {template: pla_marine_how_sp_coy, count: 1}
+      - {template: pla_marine_how181_coy, count: 1}
+      - {template: pla_marine_how66_coy, count: 1}
+      - {template: pla_marine_mrl_coy, count: 1}
+    default_bindings: {howitzer_light_sp: plz07b, howitzer_heavy_truck: pcl181, howitzer_heavy_towed: type66_152, mrl_light: type63_107}
+    notes: 身管口径较大、火箭炮口径较小、牵引火炮较多；牵引加农炮和火箭炮适合 726 登陆艇装载。每连门数原文未给（按 9 推算）。
+  - {id: pla_road_fort_coy, name: 道路筑城连, level: company, children: [{template: pla_generic_sq, count: 1}]}
+  - id: pla_marine_cbt_spt_bn
+    variant_of: pla_cbt_spt_bn
+    name: 陆战旅作战支援营
+    level: battalion
+    role: support
+    children:
+      - {template: pla_cbt_spt_cmd_comm_coy, count: 1}
+      - {template: pla_cbt_spt_info_coy, count: 1}
+      - {template: pla_cbt_spt_ew_coy, count: 1}
+      - {template: pla_cbt_spt_eng_coy, count: 1}
+      - {template: pla_cbt_spt_cbrn_coy, count: 1}
+      - {template: pla_cbt_spt_guard_coy, count: 1}
+      - {template: pla_road_fort_coy, count: 1}
+    notes: 比陆军合成旅多一个道路筑城连。
+  - id: pla_marine_brigade
+    name: 海军陆战队合成旅
+    level: brigade
+    children:
+      - {template: pla_marine_amphib_cab, count: 2}
+      - {template: pla_marine_medium_cab, count: 1}
+      - {template: pla_marine_air_assault_cab, count: 1}
+      - {template: pla_marine_arty_bn, count: 1}
+      - {template: pla_marine_cbt_spt_bn, count: 1}
+      - {template: pla_svc_spt_bn, count: 1}
+      - {template: pla_cab_hq, count: 1}
+    unit_ratings: {informatization: info_pla_elite, logistics: log_pla_field, readiness: ready_normal}
+    notes: 旅级实现重中轻合成，以便海外部署时能力完整并减轻全旅重量；中国主要的跨海远程部署地面力量。原文未提侦察营、防空营，此处不加。
+  - {id: pla_vsq_z8c, level: squad, granularity: aggregate, slots: {transport_helicopter: 1}}
+  - {id: pla_vsq_z20n, level: squad, granularity: aggregate, slots: {utility_helicopter: 1}}
+  - {id: pla_marine_z8c_bn, name: 直-8C 营, level: battalion, children: [{template: pla_vsq_z8c, count: 24}], default_bindings: {transport_helicopter: z8c}}
+  - {id: pla_marine_z20_bn, name: 直-20 海军突击营, level: battalion, children: [{template: pla_vsq_z20n, count: 24}], default_bindings: {utility_helicopter: z20}, notes: 可携带反坦克导弹，同时运输兵员。}
+  - {id: pla_marine_z9_bn, name: 直-9C 营, level: battalion, children: [{template: pla_vsq_z20n, count: 24}], default_bindings: {utility_helicopter: z9}}
+  - id: pla_marine_aviation_brigade
+    name: 陆战队独立航空兵旅
+    level: brigade
+    children:
+      - {template: pla_marine_z8c_bn, count: 4}
+      - {template: pla_marine_z20_bn, count: 2}
+      - {template: pla_marine_z9_bn, count: 1}
+    confidence: estimated
+    notes: 猜测 4 个营 96 架直-8C、2 个营 48 架直-20、1 个营 24 架直-9C；由 075、071 搭载运送空中突击营上岸。
+  - {id: pla_marine_sof_brigade, name: 陆战队特战旅, level: brigade, granularity: aggregate, children: [], notes: 含蛟龙突击队（Tier 2）、两栖侦察连（Tier 2）。}
+  - id: pla_marine_corps
+    name: 海军陆战队
+    level: corps
+    children:
+      - {template: pla_marine_brigade, count: 6}
+      - {template: pla_marine_sof_brigade, count: 1}
+      - {template: pla_marine_aviation_brigade, count: 1}
+    confidence: estimated
+    notes: 另有 1 个训练基地；合成旅数量原文未给（示例 6 个）。
+
+  # ##################################################################
+  # 九、驻港 / 驻澳 / 北京卫戍区
+  # ##################################################################
+  - id: pla_hk_92_cab
+    name: 驻港 92 式轮式合成营
+    level: battalion
+    children:
+      - {template: pla_medium_mech_coy, count: 3}
+      - {template: pla_heavy_fire_coy, count: 1}
+      - {template: pla_medium_spt_coy, count: 1}
+      - {template: pla_bn_hq_coy, count: 1}
+    default_bindings: {ifv: zsl92b, apc: zsl92}
+    confidence: estimated
+    notes: 只有 92B 步战车和 92 装输，无突击炮连；连数原文未给。
+  - id: pla_hk_brigade
+    name: 驻港合成旅
+    level: brigade
+    children:
+      - {template: pla_medium_cab, count: 1}
+      - {template: pla_hk_92_cab, count: 1}
+      - {template: pla_light_cab, count: 3}
+      - {template: pla_recon_bn_light, count: 1}
+      - {template: pla_arty_bn_light, count: 1}
+      - {template: pla_ad_bn_light, count: 1}
+      - {template: pla_cbt_spt_bn, count: 1}
+      - {template: pla_svc_spt_bn, count: 1}
+    unit_ratings: {informatization: info_pla_hk, readiness: ready_high}
+    notes: 5 个合成营：1 个 08 车族中型营（有突击炮连）、1 个 92B/92 营、3 个轻高机营；另有侦察、炮兵、防空、作战支援、勤务保障营各 1（类型原文未给，此处取轻型）。驻港空军有直-20、直-10 各一个中队。
+  - {id: pla_macau_armored_inf_coy, name: 92B 装步连, level: company, children: [{template: pla_mech_plt, count: 3}, {template: pla_mech_coy_hq, count: 1}], default_bindings: {ifv: zsl92b}}
+  - {id: pla_macau_engchem_coy, name: 工化连, level: company, children: [{template: pla_generic_sq, count: 1}]}
+  - {id: pla_macau_special_coy, name: 特种连, level: company, children: [{template: pla_generic_sq, count: 1}]}
+  - id: pla_macau_garrison
+    name: 驻澳门部队
+    level: battalion
+    children:
+      - {template: pla_macau_armored_inf_coy, count: 1}
+      - {template: pla_motor_coy, count: 3}
+      - {template: pla_macau_engchem_coy, count: 1}
+      - {template: pla_xj_recon_coy, count: 1}
+      - {template: pla_macau_special_coy, count: 1}
+    notes: 无后勤单位。
+  - id: pla_guard3_regiment
+    name: 警卫 3 师警卫团
+    level: brigade
+    children:
+      - {template: pla_xj_light_cab, count: 3}
+      - {template: pla_xj_fire_bn, count: 1}
+      - {template: pla_xj_spt_bn, count: 1}
+    confidence: estimated
+    notes: 编制猜测类似新疆军区轻高机合成团。
+  - {id: pla_guard3_arty_regiment, name: 警卫 3 师炮兵团, level: brigade, granularity: aggregate, children: []}
+  - {id: pla_guard3_aa_regiment, name: 警卫 3 师高炮团, level: brigade, granularity: aggregate, children: []}
+  - {id: pla_guard3_spt_regiment, name: 警卫 3 师支援保障团, level: brigade, role: support, granularity: aggregate, children: []}
+  - id: pla_guard_div_3
+    name: 北京卫戍区警卫 3 师
+    level: division
+    children:
+      - {template: pla_guard3_regiment, count: 4}
+      - {template: pla_guard3_arty_regiment, count: 1}
+      - {template: pla_guard3_aa_regiment, count: 1}
+      - {template: pla_guard3_spt_regiment, count: 1}
+    unit_ratings: {mechanization: mech_wheeled}
+    notes: 装备猛士的轻高机部队，主要负责首都防御。
+  - {id: pla_guard1_regiment, name: 警卫 1 师警卫团, level: brigade, granularity: aggregate, children: [], notes: 内卫任务；侦察连属特战 Tier 3。}
+  - {id: pla_honor_guard, name: 仪仗大队, level: battalion, granularity: aggregate, children: []}
+  - id: pla_guard_div_1
+    name: 北京卫戍区警卫 1 师
+    level: division
+    children: [{template: pla_guard1_regiment, count: 4}, {template: pla_honor_guard, count: 1}]
+    default_bindings: {motorcycle: sidecar_motorcycle}
+    notes: 非野战部队，主要机动装备为车队护送用侧三轮摩托。
+  - id: pla_beijing_garrison
+    name: 北京卫戍区
+    level: corps
+    children: [{template: pla_guard_div_1, count: 1}, {template: pla_guard_div_3, count: 1}]
+
+  # ##################################################################
+  # 十、边防团 / 边防旅
+  # ##################################################################
+  - id: pla_border_squad
+    name: 边防步兵班
+    level: squad
+    granularity: aggregate
+    slots: {rifle: 9}
+    confidence: estimated
+    notes: 装备 03 式自动步枪；人数和岗位原文未给。
+  - {id: pla_border_plt, level: platoon, children: [{template: pla_border_squad, count: 3}], confidence: estimated}
+  - id: pla_border_coy
+    name: 边防连
+    level: company
+    children: [{template: pla_border_plt, count: 3}, {template: pla_border_patrol_veh, count: 1}]
+    confidence: estimated
+    notes: 摩步单位；可能没有火力排。排数原文未给。
+  - {id: pla_border_patrol_veh, level: squad, role: equipment_pool, slots: {light_armored_vehicle: 2}, notes: 1-2 辆巡逻载具：装甲猛士、山猫，个别装甲卡车或防雷车。}
+  - id: pla_border_bn
+    name: 边防营
+    level: battalion
+    children: [{template: pla_border_coy, count: 3}]
+    notes: 可能没有火力连和支援保障连。
+  - id: pla_border_mobile_squad
+    name: 边防机动步兵班
+    level: squad
+    granularity: aggregate
+    slots: {rifle: 8, smg: 1}
+    confidence: estimated
+    notes: 大部分装 95 式突击步枪，少部分 171 式冲锋枪；人数原文未给。
+  - {id: pla_border_mobile_plt, level: platoon, children: [{template: pla_border_mobile_squad, count: 3}], confidence: estimated}
+  - {id: pla_border_gpmg_sq, level: squad, granularity: aggregate, slots: {gpmg: 3}, notes: 3 挺 67 式通用机枪（800-1000m）。}
+  - {id: pla_border_mortar_sq, level: squad, granularity: aggregate, slots: {mortar_light: 2}, notes: 2 门 89 式 60 迫。}
+  - {id: pla_border_rocket_sq, level: squad, granularity: aggregate, slots: {reusable_launcher: 4}, notes: 4 具 PF-98 营用型。}
+  - id: pla_border_mobile_coy_fire_plt
+    name: 机动步兵连火力排
+    level: platoon
+    children: [{template: pla_border_gpmg_sq, count: 1}, {template: pla_border_mortar_sq, count: 1}, {template: pla_border_rocket_sq, count: 1}]
+  - id: pla_border_mobile_coy
+    name: 边防机动步兵连
+    level: company
+    children: [{template: pla_border_mobile_plt, count: 3}, {template: pla_border_mobile_coy_fire_plt, count: 1}]
+  - {id: pla_border_bn_mortar_plt, level: platoon, children: [{template: pla_border_bn_mortar_sq, count: 3}], notes: 3 门：82mm 牵引速射迫、PCP-001 车载速射迫、PP-87 82 迫或 PP-93 长管 60 迫。}
+  - {id: pla_border_bn_mortar_sq, level: squad, granularity: aggregate, slots: {mortar_medium: 1}}
+  - {id: pla_border_hmg_sq, level: squad, granularity: aggregate, slots: {hmg: 2}}
+  - {id: pla_border_agl_sq, level: squad, granularity: aggregate, slots: {agl: 3}, notes: 3 挺 04 式。}
+  - {id: pla_border_bn_fire_plt, level: platoon, children: [{template: pla_border_hmg_sq, count: 2}, {template: pla_border_agl_sq, count: 1}], notes: 2 个重机枪班 4 挺 89 式 + 1 个榴弹发射器班。}
+  - {id: pla_border_sniper_plt, level: platoon, children: [{template: pla_border_sniper_agg, count: 1}]}
+  - {id: pla_border_sniper_agg, level: squad, granularity: aggregate, slots: {anti_materiel_rifle: 9, sniper_gl: 9}, notes: 9 挺 12.7mm 反器材步枪 + 9 挺 11 式狙击榴弹发射器。}
+  - id: pla_border_bn_fire_coy
+    name: 机动步兵营火力连
+    level: company
+    children: [{template: pla_border_bn_mortar_plt, count: 1}, {template: pla_border_bn_fire_plt, count: 1}, {template: pla_border_sniper_plt, count: 1}]
+  - {id: pla_border_aamg_sq, level: squad, granularity: aggregate, slots: {aa_mg: 1}, notes: 02 式 14.5mm 高射机枪，10 人操作。}
+  - {id: pla_border_aamg_plt, level: platoon, children: [{template: pla_border_aamg_sq, count: 3}]}
+  - id: pla_border_bn_ad_coy
+    name: 机动步兵营防空连
+    level: company
+    children: [{template: pla_border_aamg_plt, count: 3}]
+    notes: 3 个高射机枪排共 9 门 02 式。
+  - id: pla_border_mobile_bn
+    name: 边防团机动步兵营
+    level: battalion
+    children:
+      - {template: pla_border_mobile_coy, count: 3}
+      - {template: pla_border_bn_fire_coy, count: 1}
+      - {template: pla_border_bn_ad_coy, count: 1}
+    default_bindings: {aa_mg: qjg02, gpmg: type67_gpmg, mortar_light: pp89_60, reusable_launcher: pf98_bn, hmg: qjz89, agl: qlz04, anti_materiel_rifle: qbu10, sniper_gl: qlu11, rifle: qbz95, smg: qcw171}
+    notes: 需要时可快速增援全团任一方向。载具常见 92 式装输、二/三代猛士、山猫 8x8（山地配山猫，压力较小的边境配猛士）。连数原文未给（按 3 个）。
+  - {id: pla_border_regt_arty_coy, name: 边防团直属炮兵连, level: company, children: [{template: pla_border_bn_mortar_sq, count: 9}], default_bindings: {mortar_medium: pp89_100}, notes: 9 门 PP-89 100 迫，必要时平射充当直瞄火力。}
+  - {id: pla_border_regt_ad_coy, name: 边防团直属防空连, level: company, children: [{template: pla_vsq_aa_gun_towed, count: 6}], default_bindings: {aa_gun_towed: pg87}}
+  - {id: pla_border_recon_coy, name: 直属武装侦察连, level: company, children: [{template: pla_armed_recon_plt, count: 3}], confidence: estimated}
+  - {id: pla_border_spt_coy, name: 支援保障连, level: company, role: support, children: [{template: pla_generic_sq, count: 1}]}
+  - {id: pla_border_outposts, name: 哨所和雷达站, level: company, children: [{template: pla_generic_sq, count: 1}], notes: 若干。}
+  - id: pla_border_regiment
+    name: 边防团
+    level: brigade
+    children:
+      - {template: pla_border_bn, count: 3}
+      - {template: pla_border_mobile_bn, count: 1}
+      - {template: pla_border_regt_arty_coy, count: 1}
+      - {template: pla_border_regt_ad_coy, count: 1}
+      - {template: pla_border_recon_coy, count: 1}
+      - {template: pla_border_spt_coy, count: 1}
+      - {template: pla_border_outposts, count: 1}
+    unit_ratings: {informatization: info_pla_border, logistics: log_pla_light, readiness: ready_border}
+    notes: 火力配备水平较低，装备老旧，持续作战能力较弱，但机械化程度高于摩步旅。似乎 17 年军改中没有重要调整。
+  - id: pla_border_arty_bn
+    name: 边防旅炮兵营
+    level: battalion
+    children: [{template: pla_border_regt_arty_coy, count: 2}]
+    notes: 火炮数量翻倍；有时有 59 式 130 加农炮。
+  - {id: pla_border_ad_bn, name: 边防旅防空营, level: battalion, children: [{template: pla_border_regt_ad_coy, count: 2}]}
+  - {id: pla_border_spt_bn, name: 边防旅支援保障营, level: battalion, role: support, granularity: aggregate, children: []}
+  - id: pla_border_brigade
+    name: 边防旅
+    level: brigade
+    children:
+      - {template: pla_border_bn, count: 4}
+      - {template: pla_border_mobile_bn, count: 1}
+      - {template: pla_border_arty_bn, count: 1}
+      - {template: pla_border_ad_bn, count: 1}
+      - {template: pla_border_recon_coy, count: 1}
+      - {template: pla_border_spt_bn, count: 1}
+      - {template: pla_border_outposts, count: 1}
+    confidence: estimated
+    unit_ratings: {informatization: info_pla_border, logistics: log_pla_light, readiness: ready_border}
+    notes: 边防营更多（可能 4 个），支援保障为营级，炮兵连和防空连扩为营。
+
+  # ##################################################################
+  # 十一、海防旅（2026 更新：大量已裁撤）
+  # ##################################################################
+  - id: pla_coastal_squad
+    name: 海防连步兵班（11 人）
+    level: squad
+    personnel: {at_gunner: 1, assistant_gunner: 3, automatic_rifleman: 2, mg_gunner: 1, rifleman: 4}
+    slots: {reusable_launcher: 1, lmg: 2, agl: 1, rifle: 4}
+    notes: PF-98 两人小组、2 名班用机枪手、87 式自动榴弹 3 人小组、4 名步枪手（03 式）。
+  - {id: pla_coastal_inf_plt, level: platoon, children: [{template: pla_coastal_squad, count: 3}], confidence: estimated}
+  - {id: pla_coastal_gun_sq, level: squad, granularity: aggregate, slots: {howitzer_heavy_towed: 1}}
+  - {id: pla_coastal_arty_plt, level: platoon, children: [{template: pla_coastal_gun_sq, count: 3}], default_bindings: {howitzer_heavy_towed: type59_130}, notes: 每排 3 门 59 式 130 加农炮。}
+  - {id: pla_coastal_ad_plt, level: platoon, children: [{template: pla_border_aamg_sq, count: 3}], notes: 2-3 个班，每班 1 门 02 式高射机枪。}
+  - id: pla_coastal_garrison_coy
+    name: 守备海防连
+    level: company
+    children:
+      - {template: pla_coastal_inf_plt, count: 2}
+      - {template: pla_coastal_arty_plt, count: 2}
+      - {template: pla_coastal_ad_plt, count: 1}
+    notes: 1-2 个步兵排、1-2 个炮兵排、有时 1 个防空排；可能配若干对海侦察校射雷达；无巡逻机动载具。
+  - {id: pla_coastal_garrison_bn, name: 守备海防营, level: battalion, children: [{template: pla_coastal_garrison_coy, count: 3}], confidence: estimated}
+  - id: pla_coastal_mobile_bn
+    name: 海防旅机动步兵营
+    level: battalion
+    children:
+      - {template: pla_border_mobile_coy, count: 3}
+      - {template: pla_border_regt_arty_coy, count: 1}
+      - {template: pla_border_bn_ad_coy, count: 1}
+    default_bindings: {light_armored_vehicle: csk181, mortar_medium: pp89_100, aa_mg: qjg02}
+    confidence: estimated
+    notes: 载具主要为猛士；营属炮兵连 9 门 PP-89 100 迫或 9 辆 PTL-02；防空连 9 门 02 式；不装备榴弹发射器、重机枪、狙击枪。
+  - {id: pla_coastal_gun_coy, level: company, children: [{template: pla_coastal_gun_sq, count: 9}], confidence: estimated}
+  - id: pla_coastal_arty_bn
+    name: 海防旅炮兵营
+    level: battalion
+    children: [{template: pla_coastal_gun_coy, count: 2}, {template: pla_mrl122_coy, count: 1}]
+    default_bindings: {howitzer_heavy_towed: type59_130, mrl_light: type81_mrl}
+    notes: 一般 2 个连 59 式 130 牵引加农炮（部分为 66 式 152 甚至 PLZ-05），1 个连 81 式 122 火箭炮（部分为 11 式甚至 PHL-03）。
+  - {id: pla_coastal_ad_coy, name: 海防旅防空连, level: company, children: [{template: pla_vsq_aa_gun_towed, count: 6}], default_bindings: {aa_gun_towed: pg99}, notes: PG-99 或 PG-87。}
+  - id: pla_coastal_boat_group
+    name: 船艇大队
+    level: battalion
+    children: [{template: pla_generic_sq, count: 1}]
+    notes: 核心装备 271 型登陆艇（500 吨），另有巡逻艇、侦察艇、人员交通艇、补给运输船、拖船、驳船、工程作业船和训练船。
+  - id: pla_coastal_brigade
+    name: 海防旅
+    level: brigade
+    children:
+      - {template: pla_coastal_garrison_bn, count: 4}
+      - {template: pla_coastal_mobile_bn, count: 1}
+      - {template: pla_coastal_arty_bn, count: 1}
+      - {template: pla_coastal_ad_coy, count: 1}
+      - {template: pla_coastal_boat_group, count: 1}
+      - {template: pla_border_spt_bn, count: 1}
+    unit_ratings: {informatization: info_pla_border, logistics: log_pla_light, readiness: ready_border}
+    notes: 可看作岸炮部队和在近岸岛屿、内水活动的小型黄水海军。守备营可能为 4 个。2026 年更新：大量海防部队已裁撤，身管火炮分配给各集团军炮兵旅。
+
+  # ##################################################################
+  # 十二、空军地导旅 / 海军岸舰导弹团
+  # ##################################################################
+  - id: pla_af_sam_coy_long
+    name: 远程/中远程地导连
+    level: company
+    children: [{template: pla_vsq_sam_long, count: 4}, {template: pla_af_sam_coy_long_spt, count: 1}]
+  - {id: pla_af_sam_coy_long_spt, level: squad, role: support, granularity: aggregate, notes: 1 辆制导雷达车、2 辆备弹运输车、若干后勤运输车。}
+  - id: pla_af_sam_bn_long
+    name: 远程/中远程地导营
+    level: battalion
+    children: [{template: pla_af_sam_coy_long, count: 2}]
+    default_bindings: {sam_long: hq9b}
+    notes: 红旗-19 / 红旗-9 / 红旗-22 / S-400 / S-300，每车 4 联。
+  - id: pla_af_sam_coy_point
+    name: 要地防空导弹连
+    level: company
+    children: [{template: pla_vsq_sam_medium, count: 6}, {template: pla_af_sam_coy_point_spt, count: 1}]
+  - {id: pla_af_sam_coy_point_spt, level: squad, role: support, granularity: aggregate, notes: 1 辆指挥车、1 辆远程搜索雷达车、3 辆跟踪/火控雷达车、若干后勤车。}
+  - id: pla_af_sam_bn_point
+    name: 要地防空营
+    level: battalion
+    children: [{template: pla_af_sam_coy_point, count: 2}]
+    default_bindings: {sam_medium: hq12a, sam_short: hq6d, c_ram: ld2000}
+    notes: 红旗-12 或红旗-6D + 陆盾-2000，每车 2 联，每营 12 辆发射车。
+  - {id: pla_af_sam_radar_det, name: 雷达分队, level: company, children: [{template: pla_generic_sq, count: 1}]}
+  - {id: pla_af_sam_c2_det, name: 指挥控制和通信分队, level: company, children: [{template: pla_generic_sq, count: 1}]}
+  - {id: pla_af_sam_spt_det, name: 保障分队, level: company, role: support, children: [{template: pla_generic_sq, count: 1}]}
+  - id: pla_af_sam_brigade
+    name: 空军地导旅
+    level: brigade
+    children:
+      - {template: pla_af_sam_bn_long, count: 5}
+      - {template: pla_af_sam_radar_det, count: 1}
+      - {template: pla_af_sam_c2_det, count: 1}
+      - {template: pla_af_sam_spt_det, count: 1}
+    notes: 一般 5 个地导营（远程营和要地营的混编比例原文未给）。五大战区空军各 4-6 个地导旅，负责要地防空和区域防空。
+  - id: pla_navy_coastal_missile_regiment
+    name: 海军岸舰导弹团
+    level: brigade
+    children: [{template: pla_vsq_coastal_ashm, count: 16}]
+    default_bindings: {coastal_ashm_launcher: yj12b}
+    notes: 每团 16 辆发射车：鹰击-12B（每车 4 枚）或鹰击-62（每车 3 枚）。
+
+# ======================================================================
+# 解放军特战部队分级（原文 1.4.2.13，以本轮特战旅改革前为准）
+# ======================================================================
+special_forces_tiers:
+  tier1: [海军反恐特遣（连级）, 库尔勒小刀（连级）]
+  tier2: [76 集团军雪枫特战旅天狼突击队, 海军陆战队特战旅蛟龙突击队, 空降兵特战旅雷神突击队, 各战区情报侦察旅武装侦察营敌后侦察连, 空降军空降引导侦察连, 陆战队两栖侦察连, 武警雪豹突击队（营级）, 武警猎鹰突击队（营级）]
+  tier3: [陆军各集团军/陆战队/空降兵军 17 个特战旅和火箭军特战团的特侦营武装侦察连, 陆战队/空降兵/陆军和空军空突部队侦察营武装侦察连, 北京卫戍区各警卫团侦察连, 5 个战区情报侦察旅武装侦察营武装侦察连, 香港警察特别任务连, 武警第一/第二机动总队特战第一支队（团级）]
+  tier4: [陆军各合成旅侦察营武装侦察连, 各特战旅特战营, 武警各总队其他特战支队]

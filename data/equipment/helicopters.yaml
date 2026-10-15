@@ -1,0 +1,142 @@
+# 直升机与倾转旋翼机
+# 原文评估：运输直升机 = 货舱尺寸、载重（机内与吊运的几何平均）、转场航程、最大速度 各 25% 几何平均；
+#           攻击直升机 = 武器载重（50%）、转场航程、最大速度。
+# article_power_index：原文攻击直升机战力系数（AH-64 = 1）。
+
+models:
+  # ======================= 美国 · 攻击 =======================
+  - id: ah64e
+    name: AH-64E 阿帕奇
+    category: attack_helicopter
+    family: ah64
+    origin: USA
+    specs: {length_m: 17.73, rotor_m: 14.63, height_m: 3.87, empty_kg: 5165, mtow_kg: 10433, weapon_load_kg: 2700, max_speed_kph: 293, ferry_range_km: 1896, combat_range_km: 470, ceiling_m: 6100, climb_mps: 8.1, max_missiles: 16}
+    weapons: [tow, agm65, hellfire, jagm, stinger, aim9x, 反辐射导弹, 70mm 火箭弹]
+    article_power_index: 1.0
+    notes: 原文写机炮为“23mm 转膛机炮”，实际应为 30mm 链式炮，待核。
+  - id: ah1z
+    name: AH-1Z 蝰蛇
+    category: attack_helicopter
+    family: ah1
+    origin: USA
+    specs: {length_m: 17.75, rotor_m: 15, height_m: 4.37, empty_kg: 5579, mtow_kg: 8391, weapon_load_kg: 2615, max_speed_kph: 411, ferry_range_km: 900, range_km: 690, combat_range_km: 230, ceiling_m: 6100, climb_mps: 14.2, gun: 20mm 转膛机炮}
+    weapons: [jagm, hellfire, aim9x]
+    article_power_index: 0.89
+    notes: 原文表中最大速度 411kph，偏高，待核。
+  - id: mh6m
+    name: MH-6M / AH-6M 小鸟
+    category: light_attack_helicopter
+    family: md500
+    origin: USA
+    crew: 2
+    capacity: 6
+    specs: {length_m: 7.5, rotor_m: 8.352, height_m: 2.67, empty_kg: 722, mtow_kg: 1406, weapon_load_kg: 684, max_speed_kph: 282, ferry_range_km: 833, ceiling_m: 5700, climb_mps: 10.47}
+    weapons: [GAU-19 12.7mm 三管机枪 或 7.62mm 六管机枪 ×2, 7 管 70mm 火箭巢 ×2, 4 × 地狱火或毒刺]
+    article_power_index: 0.41
+    notes: MH-6M 为侦察/运输型（隐蔽），AH-6M 为攻击型。
+
+  # ======================= 美国 · 运输 / 通用 =======================
+  - id: uh60
+    name: UH-60 黑鹰
+    category: utility_helicopter
+    family: h60
+    origin: USA
+    capacity: 11
+    specs: {internal_load_t: 1.2, sling_load_t: 4.1, range_km: 590}
+    notes: 原文运输直升机战力基准。
+  - {id: hh60, name: HH-60 医疗救援直升机, category: utility_helicopter, family: h60, origin: USA}
+  - {id: uh60_c2, name: UH-60 航空指挥型, category: utility_helicopter, family: h60, origin: USA}
+  - {id: mh60l, name: MH-60L 特战突击直升机, category: utility_helicopter, family: h60, origin: USA}
+  - id: mh60l_dap
+    name: MH-60L DAP 直接行动穿透者
+    category: attack_helicopter
+    family: h60
+    origin: USA
+    weapons: [M230 30mm 机炮, 19 管 70mm 火箭巢, M134D 7.62mm 舱门机枪, 地狱火, 毒刺]
+    notes: 不再载人，专职攻击。
+  - {id: mh60r_s, name: MH-60 海军反潜/多用途直升机, category: utility_helicopter, family: h60, origin: USA}
+  - {id: eh60, name: EH-60 电子战直升机, category: ew_helicopter, family: h60, origin: USA}
+  - id: ch47f
+    name: CH-47F 支奴干
+    category: transport_helicopter
+    family: ch47
+    origin: USA
+    capacity: 55
+    specs: {cabin_m: [9.14, 2.53, 1.98], max_load_t: 11, range_km: 740}
+    notes: 可机内装载 ISV。
+  - {id: mh47g, name: MH-47G 特战运输直升机, category: transport_helicopter, family: ch47, origin: USA}
+  - id: ch53e
+    name: CH-53E 超级种马
+    category: heavy_helicopter
+    family: ch53
+    origin: USA
+    capacity: 55
+    specs: {cabin_m: [9.14, 2.29, 1.98], internal_load_t: 12.2, sling_load_t: 14.5, max_speed_kph: 278, range_km: 1000}
+    notes: 更适合吊运 LAV-25 等重装备。
+  - id: ch53k
+    name: CH-53K 种马王
+    category: heavy_helicopter
+    family: ch53
+    origin: USA
+    specs: {cabin_width_m: 2.53, internal_load_t: 15.9, max_speed_kph: 318, range_km: 852}
+  - id: uh1y
+    name: UH-1Y 毒液
+    category: utility_helicopter
+    family: uh1
+    origin: USA
+    capacity: 10
+    specs: {mtow_t: 8.4, stretchers: 6}
+  - id: mv22
+    name: MV-22 鱼鹰
+    category: tiltrotor
+    family: v22
+    origin: USA
+    capacity: 32
+    specs: {cabin_m: [6.35, 1.72, 1.68], internal_load_t: 9.1, sling_load_t: 6.8, max_speed_kph: 509, range_km: 1628, climb_mps: 20.3}
+    notes: 旋翼盘载荷小，外吊能力小于内载。
+  - {id: cv22b, name: CV-22B, category: tiltrotor, family: v22, origin: USA, notes: 增强雷达设备的空军特战型。}
+
+  # ======================= 中国 · 攻击 =======================
+  - id: z10
+    name: 直-10
+    category: attack_helicopter
+    family: z10
+    origin: CHN
+    specs: {length_m: 14.2, rotor_m: 13, height_m: 3.85, empty_kg: 4300, mtow_kg: 7200, weapon_load_kg: 1600, max_speed_kph: 290, ferry_range_km: 1500, range_km: 800, ceiling_m: 6400, climb_mps: 12, max_missiles: 16, gun: 23mm 转膛机炮}
+    weapons: [红箭-8/9/10, 空地-10, 空地-9, 空地-21, 天燕-90, 霹雳-5, 霹雳-9, GB25, GB50, 鹰击-7, 鹰击-9, CM-501GA, CM-501G, 57mm/90mm 火箭弹]
+    article_power_index: 0.72
+    notes: 空地-10 射程 6.9km（类似地狱火），空地-21 毫米波雷达制导 21km；天燕-90 红外 2 马赫 6km；霹雳-5/9 射程 16/22km；鹰击-7/9 射程 25/20km；CM-501GA/501G 射程 40/70km，只能挂 8/4 枚。
+  - id: z19
+    name: 直-19
+    category: light_attack_helicopter
+    family: z9
+    origin: CHN
+    specs: {length_m: 12, rotor_m: 11.93, height_m: 4.01, empty_kg: 2350, mtow_kg: 4250, weapon_load_kg: 1200, max_speed_kph: 280, ferry_range_km: 900, ceiling_m: 6000, climb_mps: 9, pylons: 2, max_missiles: 8}
+    article_power_index: 0.55
+  - {id: z9w, name: 直-9W, category: light_attack_helicopter, family: z9, origin: CHN, specs: {mtow_kg: 4250, pylons: 2, max_missiles: 8}}
+
+  # ======================= 中国 · 运输 / 通用 =======================
+  - id: z20
+    name: 直-20
+    category: utility_helicopter
+    family: z20
+    origin: CHN
+    notes: 参数不明，应类似 UH-60；可由运-20 机舱装载。有海军反潜/多用途型和可挂反坦克导弹的突击型。
+  - id: z8
+    name: 直-8
+    category: transport_helicopter
+    family: z8
+    origin: CHN
+    capacity: 39
+    specs: {cabin_m: [7, 1.8, 1.83], internal_load_t: 3, sling_load_t: 5, range_km: 800}
+  - {id: z8l, name: 直-8L, category: transport_helicopter, family: z8, origin: CHN, capacity: 39, specs: {cabin_m: [7, 2.5, 1.95], internal_load_t: 3, sling_load_t: 5, range_km: 800}}
+  - {id: z8c, name: 直-8C 舰载型, category: transport_helicopter, family: z8, origin: CHN}
+  - id: mi171
+    name: 米-17 / 米-171
+    category: transport_helicopter
+    family: mi8
+    origin: RUS
+    capacity: 24
+    specs: {cabin_m: [5.34, 2.34, 1.8], internal_load_t: 4, sling_load_t: 5, range_km: 800}
+  - {id: z9, name: 直-9 多用途直升机, category: utility_helicopter, family: z9, origin: CHN}
+  - {id: ka28, name: 卡-28 反潜直升机, category: utility_helicopter, family: ka27, origin: RUS, notes: 我军现役 8 架。}

@@ -1,0 +1,629 @@
+# 美国海军陆战队编制模板（原文 1.4.1，以 2020 年 Force Design 2030 改革前为准）
+
+templates:
+
+  # ==================================================================
+  # 步兵营
+  # ==================================================================
+  - id: usmc_rifle_squad
+    name: 陆战队 13 人步兵班
+    level: squad
+    personnel: {squad_leader: 1, team_leader: 3, grenadier: 3, automatic_rifleman: 3, rifleman: 1, marksman: 1, at_gunner: 1}
+    slots: {rifle: 9, lmg: 3, underbarrel_gl: 3, dmr: 1, reusable_launcher: 1}
+    notes: >
+      班长 + 3 个火力组（组长、M320 榴弹手、步枪手、自动步枪手）。实际全员装备 M27 IAR（4.4kg，只有 30 发弹匣，
+      班内无持续火力）；一个火力组的步枪手为 M38 精确射手，另一组有一人带 M3E1 古斯塔夫。
+  - id: usmc_plt_hq
+    level: squad
+    role: hq
+    personnel: {officer: 1, nco_senior: 1, staff: 1, signaler: 1}
+    notes: 排长、排军士长、排导航员、通信员；常获 1 名医护兵加强。
+  - id: usmc_rifle_plt
+    level: platoon
+    children: [{template: usmc_rifle_squad, count: 3}, {template: usmc_plt_hq, count: 1}]
+    attached: [{template: us_att_medic, count: 1}]
+    expected_personnel: 43
+
+  - {id: usmc_m224_sq, level: squad, personnel: {mortarman: 3}, slots: {mortar_light: 1}}
+  - {id: usmc_smaw_sq, level: squad, personnel: {at_gunner: 2, assistant_gunner: 2}, slots: {reusable_launcher: 2}, notes: 2 个 2 人 SMAW 小组。}
+  - {id: usmc_m240_sq, level: squad, personnel: {mg_gunner: 2, assistant_gunner: 4}, slots: {gpmg: 2}, notes: 2 个 3 人 M240 小组。}
+  - {id: usmc_section_leader, level: squad, role: hq, personnel: {nco_senior: 1}}
+  - id: usmc_weapons_plt
+    name: 步兵连武器排
+    level: platoon
+    children:
+      - {template: usmc_section_leader, count: 3}
+      - {template: usmc_m224_sq, count: 3}
+      - {template: usmc_smaw_sq, count: 3}
+      - {template: usmc_m240_sq, count: 3}
+      - {template: usmc_wpn_plt_hq, count: 1}
+    expected_personnel: 44
+    notes: 迫击炮分队 10 人（分队长 + 3 个 60 迫班）、突击分队 13 人（分队长 + 3 个突击班）、机枪分队 19 人（分队长 + 3 个机枪班）。
+  - {id: usmc_wpn_plt_hq, level: squad, role: hq, personnel: {officer: 1, nco_senior: 1}, confidence: estimated}
+  - id: usmc_coy_hq
+    level: squad
+    role: hq
+    personnel: {officer: 2, nco_senior: 2, mechanic: 1, driver: 1}
+    slots: {light_armored_vehicle: 1, trailer: 1}
+    notes: 连长、副连长、一军士长、连炮士官、军械士、司机/通信员；1 辆悍马拖弹药补给拖车。
+  - id: usmc_rifle_coy
+    name: 陆战队步兵连
+    level: company
+    children:
+      - {template: usmc_rifle_plt, count: 3}
+      - {template: usmc_weapons_plt, count: 1}
+      - {template: usmc_coy_hq, count: 1}
+    expected_personnel: 179
+
+  # ---- 营武器连 ----
+  - id: usmc_m252_sq
+    level: squad
+    personnel: {squad_leader: 1, mortarman: 4, driver: 1}
+    slots: {mortar_medium: 1, light_armored_vehicle: 1}
+    notes: 班长、炮手、副炮手、2 名弹药手、1 名弹药手兼司机。原文全排 11 辆悍马，按每班 1 辆分配。
+  - {id: usmc_81_section_hq, level: squad, role: hq, personnel: {nco_senior: 1, supply: 1, driver: 1}, slots: {light_armored_vehicle: 1}}
+  - id: usmc_81_plt_hq
+    level: squad
+    role: hq
+    personnel: {officer: 1, nco_senior: 1, supply: 3, forward_observer: 2, driver: 1, spotter: 2}
+    slots: {light_armored_vehicle: 1}
+    notes: 排长、排军士长、弹药技师、2 名弹药专员 + 5 人火炮引导小组（2 前观、司机兼记录手、观察手、观察手兼记录手）。
+  - id: usmc_81_plt
+    level: platoon
+    children:
+      - {template: usmc_m252_sq, count: 8}
+      - {template: usmc_81_section_hq, count: 2}
+      - {template: usmc_81_plt_hq, count: 1}
+    expected_personnel: 64
+    expected_equipment: {mortar_medium: 8, light_armored_vehicle: 11}
+  - {id: usmc_hmg_sq, level: squad, personnel: {squad_leader: 1, mg_gunner: 1, assistant_gunner: 1, driver: 1}, slots: {light_armored_vehicle: 1, hmg: 1}, notes: M2 可从车上搬下使用。}
+  - {id: usmc_hmg_plt_hq, level: squad, role: hq, personnel: {officer: 1, nco_senior: 1, supply: 1, driver: 1}, slots: {light_armored_vehicle: 1}}
+  - id: usmc_hmg_plt
+    level: platoon
+    children: [{template: usmc_hmg_sq, count: 6}, {template: usmc_hmg_plt_hq, count: 1}]
+    expected_personnel: 28
+    expected_equipment: {hmg: 6, light_armored_vehicle: 7}
+  - {id: usmc_javelin_sq, level: squad, personnel: {at_gunner: 4, assistant_gunner: 4}, slots: {atgm_portable: 4}, notes: 4 个 2 人标枪小组。}
+  - {id: usmc_tow_sq, level: squad, personnel: {squad_leader: 1, at_gunner: 2, assistant_gunner: 2, driver: 2}, slots: {atgm_vehicle: 2}, notes: 2 个 3 人 TOW 小组，每组 1 辆悍马 TOW 车。}
+  - {id: usmc_at_plt_hq, level: squad, role: hq, personnel: {officer: 1, nco_senior: 1, driver: 1}, slots: {light_armored_vehicle: 1}}
+  - {id: usmc_at_section_hq, level: squad, role: hq, personnel: {nco_senior: 1, staff: 1}}
+  - id: usmc_at_plt
+    level: platoon
+    children:
+      - {template: usmc_at_plt_hq, count: 1}
+      - {template: usmc_section_leader, count: 1}
+      - {template: usmc_javelin_sq, count: 2}
+      - {template: usmc_at_section_hq, count: 1}
+      - {template: usmc_tow_sq, count: 4}
+    expected_personnel: 41
+    expected_equipment: {atgm_vehicle: 8, atgm_portable: 8}
+    notes: 原文分项（3 + 17 + 30 = 50）与总数 41 不符。
+  - {id: usmc_wpn_coy_hq, level: squad, role: hq, personnel: {officer: 2, nco_senior: 2, staff: 3}, slots: {light_armored_vehicle: 2}}
+  - id: usmc_weapons_coy
+    name: 陆战队营武器连
+    level: company
+    children:
+      - {template: usmc_81_plt, count: 1}
+      - {template: usmc_hmg_plt, count: 1}
+      - {template: usmc_at_plt, count: 1}
+      - {template: usmc_wpn_coy_hq, count: 1}
+    expected_personnel: 149
+    expected_equipment: {"light_armored_vehicle+atgm_vehicle": 31}
+
+  - id: usmc_scout_sniper_plt
+    level: platoon
+    children: [{template: usmc_sniper_team_amr, count: 4}, {template: usmc_sniper_team_m40, count: 4}]
+  - {id: usmc_sniper_team_amr, level: squad, personnel: {sniper: 1, spotter: 1}, slots: {anti_materiel_rifle: 1}}
+  - {id: usmc_sniper_team_m40, level: squad, personnel: {sniper: 1, spotter: 1}, slots: {sniper_rifle: 1}}
+  - {id: usmc_hs_coy_agg, level: squad, role: support, granularity: aggregate, personnel: {staff: 253}, confidence: estimated, notes: 营部、通信排、服务排（供应、汽车运输、军械、TOW 维护、食物）、医疗排；按 269 人扣除侦察狙击排倒推。}
+  - id: usmc_hs_coy
+    name: 营总部与服务连
+    level: company
+    role: hq
+    children: [{template: usmc_scout_sniper_plt, count: 1}, {template: usmc_hs_coy_agg, count: 1}]
+    expected_personnel: 269
+
+  - id: usmc_inf_bn
+    name: 陆战队步兵营
+    level: battalion
+    children:
+      - {template: usmc_rifle_coy, count: 3}
+      - {template: usmc_weapons_coy, count: 1}
+      - {template: usmc_hs_coy, count: 1}
+    default_bindings: {lmg: m27_iar, dmr: m38_dmr, underbarrel_gl: m320, reusable_launcher: m3e1_carl_gustaf, gpmg: m240, hmg: m2_hmg, mortar_light: m224, mortar_medium: m252, atgm_portable: javelin, atgm_vehicle: hmmwv_tow, light_armored_vehicle: m1165a1, sniper_rifle: m40, anti_materiel_rifle: m82}
+    expected_personnel: 955
+    unit_ratings: {informatization: info_us_standard, logistics: log_us, readiness: ready_high}
+    notes: 陆战队基本单位，合成度和规模明显大于美陆军普通步兵营。连武器排的突击班用 SMAW（实例中 reusable_launcher 可绑定 smaw）。
+
+  - {id: usmc_regt_hq_coy, level: company, role: hq, children: [{template: usmc_regt_hq_agg, count: 1}], expected_personnel: 182}
+  - {id: usmc_regt_hq_agg, level: squad, role: hq, granularity: aggregate, personnel: {staff: 182}, notes: 服务排只服务团部；无医疗排和侦察狙击排；通信排较小。}
+  - id: usmc_inf_regiment
+    name: 陆战步兵团
+    level: brigade
+    children: [{template: usmc_inf_bn, count: 3}, {template: usmc_regt_hq_coy, count: 1}]
+    expected_personnel: 3047
+
+  # ==================================================================
+  # 师属兵种营
+  # ==================================================================
+  # ---- 坦克营 ----
+  - id: usmc_tank_coy
+    level: company
+    children:
+      - {template: us_tank_plt, count: 3}
+      - {template: usmc_tank_coy_hq, count: 1}
+    expected_personnel: 82
+    expected_equipment: {mbt: 14}
+    notes: 原文“每个坦克排为排部 1 辆 + 3 个坦克班各 1 辆”，即 4 车。
+  - id: usmc_tank_coy_hq
+    level: squad
+    role: hq
+    granularity: aggregate
+    personnel: {tank_commander: 2, tank_gunner: 2, tank_driver: 2, tank_loader: 2, staff: 26}
+    slots: {mbt: 2}
+  - id: usmc_tank_bn_hq_coy
+    level: company
+    role: hq
+    children:
+      - {template: usmc_tank_bn_at_plt, count: 1}
+      - {template: usmc_tank_bn_recon_plt, count: 1}
+      - {template: usmc_tank_bn_hq_agg, count: 1}
+    expected_personnel: 496
+  - {id: usmc_tank_bn_at_plt, level: squad, granularity: aggregate, personnel: {staff: 69}, slots: {atgm_vehicle: 12}, notes: 排部 3 人 + 3 个反坦克分队（分队长、车辆操作员、2 个反坦克班，每班班长 + 2 个 TOW 悍马小组）。}
+  - {id: usmc_tank_bn_recon_plt, level: squad, granularity: aggregate, personnel: {scout: 24}, slots: {light_armored_vehicle: 6, atgm_vehicle: 2, hmg: 2}, notes: 排部 6 人 + 2 个侦察分队（分队长车 3 人 + TOW 班 + 重机枪班，各 1 辆悍马）。}
+  - {id: usmc_tank_bn_hq_agg, level: squad, role: support, granularity: aggregate, personnel: {staff: 403}, slots: {mbt: 2, armored_recovery_vehicle: 1, bridge_layer: 4}, notes: 营部 2 辆坦克（由 58 − 4×14 推得）；工程、维修、后勤、战场抢救、医疗、牧师、通信；M88 1 辆、AVLB 4 辆。}
+  - id: usmc_tank_bn
+    name: 陆战队坦克营
+    level: battalion
+    children: [{template: usmc_tank_coy, count: 4}, {template: usmc_tank_bn_hq_coy, count: 1}]
+    default_bindings: {mbt: m1a2_sepv2, light_armored_vehicle: m1165a1, truck_medium: mtvr}
+    expected_personnel: 823
+    expected_equipment: {mbt: 58}
+    status: disbanded_by_fd2030
+    notes: 共 58 辆坦克、87 辆悍马、38 辆 MTVR。Force Design 2030 已裁撤全部装甲连。
+
+  # ---- 两栖突击营 ----
+  - {id: usmc_aav_plt, level: platoon, children: [{template: usmc_aav_plt_agg, count: 1}]}
+  - {id: usmc_aav_plt_agg, level: squad, granularity: aggregate, slots: {amphibious_assault_vehicle: 12}, notes: 12 辆 AAV-7（1 辆指挥型）；每排可一次运送一个步兵连及加强的重机枪、迫击炮、反坦克力量。}
+  - id: usmc_aav_coy
+    level: company
+    children: [{template: usmc_aav_plt, count: 3}, {template: usmc_aav_coy_hq, count: 1}]
+    expected_personnel: 201
+    expected_equipment: {amphibious_assault_vehicle: 42}
+  - {id: usmc_aav_coy_hq, level: squad, role: hq, granularity: aggregate, slots: {amphibious_assault_vehicle: 6}, notes: 6 辆，1 辆指挥型。}
+  - {id: usmc_aav_bn_hq_coy, level: company, role: hq, children: [{template: usmc_aav_bn_hq_agg, count: 1}], expected_personnel: 357}
+  - {id: usmc_aav_bn_hq_agg, level: squad, role: hq, granularity: aggregate, personnel: {staff: 357}, slots: {amphibious_assault_vehicle: 65, light_armored_vehicle: 26, truck_medium: 22}, notes: 营部 65 辆（2 辆指挥型、6 辆救援型）。}
+  - id: usmc_aav_bn
+    name: 两栖突击营
+    level: battalion
+    children: [{template: usmc_aav_coy, count: 4}, {template: usmc_aav_bn_hq_coy, count: 1}]
+    default_bindings: {amphibious_assault_vehicle: aav7}
+    expected_personnel: 1161
+    expected_equipment: {amphibious_assault_vehicle: 233}
+    status: disbanded_by_fd2030
+    notes: 正在换装 ACV（只能乘 13 人）。
+
+  # ---- 轻装甲侦察营 ----
+  - id: usmc_lar_sq
+    level: squad
+    personnel: {vehicle_commander: 1, vehicle_gunner: 1, vehicle_driver: 1, scout: 6}
+    slots: {ifv: 1}
+  - {id: usmc_lar_plt_hq, level: squad, role: hq, personnel: {officer: 1, vehicle_gunner: 1, vehicle_driver: 1, nco_senior: 1, signaler: 1}, slots: {ifv: 1}, confidence: estimated}
+  - id: usmc_lar_plt
+    level: platoon
+    children: [{template: usmc_lar_sq, count: 2}, {template: usmc_lar_plt_hq, count: 1}]
+    expected_personnel: 23
+  - {id: usmc_lar_at_section, level: squad, personnel: {vehicle_commander: 4, vehicle_gunner: 4, vehicle_driver: 4, assistant_gunner: 4}, slots: {atgm_vehicle: 4}}
+  - id: usmc_lar_coy_hq
+    level: squad
+    role: hq
+    granularity: aggregate
+    personnel: {staff: 38}
+    slots: {mortar_vehicle: 2, armored_command_vehicle: 1, apc: 3, armored_recovery_vehicle: 1, ifv: 3}
+    notes: 2 辆 LAV-M 车载 81 迫、1 辆 LAV-C2、3 辆 LAV-L、1 辆 LAV-R、3 辆 LAV-25。
+  - id: usmc_lar_coy
+    level: company
+    children:
+      - {template: usmc_lar_plt, count: 3}
+      - {template: usmc_lar_at_section, count: 1}
+      - {template: usmc_lar_coy_hq, count: 1}
+    expected_personnel: 138
+  - {id: usmc_lar_hs_coy, level: company, role: hq, children: [{template: usmc_lar_hs_agg, count: 1}], expected_personnel: 418}
+  - {id: usmc_lar_hs_agg, level: squad, role: hq, granularity: aggregate, personnel: {staff: 418}, slots: {ew_vehicle: 4}, notes: 营部、通信、服务、医疗、维修、汽车运输排；4 辆 LAV-MEWSS。}
+  - id: usmc_lar_bn
+    name: 轻装甲侦察营
+    level: battalion
+    children: [{template: usmc_lar_coy, count: 4}, {template: usmc_lar_hs_coy, count: 1}]
+    default_bindings: {ifv: lav25, mortar_vehicle: lav_m, atgm_vehicle: lav_at, armored_command_vehicle: lav_c2, apc: lav_l, armored_recovery_vehicle: lav_r, ew_vehicle: lav_mewss}
+    expected_personnel: 832
+    notes: 原文分项（418 + 4×138）与总数 832 不符。FD2030 现役 LAR 连由 9 个增加到 12 个。
+
+  # ---- 炮兵 ----
+  - {id: usmc_sq_generic, level: squad, granularity: aggregate, notes: 原文只给出组/班名称，人员和装备未给。}
+  - {id: usmc_fdc, name: 火炮指挥中心, level: squad, granularity: aggregate, notes: 计算诸元、指挥火炮操作。}
+  - {id: usmc_fo_center, name: 炮火引导中心, level: squad, granularity: aggregate, notes: 火炮前观，观察和定位目标、评估损伤、较射。}
+  - {id: usmc_plt_hq_generic, name: 排部, level: squad, role: hq, granularity: aggregate}
+  - id: usmc_m777_firing_plt
+    name: M777 发射排
+    level: platoon
+    children: [{template: us_m777_section, count: 6}, {template: usmc_plt_hq_generic, count: 1}, {template: usmc_fdc, count: 1}, {template: usmc_fo_center, count: 1}]
+  - id: usmc_m327_firing_plt
+    name: M327 发射排
+    level: platoon
+    children: [{template: usmc_m327_section, count: 6}, {template: usmc_plt_hq_generic, count: 1}, {template: usmc_fdc, count: 1}, {template: usmc_fo_center, count: 1}]
+  - id: usmc_himars_firing_plt
+    name: 海马斯发射排
+    level: platoon
+    children: [{template: usmc_himars_section, count: 4}, {template: usmc_plt_hq_generic, count: 1}, {template: usmc_fdc, count: 1}, {template: usmc_fo_center, count: 1}]
+  - {id: usmc_m327_section, level: squad, personnel: {squad_leader: 1, mortarman: 5, driver: 2}, slots: {mortar_heavy: 1, utility_vehicle: 2}, confidence: estimated, notes: 每门由 1 辆 Growler 牵引，另 1 辆车牵引弹药；人数原文未给。}
+  - {id: usmc_himars_section, level: squad, personnel: {vehicle_commander: 1, rocket_artilleryman: 1, vehicle_driver: 1}, slots: {mrl_long_range: 1}, confidence: estimated}
+  - id: usmc_battery_hq
+    name: 炮兵连连部
+    level: platoon
+    role: hq
+    children:
+      - {template: usmc_sq_generic, count: 1}   # 连部组
+      - {template: usmc_sq_generic, count: 1}   # 通信组
+      - {template: usmc_sq_generic, count: 1}   # 维修组
+      - {template: usmc_sq_generic, count: 1}   # 医疗组
+      - {template: usmc_sq_generic, count: 1}   # 弹药组
+      - {template: usmc_sq_generic, count: 1}   # 炮火协调组
+    notes: 连部组、通信组、维修组、医疗组、弹药组、炮火协调组。
+  - {id: usmc_m777_battery, name: M777 炮连, level: company, children: [{template: usmc_m777_firing_plt, count: 2}, {template: usmc_battery_hq, count: 1}], notes: 每连 2 排、每排 6 门；连 120-280 人。}
+  - {id: usmc_m327_battery, name: M327 迫击炮连, level: company, children: [{template: usmc_m327_firing_plt, count: 2}, {template: usmc_battery_hq, count: 1}]}
+  - {id: usmc_himars_battery, name: 海马斯炮连, level: company, children: [{template: usmc_himars_firing_plt, count: 1}, {template: usmc_battery_hq, count: 1}], notes: 每连 1 排 4 辆。}
+  - id: usmc_arty_bn_hq
+    name: 炮兵营营部连
+    level: company
+    role: hq
+    children:
+      - {template: usmc_sq_generic, count: 1}   # 营部
+      - {template: usmc_arty_bn_cmd_plt, count: 1}
+      - {template: usmc_arty_bn_svc_plt, count: 1}
+      - {template: usmc_arty_bn_comm_plt, count: 1}
+  - {id: usmc_arty_bn_cmd_plt, name: 营指挥排, level: platoon, children: [{template: usmc_sq_generic, count: 5}], notes: 炮火引导组、测地组、情报组、炮火协调组、海军炮火协调组。}
+  - {id: usmc_arty_bn_svc_plt, name: 营服务排, level: platoon, role: support, children: [{template: usmc_sq_generic, count: 6}], notes: 后勤组、供应组、运输组、食物组、医疗组、牧师组。}
+  - {id: usmc_arty_bn_comm_plt, name: 营通信排, level: platoon, children: [{template: usmc_sq_generic, count: 3}], notes: 排部、有线通信组、无线电组。}
+  - id: usmc_arty_bn
+    name: 陆战队炮兵营（典型配置）
+    level: battalion
+    children:
+      - {template: usmc_m777_battery, count: 3}
+      - {template: usmc_m327_battery, count: 1}
+      - {template: usmc_arty_bn_hq, count: 1}
+    default_bindings: {howitzer_heavy_towed: m777a2, mortar_heavy: m327, utility_vehicle: m1163_growler, mrl_long_range: m142_himars}
+    notes: 每营 3-5 个炮连、600-1300 人；比较典型的是 3 个 M777 连 + 1 个 120 迫击炮连。FD2030：M777 从 21 个连减到 5 个，海马斯从 7 个连增到 14 个。
+  - id: usmc_arty_regt_hq
+    name: 炮兵团总部连
+    level: company
+    role: hq
+    children:
+      - {template: usmc_sq_generic, count: 6}   # 团部：总部、行政、事业规划、后勤、牧师、医疗组
+      - {template: usmc_arty_regt_cmd_plt, count: 1}
+      - {template: usmc_arty_regt_svc_plt, count: 1}
+      - {template: usmc_arty_regt_comm_plt, count: 1}
+  - {id: usmc_arty_regt_cmd_plt, name: 团指挥排, level: platoon, children: [{template: usmc_sq_generic, count: 5}], notes: 炮火引导组、炮火支援协调组、测地组、气象组、情报组。}
+  - {id: usmc_arty_regt_svc_plt, name: 团服务排, level: platoon, role: support, children: [{template: usmc_sq_generic, count: 4}], notes: 供应组、汽车运输组、食物组、工程装备组。}
+  - {id: usmc_arty_regt_comm_plt, name: 团通信排, level: platoon, children: [{template: usmc_sq_generic, count: 4}], notes: 排部、火炮电子设备维护组、有线通信组、无线电组。}
+  - id: usmc_arty_regiment
+    name: 陆战队炮兵团
+    level: brigade
+    children: [{template: usmc_arty_bn, count: 3}, {template: usmc_arty_regt_hq, count: 1}]
+    notes: 2800-4500 人。
+
+  # ---- 侦察营 / 工兵营 / 师部营 ----
+  - {id: usmc_recon_coy, name: 侦察连, level: company, children: [{template: usmc_sq_generic, count: 1}], notes: 徒步轻装侦察。}
+  - {id: usmc_recon_hs_coy, name: 侦察营指挥与服务连, level: company, role: hq, children: [{template: usmc_sq_generic, count: 1}]}
+  - id: usmc_recon_bn
+    name: 陆战队侦察营
+    level: battalion
+    children: [{template: usmc_recon_coy, count: 4}, {template: usmc_recon_hs_coy, count: 1}]
+    notes: 1-4 个侦察连。
+  - {id: usmc_combat_eng_plt, name: 战斗工兵排, level: platoon, children: [{template: usmc_sq_generic, count: 1}], expected_personnel: 36}
+  - {id: usmc_combat_eng_coy, name: 战斗工兵连, level: company, children: [{template: usmc_combat_eng_plt, count: 3}], expected_personnel: 114}
+  - id: usmc_eng_spt_coy
+    name: 工兵支援连
+    level: company
+    role: support
+    children: [{template: usmc_sq_generic, count: 3}]
+    expected_personnel: 259
+    notes: 以后勤职能为主：装备排、汽车运输排、设施保障排。
+  - id: usmc_eng_hq_coy
+    name: 工兵营营部连
+    level: company
+    role: hq
+    children: [{template: usmc_sq_generic, count: 6}]
+    expected_personnel: 173
+    notes: 营部、供应排、通信排、医疗排、食物组、牧师组。
+  - id: usmc_engineer_bn
+    name: 陆战队工兵营
+    level: battalion
+    children: [{template: usmc_eng_hq_coy, count: 1}, {template: usmc_eng_spt_coy, count: 1}, {template: usmc_combat_eng_coy, count: 3}]
+    expected_personnel: 888
+    notes: 原文分项合计 774，与总数 888 不符。
+  - id: usmc_div_hq_bn
+    name: 师总部营
+    level: battalion
+    role: hq
+    children:
+      - {template: usmc_sq_generic, count: 1}   # 营指挥部
+      - {template: usmc_div_hq_coy, count: 1}
+      - {template: usmc_div_comm_coy, count: 1}
+      - {template: usmc_div_truck_coy, count: 1}
+  - {id: usmc_div_hq_coy, name: 总部连, level: company, role: hq, children: [{template: usmc_sq_generic, count: 1}], notes: 服务总部营。}
+  - {id: usmc_div_comm_coy, name: 通信连, level: company, children: [{template: usmc_sq_generic, count: 1}]}
+  - {id: usmc_div_truck_coy, name: 卡车连, level: company, role: support, children: [{template: usmc_sq_generic, count: 1}]}
+
+  - id: usmc_division
+    name: 陆战师（2020）
+    level: division
+    children:
+      - {template: usmc_div_hq_bn, count: 1}
+      - {template: usmc_inf_regiment, count: 3}
+      - {template: usmc_arty_regiment, count: 1}
+      - {template: usmc_tank_bn, count: 1}
+      - {template: usmc_aav_bn, count: 1}
+      - {template: usmc_lar_bn, count: 1}
+      - {template: usmc_recon_bn, count: 1}
+      - {template: usmc_engineer_bn, count: 1}
+
+  # ==================================================================
+  # 濒海战斗团（FD2030）
+  # ==================================================================
+  - {id: usmc_nmesis_battery, name: 濒海战斗团营属导弹连, level: company, children: [{template: usmc_nmesis_agg, count: 1}], default_bindings: {coastal_ashm_launcher: nmesis}}
+  - {id: usmc_nmesis_agg, level: squad, granularity: aggregate, slots: {coastal_ashm_launcher: 8}}
+  - id: usmc_littoral_regiment
+    name: 陆战濒海战斗团（MLR）
+    level: brigade
+    children: [{template: usmc_littoral_inf_bn, count: 1}, {template: usmc_littoral_aa_bn, count: 1}]
+    notes: 只有 1 个陆战营（营内新增 NMESIS 导弹连），另编团属防空营。全部位于冲绳第三 MEF；不负责抢滩，只在友方岛屿防守并支援海军。共 2 个团。
+
+
+  # ==================================================================
+  # Force Design 2030 后的步兵营
+  # ==================================================================
+  - id: usmc_rifle_coy_fd2030
+    variant_of: usmc_rifle_coy
+    name: 陆战队步兵连（FD2030）
+    level: company
+    children:
+      - {template: usmc_rifle_plt, count: 3}
+      - {template: usmc_coy_hq, count: 1}
+      - {template: usmc_coy_uav_pool_fd2030, count: 1}
+    confidence: estimated
+    notes: 裁撤武器排，部分武器下放到连（具体如何下放原文未给）；连级增配 Stalker Blk 30 无人机。
+  - {id: usmc_coy_uav_pool_fd2030, level: squad, role: equipment_pool, slots: {uav_small_vtol: 1}, confidence: estimated, notes: 数量原文未给。}
+  - id: usmc_inf_bn_fd2030
+    variant_of: usmc_inf_bn
+    name: 陆战队步兵营（FD2030）
+    level: battalion
+    children:
+      - {template: usmc_rifle_coy_fd2030, count: 3}
+      - {template: usmc_hs_coy_fd2030, count: 1}
+    default_bindings: {uav_small_vtol: stalker_blk30, lmg: m27_iar, dmr: m38_dmr}
+    notes: 营裁撤武器连；裁撤侦察狙击排，营级侦察依赖师侦察营下放到营的侦察排。
+  - {id: usmc_hs_coy_fd2030, variant_of: usmc_hs_coy, level: company, role: hq, children: [{template: usmc_hs_coy_agg, count: 1}], notes: 无侦察狙击排。}
+  - id: usmc_littoral_inf_bn
+    name: 濒海战斗团陆战营
+    level: battalion
+    children:
+      - {template: usmc_rifle_coy_fd2030, count: 3}
+      - {template: usmc_nmesis_battery, count: 1}
+      - {template: usmc_hs_coy_fd2030, count: 1}
+    notes: 营内新增昂贵的 NMESIS 导弹连（每连 8 车）。
+  - {id: usmc_littoral_aa_bn, name: 濒海战斗团防空营, level: battalion, children: [{template: usmc_sq_generic, count: 1}], notes: 组成原文未给。}
+
+  # ==================================================================
+  # 航空联队 MAW
+  # ==================================================================
+  - {id: usmc_vsq_fighter, level: squad, granularity: aggregate, slots: {fighter: 1}}
+  - {id: usmc_vsq_tanker, level: squad, granularity: aggregate, slots: {tanker_aircraft: 1}}
+  - {id: usmc_vsq_mv22, level: squad, granularity: aggregate, slots: {tiltrotor: 1}}
+  - {id: usmc_vsq_ch53, level: squad, granularity: aggregate, slots: {heavy_helicopter: 1}}
+  - {id: usmc_vsq_ah1z, level: squad, granularity: aggregate, slots: {attack_helicopter: 1}}
+  - {id: usmc_vsq_uh1y, level: squad, granularity: aggregate, slots: {utility_helicopter: 1}}
+  - {id: usmc_vsq_uav, level: squad, granularity: aggregate, slots: {uav_tactical: 1}}
+  - {id: usmc_vsq_avenger, level: squad, granularity: aggregate, slots: {sam_vehicle_manpads: 1}}
+  - id: usmc_fighter_sqn
+    name: 战斗机中队（12 架）
+    level: battalion
+    children: [{template: usmc_vsq_fighter, count: 12}]
+    notes: AV-8B、F-35B（两栖舰搭载），F/A-18C、F/A-18D、F-35C（借用航母）。FD2030 计划每中队减为 10 架。
+  - {id: usmc_tanker_sqn, name: 加油机中队, level: battalion, children: [{template: usmc_vsq_tanker, count: 12}], notes: 12 架 KC-130J。}
+  - {id: usmc_uav_sqn, name: 无人机中队, level: battalion, children: [{template: usmc_vsq_uav, count: 5}], default_bindings: {uav_tactical: rq21}, notes: 2020 年为 5 架 RQ-21，正换装 MQ-9A。}
+  - id: usmc_fixed_wing_group
+    name: 固定翼大队
+    level: brigade
+    children: [{template: usmc_fighter_sqn, count: 6}, {template: usmc_tanker_sqn, count: 1}, {template: usmc_uav_sqn, count: 1}]
+  - {id: usmc_tiltrotor_sqn, name: 倾转旋翼机中队, level: battalion, children: [{template: usmc_vsq_mv22, count: 12}], default_bindings: {tiltrotor: mv22}}
+  - id: usmc_tiltrotor_group
+    name: 倾转旋翼机大队
+    level: brigade
+    children: [{template: usmc_tiltrotor_sqn, count: 6}]
+    notes: 5-6 个中队。
+  - {id: usmc_heavy_heli_sqn, name: 重型直升机中队, level: battalion, children: [{template: usmc_vsq_ch53, count: 12}], default_bindings: {heavy_helicopter: ch53e}}
+  - id: usmc_light_attack_heli_sqn
+    name: 轻型攻击直升机中队
+    level: battalion
+    children: [{template: usmc_vsq_ah1z, count: 18}, {template: usmc_vsq_uh1y, count: 9}]
+    default_bindings: {attack_helicopter: ah1z, utility_helicopter: uh1y}
+  - id: usmc_helicopter_group
+    name: 直升机大队
+    level: brigade
+    children: [{template: usmc_heavy_heli_sqn, count: 2}, {template: usmc_light_attack_heli_sqn, count: 2}]
+  - id: usmc_laad_bn
+    name: 低空防御营
+    level: battalion
+    children: [{template: usmc_vsq_avenger, count: 60}]
+    default_bindings: {sam_vehicle_manpads: avenger}
+  - id: usmc_air_control_group
+    name: 空中控制大队
+    level: brigade
+    children:
+      - {template: usmc_laad_bn, count: 1}
+      - {template: usmc_air_support_sqn, count: 1}
+      - {template: usmc_air_control_sqn, count: 1}
+      - {template: usmc_comm_sqn, count: 1}
+      - {template: usmc_wing_support_sqn, count: 2}
+  - {id: usmc_air_support_sqn, name: 空中支援中队, level: battalion, children: [{template: usmc_sq_generic, count: 1}], notes: 负责空地协同。}
+  - {id: usmc_air_control_sqn, name: 空中控制中队, level: battalion, children: [{template: usmc_sq_generic, count: 1}], notes: 负责雷达监视。}
+  - {id: usmc_comm_sqn, name: 通信中队, level: battalion, children: [{template: usmc_sq_generic, count: 1}]}
+  - {id: usmc_wing_support_sqn, name: 航空支援中队, level: battalion, role: support, children: [{template: usmc_sq_generic, count: 1}], notes: 负责后勤。}
+  - id: usmc_aircraft_wing
+    name: 陆战队航空联队（MAW）
+    level: division
+    children:
+      - {template: usmc_fixed_wing_group, count: 1}
+      - {template: usmc_tiltrotor_group, count: 1}
+      - {template: usmc_helicopter_group, count: 1}
+      - {template: usmc_air_control_group, count: 1}
+
+  # ==================================================================
+  # 后勤群 / 本部群 / MEF
+  # ==================================================================
+  - id: usmc_logistics_group
+    name: 后勤群（MLG）
+    level: division
+    role: support
+    children: [{template: usmc_lg_comm_bn, count: 1}, {template: usmc_lg_intel_bn, count: 1}, {template: usmc_lg_radio_bn, count: 1}, {template: usmc_lg_mp_bn, count: 1}]
+    notes: 原文列为通信营、情报营、无线电营、宪兵营（这几个营一般属于本部群，原文如此记载）。FD2030 裁撤 3 个宪兵营。
+  - {id: usmc_lg_comm_bn, name: 通信营, level: battalion, children: [{template: usmc_sq_generic, count: 1}]}
+  - {id: usmc_lg_intel_bn, name: 情报营, level: battalion, children: [{template: usmc_sq_generic, count: 1}]}
+  - {id: usmc_lg_radio_bn, name: 无线电营, level: battalion, children: [{template: usmc_sq_generic, count: 1}]}
+  - {id: usmc_lg_mp_bn, name: 宪兵营, level: battalion, children: [{template: usmc_sq_generic, count: 1}]}
+  - {id: usmc_forecon, name: 远征军侦察连（FORECON）, level: company, children: [{template: usmc_sq_generic, count: 1}], notes: 特种部队性质，执行敌后特种侦察，特战 Tier 3。}
+  - id: usmc_hq_group
+    name: 远征军本部群
+    level: brigade
+    role: hq
+    children: [{template: usmc_forecon, count: 1}]
+  - id: usmc_mef
+    name: 陆战远征军（MEF）
+    level: corps
+    children:
+      - {template: usmc_division, count: 1}
+      - {template: usmc_aircraft_wing, count: 1}
+      - {template: usmc_logistics_group, count: 1}
+      - {template: usmc_hq_group, count: 1}
+    notes: 地面作战部队（GCE）+ 航空作战部队（ACE）+ 后勤（LCE）+ 指挥部。结构上类似解放军一个战区。运送一个 MEF 需要全部两栖舰船。
+
+  # ==================================================================
+  # MEB（远征旅）
+  # ==================================================================
+  - {id: usmc_tank_coy_att, variant_of: usmc_tank_coy, level: company, children: [{template: us_tank_plt, count: 3}, {template: usmc_tank_coy_hq, count: 1}]}
+  - id: usmc_meb_gce
+    name: MEB 地面作战部队（加强团）
+    level: brigade
+    children:
+      - {template: usmc_inf_regiment, count: 1}
+      - {template: usmc_arty_bn, count: 1}
+      - {template: usmc_tank_coy, count: 1}
+      - {template: usmc_aav_coy, count: 1}
+      - {template: usmc_lar_coy, count: 1}
+      - {template: usmc_recon_coy, count: 1}
+      - {template: usmc_combat_eng_coy, count: 1}
+    notes: 由师属辅助单位拆分：1 个炮兵营，坦克、两栖突击、轻装甲侦察、侦察、工兵各 1 个连；大抵相当于 1 个陆军 BCT。
+  - id: usmc_meb_ace
+    name: MEB 航空作战部队
+    level: brigade
+    children:
+      - {template: usmc_fighter_sqn, count: 2}
+      - {template: usmc_vsq_tanker, count: 6}
+      - {template: usmc_tiltrotor_sqn, count: 2}
+      - {template: usmc_heavy_heli_sqn, count: 1}
+      - {template: usmc_light_attack_heli_sqn, count: 1}
+    notes: 2 个战斗机中队、半个加油机中队、2 个旋翼机中队、1 个重型直升机中队、1 个轻型攻击直升机中队。
+  - {id: usmc_meb_lce, name: MEB 后勤团, level: brigade, role: support, children: [{template: usmc_sq_generic, count: 1}], notes: 由各单位连级单位组成。}
+  - id: usmc_meb
+    name: 陆战远征旅（MEB）
+    level: division
+    children: [{template: usmc_meb_gce, count: 1}, {template: usmc_meb_ace, count: 1}, {template: usmc_meb_lce, count: 1}]
+    notes: 运送需要 3 个两栖戒备舰队。
+
+  # ==================================================================
+  # MEU（远征单元）
+  # ==================================================================
+  - {id: usmc_tank_plt_att, name: 坦克排（加强）, level: platoon, children: [{template: us_tank_plt, count: 1}]}
+  - {id: usmc_aav_plt_att, name: 两栖突击排（加强）, level: platoon, children: [{template: usmc_aav_plt, count: 1}]}
+  - {id: usmc_lar_plt_att, name: 轻装甲侦察排（加强）, level: platoon, children: [{template: usmc_lar_plt, count: 1}]}
+  - {id: usmc_recon_plt_att, name: 侦察排（加强）, level: platoon, children: [{template: usmc_sq_generic, count: 1}]}
+  - {id: usmc_eng_plt_att, name: 工兵排（加强）, level: platoon, children: [{template: usmc_combat_eng_plt, count: 1}]}
+  - id: usmc_meu_gce
+    name: MEU 地面作战部队（营登陆队）
+    level: battalion
+    children:
+      - {template: usmc_inf_bn, count: 1}
+      - {template: usmc_m777_battery, count: 1}
+      - {template: usmc_tank_plt_att, count: 1}
+      - {template: usmc_aav_plt_att, count: 1}
+      - {template: usmc_lar_plt_att, count: 1}
+      - {template: usmc_recon_plt_att, count: 1}
+      - {template: usmc_eng_plt_att, count: 1}
+    expected_personnel: 1284
+    notes: 加强了一个营，加强单位降级到炮兵连和各种排。
+  - id: usmc_meu_ace
+    name: MEU 航空作战部队（混编中队）
+    level: battalion
+    children:
+      - {template: usmc_vsq_fighter, count: 6}
+      - {template: usmc_vsq_tanker, count: 2}
+      - {template: usmc_vsq_mv22, count: 12}
+      - {template: usmc_vsq_ch53, count: 4}
+      - {template: usmc_vsq_ah1z, count: 4}
+      - {template: usmc_vsq_uh1y, count: 3}
+    expected_personnel: 588
+    notes: 除加油机外正好可由一艘美国级或黄蜂级搭载；美国级制海模式只载 20 架 F-35B + 2 架 HH-60。
+  - {id: usmc_meu_lce, name: MEU 后勤营, level: battalion, role: support, children: [{template: usmc_sq_generic, count: 1}], expected_personnel: 267, notes: 由排级单位组成。}
+  - {id: usmc_meu_ce, name: MEU 指挥部, level: company, role: hq, children: [{template: usmc_sq_generic, count: 1}], expected_personnel: 307}
+  - id: usmc_meu
+    name: 陆战远征单元（MEU）
+    level: brigade
+    children: [{template: usmc_meu_gce, count: 1}, {template: usmc_meu_ace, count: 1}, {template: usmc_meu_lce, count: 1}, {template: usmc_meu_ce, count: 1}]
+    expected_personnel: 2446
+    notes: 实战中最常组成的作战单位；一个两栖戒备舰队（1 艘美国级或黄蜂级 + 1 艘圣安东尼奥级 + 1 艘惠德贝岛级或第二艘圣安东尼奥级，最多 2890 人）正好装下。适合针对一个小岛的抢滩登陆。高配版的俄罗斯营战术群。
+
+
+# ======================================================================
+# MAGTF 编组（原文 1.4.1.1.3）—— 作为参考数据，不是严格的嵌套模板
+# ======================================================================
+magtf:
+  MEF:
+    components: [陆战师（地面作战部队 GCE）, 航空联队（航空作战部队 ACE）, 后勤群（LCE）, 远征军本部群]
+    analogy: 结构上类似解放军一个战区（陆军 + 空军 + 联勤保障中心）
+    aircraft_wing:
+      fixed_wing_group: {fighter_squadrons: 6, tanker_squadrons: 1, uav_squadrons: 1, aircraft_per_fighter_sqn: 12, tanker: 12 × KC-130J, uav_2020: 5 × RQ-21（换装 MQ-9）}
+      tiltrotor_group: {squadrons: [5, 6], aircraft_per_sqn: 12, type: MV-22}
+      helicopter_group: {heavy_sqn: 2 × 12 CH-53E, light_attack_sqn: 2 × (18 AH-1Z + 9 UH-1Y)}
+      control_group: 低空防御营（60 台复仇者）、空中支援中队、空中控制中队、通信中队、2 个航空支援中队
+    logistics_group: 通信营、情报营、无线电营、宪兵营
+    other: 每个 MEF 有一个特种侦察连 FORECON
+  MEB:
+    ground: 1 个加强团 + 1 个炮兵营 + 坦克/两栖突击/轻装甲侦察/侦察/工兵各 1 个连（约相当于陆军 1 个 BCT）
+    air: 2 个战斗机中队、半个加油机中队、2 个旋翼机中队、1 个重型直升机中队、1 个轻型攻击直升机中队
+    logistics: 后勤团
+    lift_required: 3 个两栖戒备舰队
+  MEU:
+    ground: 1 个加强营（炮兵连 + 各种排）1284 人
+    air: 6 架战斗机、2 架加油机、12 架 MV-22、4 架重型运输直升机、4 架攻击直升机、3 架通用直升机；588 人
+    logistics: 后勤营 267 人
+    command: 307 人
+    total_personnel: 2446
+    lift: 1 个两栖戒备舰队（1 艘美国级或黄蜂级 + 1 艘圣安东尼奥级 + 1 艘惠德贝岛级或第二艘圣安东尼奥级，最多 2890 人）
+    notes: 实战中最常用的编组；美国级制海模式只载 20 架 F-35B + 2 架 HH-60。
+  amphibious_fleet_2020: {wasp: 7, america: 2, san_antonio: 13, whidbey_island: 6}
+  fd2030_changes:
+    - 现役步兵营减到 21 个、预备役 6 个，其中 2 个营编为濒海战斗团（已完成）
+    - 连裁撤武器排、增加无人机（武器下放到连）；营裁撤武器连
+    - 营裁撤侦察狙击排，改由师侦察营下放侦察排
+    - 裁撤装甲连和两栖突击连，现役 LAR 连 9 → 12（已完成）
+    - M777 21 → 5 个连，海马斯 7 → 14 个连（未开始）
+    - 裁撤 3 个宪兵营（已完成）
+    - 战斗机中队 12 → 10 架；重型直升机 8 → 5 个中队；轻型攻击直升机 7 → 5 个中队；无人机中队增到 6 个，加油机中队增到 5 个（未开始）
+  aviation_2025:
+    fighter_operational_sqn: {AV-8B: 2, F-35B: 8, F/A-18C: 4, F/A-18D: 1, F-35C: 3}
+    fighter_training_sqn: {F-35B: 2, F-5E: 2}
+    tanker_sqn: {operational: 5, training: 1}
+    uav_sqn: {operational: 2, training: 1}
+    mv22_sqn: {operational: 17, training: 1}
+    heavy_heli_sqn: {operational: 7, training: 1, notes: 其中 1 个为 CH-53K}
+    light_attack_heli_sqn: {operational: 8, training: 1}

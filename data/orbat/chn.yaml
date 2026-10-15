@@ -1,0 +1,71 @@
+# 解放军全军数量级数据（原文各章，截至 2025-08，含 2026-06 注）
+
+country: CHN
+
+army:
+  structure: 战区 → 集团军 → 旅 → 营 → 连 → 排 → 班
+  group_armies_per_theater: [2, 3]
+  group_army_typical: 6 个合成旅（至少 1 重 1 中 1 轻）+ 特战、炮兵、防空、陆航（2 个集团军为空突旅）、工化、勤务支援旅各 1
+  special_cases:
+    xinjiang: 保留师-团两级（合成师、合成团）
+    tibet: 下辖 3 个合成旅
+    beijing_garrison: 2 个警卫师各 4 个团（警卫 3 师有野战能力）
+    hk_macau: 驻港部队、驻澳部队
+  amphibious_brigades: 6
+  sof_brigades_total: 17     # 陆军各集团军 + 海军陆战队 + 空降兵军
+  long_range_rocket_brigades: 每战区 1 个（2026-06：已普遍有 4-6 个 191 营）
+  artillery_battalions_article_calc: {plz05: 20, pcl181: 35, phl03: 15, phl191: 17}
+  artillery_brigade_equivalents: 6.1
+  rotary_wing_note: 2010 年代后直升机数量暴增，总量已超美军一半
+
+airborne_corps:
+  brigades: {mechanized_tracked: 1, mechanized_wheeled: 1, airborne_motorized: 2, lynx: 1, air_assault: 1}
+  other: 特战旅、支援旅、训练旅、航空兵旅各 1
+
+marine_corps:
+  brigades: 若干海军陆战合成旅
+  other: 特战旅 1、独立航空兵旅 1、训练基地 1
+  lift_helicopters: {type_071: {count: 8, z8_per_ship: 6}, type_075: {count: 3, z8_per_ship: 20, z9_per_ship: 6, z20_per_ship: 4}, totals: {z8: 108, z9: 12, z20: 8}}
+
+air_force_ground:
+  sam_brigades_per_theater: [4, 6]
+  hk_garrison_aviation: 直-20、直-10 各一个中队
+
+navy_shipborne_helicopters:
+  carriers: {count: 2, z8_per_ship: 10, z9_sar_per_ship: 2}
+  type_055: {count: 8, z20_per_ship: 2}
+  type_052d_batch3_4: {count: 16, z20_per_ship: 1}
+  type_054b: {count: 2, z20_per_ship: 1}
+  type_054a_batch5: {count: 10, z20_per_ship: 1}
+  type_052d_batch1_2: {count: 13, z9_per_ship: 1}
+  type_054a_batch1_4: {count: 30, z9_per_ship: 1}
+  type_052c: {count: 6, z9_or_ka28_per_ship: 1}
+  type_052b: {count: 2, z9_or_ka28_per_ship: 1}
+  sovremenny: {count: 4, z9_or_ka28_per_ship: 1}
+  type_051b: {count: 1, z9_or_ka28_per_ship: 2}
+  type_052: {count: 2, z9_per_ship: 2}
+  totals: {z8: 20, z20: 44, z9: 53, ka28: 8}
+
+navy_coastal_missile: 机动岸舰导弹团，每团 16 辆发射车
+
+strategic_lift:
+  origins: {air: 成都, sea: 湛江}
+  airlift_distance_km: {kyiv: 6300, jerusalem: 6597, damascus: 6840, tehran: 4941, average: 6170}
+  sealift_distance_nm: {odesa: 7461, haifa: 6502, latakia: 6642, bandar_abbas: 4700, average: 6326}
+  lift_capacity_24h_t: {air: 10247, sea: 1895, total: 12141}
+  notes: 战略运输机总吨位已接近美军 30%，但转运距离更长、满载航程略小，24 小时周转量差距仍大。
+
+article_assessment:   # 原文结论（不含核力量），美军地面力量 = 100
+  ground: 154.5
+  ground_power_projection: 16.7
+  air: 180.7
+  sea: 51.1
+  space: 15.9
+  total: 418.9
+  ratio_to_us: 0.8033
+  by_service: {army: 121.8, navy: 72.9, air_force: 208.3, rocket_force: 15.9}
+  ground_detail: {combat_brigades: 315.5, special_forces: 18.8, artillery_brigades: 62.4, air_defense: 102.4, helicopters: 74.0, total: 573.0}
+  ground_by_service: {army_combat: 281.1, marine_combat: 26.8, af_combat: 7.6, army_sf: 18.12, marine_sf: 1.39, navy_sf: 0.46, af_sf: 0.18, army_ad: 26.3, af_ad: 76.1, army_heli: 58.9, marine_heli: 6.1, navy_heli: 4.2, af_heli: 4.8}
+  projection_detail: {air: 14.1, sea: 2.6}
+  air_detail: {fighter_a2a: 94.8, aew: 30.4, ew: 5.8, fighter_a2g: 35.2, bomber_attack: 4.0, tanker: 1.2, c2: 0.1, psyop: 0.3, recon: 1.4, asw: 2.6, uav: 4.9}
+  sea_detail: {surface_combatants: 34.0, carriers: 9.3, submarines: 7.7}
