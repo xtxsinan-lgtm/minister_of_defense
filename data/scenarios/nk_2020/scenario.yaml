@@ -1,0 +1,220 @@
+# 剧本 nk_2020：2020 年 9 月（直接开战）
+# 规格：docs/spec/14_scenario_nk.md §3.1、§4、§9.2（V2 校准目标在 calibration.yaml）。
+# 来源键：wp_arm_eq_2020（oldid=973047801）、wp_aze_eq_2020（oldid=977340066）、wp_nka_2020（oldid=977867503）、
+#        wp Azerbaijani Air Forces 2020-09-18（oldid=979118097）、wp Armenian Air Force 2020-09-18（oldid=979120545）。
+# 维基列表本身引用 IISS 等；2020 年阿方列表有明显错误条目（如 LORA “50 部”），这类数字不采用并注明。
+
+scenario:
+  id: nk_2020
+  name: 纳卡：2020 年 9 月
+  theater: nk
+  start: 2020-09-27T00:00:00Z
+  suggested_horizon: 2021-03-31T23:59:00Z
+  playable: [ARM, AZE]
+  default_historical_mode: historical
+  includes: [nk_common/countries.yaml, nk_common/theater.yaml, nk_common/logistics_nodes.yaml, nk_common/procurement.yaml,
+             nk_common/events.yaml, nk_common/ai_profiles.yaml]
+
+war_state_at_start:
+  wars: []                                  # 战争由事件 aze_2020_september_offensive 在 03:00Z 创建（Historical）；玩家为阿方时由玩家决定
+  tension: {ARM-AZE: 0.80}                  # 危机级（七月托武兹冲突之后）
+  scripted_start:                           # 仅 historical 模式；玩家国家不受这些 AI 指令约束（11 §4.12）
+    - {at: 2020-09-27T03:00:00Z, event: aze_2020_september_offensive}
+    - {at: 2020-09-27T08:00:00Z, country: ARM, mobilization: full, note: 亚美尼亚与纳卡当日宣布戒严与总动员（Second Nagorno-Karabakh War 条目）}
+    - {at: 2020-09-28T08:00:00Z, country: AZE, mobilization: partial, note: 阿方 9-28 宣布部分动员}
+  completed_contracts_note: 开局前已交付的合同全部计入 inventory；在途合同见 open_contracts。
+
+open_contracts:                             # 开局时已批准、未交付完的合同（11 ProcurementContract）
+  ARM:
+    - {seller: RUS, model: su30sm, qty: 8, delivered: 0, next_lot: 2021-06-01, note: wp Armenian Air Force 2020-09：“4 架在役、8 架在订”；交付期 uncertain}
+  AZE: []
+
+# ------------------------------------------------------------------ 开局库存
+inventory:
+  ARM:
+    _confidence: "本土 = wp_arm_eq_2020（引 IISS 等）；纳卡 = wp_nka_2020 区间取中值（uncertain）"
+    # --- 亚美尼亚本土 ---
+    t72a: 60               # 本土 T-72 共 101（A/AV/B/B1/B3 混编），按 60/41 拆为 t72a/t72b（uncertain）
+    t72b: 41
+    t55: 8
+    bmp2: 100
+    bmp1: 80
+    brm1k: 13
+    brdm2: 120
+    btr80: 160             # uncertain（维基注“可能更多在库”）
+    btr70: 18
+    mtlb: 145
+    2s1: 10
+    2s3: 28
+    d20: 34
+    d30: 69
+    2a36: 26
+    bm21: 47
+    9a52_smerch: 8         # 维基 6–12
+    tos1a: 6
+    wm80: 4
+    9p149_shturm_s: 27
+    9k135_kornet: 30       # 2015 贷款项目，数量 uncertain
+    igla_s: 50             # 同上
+    osa_akm: 10
+    strela10: 10
+    s125_pechora: 8
+    krug: 27               # 维基：115（在库，阅兵用）；只计可用部分，uncertain
+    s300ps: 16             # 2–4 个营，取中值约 16 部发射车（uncertain）
+    tor_m2km: 4            # uncertain
+    buk_m1_2: 4            # uncertain（2016 阅兵首见）
+    zsu23_4: 20
+    avtobaza: 2
+    repellent1: 2
+    su30sm: 4
+    su25: 14
+    mi24p: 15
+    mi8mt: 12
+    l39: 6
+    krunk: 15              # uncertain
+    # --- 纳卡防卫军（wp_nka_2020：坦克 316–371、装甲车 224–459、>122mm 火炮 322–479、火箭炮 44，Scud-B ≥ 4）---
+    _nk_t72a: 300
+    _nk_t55: 40
+    _nk_bmp1: 150
+    _nk_bmp2: 60
+    _nk_mtlb: 70
+    _nk_btr70: 60
+    _nk_d30: 180
+    _nk_d20: 100
+    _nk_2a36: 30
+    _nk_m46: 20
+    _nk_2s1: 40
+    _nk_2s3: 30
+    _nk_bm21: 44
+    _nk_osa_akm: 20        # uncertain：Oryx 记录的亚方 Osa 损失远多于本土 10 套，推断纳卡另有
+    _nk_strela10: 10
+    _nk_zsu23_4: 15
+    _nk_su25: 2
+    _nk_mi24p: 5
+    # --- pending M2 ---
+    iskander_e: 4
+    scud_b: 8
+    _nk_scud_b: 4
+    hresh: 0
+    _auto_fill_categories: [rifle, lmg, gpmg, dmr, reusable_launcher, disposable_launcher, agl, radio_handheld, truck_medium, truck_heavy,
+                            field_kitchen, armored_ambulance, armored_recovery_vehicle, armored_command_vehicle, engineer_vehicle, mine_clearing_vehicle,
+                            mortar_heavy, atgm_heavy, manpads]
+    _auto_fill_share: 0.9
+    _oryx_check: "必须 ≥ Oryx 记录的亚方损失（坦克 255、牵引炮 250、自行炮 29、火箭炮 84、防空导弹系统 39），见 calibration.yaml；本表：坦克 449、牵引炮 459、自行炮 108、火箭炮 109、防空导弹 109 → 满足"
+  AZE:
+    _confidence: "wp_aze_eq_2020 为主；冲突/错误条目处取 2010 基数 + 史实交付推算（uncertain）"
+    t90s: 100
+    t72a: 150              # 2010 年 182，后续升级为 Aslan 一部分，按 150/50 拆分（uncertain）
+    t72av_aslan: 50
+    t55: 95                # 维基：多用作靶车/二线
+    bmp3: 100
+    bmp2: 33               # 现役 33，另有库存（未计）
+    bmp1: 43
+    brm1k: 20
+    bmd1: 20
+    btr80a: 70
+    btr82a: 10
+    btr70: 132
+    btr60: 10
+    brdm2: 88
+    mtlb: 336
+    otokar_cobra: 150      # 维基 350，uncertain，取保守值
+    plasan_sandcat: 100    # 维基 230，uncertain
+    matador_mpv: 85
+    marauder_mpv: 85
+    dana: 36               # 维基 2020 版 100、2025 版 36，取 36（uncertain）
+    2s19: 18
+    2s7: 12
+    2s3: 6
+    2s1: 46
+    atmos2000: 5
+    2s9: 18                # 2020 版 50、2025 版 18，取 18（uncertain）
+    2s31: 18
+    d30: 129
+    d20: 24
+    2a36: 18
+    m46: 36
+    bm21: 63               # 2020 版 43、2025 版 140+，取 2010 年值 63（uncertain）
+    t122_sakarya: 21
+    tos1a: 17
+    9a52_smerch: 30
+    polonez: 10
+    lynx_mrl: 30
+    t300_kasirga: 20       # uncertain
+    spike_lr: 100          # 维基“100 systems used on vehicles”（Spike NLOS/LR 混记，uncertain）
+    9k135_kornet: 30
+    igla_s: 200            # 2012–2013 年交付 200 发射器 / 1000 弹（wp_aze_eq_2020）
+    s300pmu2: 16           # 2 个营，uncertain
+    barak8: 8              # uncertain
+    buk_mb: 18             # 2025 版 18+；uncertain
+    osa_akm: 40            # uncertain
+    s125_pechora: 27       # uncertain
+    strela10: 40           # uncertain
+    zsu23_4: 30            # uncertain
+    mig29: 12              # wp Azerbaijani Air Forces 2020-09
+    su25: 12
+    l39: 12
+    mi35m: 17              # Mi-24/35 合计 17
+    mi8mt: 65              # Mi-17 65（含边防与内卫？uncertain）
+    hermes_450: 10
+    hermes_900: 2
+    heron1: 5
+    searcher_mk2: 5
+    orbiter2: 10
+    orbiter3: 10           # uncertain
+    aerostar: 10           # uncertain
+    bayraktar_tb2: 12      # uncertain（常见估计 6–24）
+    1l219_zoopark: 0
+    # --- pending M2 ---
+    tochka_u: 4
+    lora: 4
+    harop: 50              # uncertain（每枚）
+    skystriker: 100        # uncertain
+    orbiter_1k: 100        # uncertain
+    _auto_fill_categories: [rifle, lmg, gpmg, dmr, reusable_launcher, disposable_launcher, agl, radio_handheld, truck_medium, truck_heavy,
+                            field_kitchen, armored_ambulance, armored_recovery_vehicle, armored_command_vehicle, engineer_vehicle, mine_clearing_vehicle,
+                            mortar_heavy, atgm_heavy, manpads]
+    _auto_fill_share: 0.95
+
+# ------------------------------------------------------------------ 开局编制（结构同 nk_2010；位置为 2020-09-27 前沿部署，estimated）
+oob:
+  ARM:
+    inherit_from: nk_2010                   # 复用 nk_2010 的 oob.ARM，然后应用下列差异（14 §4.3 规则 O2）
+    overrides:
+      - {id: arm_nk_army, tier: active}
+      - {id: arm_1st_corps, lat: 39.5111, lon: 46.3383, note: 支援拉钦—库巴德利方向}
+      - {id: arm_army_troops, add_direct: [{template: arm_mrl_lr_bn, count: 1, binding: {mrl_long_range: 9a52_smerch}}],
+         add_pending_m2: [{template: arm_tbm_bn, count: 1, binding: {tbm_launcher: iskander_e}}]}
+  AZE:
+    inherit_from: nk_2010
+    overrides:
+      - {id: aze_4th_corps, tier: active, lat: 40.3744, lon: 47.1267, note: 2020 年前调至巴尔达方向（estimated）}
+      - {id: aze_1st_corps, lat: 40.3417, lon: 46.9311}
+      - {id: aze_2nd_corps, lat: 39.4481, lon: 47.3361}
+      - {id: aze_3rd_corps, lat: 40.5000, lon: 46.4000, note: 穆罗夫山北麓（estimated）}
+      - {id: aze_army_troops, add_direct: [{template: aze_mrl_lr_bn, count: 1, binding: {mrl_long_range: polonez}}, {template: aze_mrl_lr_bn, count: 1, binding: {mrl_long_range: lynx_mrl}}],
+         add_pending_m2: [{template: aze_tbm_bn, count: 1, binding: {tbm_launcher: lora}}, {template: aze_loitering_btry, count: 4, binding: {loitering_munition: harop}}]}
+
+air_force:
+  ARM: {su30sm: arm_airbase_erebuni, su25: arm_airbase_erebuni, l39: arm_airbase_erebuni, mi24p: arm_airbase_erebuni, mi8mt: arm_airbase_erebuni, krunk: arm_depot_stepanakert}
+  AZE: {mig29: aze_airbase_nasosnaya, su25: aze_airbase_kurdamir, l39: aze_airbase_kurdamir, mi35m: aze_airbase_kurdamir, mi8mt: aze_airbase_kurdamir,
+        bayraktar_tb2: aze_airbase_kurdamir, hermes_450: aze_airbase_kurdamir, hermes_900: aze_airbase_kurdamir, heron1: aze_airbase_kurdamir,
+        searcher_mk2: aze_airbase_ganja, orbiter3: aze_airbase_ganja, aerostar: aze_airbase_ganja}
+
+personnel_start:
+  ARM: {general_skill: {active: 0.50, reduced: 0.40, cadre: 0.30}, type_skill: 0.55, nk_defence_army_general_bonus: 0.05}
+  AZE: {general_skill: {active: 0.55, reduced: 0.45, cadre: 0.35}, type_skill: 0.55, note: 2010 年代土耳其协助训练（bal）}
+  basis: bal
+
+fortification_start:                        # 04 FortificationLevel 初值（26 年固守的接触线；04 定义等级刻度）
+  arm_contact_line_tiles: {level: high, note: 亚方沿接触线有多层阵地（公开报道普遍提及），具体等级刻度由 04 定}
+  aze_contact_line_tiles: {level: medium}
+
+goals:
+  ARM:
+    - {id: arm_better_than_history, name: 好于史实, type: war_outcome,
+       success: "停火时 key_tile shusha 仍由 ARM 控制，且保住开战时控制地块的 ≥ 60%", note: 史实约失去 72%（含移交）}
+    - {id: arm_hold_lachin, name: 保住走廊, type: war_outcome, success: "停火时 lachin_corridor 全部地块由 ARM 控制或处于维和区"}
+  AZE:
+    - {id: aze_match_history, name: 达到史实, type: war_outcome, success: "≤ 44 天内触发 nov10_template（或更好）", stretch: "≤ 30 天"}
+    - {id: aze_cost_history, name: 代价不高于史实, type: war_cost, success: "阵亡 ≤ 2,906 人"}

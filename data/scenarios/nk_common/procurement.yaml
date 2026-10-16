@@ -1,0 +1,162 @@
+# 纳卡剧本采购数据：型号采购属性（11 ProcurementProfile）、国内生产线、升级路径、二手市场池、可采购清单
+# 规格：docs/spec/11_strategic_layer.md §3.3、§4.4–4.6；docs/spec/14_scenario_nk.md §3.4。
+# 货币：2020 年不变价百万美元。
+#
+# 关于单价（最重要的不确定性，14 N-08）：公开资料几乎没有逐件出口价。这里的 cost_musd 是“数量级估算”，
+#   confidence 一律 estimated 或 uncertain，basis 写明推算方法。V4 搜索（14 §9.3）会对单价做 ±50% 敏感性扫描，
+#   结论若对单价敏感，必须先用 SIPRI 趋势指示值（TIV，https://www.sipri.org/databases/armstransfers）校准。
+# 敏感度 sensitivity：0 通用（卡车、轻武器）；1 常规陆战装备；2 防空、远程火力、作战飞机、MALE 无人机；3 弹道导弹、远程防空、巡飞弹。
+# lead_time_days 缺省按 11 常数 LeadTimeDefault*。
+
+procurement_profiles:
+  # id: {cost_musd, service_year(采购起始年), end_production_year, producers, sensitivity, historical_exports_to, confidence, basis}
+  t72a:          {cost_musd: 1.5, end_production_year: 1990, producers: [RUS, UKR, BLR], sensitivity: 1, historical_exports_to: [ARM, AZE], confidence: uncertain, basis: 只能二手；1.5 为“新品等价”基准，二手价按 11 §4.5.1 打折}
+  t72b:          {cost_musd: 1.8, end_production_year: 1992, producers: [RUS], sensitivity: 1, historical_exports_to: [ARM], confidence: uncertain, basis: 同上}
+  t72b3:         {cost_musd: 2.0, producers: [RUS], sensitivity: 1, historical_exports_to: [], confidence: uncertain, basis: 新造等价；更常见的是 t72a/t72b→t72b3 升级（upgrades 表）}
+  t90s:          {cost_musd: 3.0, producers: [RUS], sensitivity: 1, historical_exports_to: [AZE], lead_time_days: 365, lot_size: 20, confidence: estimated, basis: "公开报道的出口合同（印度、阿尔及利亚 2000 年代）折算约 2.5–3.5"}
+  t55:           {cost_musd: 0.3, end_production_year: 1981, producers: [RUS, UKR], sensitivity: 1, historical_exports_to: [AZE], confidence: uncertain, basis: 只能二手}
+  bmp1:          {cost_musd: 0.5, end_production_year: 1983, producers: [RUS, UKR, CZE], sensitivity: 1, historical_exports_to: [ARM, AZE], confidence: uncertain, basis: 只能二手}
+  bmp2:          {cost_musd: 0.9, end_production_year: 2000, producers: [RUS, UKR], sensitivity: 1, historical_exports_to: [ARM, AZE], confidence: uncertain, basis: 二手为主}
+  bmp3:          {cost_musd: 1.5, producers: [RUS], sensitivity: 1, historical_exports_to: [AZE], lead_time_days: 365, lot_size: 25, confidence: estimated, basis: "出口型约 1–1.5（海湾国家合同报道），取上限含配套"}
+  btr80a:        {cost_musd: 0.6, producers: [RUS], sensitivity: 1, historical_exports_to: [AZE], confidence: estimated, basis: 出口装甲车数量级}
+  btr82a:        {cost_musd: 0.8, producers: [RUS], sensitivity: 1, historical_exports_to: [AZE], confidence: estimated, basis: 同上}
+  btr70:         {cost_musd: 0.3, end_production_year: 1985, producers: [RUS, UKR], sensitivity: 1, historical_exports_to: [AZE], confidence: uncertain}
+  mtlb:          {cost_musd: 0.3, producers: [RUS, UKR, BLR], sensitivity: 0, historical_exports_to: [ARM, AZE], confidence: uncertain}
+  otokar_cobra:  {cost_musd: 0.4, producers: [TUR], sensitivity: 0, historical_exports_to: [AZE], confidence: estimated}
+  plasan_sandcat: {cost_musd: 0.4, producers: [ISR], sensitivity: 0, historical_exports_to: [AZE], confidence: estimated}
+  matador_mpv:   {cost_musd: 0.5, producers: [AZE], sensitivity: 0, historical_exports_to: [], local_assembly_allowed: true, confidence: estimated, basis: 阿方本地组装，见 production_lines}
+  d30:           {cost_musd: 0.25, producers: [RUS, SRB], sensitivity: 1, historical_exports_to: [ARM, AZE], confidence: uncertain}
+  d20:           {cost_musd: 0.4, end_production_year: 1985, producers: [RUS], sensitivity: 1, historical_exports_to: [ARM, AZE], confidence: uncertain, basis: 只能二手}
+  2a36:          {cost_musd: 0.6, end_production_year: 1991, producers: [RUS], sensitivity: 1, historical_exports_to: [ARM, AZE], confidence: uncertain, basis: 只能二手}
+  2s1:           {cost_musd: 0.8, end_production_year: 1991, producers: [RUS, UKR, BLR], sensitivity: 1, historical_exports_to: [ARM, AZE], confidence: uncertain, basis: 只能二手}
+  2s3:           {cost_musd: 1.2, end_production_year: 1993, producers: [RUS], sensitivity: 1, historical_exports_to: [ARM, AZE], confidence: uncertain, basis: 只能二手}
+  2s19:          {cost_musd: 3.0, producers: [RUS], sensitivity: 2, historical_exports_to: [AZE], lead_time_days: 365, lot_size: 6, confidence: uncertain, basis: 新造自行榴炮数量级}
+  dana:          {cost_musd: 1.0, end_production_year: 1994, producers: [CZE], sensitivity: 1, historical_exports_to: [AZE], confidence: uncertain, basis: 二手（捷克/斯洛伐克库存）}
+  atmos2000:     {cost_musd: 2.5, producers: [ISR], sensitivity: 2, historical_exports_to: [AZE], confidence: uncertain}
+  2s31:          {cost_musd: 3.0, producers: [RUS], sensitivity: 2, historical_exports_to: [AZE], confidence: uncertain}
+  bm21:          {cost_musd: 0.4, producers: [RUS, CZE, SRB], sensitivity: 1, historical_exports_to: [ARM, AZE], confidence: uncertain}
+  t122_sakarya:  {cost_musd: 1.0, producers: [TUR], sensitivity: 1, historical_exports_to: [AZE], confidence: uncertain}
+  tos1a:         {cost_musd: 5.0, producers: [RUS], sensitivity: 2, historical_exports_to: [ARM, AZE], lot_size: 6, confidence: uncertain}
+  9a52_smerch:   {cost_musd: 12.0, producers: [RUS], sensitivity: 2, historical_exports_to: [ARM, AZE], lot_size: 6, confidence: uncertain, basis: 单车（含装填车与首批火箭）数量级；亚方 2015 贷款项目包含 Smerch}
+  polonez:       {cost_musd: 15.0, producers: [BLR], sensitivity: 3, historical_exports_to: [AZE], service_year: 2016, lot_size: 5, confidence: uncertain}
+  lynx_mrl:      {cost_musd: 6.0, producers: [ISR], sensitivity: 2, historical_exports_to: [AZE], confidence: uncertain}
+  t300_kasirga:  {cost_musd: 8.0, producers: [TUR], sensitivity: 2, historical_exports_to: [AZE], confidence: uncertain}
+  wm80:          {cost_musd: 4.0, producers: [CHN], sensitivity: 2, historical_exports_to: [ARM], confidence: uncertain}
+  9k135_kornet:  {cost_musd: 0.25, producers: [RUS], sensitivity: 1, historical_exports_to: [ARM, AZE], confidence: uncertain, basis: 发射器 + 首批导弹}
+  spike_lr:      {cost_musd: 0.3, producers: [ISR], sensitivity: 2, historical_exports_to: [AZE], confidence: uncertain}
+  igla_s:        {cost_musd: 0.12, producers: [RUS], sensitivity: 2, historical_exports_to: [ARM, AZE], confidence: uncertain, basis: 发射器 + 2 弹}
+  osa_akm:       {cost_musd: 2.0, end_production_year: 1988, producers: [RUS, BLR], sensitivity: 2, historical_exports_to: [ARM, AZE], confidence: uncertain, basis: 二手 + 白俄 Osa-1T 升级}
+  strela10:      {cost_musd: 0.8, end_production_year: 1990, producers: [RUS, BLR], sensitivity: 2, historical_exports_to: [ARM, AZE], confidence: uncertain}
+  tor_m2km:      {cost_musd: 20.0, producers: [RUS], sensitivity: 3, historical_exports_to: [ARM], service_year: 2016, lead_time_days: 540, lot_size: 2, confidence: uncertain, basis: 单发射单元 + 指挥车分摊}
+  buk_m1_2:      {cost_musd: 25.0, producers: [RUS], sensitivity: 3, historical_exports_to: [ARM], confidence: uncertain}
+  buk_mb:        {cost_musd: 15.0, producers: [BLR], sensitivity: 3, historical_exports_to: [AZE], confidence: uncertain}
+  s125_pechora:  {cost_musd: 5.0, producers: [BLR, UKR, RUS], sensitivity: 2, historical_exports_to: [ARM, AZE], confidence: uncertain, basis: 升级翻新型（2TM/2M）}
+  s300ps:        {cost_musd: 15.0, end_production_year: 1994, producers: [RUS], sensitivity: 3, historical_exports_to: [ARM], confidence: uncertain, basis: 二手，按发射车计}
+  s300pmu2:      {cost_musd: 35.0, producers: [RUS], sensitivity: 3, historical_exports_to: [AZE], lead_time_days: 730, lot_size: 4, confidence: uncertain, basis: 按发射车分摊营级成本}
+  barak8:        {cost_musd: 30.0, producers: [ISR], sensitivity: 3, historical_exports_to: [AZE], service_year: 2015, confidence: uncertain}
+  su25:          {cost_musd: 8.0, end_production_year: 2010, producers: [RUS, BLR, UKR], sensitivity: 2, historical_exports_to: [ARM, AZE], confidence: uncertain, basis: 二手翻新为主}
+  su30sm:        {cost_musd: 45.0, producers: [RUS], sensitivity: 3, historical_exports_to: [ARM], service_year: 2016, lead_time_days: 730, lot_size: 2, confidence: uncertain}
+  mig29:         {cost_musd: 10.0, end_production_year: 1991, producers: [RUS, UKR, BLR], sensitivity: 2, historical_exports_to: [AZE], confidence: uncertain, basis: 二手（阿 2006 年自乌购入）}
+  mi35m:         {cost_musd: 15.0, producers: [RUS], sensitivity: 2, historical_exports_to: [AZE], confidence: uncertain}
+  mi8mt:         {cost_musd: 6.0, producers: [RUS], sensitivity: 1, historical_exports_to: [ARM, AZE], confidence: uncertain}
+  bayraktar_tb2: {cost_musd: 5.0, producers: [TUR], sensitivity: 3, historical_exports_to: [AZE], service_year: 2014, export_from_year: 2018, lead_time_days: 120, lot_size: 6, confidence: uncertain, basis: 单机 + 地面站分摊（各国合同报道差异大）}
+  hermes_450:    {cost_musd: 4.0, producers: [ISR], sensitivity: 2, historical_exports_to: [AZE], confidence: uncertain}
+  hermes_900:    {cost_musd: 10.0, producers: [ISR], sensitivity: 2, historical_exports_to: [AZE], confidence: uncertain}
+  heron1:        {cost_musd: 10.0, producers: [ISR], sensitivity: 2, historical_exports_to: [AZE], confidence: uncertain}
+  searcher_mk2:  {cost_musd: 2.0, producers: [ISR], sensitivity: 2, historical_exports_to: [AZE], confidence: uncertain}
+  aerostar:      {cost_musd: 1.5, producers: [ISR, AZE], sensitivity: 2, historical_exports_to: [AZE], local_assembly_allowed: true, confidence: uncertain}
+  orbiter2:      {cost_musd: 0.3, producers: [ISR, AZE], sensitivity: 1, historical_exports_to: [AZE], local_assembly_allowed: true, confidence: uncertain}
+  orbiter3:      {cost_musd: 1.0, producers: [ISR, AZE], sensitivity: 2, historical_exports_to: [AZE], local_assembly_allowed: true, confidence: uncertain}
+  krunk:         {cost_musd: 0.3, producers: [ARM], sensitivity: 1, historical_exports_to: [], confidence: uncertain, basis: 国产}
+  avtobaza:      {cost_musd: 10.0, producers: [RUS], sensitivity: 2, historical_exports_to: [ARM], confidence: uncertain}
+  repellent1:    {cost_musd: 5.0, producers: [RUS], sensitivity: 2, historical_exports_to: [ARM], service_year: 2016, confidence: uncertain}
+  1l219_zoopark: {cost_musd: 5.0, producers: [RUS], sensitivity: 2, historical_exports_to: [], confidence: uncertain, basis: 双方都可买的反炮兵雷达（V4 采购选项）}
+  ural4320:      {cost_musd: 0.08, producers: [RUS], sensitivity: 0, historical_exports_to: [ARM, AZE], confidence: estimated}
+  kamaz_5350:    {cost_musd: 0.10, producers: [RUS], sensitivity: 0, historical_exports_to: [ARM, AZE], confidence: estimated}
+  ak74:          {cost_musd: 0.0005, producers: [RUS, AZE], sensitivity: 0, historical_exports_to: [ARM, AZE], confidence: estimated}
+  # ---- 需要 01 M2 新类别的型号（data/equipment_pending/）----
+  iskander_e:    {cost_musd: 60.0, producers: [RUS], sensitivity: 3, historical_exports_to: [ARM], service_year: 2016, lot_size: 2, confidence: uncertain, basis: 发射车 + 首批导弹分摊}
+  scud_b:        {cost_musd: 3.0, end_production_year: 1987, producers: [RUS], sensitivity: 3, historical_exports_to: [ARM], confidence: uncertain, basis: 只能二手}
+  tochka_u:      {cost_musd: 8.0, end_production_year: 1989, producers: [RUS], sensitivity: 3, historical_exports_to: [AZE], confidence: uncertain}
+  lora:          {cost_musd: 40.0, producers: [ISR], sensitivity: 3, historical_exports_to: [AZE], service_year: 2017, confidence: uncertain}
+  harop:         {cost_musd: 1.0, producers: [ISR], sensitivity: 3, historical_exports_to: [AZE], service_year: 2009, lot_size: 25, confidence: uncertain, basis: 每枚；无可靠公开单价}
+  skystriker:    {cost_musd: 0.15, producers: [ISR], sensitivity: 3, historical_exports_to: [AZE], service_year: 2016, lot_size: 50, confidence: uncertain}
+  orbiter_1k:    {cost_musd: 0.1, producers: [AZE, ISR], sensitivity: 3, historical_exports_to: [AZE], service_year: 2016, local_assembly_allowed: true, confidence: uncertain}
+  hresh:         {cost_musd: 0.05, producers: [ARM], sensitivity: 2, historical_exports_to: [], service_year: 2020, confidence: uncertain}
+
+# ------------------------------------------------------------------ 国内生产线（11 ProductionLine）
+# 产能全部 estimated/bal：公开资料只能确认“生产什么”，不能确认“每年多少”。
+production_lines:
+  - {id: aze_line_mortar_120, owner: AZE, factory: aze_factory_modi_baku, models: [2b11], capacity_per_year: 60, utilization: 0.5, unit_cost_musd: 0.03, confidence: estimated, note: 以 2b11 代表 MODI 的 Komando 20N6MT 等国产迫击炮}
+  - {id: aze_line_small_arms, owner: AZE, factory: aze_factory_modi_baku, models: [ak74], capacity_per_year: 20000, utilization: 0.3, unit_cost_musd: 0.0004, confidence: estimated}
+  - {id: aze_line_uav, owner: AZE, factory: aze_factory_azad_systems, models: [orbiter2, orbiter3, aerostar], capacity_per_year: 20, utilization: 0.5, unit_cost_musd: 0.4, is_assembly_only: true, from_year: 2011, confidence: estimated, note: 依赖以色列零件包（11 §4.4.4 本地组装）}
+  - {id: aze_line_loitering, owner: AZE, factory: aze_factory_azad_systems, models: [orbiter_1k], capacity_per_year: 100, utilization: 0.5, unit_cost_musd: 0.08, is_assembly_only: true, from_year: 2016, pending_m2: true, confidence: estimated}
+  - {id: aze_line_mpv, owner: AZE, factory: aze_factory_paramount, models: [matador_mpv, marauder_mpv], capacity_per_year: 40, utilization: 0.5, unit_cost_musd: 0.45, is_assembly_only: true, from_year: 2009, confidence: estimated}
+  - {id: arm_line_uav, owner: ARM, factory: arm_industry_yerevan, models: [krunk], capacity_per_year: 10, utilization: 0.5, unit_cost_musd: 0.25, from_year: 2011, confidence: estimated}
+  - {id: arm_line_loitering, owner: ARM, factory: arm_industry_yerevan, models: [hresh], capacity_per_year: 20, utilization: 0.0, unit_cost_musd: 0.05, from_year: 2020, pending_m2: true, confidence: uncertain}
+expansion_cost_musd_per_unit_year:          # 11 §4.5.3 LineExpansion 的单位扩产成本（bal）
+  default_share_of_unit_cost: 0.8           # 每增加 1 件/年产能 ≈ 0.8 × 单件国产价
+
+# ------------------------------------------------------------------ 升级路径（11 UpgradePath）
+upgrades:
+  - {id: t72a_to_t72b3, from: t72a, to: t72b3, cost_per_unit_musd: 1.0, days_per_unit: 120, providers: [RUS], capacity_per_year: 40, type_skill_retention: 0.8, confidence: uncertain}
+  - {id: t72b_to_t72b3, from: t72b, to: t72b3, cost_per_unit_musd: 0.8, days_per_unit: 100, providers: [RUS], capacity_per_year: 40, type_skill_retention: 0.85, confidence: uncertain}
+  - {id: t72a_to_aslan, from: t72a, to: t72av_aslan, cost_per_unit_musd: 0.8, days_per_unit: 120, providers: [ISR, domestic], domestic_facility: aze_factory_modi_baku, capacity_per_year: 30, type_skill_retention: 0.8, availability: [AZE], from_year: 2012, confidence: uncertain}
+  - {id: btr80_to_btr80a, from: btr80, to: btr80a, cost_per_unit_musd: 0.2, days_per_unit: 60, providers: [RUS], capacity_per_year: 50, type_skill_retention: 0.85, confidence: uncertain}
+  - {id: igla_to_igla_s, from: igla, to: igla_s, cost_per_unit_musd: 0.05, days_per_unit: 10, providers: [RUS], capacity_per_year: 200, type_skill_retention: 0.9, confidence: uncertain}
+  - {id: tor_m1_to_m2km, from: tor_m1, to: tor_m2km, cost_per_unit_musd: 10.0, days_per_unit: 180, providers: [RUS], capacity_per_year: 6, type_skill_retention: 0.7, confidence: uncertain}
+  - {id: refurbish_generic, from: "*", to: "*", cost_share_of_unit_cost: 0.10, days_per_unit: 90, providers: [domestic], capacity_per_year: 100, note: 11 §4.5.1 二手整修（refurbish）}
+
+# ------------------------------------------------------------------ 二手市场池（11 §4.5.2）
+# quarterly_p / qty / grade 权重为 bal；“谁卖过什么”依据为定性史实（notes）。
+market_pool:
+  - {seller: UKR, model: t72a,   quarterly_p: 0.35, qty: [10, 40], grades: {poor: 0.3, fair: 0.5, good: 0.2}, years: [2010, 2014], note: 2010 年前后乌克兰为阿方二手坦克/装甲车来源（BTR-70 2009 年交付，wp_aze_2010）}
+  - {seller: UKR, model: btr70,  quarterly_p: 0.30, qty: [10, 30], grades: {poor: 0.3, fair: 0.5, good: 0.2}, years: [2010, 2014]}
+  - {seller: UKR, model: 2s1,    quarterly_p: 0.15, qty: [6, 18],  grades: {poor: 0.3, fair: 0.5, good: 0.2}, years: [2010, 2014]}
+  - {seller: UKR, model: mig29,  quarterly_p: 0.05, qty: [2, 6],   grades: {poor: 0.4, fair: 0.5, good: 0.1}, years: [2010, 2014]}
+  - {seller: BLR, model: t72a,   quarterly_p: 0.20, qty: [10, 30], grades: {poor: 0.2, fair: 0.5, good: 0.3}}
+  - {seller: BLR, model: osa_akm, quarterly_p: 0.15, qty: [4, 12], grades: {poor: 0.1, fair: 0.4, good: 0.5}, note: Osa-1T 升级型}
+  - {seller: BLR, model: s125_pechora, quarterly_p: 0.10, qty: [4, 8], grades: {fair: 0.5, good: 0.5}, note: Pechora-2TM}
+  - {seller: BLR, model: su25,   quarterly_p: 0.05, qty: [2, 6],   grades: {poor: 0.3, fair: 0.5, good: 0.2}}
+  - {seller: RUS, model: t72b,   quarterly_p: 0.25, qty: [10, 40], grades: {poor: 0.2, fair: 0.5, good: 0.3}, note: 俄封存库存}
+  - {seller: RUS, model: bmp2,   quarterly_p: 0.25, qty: [10, 40], grades: {poor: 0.2, fair: 0.5, good: 0.3}}
+  - {seller: RUS, model: 2s3,    quarterly_p: 0.10, qty: [6, 18],  grades: {poor: 0.3, fair: 0.5, good: 0.2}}
+  - {seller: RUS, model: d30,    quarterly_p: 0.20, qty: [12, 36], grades: {poor: 0.3, fair: 0.5, good: 0.2}}
+  - {seller: RUS, model: bm21,   quarterly_p: 0.15, qty: [6, 18],  grades: {poor: 0.3, fair: 0.5, good: 0.2}}
+  - {seller: CZE, model: dana,   quarterly_p: 0.10, qty: [6, 24],  grades: {fair: 0.6, good: 0.4}, note: 阿方 Dana 来源}
+  - {seller: CZE, model: rm70,   quarterly_p: 0.08, qty: [6, 12],  grades: {fair: 0.6, good: 0.4}}
+  - {seller: MDA, model: 9p149_shturm_s, quarterly_p: 0.05, qty: [9, 27], grades: {fair: 0.7, good: 0.3}, note: 亚方史实来源（wp_arm_eq_2020）}
+  - {seller: SRB, model: d30,    quarterly_p: 0.10, qty: [6, 18],  grades: {fair: 0.5, good: 0.5}}
+
+# ------------------------------------------------------------------ 历史采购清单（Historical/Plausible 模式下 AI 的参考计划；12 扩展字段，14 N-11）
+# 年份 = 签约年（批准即按 11 §4.4.4 交付）；数量为公开报道的量级（uncertain）。玩家扮演该国时不自动执行。
+historical_procurement:
+  AZE:
+    - {year: 2010, seller: RUS, model: s300pmu2, qty: 16, note: 2 个营（交付约 2011）}
+    - {year: 2010, seller: RUS, model: t90s, qty: 94, note: 2010–2013 年对俄大单（与 BMP-3、Msta-S、Smerch、TOS-1A、Mi-35M 合计约 40 亿美元，常见报道）}
+    - {year: 2011, seller: RUS, model: bmp3, qty: 100}
+    - {year: 2011, seller: RUS, model: 2s19, qty: 18}
+    - {year: 2011, seller: RUS, model: 9a52_smerch, qty: 12}
+    - {year: 2011, seller: RUS, model: tos1a, qty: 18}
+    - {year: 2011, seller: RUS, model: mi35m, qty: 24}
+    - {year: 2012, seller: RUS, model: igla_s, qty: 200, note: wp_aze_eq：2012–2013 年交付 1000 弹 200 发射器}
+    - {year: 2012, seller: ISR, model: heron1, qty: 5}
+    - {year: 2012, seller: ISR, model: searcher_mk2, qty: 5}
+    - {year: 2012, seller: ISR, model: hermes_450, qty: 10}
+    - {year: 2012, seller: ISR, model: harop, qty: 50, note: 数量 uncertain}
+    - {year: 2014, seller: ISR, model: hermes_900, qty: 2}
+    - {year: 2016, seller: ISR, model: barak8, qty: 8}
+    - {year: 2017, seller: ISR, model: lora, qty: 4}
+    - {year: 2018, seller: BLR, model: polonez, qty: 10}
+    - {year: 2019, seller: ISR, model: skystriker, qty: 100}
+    - {year: 2020, seller: TUR, model: bayraktar_tb2, qty: 12, note: 2020-06 签约、战前交付；数量 uncertain}
+  ARM:
+    - {year: 2016, seller: RUS, model: iskander_e, qty: 4, credit: null}
+    - {year: 2016, seller: RUS, model: 9a52_smerch, qty: 6, credit: rus_arm_loan_2015}
+    - {year: 2016, seller: RUS, model: igla_s, qty: 50, credit: rus_arm_loan_2015}
+    - {year: 2016, seller: RUS, model: 9k135_kornet, qty: 30, credit: rus_arm_loan_2015}
+    - {year: 2016, seller: RUS, model: avtobaza, qty: 2, credit: rus_arm_loan_2015}
+    - {year: 2016, seller: RUS, model: tos1a, qty: 6, credit: rus_arm_loan_2015}
+    - {year: 2018, seller: RUS, model: tor_m2km, qty: 4, credit: rus_arm_loan_2017}
+    - {year: 2019, seller: RUS, model: su30sm, qty: 4}
+    - {year: 2019, seller: RUS, model: repellent1, qty: 2}

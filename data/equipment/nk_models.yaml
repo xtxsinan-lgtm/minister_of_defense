@@ -1,0 +1,211 @@
+# 纳卡战区（阶段 1 MVP）新增装备型号：亚美尼亚、阿塞拜疆及其主要供应国装备
+# 格式：data/README.md「装备型号」+ docs/spec/01_org_templates.md §3.3（可选 service_year / upgrade_of / maintenance_group，01 M3）。
+# 只使用 data/schema/categories.yaml 现有类别。需要新类别（loitering_munition、tbm_launcher，01 M2）的型号
+#   在 data/equipment_pending/nk_models_m2.yaml，等 M2 迁移后移入本目录（否则 tools/validate_data.py 报错）。
+#
+# confidence 约定（本文件）：stated = 下列公开来源直接给出；estimated = 依据注明的推算；uncertain = 来源互相矛盾。
+#   原文 README 的 stated 指“知乎原文”，本文件改指下列公开来源（14 §3.2）。
+# origin：苏联设计统一写 RUS（与现有 tor_m1 一致），notes 注明“苏联设计”。
+# 单价、可采购年份等采购属性不放这里，放 data/scenarios/nk_common/procurement.yaml（11 的 ProcurementProfile）。
+#
+# 来源（每个型号的 src 字段引用这里的键）：
+#   wp_<页面>  = 英文维基百科同名条目（型号的基本参数：口径、射程、乘员、载员），访问 2026-10
+#   fm100_2_3  = US Army FM 100-2-3 (1991) https://irp.fas.org/doddir/army/fm100-2-3.pdf
+#   wp_arm_eq_2020 = https://en.wikipedia.org/w/index.php?oldid=973047801 （List of equipment of the Armenian Armed Forces，2020-08-15 修订版）
+#   wp_aze_eq_2020 = https://en.wikipedia.org/w/index.php?oldid=977340066 （List of equipment of the Azerbaijani Land Forces，2020-09-08 修订版）
+
+models:
+  # ======================= 主战坦克 =======================
+  - {id: t55, name: T-55, category: mbt, family: t54_55, origin: RUS, crew: 4, service_year: 1958,
+     specs: {main_gun_mm: 100}, src: wp_T-55, notes: 苏联设计。阿方 2020 年约 95 辆、多用作靶车/二线（wp_aze_eq_2020）；亚方 8 辆（含 T-54，wp_arm_eq_2020）。}
+  - {id: t72a, name: T-72A, category: mbt, family: t72, origin: RUS, crew: 3, service_year: 1979,
+     specs: {main_gun_mm: 125, autoloader: true, combat_weight_t: 41.5}, src: wp_T-72,
+     notes: 苏联设计。纳卡双方最主要的坦克（各子型 T-72A/AV/B/B1 在剧本中按 t72a / t72b 两档合并）。}
+  - {id: t72b, name: T-72B/B1, category: mbt, family: t72, origin: RUS, crew: 3, service_year: 1985, upgrade_of: t72a,
+     specs: {main_gun_mm: 125, autoloader: true, combat_weight_t: 44.5, gun_launched_atgm: 9m119_svir}, src: wp_T-72,
+     notes: 苏联设计；带 Kontakt-1/5 反应装甲与炮射导弹。}
+  - {id: t72b3, name: T-72B3, category: mbt, family: t72, origin: RUS, crew: 3, service_year: 2013, upgrade_of: t72b,
+     specs: {main_gun_mm: 125, thermal_sight: true}, src: wp_T-72,
+     notes: 俄罗斯升级型（热像 Sosna-U）。作为亚方可选升级路径（11 UpgradePath），史实亚方 2020 年前未成规模列装。}
+  - {id: t72av_aslan, name: T-72 "Aslan"（阿塞拜疆升级）, category: mbt, family: t72, origin: AZE, crew: 3, service_year: 2014, upgrade_of: t72a,
+     specs: {main_gun_mm: 125}, confidence: uncertain, src: wp_aze_eq_2020,
+     notes: 以色列 Elbit 协助的阿方 T-72 升级（火控/热像）。列装年份与数量说法不一。}
+  - {id: t90s, name: T-90S, category: mbt, family: t72, origin: RUS, crew: 3, service_year: 1992, upgrade_of: t72b,
+     specs: {main_gun_mm: 125, combat_weight_t: 46.5}, src: wp_T-90,
+     notes: 阿方 2011–2013 年自俄引进约 100 辆（wp_aze_eq_2020 记 100）。}
+  - {id: t80b, name: T-80B, category: mbt, family: t80, origin: RUS, crew: 3, service_year: 1978,
+     specs: {main_gun_mm: 125}, confidence: uncertain, src: wp_Armed_Forces_of_Armenia,
+     notes: 苏联设计。2010-12 维基修订版（oldid=404623264）引 IISS 2010 称亚方有 20 辆 T-80；其他资料未见，存疑。}
+
+  # ======================= 步战车 / 装甲车 =======================
+  - {id: bmp1, name: BMP-1/1P, category: ifv, family: bmp1, origin: RUS, crew: 3, capacity: 8, service_year: 1966,
+     specs: {main_gun_mm: 73, atgm: 9m14_malyutka_or_9m113}, src: wp_BMP-1, notes: 苏联设计。}
+  - {id: bmp2, name: BMP-2, category: ifv, family: bmp2, origin: RUS, crew: 3, capacity: 7, service_year: 1980,
+     specs: {main_gun_mm: 30, atgm: 9k111_or_9k113}, src: wp_BMP-2, notes: 苏联设计。}
+  - {id: bmp3, name: BMP-3, category: ifv, family: bmp3, origin: RUS, crew: 3, capacity: 7, service_year: 1987,
+     specs: {main_gun_mm: 100, coax_gun_mm: 30, gun_launched_atgm: 9m117}, src: wp_BMP-3,
+     notes: 阿方自俄引进约 100 辆（wp_aze_eq_2020）。}
+  - {id: bmd1, name: BMD-1, category: ifv, family: bmd1, origin: RUS, crew: 2, capacity: 5, service_year: 1969, src: wp_BMD-1, notes: 苏联设计；双方少量。}
+  - {id: brm1k, name: BRM-1K, category: recon_ifv, family: bmp1, origin: RUS, crew: 6, service_year: 1972, upgrade_of: bmp1,
+     specs: {radar: psnr_5k_tall_mike}, src: wp_BMP-1, notes: BMP-1 底盘侦察车（含 PSNR-5K 地面雷达）。}
+  - {id: brdm2, name: BRDM-2, category: recon_ifv, family: brdm2, origin: RUS, crew: 4, service_year: 1962, src: wp_BRDM-2, notes: 苏联设计侦察车。}
+  - {id: btr60, name: BTR-60PB, category: apc, family: btr60, origin: RUS, crew: 3, capacity: 14, service_year: 1961, src: wp_BTR-60}
+  - {id: btr70, name: BTR-70, category: apc, family: btr70, origin: RUS, crew: 2, capacity: 7, service_year: 1976, src: wp_BTR-70,
+     notes: 阿方 MODI 加装“Shimshek”炮塔改进型（wp_aze_eq_2020）在剧本中仍按 btr70。}
+  - {id: btr80, name: BTR-80, category: apc, family: btr80, origin: RUS, crew: 3, capacity: 7, service_year: 1986, src: wp_BTR-80}
+  - {id: btr80a, name: BTR-80A, category: apc, family: btr80, origin: RUS, crew: 3, capacity: 7, service_year: 1994, upgrade_of: btr80,
+     specs: {main_gun_mm: 30}, src: wp_BTR-80}
+  - {id: btr82a, name: BTR-82A, category: apc, family: btr80, origin: RUS, crew: 3, capacity: 7, service_year: 2013, upgrade_of: btr80a,
+     specs: {main_gun_mm: 30, thermal_sight: true}, src: wp_BTR-80}
+  - {id: btr_d, name: BTR-D, category: apc, family: bmd1, origin: RUS, crew: 2, capacity: 10, service_year: 1974, src: wp_BTR-D}
+  - {id: mtlb, name: MT-LB, category: apc, family: mtlb, origin: RUS, crew: 2, capacity: 11, service_year: 1970, src: wp_MT-LB,
+     notes: 双方大量用作装甲输送车与牵引车。}
+  - {id: otokar_cobra, name: Otokar Cobra, category: light_armored_vehicle, family: cobra, origin: TUR, crew: 2, capacity: 7, service_year: 1997, src: wp_Otokar_Cobra}
+  - {id: plasan_sandcat, name: Plasan Sand Cat, category: light_armored_vehicle, family: sandcat, origin: ISR, crew: 2, capacity: 4, service_year: 2005, src: wp_Plasan_Sand_Cat,
+     notes: 阿方另装 Spear Mk2 120mm 车载迫击炮（mortar_vehicle 类别，后续补）。}
+  - {id: matador_mpv, name: Matador MPV, category: mrap, family: paramount_mpv, origin: AZE, crew: 2, capacity: 10, service_year: 2009, src: wp_aze_eq_2020,
+     notes: 南非 Paramount 与阿方合资本地生产（阿方 MODI 本地组装线的史实例子）。}
+  - {id: marauder_mpv, name: Marauder MPV, category: mrap, family: paramount_mpv, origin: AZE, crew: 2, capacity: 6, service_year: 2009, src: wp_aze_eq_2020}
+
+  # ======================= 身管火炮 =======================
+  - {id: d30, name: D-30 122mm 榴弹炮, category: howitzer_light_towed, family: d30, origin: RUS, crew: 8, service_year: 1963,
+     specs: {caliber_mm: 122, range_km: 15.4, range_rap_km: 21.9}, src: wp_D-30, notes: 苏联设计。}
+  - {id: d20, name: D-20 152mm 加农榴弹炮, category: howitzer_heavy_towed, family: d20, origin: RUS, crew: 10, service_year: 1955,
+     specs: {caliber_mm: 152, range_km: 17.4}, src: wp_152_mm_towed_gun-howitzer_M1955_(D-20)}
+  - {id: 2a36, name: 2A36 Giatsint-B 152mm 加农炮, category: howitzer_heavy_towed, family: giatsint, origin: RUS, crew: 8, service_year: 1976,
+     specs: {caliber_mm: 152, range_km: 28.5}, src: wp_2A36_Giatsint-B}
+  - {id: m46, name: M-46 130mm 加农炮, category: howitzer_heavy_towed, family: m46, origin: RUS, crew: 8, service_year: 1954,
+     specs: {caliber_mm: 130, range_km: 27.5}, src: wp_130_mm_towed_field_gun_M1954_(M-46)}
+  - {id: 2s1, name: 2S1 Gvozdika 122mm 自行榴弹炮, category: howitzer_light_sp, family: 2s1, origin: RUS, crew: 4, service_year: 1972,
+     specs: {caliber_mm: 122, range_km: 15.2}, src: wp_2S1_Gvozdika}
+  - {id: 2s3, name: 2S3 Akatsiya 152mm 自行榴弹炮, category: howitzer_heavy_sp, family: 2s3, origin: RUS, crew: 4, service_year: 1971,
+     specs: {caliber_mm: 152, range_km: 18.5}, src: wp_2S3_Akatsiya, notes: 类别名写 155mm，152mm 苏式自行炮同归此类。}
+  - {id: 2s19, name: 2S19 Msta-S 152mm 自行榴弹炮, category: howitzer_heavy_sp, family: msta, origin: RUS, crew: 5, service_year: 1989,
+     specs: {caliber_mm: 152, range_km: 24.7, range_rap_km: 28.9}, src: wp_2S19_Msta, notes: 阿方 2010 年代自俄引进 18 门（wp_aze_eq_2020）。}
+  - {id: 2s7, name: 2S7 Pion 203mm 自行加农炮, category: howitzer_heavy_sp, family: 2s7, origin: RUS, crew: 7, service_year: 1976,
+     specs: {caliber_mm: 203, range_km: 37.5}, src: wp_2S7_Pion}
+  - {id: dana, name: ShKH vz.77 DANA 152mm 轮式自行榴弹炮, category: howitzer_heavy_truck, family: dana, origin: CZE, crew: 5, service_year: 1981,
+     specs: {caliber_mm: 152, range_km: 18.7}, src: wp_ShKH_vz._77_DANA, notes: 捷克斯洛伐克设计；阿方二手引进（数量说法 36–100）。}
+  - {id: atmos2000, name: ATMOS 2000 155mm 车载榴弹炮, category: howitzer_heavy_truck, family: atmos, origin: ISR, crew: 4, service_year: 2004,
+     specs: {caliber_mm: 155, range_km: 41}, src: wp_ATMOS_2000}
+  - {id: 2s9, name: 2S9 Nona-S 120mm 自行迫榴炮, category: sp_mortar_howitzer, family: nona, origin: RUS, crew: 4, service_year: 1981,
+     specs: {caliber_mm: 120, range_km: 8.8}, src: wp_2S9_Nona}
+  - {id: 2s31, name: 2S31 Vena 120mm 自行迫榴炮, category: sp_mortar_howitzer, family: nona, origin: RUS, crew: 4, service_year: 2010,
+     specs: {caliber_mm: 120, range_km: 13}, src: wp_2S31_Vena}
+
+  # ======================= 迫击炮 =======================
+  - {id: 2b11, name: 2B11 Sani 120mm 迫击炮, category: mortar_heavy, family: m120_sov, origin: RUS, crew: 5, service_year: 1981,
+     specs: {caliber_mm: 120, range_km: 7.1}, src: wp_120-PM-43_mortar}
+  - {id: m1938_120, name: M1938 120mm 迫击炮, category: mortar_heavy, family: m120_sov, origin: RUS, crew: 6, service_year: 1938,
+     specs: {caliber_mm: 120, range_km: 5.7}, src: wp_120-PM-38_mortar}
+  - {id: 2b14, name: 2B14 Podnos 82mm 迫击炮, category: mortar_medium, family: m82_sov, origin: RUS, crew: 4, service_year: 1983,
+     specs: {caliber_mm: 82, range_km: 4.3}, src: wp_2B14_Podnos}
+
+  # ======================= 火箭炮 =======================
+  - {id: bm21, name: BM-21 Grad 122mm 火箭炮, category: mrl_light, family: bm21, origin: RUS, crew: 3, service_year: 1963,
+     specs: {caliber_mm: 122, tubes: 40, range_km: 20}, src: wp_BM-21_Grad, notes: 标准弹 20km，增程弹约 40km（阿方部分）。}
+  - {id: rm70, name: RM-70 122mm 火箭炮, category: mrl_light, family: bm21, origin: CZE, crew: 4, service_year: 1972,
+     specs: {caliber_mm: 122, tubes: 40}, src: wp_RM-70}
+  - {id: t122_sakarya, name: T-122 Sakarya 122mm 火箭炮, category: mrl_light, family: t122, origin: TUR, crew: 4, service_year: 1997,
+     specs: {caliber_mm: 122, tubes: 40, range_km: 40}, src: wp_T-122_Sakarya}
+  - {id: tos1a, name: TOS-1A 220mm 温压火箭炮, category: mrl_light, family: tos1, origin: RUS, crew: 3, service_year: 2001,
+     specs: {caliber_mm: 220, tubes: 24, range_km: 6}, src: wp_TOS-1,
+     notes: 射程短（约 6km）按轻型火箭炮归类；类别表没有更合适的类别。双方都有（阿约 18、亚约 6）。}
+  - {id: 9a52_smerch, name: 9A52 Smerch 300mm 远程火箭炮, category: mrl_long_range, family: smerch, origin: RUS, crew: 4, service_year: 1989,
+     specs: {caliber_mm: 300, tubes: 12, range_km: [20, 70]}, src: wp_BM-30_Smerch,
+     notes: 射程超出一个地块，编入战斗旅时编辑器提醒（总纲 §9.3）。阿方约 30（2010 年 18），亚方 6–12。}
+  - {id: bm27_uragan, name: BM-27 Uragan 220mm 火箭炮, category: mrl_long_range, family: uragan, origin: RUS, crew: 4, service_year: 1975,
+     specs: {caliber_mm: 220, tubes: 16, range_km: 35}, src: wp_BM-27_Uragan, notes: 类别下限为 227mm，220mm 暂归此类（射程 35km）。}
+  - {id: wm80, name: WM-80 273mm 火箭炮, category: mrl_long_range, family: wm80, origin: CHN, crew: 4, service_year: 1990,
+     specs: {caliber_mm: 273, tubes: 8, range_km: 80}, src: wp_arm_eq_2020, notes: 亚方至少 4 部。}
+  - {id: polonez, name: Polonez 300/301mm 远程火箭炮, category: mrl_long_range, family: polonez, origin: BLR, crew: 3, service_year: 2016,
+     specs: {range_km: 200}, src: wp_Polonez_(MRL), notes: 白俄罗斯（中国 A200 火箭）；阿方 2018 年起约 10 部。}
+  - {id: lynx_mrl, name: IMI Lynx 模块化火箭炮（LAR-160 / EXTRA）, category: mrl_long_range, family: lynx_mrl, origin: ISR, crew: 3, service_year: 2007,
+     specs: {range_km: [45, 150]}, src: wp_Lynx_(rocket_launcher), notes: 阿方约 30 部；EXTRA 306mm 精确火箭射程 150km。}
+  - {id: t300_kasirga, name: T-300 Kasırga 302mm 火箭炮, category: mrl_long_range, family: t300, origin: TUR, crew: 3, service_year: 2007,
+     specs: {caliber_mm: 302, range_km: 120}, src: wp_T-300_Kasırga}
+
+  # ======================= 反坦克 =======================
+  - {id: 9k111_fagot, name: 9K111 Fagot, category: atgm_heavy, family: fagot_konkurs, origin: RUS, crew: 2, service_year: 1970,
+     specs: {range_km: 2.5}, src: wp_9K111_Fagot}
+  - {id: 9k113_konkurs, name: 9K113 Konkurs, category: atgm_heavy, family: fagot_konkurs, origin: RUS, crew: 2, service_year: 1974,
+     specs: {range_km: 4}, src: wp_9M113_Konkurs}
+  - {id: 9k135_kornet, name: 9K135 Kornet, category: atgm_heavy, family: kornet, origin: RUS, crew: 2, service_year: 1998,
+     specs: {range_km: 5.5}, src: wp_9M133_Kornet, notes: 亚方 2015 年俄贷款项目之一（11 CreditLine，14 §3.4）。}
+  - {id: spike_lr, name: Spike-LR, category: atgm_portable, family: spike, origin: ISR, crew: 2, service_year: 1997,
+     specs: {range_km: 4}, src: wp_Spike_(missile)}
+  - {id: 9p149_shturm_s, name: 9P149 Shturm-S, category: atgm_vehicle, family: shturm, origin: RUS, crew: 2, service_year: 1979,
+     specs: {range_km: 5}, src: wp_arm_eq_2020, notes: 亚方自摩尔多瓦购得 27 套（wp_arm_eq_2020）。}
+
+  # ======================= 轻武器 =======================
+  - {id: ak74, name: AK-74/74M, category: rifle, family: ak, origin: RUS, service_year: 1974, specs: {caliber_mm: 5.45}, src: wp_AK-74}
+  - {id: rpk74, name: RPK-74, category: lmg, family: ak, origin: RUS, service_year: 1974, specs: {caliber_mm: 5.45}, src: wp_RPK-74}
+  - {id: pkm, name: PKM, category: gpmg, family: pk, origin: RUS, service_year: 1969, specs: {caliber_mm: 7.62}, src: wp_PK_machine_gun}
+  - {id: svd, name: SVD, category: dmr, family: svd, origin: RUS, service_year: 1963, specs: {caliber_mm: 7.62}, src: wp_Dragunov_sniper_rifle}
+  - {id: rpg7, name: RPG-7V, category: reusable_launcher, family: rpg7, origin: RUS, service_year: 1961, specs: {caliber_mm: 40}, src: wp_RPG-7}
+  - {id: rpg26, name: RPG-26/RPG-22, category: disposable_launcher, family: rpg26, origin: RUS, service_year: 1985, specs: {caliber_mm: 72.5}, src: wp_RPG-26}
+  - {id: ags17, name: AGS-17, category: agl, family: ags17, origin: RUS, crew: 3, service_year: 1971, specs: {caliber_mm: 30, range_km: 1.7}, src: wp_AGS-17}
+
+  # ======================= 防空 =======================
+  - {id: igla, name: 9K38 Igla, category: manpads, family: igla, origin: RUS, service_year: 1983, specs: {range_km: 5.2}, src: wp_9K38_Igla}
+  - {id: igla_s, name: 9K338 Igla-S, category: manpads, family: igla, origin: RUS, service_year: 2004, upgrade_of: igla, specs: {range_km: 6}, src: wp_9K338_Igla-S}
+  - {id: zu23_2, name: ZU-23-2, category: aa_gun_towed, family: zu23, origin: RUS, crew: 2, service_year: 1960, specs: {caliber_mm: 23}, src: wp_ZU-23-2}
+  - {id: zsu23_4, name: ZSU-23-4 Shilka, category: spaag, family: zu23, origin: RUS, crew: 4, service_year: 1965, specs: {caliber_mm: 23, range_km: 2.5}, src: wp_ZSU-23-4_Shilka}
+  - {id: strela10, name: 9K35 Strela-10, category: sam_short, family: strela10, origin: RUS, crew: 3, service_year: 1976, specs: {range_km: 5}, src: wp_9K35_Strela-10}
+  - {id: osa_akm, name: 9K33 Osa-AKM, category: sam_short, family: osa, origin: RUS, crew: 5, service_year: 1980, specs: {range_km: 10}, src: wp_9K33_Osa,
+     notes: Oryx 列出 2020 年亚方大量 Osa 损失（防空单元 34 套被毁中的主体）。}
+  - {id: tor_m2km, name: Tor-M2KM, category: sam_short, family: tor, origin: RUS, crew: 3, service_year: 2016, upgrade_of: tor_m1, specs: {range_km: 15}, src: wp_Tor_missile_system,
+     notes: 亚方 2019 年前后引进（模块化版本），具体数量未公开。}
+  - {id: s125_pechora, name: S-125 Pechora（含 2M/2TM 升级）, category: sam_medium, family: s125, origin: RUS, crew: 5, service_year: 1961, specs: {range_km: 25}, src: wp_S-125_Neva/Pechora,
+     notes: 阿方自白俄罗斯/乌克兰升级型（2TM），亚方 2M。}
+  - {id: krug, name: 2K11 Krug, category: sam_medium, family: krug, origin: RUS, crew: 3, service_year: 1965, specs: {range_km: 50}, src: wp_2K11_Krug}
+  - {id: kub, name: 2K12 Kub, category: sam_medium, family: kub_buk, origin: RUS, crew: 3, service_year: 1967, specs: {range_km: 24}, src: wp_2K12_Kub}
+  - {id: buk_m1_2, name: Buk-M1-2, category: sam_medium, family: kub_buk, origin: RUS, crew: 4, service_year: 1998, specs: {range_km: 42}, src: wp_Buk_missile_system}
+  - {id: buk_mb, name: Buk-MB（白俄罗斯升级）, category: sam_medium, family: kub_buk, origin: BLR, crew: 4, service_year: 2005, specs: {range_km: 35}, src: wp_Buk_missile_system}
+  - {id: barak8, name: Barak-8 (MRSAM), category: sam_medium, family: barak8, origin: ISR, service_year: 2015, specs: {range_km: 70}, confidence: estimated, src: wp_Barak_8,
+     notes: 射程资料 70–100km（版本不同）；阿方约 2016–2017 年引进。}
+  - {id: s300ps, name: S-300PS/PT, category: sam_long, family: s300, origin: RUS, service_year: 1982, specs: {range_km: 75}, src: wp_S-300_missile_system,
+     notes: 亚方 2–4 个营（来源说法不一，wp_arm_eq_2020）；5V55U 弹约 75–90km。阿方的 S-300PMU-2 复用现有型号 s300pmu2（air_defense.yaml），2 个营约 2011 年交付。}
+
+  # ======================= 航空器 =======================
+  - {id: su25, name: Su-25/Su-25K, category: fighter, family: su25, origin: RUS, crew: 1, service_year: 1981, src: wp_Sukhoi_Su-25,
+     notes: 双方主力攻击机（亚约 14–15、阿约 12，2020 年；阿 2010 年维基称 33 但 IISS 2007 为 6，差异大）。}
+  - {id: su30sm, name: Su-30SM, category: fighter, family: su27, origin: RUS, crew: 2, service_year: 2012, src: wp_Sukhoi_Su-30SM,
+     notes: 亚方 2019-12 起交付 4 架（2020 年时无空空导弹的说法流传，未证实）。}
+  - {id: mig29, name: MiG-29, category: fighter, family: mig29, origin: RUS, crew: 1, service_year: 1983, src: wp_Mikoyan_MiG-29, notes: 阿方约 12 架可用（2020）。}
+  - {id: mig25, name: MiG-25PD, category: fighter, family: mig25, origin: RUS, crew: 1, service_year: 1978, src: wp_Mikoyan-Gurevich_MiG-25, notes: 亚方 1 架（2010）。}
+  - {id: l39, name: L-39 Albatros, category: fighter, family: l39, origin: CZE, crew: 2, service_year: 1972, src: wp_Aero_L-39_Albatros,
+     notes: 教练/轻攻击机；类别表无教练机类别，暂归 fighter。}
+  - {id: mi24p, name: Mi-24P/V, category: attack_helicopter, family: mi24, origin: RUS, crew: 3, service_year: 1981, src: wp_Mil_Mi-24}
+  - {id: mi35m, name: Mi-35M, category: attack_helicopter, family: mi24, origin: RUS, crew: 2, service_year: 2005, upgrade_of: mi24p, src: wp_Mil_Mi-24,
+     notes: 阿方 2010 年代自俄引进 24 架（说法），2020 年合计 Mi-24/35 约 17（wp Azerbaijani Air Forces 2020-09 修订版）。}
+  - {id: mi8mt, name: Mi-8MT/Mi-17, category: utility_helicopter, family: mi8, origin: RUS, crew: 3, capacity: 24, service_year: 1977, src: wp_Mil_Mi-17}
+
+  # ======================= 无人机（地面营/空军，使用现有类别）=======================
+  - {id: bayraktar_tb2, name: Bayraktar TB2, category: uav_male, family: tb2, origin: TUR, service_year: 2014,
+     specs: {endurance_h: 24, payload_kg: 150, munitions: [mam_l, mam_c]}, src: wp_Baykar_Bayraktar_TB2,
+     notes: 阿方 2020 年 6 月签约、战前交付（数量未公开，常见估计 12–24 架，uncertain）；大型无人机为空军 Flight（08），不进陆军模板。}
+  - {id: hermes_450, name: Hermes 450, category: uav_male, family: hermes, origin: ISR, service_year: 1998, specs: {endurance_h: 17}, src: wp_Elbit_Hermes_450}
+  - {id: hermes_900, name: Hermes 900, category: uav_male, family: hermes, origin: ISR, service_year: 2011, specs: {endurance_h: 30}, src: wp_Elbit_Hermes_900}
+  - {id: heron1, name: IAI Heron, category: uav_male, family: heron, origin: ISR, service_year: 2005, specs: {endurance_h: 45}, src: wp_IAI_Heron}
+  - {id: searcher_mk2, name: IAI Searcher Mk II, category: uav_tactical, family: searcher, origin: ISR, service_year: 1998, specs: {endurance_h: 18}, src: wp_IAI_Searcher}
+  - {id: aerostar, name: Aeronautics Aerostar, category: uav_tactical, family: aerostar, origin: ISR, service_year: 2000, specs: {endurance_h: 12}, src: wp_Aeronautics_Defense_Aerostar,
+     notes: 阿方 Azad Systems（MODI 与 Aeronautics 合资）本地组装。}
+  - {id: orbiter2, name: Orbiter 2, category: uav_hand_launched, family: orbiter, origin: ISR, service_year: 2007, specs: {endurance_h: 3.5}, src: wp_Aeronautics_Orbiter,
+     notes: Azad Systems 本地组装（与 Orbiter-1K 巡飞弹同族，后者见 equipment_pending）。}
+  - {id: orbiter3, name: Orbiter 3, category: uav_tactical, family: orbiter, origin: ISR, service_year: 2014, specs: {endurance_h: 7}, src: wp_Aeronautics_Orbiter}
+  - {id: krunk, name: Krunk, category: uav_tactical, family: krunk, origin: ARM, service_year: 2011, confidence: uncertain, src: wp_arm_eq_2020,
+     notes: 亚美尼亚国产侦察无人机（Armenian Armed Forces 无人机中心），性能资料少。}
+
+  # ======================= 传感器 / 电子战 =======================
+  - {id: avtobaza, name: 1L222 Avtobaza 电子侦察系统, category: ew_vehicle, family: avtobaza, origin: RUS, service_year: 2011, src: wp_arm_eq_2020,
+     notes: 亚方 2015 年俄贷款项目之一（被动探测雷达/数据链辐射）。}
+  - {id: repellent1, name: Repellent-1 反无人机电子战系统, category: ew_vehicle, family: repellent, origin: RUS, service_year: 2016, confidence: uncertain, src: wp_arm_eq_2020,
+     notes: 2020 年 Oryx 记录亚方损失 1 套（Jammers and Deception Systems 类）。}
+  - {id: 1l219_zoopark, name: 1L219 Zoopark-1 炮位侦校雷达, category: radar_counter_battery, family: zoopark, origin: RUS, service_year: 1989, confidence: uncertain, src: wp_Zoopark-1,
+     notes: 作为双方可采购的反炮兵雷达；亚、阿 2010 年持有情况不详。}
+
+  # ======================= 卡车 =======================
+  - {id: ural4320, name: Ural-4320, category: truck_medium, family: ural, origin: RUS, crew: 1, capacity: 27, service_year: 1977, src: wp_Ural-4320,
+     notes: 阿方另有 KamAZ 大量（wp 2025 版称 2000+，年代不明，不采用）。}
+  - {id: kamaz_5350, name: KamAZ-5350, category: truck_heavy, family: kamaz, origin: RUS, crew: 1, service_year: 2003, src: wp_KAMAZ}

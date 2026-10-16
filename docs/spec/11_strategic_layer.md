@@ -904,7 +904,7 @@ lossRatio = enemyKilled / max(1, ownKilled)
 
 #### 4.10.4 供应国战时行为（与 4.11 合并执行）
 - 每个外部行为体对每个交战国：`supplyContinueP = clamp(0.5 + 0.5 × stance[buyer] − 0.3 × (stance[enemy] > 0.5 ? 1 : 0), 0, 1)`，用于 4.11 的中断判定。
-- 情报共享（`IntelSharing`）：给受援国一个 `IntelShareGrant`（05 定义），把行为体的侦察手段贡献（卫星、电子侦察）加到受援国的暴露度增长中；阶段 1 只有土耳其对阿塞拜疆（若剧本开启）。
+- 情报共享（`IntelSharing`）：把外部行为体的卫星加入受援国的共享名单——即在 05 的 `SatelliteAsset.sharesWith` 中加入受援国（05 R-12：MVP 盟国只共享卫星）；阶段 1 只有土耳其对阿塞拜疆（14 `external_actors.TUR.intel_sharing`）。
 
 ### 4.11 供应依赖与战时中断（§18.7）
 每 7 天（DailyStep，`day % 7 == 0`）对每个（买方, 供应国）对，若买方在战争中：
@@ -1118,7 +1118,7 @@ challengeProgress[g] = 剧本目标的进度函数（14 定义）
 | 01 | 写 | 交付时创建 `EquipmentItem`（库存）；升级时改 `modelId`；退役时删除 | H4、4.5.4、4.6 |
 | 02 人员 | 读 | 按 `PayCategory` 的人数、`School` 产能 | 年初、H1 |
 | 02 | 写 | `TrainingIntensity`、动员到位目标、预备役练度、升级后的练度保留系数 | 变更时 |
-| 05 侦察 | 写 | `IntelShareGrant`（外部行为体）；软件支持中断的效能衰减 | 4.10.4、4.11 |
+| 05 侦察 | 写 | `SatelliteAsset.sharesWith`（外部行为体情报共享，05 R-12）；软件支持中断的效能衰减 | 4.10.4、4.11 |
 | 06 后勤 | 读 | 节点维护费、储备目标缺口、`ImportGateway` 状态 | 年初、H1 |
 | 06 | 写 | 新交付物资入口岸、口岸开关、工厂节点产出、训练弹药扣减请求、`WarReserves` 采购的弹药 | H4、H5、事件 |
 | 07 损伤 | 写 | `FaultRateMultiplier`（O&M、二手状态）、备件入库、供应中断标志 | H1、4.11 |
@@ -1346,4 +1346,4 @@ sealed class EquipmentConditionState { EquipmentItemId itemId; double condition;
 | 薪酬类别 | `PayCategory` | 人员费计算类别 |
 | 边境行动 | `BorderActionType` | `Patrol/Exercise` |
 | 战略行动接口 | `IStrategicActions` | 玩家与 AI 共用的战略层命令接口 |
-| 情报共享授权 | `IntelShareGrant`（由 05 定义结构） | 外部行为体向受援国提供暴露度贡献 |
+| 情报共享（外部行为体） | 复用 05 `SatelliteAsset.sharesWith` | 外部行为体向受援国共享卫星情报（不新增类型） |

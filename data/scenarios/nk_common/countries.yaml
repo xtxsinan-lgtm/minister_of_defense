@@ -1,0 +1,244 @@
+# 纳卡战区剧本共享数据：国家参数、预算路径、人力、关系、出口政策、外部大国、信贷、停火模板
+# 规格：docs/spec/14_scenario_nk.md §3（数据格式）、docs/spec/11_strategic_layer.md §3（类型定义）。
+# 货币：2020 年不变价百万美元（G-10）。换算：当年美元 × 100 / 美国 GDP 平减指数（2020 = 100），平减指数取自
+#   World Bank NY.GDP.DEFL.ZS（USA）：https://api.worldbank.org/v2/country/USA/indicator/NY.GDP.DEFL.ZS
+# 归一化量 [0,1]；关系值 [-1,1]（11 S-16）。
+#
+# 来源键：
+#   wb_milex  = World Bank MS.MIL.XPND.CD（数据来自 SIPRI Military Expenditure Database）
+#               https://api.worldbank.org/v2/country/ARM;AZE/indicator/MS.MIL.XPND.CD
+#   wb_gdp    = World Bank NY.GDP.MKTP.CD    wb_pop = SP.POP.TOTL    wb_pers = MS.MIL.TOTL.P1（含准军事，来自 IISS）
+#   wp_arm_2010 = https://en.wikipedia.org/w/index.php?oldid=404623264 （Armed Forces of Armenia，2010-12-28，引 IISS 2010）
+#   wp_arm_2020 = https://en.wikipedia.org/w/index.php?oldid=978631512 （Armed Forces of Armenia，2020-09-16）
+#   wp_nka_2010 = https://en.wikipedia.org/w/index.php?oldid=404448569 （Artsakh Defence Army，2010-12-27）
+#   wp_nka_2020 = https://en.wikipedia.org/w/index.php?oldid=977867503 （Artsakh Defence Army，2020-09-11）
+#   wp_aze_2010 = https://en.wikipedia.org/w/index.php?oldid=404876835 （Azerbaijani Armed Forces，2010-12-29）
+#   wp_azelf_2020 = https://en.wikipedia.org/w/index.php?oldid=943093497 （Azerbaijani Land Forces，2020-02-28，引 IISS 2013 陆军 56,850 + 准军事 15,000 + 预备 300,000）
+#   wp_cf2020 = https://en.wikipedia.org/wiki/2020_Nagorno-Karabakh_ceasefire_agreement
+
+sources_accessed: 2026-10-16
+
+countries:
+  # ------------------------------------------------------------------ 交战国（可玩）
+  - iso3: ARM
+    role: belligerent
+    playable: true
+    rival: AZE
+    note_g13: 纳卡“防卫军”作为 ARM 一方的编组（00 G-13 / 14 N-01），人员、装备、预算并入 ARM。
+    gdp_musd_by_year:        {2010: 10887, 2011: 11683, 2012: 12009, 2013: 12366, 2014: 12688, 2015: 11428, 2016: 11312, 2017: 12147, 2018: 12834, 2019: 13802, 2020: 12642}   # wb_gdp → 2020$
+    population_m_by_year:    {2010: 3.045, 2011: 3.028, 2012: 3.024, 2013: 3.022, 2014: 3.014, 2015: 3.005, 2016: 2.992, 2017: 2.979, 2018: 2.969, 2019: 2.963, 2020: 2.962}   # wb_pop
+    base_budget_musd_by_year: {2010: 464.4, 2011: 450.2, 2012: 430.4, 2013: 494.3, 2014: 500.3, 2015: 484.4, 2016: 462.7, 2017: 467.5, 2018: 528.7, 2019: 660.8, 2020: 634.0}   # wb_milex → 2020$
+    budget_note: SIPRI 口径不含纳卡自身的防务开支（未公开）；是否加一项 nk_supplement 见 14 N-04（默认 0）。
+    budget_confidence: stated
+    conscription:
+      conscription: true
+      term_months: 24                       # wp_arm_2020 信息框
+      annual_intake_cap: 16000              # estimated：18 岁男性约 3.1 万/年（wp_arm_2020 reaching_military_age 31,774），扣除免役/延期约一半
+      contract_share_target: {2010: 0.25, 2020: 0.45}   # estimated：2017 年约 1.9 万义务兵 + 2.3 万职业军人（wp_arm_2020）
+      reserve_pool: 210000                  # wp_arm_2020：“近 15 年服过役的前军人 21 万”
+      reserve_general_skill: 0.30           # estimated / bal
+      pay_musd_per_head_year: {conscript: 0.0015, contract: 0.006, officer: 0.012, reservist_mobilized: 0.003, civilian: 0.005}
+      pay_confidence: estimated
+      pay_basis: 反推使人员费约占预算 45–50%（11 §9.1）；无公开分项数据。
+    headcount_by_year:                      # 现役（含纳卡防卫军），用于开局实例化后核对，不直接生成人员
+      2010: {total: 63641, armenia: 43641, nk_defence_army: 20000, source: "wp_arm_2010（43,641：陆军 40,421 含义务兵 30,634；空军 3,220）+ wp_nka_2010（未给数，取 wp_nka_2020 区间 18,500–25,000 的中下值，uncertain）"}
+      2020: {total: 72943, armenia: 51580, nk_defence_army: 21363, source: "wp_arm_2020 信息框（51,580；另注 21,363 在纳卡指挥下）"}
+    politics:
+      initial_trust: 0.6
+      leadership_hawkishness: {2010: 0.35, 2018: 0.30}   # bal：守势；2018 年领导层更替后见事件 arm_2018_velvet_revolution
+      issue_baseline: {hardline_vs_rival: 0.55, defense_budget_increase: 0.55, conscription_reform: 0.40}
+    deterrence_initial: {2010: 0.55, 2020: 0.50}   # bal
+
+  - iso3: AZE
+    role: belligerent
+    playable: true
+    rival: ARM
+    gdp_musd_by_year:        {2010: 62204, 2011: 75971, 2012: 78798, 2013: 82461, 2014: 82228, 2015: 57473, 2016: 40618, 2017: 43064, 2018: 48534, 2019: 48822, 2020: 42693}
+    population_m_by_year:    {2010: 9.054, 2011: 9.173, 2012: 9.296, 2013: 9.417, 2014: 9.535, 2015: 9.649, 2016: 9.758, 2017: 9.854, 2018: 9.940, 2019: 10.024, 2020: 10.093}
+    base_budget_musd_by_year: {2010: 1736.0, 2011: 3548.0, 2012: 3670.9, 2013: 3744.5, 2014: 3745.5, 2015: 3140.8, 2016: 1498.5, 2017: 1611.1, 2018: 1722.6, 2019: 1879.2, 2020: 2237.8}
+    budget_note: 2011–2015 年翻倍、2016 年腰斩随油价与马纳特贬值（外生背景，不受历史模式影响，11 §4.12）。SIPRI 口径含国防工业部等。
+    budget_confidence: stated
+    conscription:
+      conscription: true
+      term_months: 18                       # uncertain：常见说法 18 个月（大学毕业 12 个月）；wp_aze_2010 信息框写 24 个月
+      annual_intake_cap: 45000              # estimated：18 岁男性约 9 万/年（wp_aze_2010 reaching 90,416）的一半
+      contract_share_target: {2010: 0.25, 2020: 0.30}
+      reserve_pool: 300000                  # wp_azelf_2020（“近 15 年服过役 30 万”）
+      reserve_general_skill: 0.30
+      pay_musd_per_head_year: {conscript: 0.002, contract: 0.010, officer: 0.018, reservist_mobilized: 0.004, civilian: 0.006}
+      pay_confidence: estimated
+      pay_basis: 估算；人员费约占预算 20–25%（阿方采购占比高）。
+    headcount_by_year:
+      2010: {total: 66940, source: "wb_pers 81,940 减准军事 15,000（wp_azelf_2020 的准军事数），estimated"}
+      2020: {total: 67000, source: "wb_pers 82,000 减准军事 15,000，estimated"}
+    politics:
+      initial_trust: 0.6
+      leadership_hawkishness: {2010: 0.60, 2016: 0.70, 2020: 0.80}   # bal：逐步强硬（2016 四月战争、2020 七月托武兹冲突后）
+      issue_baseline: {hardline_vs_rival: 0.65, defense_budget_increase: 0.60, conscription_reform: 0.30}
+    deterrence_initial: {2010: 0.45, 2020: 0.60}
+
+  # ------------------------------------------------------------------ 外部行为体与供应国
+  - {iso3: RUS, role: external_actor, nuclear: true}
+  - {iso3: TUR, role: external_actor}
+  - {iso3: IRN, role: external_actor}
+  - {iso3: ISR, role: supplier_only}
+  - {iso3: BLR, role: supplier_only}
+  - {iso3: UKR, role: supplier_only}
+  - {iso3: CZE, role: supplier_only}
+  - {iso3: SRB, role: supplier_only}
+  - {iso3: CHN, role: supplier_only}
+  - {iso3: MDA, role: supplier_only, note: 亚方曾自摩尔多瓦购得 Shturm-S（data/equipment/nk_models.yaml 9p149_shturm_s）}
+  - {iso3: GEO, role: transit_only, note: 双方陆路进口的主要过境国（14 §3.5 口岸）}
+
+# ------------------------------------------------------------------ 双边关系（11 Relation；[-1,1]，baseline = 回落目标）
+# 数值为 bal/estimated，依据为定性史实（注释）。flags: alliance / arms_embargo / sanctions / aid。
+relations:
+  - {a: ARM, b: AZE, value: -0.90, baseline: -0.85, note: 无外交关系；1994 年停火后冻结冲突}
+  - {a: ARM, b: RUS, value: 0.70, baseline: 0.65, alliance: mutual_defense, flags: [alliance], note: CSTO；俄 102 基地在久姆里。注意：CSTO 义务只覆盖亚美尼亚法理领土（红线 rus_csto_armenia_proper）}
+  - {a: AZE, b: RUS, value: 0.40, baseline: 0.40, alliance: friendly, note: 俄为阿方最大武器供应国之一（2010–2013 年大单）}
+  - {a: AZE, b: TUR, value: 0.90, baseline: 0.90, alliance: strategic_partner, flags: [alliance], note: 2010 年《战略伙伴与相互援助协定》；2021 舒沙宣言超出剧本范围}
+  - {a: ARM, b: TUR, value: -0.70, baseline: -0.70, flags: [arms_embargo], note: 无外交关系、边境关闭；土方不会对亚出口}
+  - {a: ARM, b: IRN, value: 0.40, baseline: 0.40, alliance: friendly, note: 亚–伊公路口岸（梅格里/阿加拉克）是亚方第二条陆路}
+  - {a: AZE, b: IRN, value: 0.00, baseline: 0.00}
+  - {a: AZE, b: ISR, value: 0.70, baseline: 0.70, alliance: friendly, note: 以色列为阿方无人机、巡飞弹、LORA、Barak-8 来源}
+  - {a: ARM, b: ISR, value: -0.10, baseline: -0.10}
+  - {a: ARM, b: BLR, value: 0.30, baseline: 0.30, alliance: friendly, note: 同为 CSTO，但白俄向阿出售 Polonez}
+  - {a: AZE, b: BLR, value: 0.50, baseline: 0.50}
+  - {a: ARM, b: UKR, value: -0.10, baseline: -0.10}
+  - {a: AZE, b: UKR, value: 0.50, baseline: 0.50, note: 2010 年前后乌克兰为阿方二手装备来源}
+  - {a: ARM, b: GEO, value: 0.30, baseline: 0.30}
+  - {a: AZE, b: GEO, value: 0.50, baseline: 0.50}
+  - {a: ARM, b: CHN, value: 0.20, baseline: 0.20}
+  - {a: AZE, b: CHN, value: 0.20, baseline: 0.20}
+  - {a: ARM, b: CZE, value: 0.10, baseline: 0.10}
+  - {a: AZE, b: CZE, value: 0.20, baseline: 0.20}
+  - {a: ARM, b: SRB, value: 0.10, baseline: 0.10}
+  - {a: AZE, b: SRB, value: 0.20, baseline: 0.20}
+  - {a: ARM, b: MDA, value: 0.10, baseline: 0.10}
+  - {a: AZE, b: MDA, value: 0.10, baseline: 0.10}
+
+tension:
+  - {a: ARM, b: AZE, score_by_start: {nk_2010: 0.45, nk_2020: 0.80}, baseline: 0.40, note: 冻结冲突常态为“紧张”；2020 年 7 月托武兹冲突后处于危机}
+
+# ------------------------------------------------------------------ 出口政策（11 ExportPolicy）
+# willingness ∈ [-1,1]；max_sensitivity ∈ 0..3（敏感度定义见 11 §3.3 与 procurement.yaml）
+export_policies:
+  RUS: {willingness: {ARM: 0.3, AZE: 0.2}, max_sensitivity: {ARM: 3, AZE: 3}, end_use_restriction: false,
+        note: 俄同时向双方出售（亚：伊斯坎德尔、Smerch、Tor-M2KM、Su-30SM；阿：T-90S、BMP-3、Smerch、TOS-1A、S-300PMU-2）}
+  TUR: {willingness: {AZE: 1.0}, max_sensitivity: {AZE: 3, ARM: 0}, note: 对亚方另有 arms_embargo 标志}
+  ISR: {willingness: {AZE: 0.8, ARM: -1.0}, max_sensitivity: {AZE: 3, ARM: 0}}
+  BLR: {willingness: {AZE: 0.3, ARM: 0.0}, max_sensitivity: {AZE: 3, ARM: 2}}
+  UKR: {willingness: {AZE: 0.3, ARM: -0.3}, max_sensitivity: {AZE: 2, ARM: 1}, valid_until_year: 2014, note: 2014 年后乌克兰自身需求激增，二手出口减少（bal）}
+  CZE: {willingness: {AZE: 0.0, ARM: 0.0}, max_sensitivity: {AZE: 1, ARM: 1}, note: OSCE 1992 年对交战区的武器禁运建议（不具约束力）以低意愿近似}
+  SRB: {willingness: {AZE: 0.1, ARM: 0.0}, max_sensitivity: {AZE: 1, ARM: 1}}
+  CHN: {willingness: {AZE: 0.0, ARM: 0.0}, max_sensitivity: {AZE: 2, ARM: 2}}
+  MDA: {willingness: {ARM: 0.0, AZE: 0.0}, max_sensitivity: {ARM: 1, AZE: 1}}
+
+# ------------------------------------------------------------------ 外部行为体政策（11 ExternalActorPolicy；14 §4.6）
+external_actors:
+  RUS:
+    stance: {ARM: 0.5, AZE: 0.2}
+    max_rung: peacekeeping
+    mediation_templates: [nov10_template, freeze_template]
+    mediation_first_day: 7
+    mediation_interval_days: 7
+    supply_in_war: {ARM: 0.7, AZE: 0.5}     # 11 §4.10.4 supplyContinueP 的剧本覆盖值（bal）
+    red_lines:
+      - id: rus_csto_armenia_proper
+        protected: ARM
+        tiles: {de_jure: ARM}
+        trigger: enemy_ground_forces_enter
+        grace_hours: 24
+        effects: [{effect: warning, after_hours: 0}, {effect: forced_ceasefire, after_hours: 72}]
+        relation_penalty: -0.30
+        note: CSTO 只覆盖亚美尼亚法理领土；2020 年战事未越过此线（俄未参战）。
+  TUR:
+    stance: {AZE: 0.9, ARM: -0.6}
+    max_rung: intel_sharing
+    mediation_templates: []
+    supply_in_war: {AZE: 0.95}
+    intel_sharing: {to: AZE, satellites: true, from_year: 2012, note: 05 SatelliteAsset.sharesWith（R-12）；土耳其 Göktürk-2（2012）/Göktürk-1（2016）}
+    red_lines:
+      - id: tur_nakhchivan
+        protected: AZE
+        tiles: {region: nakhchivan}
+        trigger: enemy_ground_forces_enter
+        grace_hours: 24
+        effects: [{effect: warning, after_hours: 0}, {effect: forced_ceasefire, after_hours: 72}]
+        relation_penalty: -0.30
+      - id: tur_aze_proper
+        protected: AZE
+        tiles: {region: aze_proper_outside_conflict_zone}
+        trigger: enemy_ground_forces_enter
+        grace_hours: 48
+        effects: [{effect: warning, after_hours: 0}, {effect: forced_ceasefire, after_hours: 96}]
+        relation_penalty: -0.20
+        note: 亚方纵深进攻阿塞拜疆本土（冲突区以外）会引发土方与国际强烈反应（bal 抽象）。
+  IRN:
+    stance: {ARM: 0.2, AZE: 0.0}
+    max_rung: statements
+    red_lines:
+      - id: irn_araz_spillover
+        protected: IRN
+        tiles: {region: araz_border_strip}
+        trigger: strikes_on_tiles
+        grace_hours: 0
+        effects: [{effect: warning, after_hours: 0}]
+        relation_penalty: -0.05
+        note: 2020 年有炮弹/火箭落入伊朗境内的报道（Timeline of the Second Nagorno-Karabakh War，1 Oct 等条目）。只做警告与关系惩罚。
+
+# ------------------------------------------------------------------ 信贷额度（11 CreditLine；事件 GrantCreditLine 授予）
+credit_lines:
+  - id: rus_arm_loan_2015
+    lender: RUS
+    borrower: ARM
+    limit_musd: 216.6                        # 名义 2 亿美元（2015 年协议，2016 年生效）× 100/92.35（2015 年美国平减指数）
+    interest_rate_per_year: 0.03             # estimated：公开报道“3% 年息”的说法，未核实
+    grace_years: 3
+    repayment_years: 10
+    restricted_to_lender_goods: true
+    available_from: 2016-02-01
+    expires_at: 2019-12-31
+    confidence: estimated
+  - id: rus_arm_loan_2017
+    lender: RUS
+    borrower: ARM
+    limit_musd: 105.4                        # 1 亿美元 × 100/94.897
+    interest_rate_per_year: 0.03
+    grace_years: 3
+    repayment_years: 10
+    restricted_to_lender_goods: true
+    available_from: 2017-10-01
+    expires_at: 2021-12-31
+    confidence: estimated
+
+# ------------------------------------------------------------------ 停火模板（11 §4.8.6 CeasefireTemplate；14 §4.7）
+ceasefire_templates:
+  - id: nov10_template
+    name: “11·10 式”三方声明（俄调停）
+    mediator: RUS
+    condition: {any: [{tile_controlled_by: {key_tile: shusha, country: AZE}},
+                      {share_of_region_controlled: {region: seven_districts, country: AZE, min: 0.5}}]}
+    terms:
+      ceasefire_line: current_control
+      handovers:                              # 史实：亚方撤出阿格达姆（11-20）、克尔巴贾尔（11-25）、拉钦（12-01）区（wp_cf2020）
+        - {region: aghdam_district,   from: ARM, to: AZE, days: 10}
+        - {region: kalbajar_district, from: ARM, to: AZE, days: 15}
+        - {region: lachin_district,   from: ARM, to: AZE, days: 21, except_region: lachin_corridor}
+      peacekeeping:
+        actor: RUS
+        regions: [lachin_corridor, nk_contact_line_arm_side]   # 后者在停火时由 14 §4.7.2 计算
+        years: 5                                # wp_cf2020：至少 5 年，可自动延长
+        troops: 1960                            # wp_cf2020：1,960 名维和人员（只作显示）
+    applies_when_war_day_at_least: 7
+  - id: freeze_template
+    name: 按现控制线冻结（调停或直接谈判）
+    mediator: any
+    condition: {always: true}
+    terms: {ceasefire_line: current_control, handovers: [], peacekeeping: null}
+  - id: local_skirmish_template
+    name: 局部冲突停火（2016 年四月战争式，俄调停，4 天）
+    mediator: RUS
+    condition: {war_scope: limited}
+    terms: {ceasefire_line: current_control, handovers: [], peacekeeping: null}
+    note: 2016-04-02 至 04-05，俄方斡旋下于莫斯科达成口头停火（wp 2016 Nagorno-Karabakh conflict）。

@@ -1,0 +1,101 @@
+# 纳卡战区地图范围、区域（地块集合）、控制锚点、关键地块、卫星资产
+# 规格：docs/spec/14_scenario_nk.md §3.3、§4.1–4.2。地块 = H3 第 4 级（00 §3.5）。
+# 本文件不写 H3 索引：10 的离线流水线按下面的规则把经纬度/多边形换成地块列表，输出到 data/map/nk/（10 定义格式）。
+# 坐标：WGS84 度；取自各地名的英文维基百科信息框（访问 2026-10），误差 < 2 km，远小于地块尺度（对边约 40 km）。
+#       confidence: estimated（未逐一与 OSM 核对；10 的流水线会用 OSM place 节点覆盖，见 14 N-06）。
+
+theater:
+  id: nk
+  include_rule: "H3 r4 单元中心落在 ARM ∪ AZE 法理领土（Natural Earth admin-0 1:10m，含纳希切万与纳卡）内的单元"
+  expected_tile_count: {estimate: 66, basis: "亚 29,743 km² + 阿 86,600 km²（含纳希切万）≈ 116,343 km² ÷ H3 r4 平均 1,770 km² ≈ 65.7；总纲 §21-4 写“约 65 格”"}
+  outside_neighbors: [GEO, RUS, IRN, TUR]
+  outside_rule: 战区外地块不实例化；与战区外相邻的交界边不可通行（不能移动、不触发战斗）；空中层不限（越界飞行由 08/11 事件处理，阶段 1 只记日志）。
+  caspian: 里海不分格（海军阶段 3）；巴库港口岸阶段 1 视为陆地口岸的一种（06 §3.4 Sea 阶段 2+ → 本剧本按 Rail/Road 外部方式处理，见 logistics_nodes.yaml）。
+
+# ------------------------------------------------------------------ 法理归属（11 TileClaimTable）
+de_jure:
+  rule: 按 Natural Earth admin-0：单元中心在阿塞拜疆境内（含纳卡、七区、纳希切万）→ AZE；在亚美尼亚境内 → ARM。
+  note: 叙事中立（总纲 §21-4）：法理归属只用于红线判定与“本土”定义，界面只显示“控制方”。
+
+# ------------------------------------------------------------------ 区域（地块集合引用；10 产出，11/12/14 使用）
+# 区域多边形来源：GADM 4.1 阿塞拜疆二级行政区（rayon）https://gadm.org/download_country.html （AZE level 2）
+#   rayon 名称按 GADM 拼写；GADM 不含 1991 年前的纳卡自治州（NKAO）边界，NKAO 用 rayon 并集近似（14 N-05）。
+regions:
+  armenia_proper:   {rule: "de_jure == ARM"}
+  nakhchivan:       {gadm_l1: ["Nakhchivan"], note: GADM 中纳希切万为一级单位}
+  nk_oblast:        {gadm_l2_union: ["Xankəndi", "Xocalı", "Şuşa", "Xocavənd", "Ağdərə"], confidence: uncertain,
+                     note: 1991 年后阿方重划 rayon，Ağdərə/Xocavənd 部分属原 NKAO 以外；以地块精度可接受}
+  aghdam_district:  {gadm_l2: "Ağdam"}
+  fuzuli_district:  {gadm_l2: "Füzuli"}
+  jabrayil_district: {gadm_l2: "Cəbrayıl"}
+  zangilan_district: {gadm_l2: "Zəngilan"}
+  qubadli_district: {gadm_l2: "Qubadlı"}
+  lachin_district:  {gadm_l2: "Laçın"}
+  kalbajar_district: {gadm_l2: "Kəlbəcər"}
+  seven_districts:  {union: [aghdam_district, fuzuli_district, jabrayil_district, zangilan_district, qubadli_district, lachin_district, kalbajar_district]}
+  conflict_zone:    {union: [nk_oblast, seven_districts]}
+  aze_proper_outside_conflict_zone: {rule: "de_jure == AZE && !conflict_zone && !nakhchivan"}
+  lachin_corridor:  {rule: "地块与 Goris(39.511,46.338)→Lachin(39.643,46.547)→Stepanakert(39.815,46.752) 折线相交", note: 2020 停火声明的 5 km 宽走廊在地块精度下即沿线 2–3 格}
+  araz_border_strip: {rule: "de_jure == AZE && 地块与伊朗边界（阿拉斯河）相邻"}
+  nk_contact_line_arm_side: {rule: "停火时计算：ARM 控制且与 AZE 控制地块相邻的 nk_oblast 地块（14 §4.7.2）"}
+
+# ------------------------------------------------------------------ 控制锚点（开局 TileControl 的校验点）
+# 开局 TileControl 规则（14 §4.2）：conflict_zone 内按 1994–2020 接触线多边形（10 的输入 data/map/nk/sources/loc_1994.geojson，
+# 由 10 按公开地图数字化，14 N-06）判定；其余地块 = 法理归属。下列锚点所在地块的控制方必须与表一致（加载校验，否则报错）。
+control_anchors:
+  # name: [lat, lon, controller_2010, controller_2020_start]
+  - {name: stepanakert, lat: 39.8153, lon: 46.7519, nk_2010: ARM, nk_2020: ARM}
+  - {name: shusha,      lat: 39.7583, lon: 46.7489, nk_2010: ARM, nk_2020: ARM}
+  - {name: martakert,   lat: 40.2153, lon: 46.8106, nk_2010: ARM, nk_2020: ARM}
+  - {name: hadrut,      lat: 39.5200, lon: 47.0300, nk_2010: ARM, nk_2020: ARM}
+  - {name: aghdam_city, lat: 39.9911, lon: 46.9297, nk_2010: ARM, nk_2020: ARM, note: 城市废墟在接触线亚方一侧}
+  - {name: fuzuli_city, lat: 39.6003, lon: 47.1431, nk_2010: ARM, nk_2020: ARM, note: 同上；2020-10-17 阿方宣布收复}
+  - {name: jabrayil,    lat: 39.3992, lon: 47.0264, nk_2010: ARM, nk_2020: ARM}
+  - {name: zangilan,    lat: 39.0856, lon: 46.6525, nk_2010: ARM, nk_2020: ARM}
+  - {name: qubadli,     lat: 39.3444, lon: 46.5797, nk_2010: ARM, nk_2020: ARM}
+  - {name: lachin,      lat: 39.6425, lon: 46.5469, nk_2010: ARM, nk_2020: ARM}
+  - {name: kalbajar,    lat: 40.1053, lon: 46.0386, nk_2010: ARM, nk_2020: ARM}
+  - {name: tartar,      lat: 40.3417, lon: 46.9311, nk_2010: AZE, nk_2020: AZE}
+  - {name: barda,       lat: 40.3744, lon: 47.1267, nk_2010: AZE, nk_2020: AZE}
+  - {name: horadiz,     lat: 39.4481, lon: 47.3361, nk_2010: AZE, nk_2020: AZE}
+  - {name: beylagan,    lat: 39.7756, lon: 47.6186, nk_2010: AZE, nk_2020: AZE}
+  - {name: ganja,       lat: 40.6828, lon: 46.3606, nk_2010: AZE, nk_2020: AZE}
+  - {name: goris,       lat: 39.5111, lon: 46.3383, nk_2010: ARM, nk_2020: ARM}
+  - {name: yerevan,     lat: 40.1792, lon: 44.4991, nk_2010: ARM, nk_2020: ARM}
+  - {name: baku,        lat: 40.4093, lon: 49.8671, nk_2010: AZE, nk_2020: AZE}
+  - {name: nakhchivan_city, lat: 39.2089, lon: 45.4122, nk_2010: AZE, nk_2020: AZE}
+  - {name: tovuz,       lat: 40.9922, lon: 45.6289, nk_2010: AZE, nk_2020: AZE, note: 2020-07 托武兹边境冲突地段（阿侧）}
+  - {name: berd,        lat: 40.8808, lon: 45.3917, nk_2010: ARM, nk_2020: ARM, note: 托武兹冲突亚侧（塔武什省）}
+
+# ------------------------------------------------------------------ 关键地块（09 调度优先级 keyTile；12 Value[t] 的剧本部分）
+# value：12 §4 的地块价值（无量纲，bal）。地块 = 坐标所在 H3 r4 单元。
+key_tiles:
+  - {id: shusha,       lat: 39.7583, lon: 46.7489, value: 10, why: 俯瞰斯捷潘纳克特与拉钦路；2020 年停火的决定性地块}
+  - {id: stepanakert,  lat: 39.8153, lon: 46.7519, value: 9,  why: 纳卡首府}
+  - {id: lachin,       lat: 39.6425, lon: 46.5469, value: 9,  why: 亚—纳卡唯一补给走廊}
+  - {id: goris,        lat: 39.5111, lon: 46.3383, value: 6,  why: 走廊亚美尼亚端、1 军军部}
+  - {id: fuzuli,       lat: 39.6003, lon: 47.1431, value: 5,  why: 南线门户}
+  - {id: jabrayil,     lat: 39.3992, lon: 47.0264, value: 5,  why: 阿拉斯河谷南线}
+  - {id: hadrut,       lat: 39.5200, lon: 47.0300, value: 6,  why: 南线进入纳卡山地的入口}
+  - {id: aghdam,       lat: 39.9911, lon: 46.9297, value: 4,  why: 东线平原}
+  - {id: martakert,    lat: 40.2153, lon: 46.8106, value: 5,  why: 北线（塔利什—马达吉斯）}
+  - {id: kalbajar,     lat: 40.1053, lon: 46.0386, value: 4,  why: 穆罗夫山以南，连接亚美尼亚北部（瓦尔德尼斯）}
+  - {id: ganja,        lat: 40.6828, lon: 46.3606, value: 6,  why: 阿第二大城市、后勤枢纽（2020 年遭弹道导弹/火箭打击）}
+  - {id: yerevan,      lat: 40.1792, lon: 44.4991, value: 10, why: 亚首都}
+  - {id: baku,         lat: 40.4093, lon: 49.8671, value: 10, why: 阿首都}
+  - {id: nakhchivan,   lat: 39.2089, lon: 45.4122, value: 5,  why: 阿飞地}
+  - {id: zangilan,     lat: 39.0856, lon: 46.6525, value: 3,  why: 南端，通往梅格里（亚—伊口岸）方向}
+
+# ------------------------------------------------------------------ 卫星资产（05 SatelliteAsset）
+# revisit / quality 为 bal/estimated；过顶相位 pass_phase_h 由 14 §4.2 用 worldSeed 确定性生成（Scenario 域 salt 3）。
+satellites:
+  - {id: azersky, owner: AZE, means: optical_satellite, revisit_h: 24, quality: 0.6, from: 2014-07-01,
+     shares_with: [], note: 2014 年阿方购入 SPOT-7 并更名 Azersky（公开报道），estimated}
+  - {id: tur_gokturk2, owner: TUR, means: optical_satellite, revisit_h: 24, quality: 0.5, from: 2012-12-18,
+     shares_with: [AZE], shares_requires: "external_actors.TUR.intel_sharing 开启（R-12）", note: estimated}
+  - {id: tur_gokturk1, owner: TUR, means: optical_satellite, revisit_h: 24, quality: 0.7, from: 2016-12-05,
+     shares_with: [AZE], note: estimated}
+  # 亚方无自有卫星；俄方是否共享未见可靠公开证据 → 不给（14 N-09）。
+
+# ------------------------------------------------------------------ 阶段 0 / 05 简化模式下的固定暴露度（05 §1 表）
+fixed_exposure_phase0: {ARM_on_AZE: 3, AZE_on_ARM: 3}

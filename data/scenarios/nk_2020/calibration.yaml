@@ -1,0 +1,96 @@
+# nk_2020 历史校准目标（V2；14 §9.2，11 §9.2）
+# 每个目标给：史实值、来源、验收区间（band，bal：考虑来源不确定性与模型粒度）。
+# 来源：
+#   wp_war   = https://en.wikipedia.org/wiki/Second_Nagorno-Karabakh_War （信息框，访问 2026-10-16）
+#   wp_tl    = https://en.wikipedia.org/wiki/Timeline_of_the_Second_Nagorno-Karabakh_War
+#   wp_cf    = https://en.wikipedia.org/wiki/2020_Nagorno-Karabakh_ceasefire_agreement
+#   oryx     = https://www.oryxspioenkop.com/2020/09/the-fight-for-nagorno-karabakh.html （视觉确认的装备损失，访问 2026-10-16；
+#              只计有照片/视频的条目，是下限而非真值）
+
+duration:
+  start: 2020-09-27
+  ceasefire_signed: 2020-11-09T20:00:00Z     # 声明 11-09 深夜签署、11-10 00:00 莫斯科时间生效（wp_cf）
+  days: 44                                   # wp_war 信息框
+  band_days: {median: [35, 55], p10_p90: [25, 75]}
+
+personnel_killed:                            # 军人阵亡（官方）
+  ARM: {value: 3825, missing: 187, source: "wp_war 信息框（Per Armenia/Artsakh）", band: [2500, 5500]}
+  AZE: {value: 2906, missing: 6, source: "wp_war 信息框（阿国防部 2021-10-21 名单 2,908，扣除 2 名战后死亡）", band: [1800, 4500]}
+  ratio_arm_to_aze: {value: 1.32, band: [1.0, 1.8]}
+  excluded: "叙利亚雇佣兵（SOHR 称 541 人阵亡，阿土否认）、平民（阿 100 / 亚 85）不计入 07 的 killedCumulative"
+
+equipment_losses_oryx:                       # 视觉确认（destroyed + damaged + abandoned + captured）
+  ARM:
+    total: 1676
+    tanks: {value: 255, destroyed: 146, damaged: 6, captured: 103, band: [150, 350]}
+    afv: {value: 71}
+    ifv: {value: 82, band: [50, 160]}
+    apc: {value: 1}
+    sp_atgm: {value: 19}
+    towed_artillery: {value: 250, band: [150, 350]}
+    sp_artillery: {value: 29, band: [15, 60]}
+    mrl: {value: 84, band: [50, 120]}
+    ballistic_missiles: {value: 2}
+    mortars: {value: 59}
+    aa_guns: {value: 15}
+    sam_systems: {value: 39, band: [25, 70]}
+    radars: {value: 18}
+    jammers_decoys: {value: 5, note: "Jammers 3 + Decoys 2"}
+    aircraft_helicopters: {value: 2}
+    uav: {value: 4}
+    trucks_vehicles: {value: 737, band: [400, 1100]}
+  AZE:
+    total: 243
+    tanks: {value: 62, destroyed: 38, damaged: 16, abandoned: 1, captured: 7, band: [30, 120]}
+    afv: {value: 9}
+    ifv: {value: 72, band: [40, 140]}
+    apc: {value: 11}
+    mrap: {value: 13}
+    infantry_mobility_vehicles: {value: 17, note: Oryx 页面该行类别名解析缺失，按上下文为步兵机动车}
+    engineering: {value: 2}
+    mrl: {value: 2}
+    mortars: {value: 1}
+    sam_systems: {value: 1}
+    aircraft_helicopters: {value: 2}
+    uav: {value: 4, note: Oryx 页面另有无人机单列口径，阿方无人机损失可能被低估}
+    trucks_vehicles: {value: 46}
+  loss_ratio_tanks: {value: 4.1, band: [2.0, 8.0], note: "ARM/AZE 坦克损失比"}
+  usage_note: 视觉确认是下限；V2 比较“模拟的永久损失 + 遗弃 + 被缴获”（07 分类）与 Oryx 数，区间已放宽。
+
+territory:
+  overall: {value: "阿方获得纳卡（阿尔察赫）控制区约 72% 的面积（含停火移交）", source: wp_war 信息框, band_share_incl_handover: [0.55, 0.85]}
+  by_fighting:
+    regions_captured: [fuzuli_district, jabrayil_district, zangilan_district, qubadli_district, "hadrut（nk_oblast 南部）", shusha]
+    share_of_arm_core_tiles: {value_estimate: 0.35, band: [0.25, 0.50], confidence: estimated,
+                              basis: "南四区 + 哈德鲁特 + 舒沙约占亚方战前控制面积的 1/3–2/5（按区面积粗估；以地块计数复核，14 §9.2）"}
+  by_handover: {regions: [aghdam_district, kalbajar_district, lachin_district], except: lachin_corridor,
+                dates: {aghdam: 2020-11-20, kalbajar: 2020-11-25, lachin: 2020-12-01}, source: wp_war 图例 / wp_cf}
+  peacekeeping: {actor: RUS, troops: 1960, years: 5, regions: [lachin_corridor, nk_contact_line_arm_side], source: wp_cf}
+
+timeline_milestones:                         # 阿方宣布控制的日期（wp_tl；阿方说法，部分亚方当时否认）
+  - {date: 2020-10-03, event: 北线塔利什、苏古沃尚方向推进（阿方宣布控制塔利什）}
+  - {date: 2020-10-04, event: 阿方宣布控制杰布拉伊尔城（亚方否认，约 10-09 确认）}
+  - {date: 2020-10-09, event: 阿方宣布控制哈德鲁特（实际争夺持续至 10 月中旬）}
+  - {date: 2020-10-17, event: 阿方宣布控制菲祖利城}
+  - {date: 2020-10-20, event: 阿方宣布控制赞格兰城}
+  - {date: 2020-10-25, event: 阿方宣布控制库巴德利城}
+  - {date: 2020-11-08, event: 阿方宣布控制舒沙}
+  - {date: 2020-11-09, event: 三方停火声明签署}
+milestone_band: "模拟中南线（杰布拉伊尔/菲祖利/赞格兰/库巴德利）各城所在地块易手日期与史实相差 ≤ 15 天；舒沙地块易手（若发生）在第 30–50 天"
+
+qualitative_checks:                          # 定性检查（人工 + AAR 统计）
+  - id: drones_dominate_losses
+    claim: 亚方重装备损失以无人机/巡飞弹与炮兵为主，直瞄交战占比小
+    metric: "04 BattleLossLedger 中亚方装备损失归属 A（纵深打击）+ C（反炮兵与火力消耗）线的比例"
+    band: [0.5, 0.9]
+    confidence: uncertain
+    basis: 多数公开分析的定性结论；无可靠量化统计
+  - id: armenian_ad_attrited_early
+    claim: 亚方防空在战争前两周被大量消耗
+    metric: "第 14 天时亚方 sam_short + sam_medium + sam_long 永久损失 / 战争总损失"
+    band: [0.5, 0.9]
+    confidence: uncertain
+  - id: no_red_line
+    claim: 战事未越过俄罗斯 CSTO 红线（亚本土无地面入侵），俄未参战
+    metric: "rus_csto_armenia_proper 未进入 forced_ceasefire 阶段"
+    band: "≥ 90% 的种子满足"

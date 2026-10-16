@@ -1,0 +1,36 @@
+# 阿塞拜疆全军数量级数据（2010 / 2020）
+# 用途同 arm.yaml。来源：
+#   wp_aze_2010  https://en.wikipedia.org/w/index.php?oldid=404876835 （Azerbaijani Armed Forces）
+#   wp_azelf_2010 https://en.wikipedia.org/w/index.php?oldid=404878089 （Azerbaijani Land Forces，2010-12-29，引 IISS 2007 与 2009 交付）
+#   wp_azelf_2020 https://en.wikipedia.org/w/index.php?oldid=943093497
+#   wp_aze_eq_2020 https://en.wikipedia.org/w/index.php?oldid=977340066
+#   wb = World Bank（SIPRI/IISS 数据转载）
+
+country: AZE
+
+personnel:
+  2010: {armed_forces_incl_paramilitary: 81940, source: wb MS.MIL.TOTL.P1}
+  2020: {armed_forces_incl_paramilitary: 82000, land_forces: 56850, paramilitary: 15000, reserve: 300000,
+         source: "wb；wp_azelf_2020（陆军 56,850 为 IISS 2013 数）"}
+  conscription_months: {value: 18, alt: 24, confidence: uncertain, note: wp_aze_2010 信息框写 24}
+
+military_expenditure_musd_current: {2010: 1476.6, 2011: 3080.1, 2014: 3427.2, 2016: 1397.0, 2020: 2237.8, source: wb MS.MIL.XPND.CD}
+military_expenditure_pct_gdp: {2010: 2.79, 2015: 5.47, 2020: 5.24, source: wb MS.MIL.XPND.GD.ZS}
+
+army_structure:
+  2010: "4 个军部 + 纳希切万，23 个摩步旅、炮兵旅、火箭炮旅、反坦克团（wp_azelf_2010 引 IISS Military Balance 2003-4 起的结构）"
+  2020: "第 1–4 军 + 纳希切万独立合成集团军（第 5 军）+ 特种部队（wp Second Nagorno-Karabakh War 信息框 units1）"
+  corps_hq_estimates: {1st: Yevlakh, 2nd: Beylagan, 3rd: Shamkir, 4th: Baku, 5th_nakhchivan: Nakhchivan, confidence: estimated}
+
+equipment_2010:                              # wp_azelf_2010
+  mbt: {t72: "120 + 62（2009 年自俄）", t55: 100}
+  acv: {bmd1: 20, btr_d: 11, bmp1: 44, bmp2: 41, bmp3: 1, brm1: 21, btr60: 25, btr70: "28 + 29（2009 年自乌）", btr80: 11, btr80a: 90, mtlb: 393}
+  artillery: {m1938_120mm: 137, 2s9: 29, d30: 182, d20: 34, m46: 36, 2a36: 34, 2s1: 81, 2s3: 6, 2s7: 12, bm21: 63, 9a52_smerch: 18, tochka: 3}
+equipment_2020_highlights:                   # wp_aze_eq_2020（部分条目明显有误，见 data/scenarios/nk_2020/scenario.yaml 的取舍注释）
+  mbt: {t90s: 100, t55: 95}
+  ifv: {bmp3: 100, bmp2: 33, bmp1: 43}
+  mrl: {9a52_smerch: 30, tos1: 17, polonez: 10, lynx: "30+", t122: 21}
+  sp_artillery: {2s19: 18, 2s7: 12, dana: "36–100（版本不一）"}
+  air: {mig29: 12, su25: 12, mi24_35: 17, mi17: 65, hermes_450_900: 12, heron: 5, searcher: 5, orbiter: "10（本地生产）"}
+  ad: {s300pmu2: "2 个营 / 200 弹（wp Azerbaijani Air Forces 2020-09）"}
+domestic_industry: "国防工业部（MODI，2005 年成立）：轻武器、迫击炮（Komando 20N6MT、20N5）、MLRS-107、弹药；合资：Azad Systems（无人机/巡飞弹，与以色列 Aeronautics）、Paramount（Matador/Marauder）"

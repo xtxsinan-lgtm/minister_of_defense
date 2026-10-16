@@ -277,7 +277,7 @@ public sealed class AmmoBasis                         // 计算结果，不存�
 
 public sealed class CaliberGroupDef                  // 数据：data/logistics/caliber_groups.yaml
 {
-    public string id;                    // 如 "cal_152_155_nato"? 不：一组 = 物理上可互换（"cal_152mm_sov"、"cal_155mm_nato"、"cal_122mm_grad"）
+    public string id;                    // 一组 = 物理上可互换的弹药，如 "cal_152mm_sov"、"cal_155mm_nato"、"cal_122mm_grad"
     public List<int> munitionHandles;
 }
 ```
@@ -646,7 +646,7 @@ StdDay[b][Parts p]  = 07 提供的 StandardWarDayPartsRate(b, p)
 
 | 阶段 | 源（必须有该物资库存） | 汇 | 承运方 | 可用弧 |
 |---|---|---|---|---|
-| 2（作战级，先算） | ForwardHub、Depot、FieldCache、Airbase（只供燃油/一般物资给 BSA，🟡 不供） → 简化：ForwardHub、Depot、FieldCache | BSA | 源是 ForwardHub：其后勤旅池；任意源：请求旅的 `BrigadeOrganic` 剩余运力（§4.6）；独立营自取：`BattalionOrganic` | 只 Road |
+| 2（作战级，先算） | ForwardHub、Depot、FieldCache（Airbase 不向 BSA 供货） | BSA | 源是 ForwardHub：其后勤旅池；任意源：请求旅的 `BrigadeOrganic` 剩余运力（§4.6）；独立营自取：`BattalionOrganic` | 只 Road |
 | 1（国家级，后算） | Depot、Factory、ImportGateway、FieldCache、ForwardHub（只在调拨命令中作为源） | ForwardHub、Airbase、Depot | `NationalRail`（铁路弧）、`NationalRoad`（公路弧） | Road + Rail + 转运弧 |
 
 阶段 2 先算，使前线运输优先占用公路容量。两阶段都用本小时开始时的库存（已扣除本小时更早分配出的量），本小时发出的货在途，不会在同一小时被再转运。
@@ -1171,7 +1171,7 @@ AAR 计数器（按旅）：noAmmoIdleHours、immobileHours、trucksLost、cargo
 | `double GetMobilityFactor(OrgUnitId battalion)` / `(SquadId)` | 09、04 | 每移动步 | §4.9 |
 | `double GetFatigueFloor(SquadId)` | 03 | 每步 | 给养断绝 |
 | `bool TryDrawFromNode(NodeId, ItemKey, double qty, out double got)` | 08（机场挂弹）、02（训练，FEFO） | 按需 | 机场挂载从机场节点扣 |
-| `void ConsumeForTraining(FormationId, ItemKey, double qty)` | 02 | 每小时 | 从该编组所在方向仓库 FEFO 扣，不足就少扣并返回实际量 |
+| `double ConsumeForTraining(FormationId, ItemKey, double qty)` | 02 | 每小时 | 从该编组所在方向的仓库（Depot，NodeId 升序）按 FEFO 扣；不足就少扣。**返回值 = 实际扣到的数量**（0 ≤ 返回值 ≤ qty），02 据此折算训练效果（02 P-18） |
 | `void AddProduced(NodeId factory, ItemKey or EquipmentModel, double qty)` | 11 | `Calendar` 时 | 产出入库（批次年份 = 当年） |
 | `void OnImportArrival(ImportBatch)` | 11 | 每小时 | §4.12 |
 | `Shortfall GetProcurementShortfall(CountryId)` | 11、12 | 每日 | §4.11 |

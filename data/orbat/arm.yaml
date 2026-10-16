@@ -1,0 +1,38 @@
+# 亚美尼亚（含纳卡防卫军，G-13）全军数量级数据（2010 / 2020）
+# 用途：与 chn.yaml / usa.yaml 同类的“全军概览”，供校验与界面参考；剧本实际实例化用 data/scenarios/nk_*/scenario.yaml。
+# 来源：
+#   wp_arm_2010 https://en.wikipedia.org/w/index.php?oldid=404623264 （引 IISS 2010）
+#   wp_arm_2020 https://en.wikipedia.org/w/index.php?oldid=978631512
+#   wp_argf_2020 https://en.wikipedia.org/w/index.php?oldid=968891629 （Armenian Ground Forces：军/团结构）
+#   wp_nka_2010 https://en.wikipedia.org/w/index.php?oldid=404448569 ；wp_nka_2020 https://en.wikipedia.org/w/index.php?oldid=977867503
+#   wb = World Bank（SIPRI/IISS 数据转载）
+
+country: ARM
+
+personnel:
+  2010: {active: 43641, army: 40421, conscripts_in_army: 30634, air_force: 3220, source: wp_arm_2010}
+  2020: {active: 51580, army: 45580, air_force_and_ad: 7000, paramilitary: 4748, nk_command: 21363, reserve: 210000, source: wp_arm_2020,
+         note: 信息框分项之和 52,580 与总数 51,580 不一致（原文出入）}
+  conscription_months: 24
+  nk_defence_army: {active: "18,500–25,000", reserve: "20,000–30,000", source: wp_nka_2020, confidence: uncertain}
+
+military_expenditure_musd_current: {2010: 395.0, 2015: 447.4, 2019: 652.0, 2020: 634.0, source: wb MS.MIL.XPND.CD}
+military_expenditure_pct_gdp: {2010: 4.27, 2020: 4.98, source: wb MS.MIL.XPND.GD.ZS}
+
+army_structure_2020:                         # wp_argf_2020
+  1st_corps: {hq: Goris, units: "1 独立坦克营、1 独立侦察营、2 摩步团"}
+  2nd_corps: {hq: Khachaghbyur, units: "1 独立坦克营、1 独立侦察营、1 步兵团、2 摩步团、1 独立炮兵营"}
+  3rd_corps: {hq: Vanadzor, units: "1 步兵团、1 炮兵营、1 坦克营、1 侦察营、1 火箭炮营、4 摩步团、维修营、通信营"}
+  4th_corps: {hq: Yeghegnadzor, units: "4 摩步团、1 自行炮兵营、通信营"}
+  5th_corps: {hq: "Nubarashen (Yerevan)", units: "2 筑垒地域、1 摩步团、1 步兵团"}
+  army_troops: "防空指挥部（防空导弹旅 1、团 2、雷达团 1）、训练摩步旅、特种团（后扩为旅）、炮兵旅、自行炮兵团、反坦克团、工兵团"
+
+equipment_2010_armenia_proper:               # wp_arm_2010（IISS 2010）
+  mbt: {t72: 137, t80: 20, t54_55: 8}
+  ifv: {bmp1: 80, bmp1k: 7, bmp2: 55, brm1k: 12}
+  apc: {btr60: 11, btr70: 21, btr80: 4, mtlb: 145, bmd1: 5}
+  recce: {brdm2: 120}
+  missiles: "Scud 24 枚 / 8 部发射车；S-300（2010-12 官方承认）"
+equipment_2010_nk: {tanks: 316, armoured_vehicles: 324, artillery_over_122mm: 322, mrl: 44, aircraft: "Su-25 ×2、Mi-24 ×5、其他直升机 ×5", source: wp_arm_2010 / wp_nka_2010, confidence: uncertain}
+equipment_2020_nk: {tanks: "316–371", armoured_vehicles: "224–459", artillery_over_122mm: "322–479", mrl: 44, scud_b_launchers: "≥ 4", source: wp_nka_2020, confidence: uncertain}
+russian_102nd_base_note: 俄 102 基地（久姆里）与埃雷布尼航空大队不属亚方，不实例化（14 §4.6）；2005 年约 74 辆坦克、18 架 MiG-29（wp_arm_2010）。

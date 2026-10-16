@@ -1,0 +1,202 @@
+# 纳卡剧本危机事件（11 CrisisEventDef；YAML 键为 snake_case，枚举 snake_case → PascalCase，00 §2.4）
+# historical: true 的事件受历史模式控制（11 §4.12）：Historical = 按日期确定触发（mtth_days 视为 0，窗口内第一刻）；
+#   Plausible = 保留条件、按 mtth_days 抽样；Free = 不触发。
+# 文案 text_key 指向本地化表（开发期预生成、人工审核，总纲 §20.4），这里的 summary 只给实现者看。
+# 效果数值均为 bal（平衡参数），依据是事件的定性影响。
+
+events:
+  # ======================= 历史事件 =======================
+  - id: aze_2012_safarov_pardon
+    historical: true
+    scope: dyad
+    window: [2012-08-31, 2012-09-30]
+    mtth_days: 30
+    one_shot: true
+    triggers: [{type: not_at_war}]
+    summary: 2012 年阿方赦免并晋升在布达佩斯杀害亚美尼亚军官的萨法罗夫，双边紧张骤升。
+    options:
+      - {id: protest, effects: [{type: tension_delta, value: 0.10}, {type: issue_delta, target: ARM, arg: hardline_vs_rival, value: 0.10}]}
+  - id: arm_2014_mi24_shootdown
+    historical: true
+    scope: dyad
+    window: [2014-11-12, 2014-12-12]
+    mtth_days: 30
+    one_shot: true
+    triggers: [{type: not_at_war}, {type: tension_score, min: 0.3, max: 1.0}]
+    summary: 2014-11-12 亚方击落阿方 Mi-24 武装直升机。
+    options:
+      - {id: retaliate_limited, effects: [{type: border_skirmish, arg: "edge_near:aghdam", value: 1}, {type: tension_delta, value: 0.12}], ai_weight: 0.6}
+      - {id: restraint, effects: [{type: tension_delta, value: 0.05}, {type: trust_delta, target: AZE, value: -0.03}], ai_weight: 0.4}
+  - id: aze_2016_april_war
+    historical: true
+    scope: dyad
+    window: [2016-04-01, 2016-04-30]
+    mtth_days: 60
+    one_shot: true
+    triggers: [{type: not_at_war}, {type: tension_level_at_least, arg: tension}]
+    summary: 2016-04-01/02 阿方在北（塔利什）南（列拉塔普高地）两线发起有限攻势，4 月 5 日俄斡旋停火（“四天战争”）。
+    options:
+      - id: limited_offensive
+        effects:
+          - {type: start_war, target: AZE, arg: "scope=limited;aims=talish_heights,lelatap_heights;max_days=7;template=local_skirmish_template"}
+          - {type: ai_directive, target: AZE, arg: "limited_offensive:north_martakert,south_horadiz"}
+        ai_weight: 1.0
+    note: 剧本可选（14 N-12）。玩家扮演阿方时以“机会事件”形式出现（可选择不打）。
+  - id: rus_2015_arm_loan
+    historical: true
+    scope: country
+    window: [2016-02-01, 2016-03-01]
+    mtth_days: 15
+    one_shot: true
+    triggers: [{type: player_country_is, arg: any}]
+    summary: 俄罗斯向亚美尼亚提供 2 亿美元军贷（限购俄制装备）。
+    options:
+      - {id: accept, effects: [{type: grant_credit_line, target: ARM, arg: rus_arm_loan_2015}, {type: relation_delta, arg: "ARM-RUS", value: 0.03}]}
+  - id: rus_2017_arm_loan
+    historical: true
+    scope: country
+    window: [2017-10-01, 2017-11-01]
+    mtth_days: 15
+    one_shot: true
+    triggers: [{type: flag_set, arg: rus_arm_loan_2015_drawn_50pct}]
+    summary: 俄罗斯追加 1 亿美元军贷。
+    options:
+      - {id: accept, effects: [{type: grant_credit_line, target: ARM, arg: rus_arm_loan_2017}]}
+  - id: arm_2018_velvet_revolution
+    historical: true
+    scope: country
+    window: [2018-04-23, 2018-05-31]
+    mtth_days: 20
+    one_shot: true
+    triggers: [{type: not_at_war}]
+    summary: 亚美尼亚政府更迭。领导层倾向与议题基线改变；国防部长信任度部分重置。
+    options:
+      - id: new_government
+        effects:
+          - {type: set_leadership_hawkishness, target: ARM, value: 0.30}
+          - {type: trust_delta, target: ARM, value: -0.10}
+          - {type: issue_delta, target: ARM, arg: defense_budget_increase, value: 0.10}
+          - {type: relation_delta, arg: "ARM-RUS", value: -0.10}
+    note: 叙事中立，只写对国防部长有影响的部分（总纲 §21-4）。
+  - id: tur_2020_tb2_offer
+    historical: true
+    scope: country
+    window: [2020-06-01, 2020-07-15]
+    mtth_days: 20
+    one_shot: true
+    triggers: [{type: not_at_war}]
+    summary: 土耳其同意向阿方出口 Bayraktar TB2（出口政策开放，批准概率不再受 export_from_year 限制）。
+    options:
+      - {id: open, effects: [{type: set_flag, arg: tb2_export_aze_open}]}
+  - id: aze_2020_tovuz_clashes
+    historical: true
+    scope: dyad
+    window: [2020-07-12, 2020-07-31]
+    mtth_days: 10
+    one_shot: true
+    triggers: [{type: not_at_war}]
+    summary: 2020-07-12 托武兹—塔武什边境冲突（远离纳卡的国界线），数日交火。
+    options:
+      - {id: escalate, effects: [{type: border_skirmish, arg: "edge_between:tovuz,berd", value: 2}, {type: tension_delta, value: 0.20}, {type: issue_delta, target: AZE, arg: hardline_vs_rival, value: 0.15}], ai_weight: 0.7}
+      - {id: contain, effects: [{type: border_skirmish, arg: "edge_between:tovuz,berd", value: 1}, {type: tension_delta, value: 0.10}], ai_weight: 0.3}
+  - id: aze_2020_september_offensive
+    historical: true
+    scope: dyad
+    window: [2020-09-27, 2020-10-15]
+    mtth_days: 10
+    one_shot: true
+    triggers: [{type: not_at_war}, {type: tension_level_at_least, arg: crisis}]
+    summary: 阿方沿接触线全面进攻（史实 2020-09-27 晨）。nk_2020 Historical 模式下于开局 03:00 UTC 触发。
+    options:
+      - id: general_offensive
+        effects:
+          - {type: start_war, target: AZE, arg: "scope=total;casus_belli=territorial_claim"}
+          - {type: ai_directive, target: AZE, arg: "historical_2020_axes"}
+    note: 只对 AI 控制的阿方生效；玩家是阿方时转为提示“领导层已批准作战方案”（11 §4.7.5 自动批准）。
+  - id: geo_transit_ban_2020
+    historical: true
+    scope: global
+    window: [2020-09-27, 2020-11-10]
+    mtth_days: 3
+    one_shot: true
+    triggers: [{type: at_war}]
+    summary: 格鲁吉亚禁止经其领土向交战双方过境运输军用物资（陆路与空域）。
+    options:
+      - id: ban
+        effects:
+          - {type: close_import_gateway, arg: arm_gateway_bagratashen, value: 1}
+          - {type: close_import_gateway, arg: arm_gateway_ayrum_rail, value: 1}
+          - {type: close_import_gateway, arg: aze_gateway_red_bridge, value: 1}
+          - {type: close_import_gateway, arg: aze_gateway_boyuk_kesik_rail, value: 1}
+    note: 只关闭“军用物资”通道（06 的进口批次）；民用不建模。阿方仍有亚拉马（俄）、空运、萨达拉克（只到纳希切万）；亚方剩梅格里（伊朗）与空运。
+  - id: rus_2020_mi24_downed
+    historical: true
+    scope: global
+    window: [2020-11-09, 2020-11-10]
+    mtth_days: 1
+    one_shot: true
+    triggers: [{type: at_war}]
+    summary: 2020-11-09 阿方在亚美尼亚境内误击俄军 Mi-24，阿方道歉。
+    options:
+      - {id: apologize, effects: [{type: relation_delta, arg: "AZE-RUS", value: -0.05}]}
+      - {id: deny, effects: [{type: relation_delta, arg: "AZE-RUS", value: -0.20}], ai_weight: 0.0}
+
+  # ======================= 通用随机事件（非历史，三种模式都触发，Free 模式也保留）=======================
+  - id: border_sniper_incident
+    historical: false
+    scope: dyad
+    mtth_days: 45
+    one_shot: false
+    triggers: [{type: not_at_war}, {type: tension_score, min: 0.3, max: 1.0}]
+    summary: 接触线狙击/小规模交火致伤亡。
+    options:
+      - {id: respond_in_kind, effects: [{type: tension_delta, value: 0.05}, {type: issue_delta, target: self, arg: hardline_vs_rival, value: 0.03}], ai_weight: 0.5}
+      - {id: report_to_osce, effects: [{type: tension_delta, value: 0.01}, {type: trust_delta, target: self, value: 0.01}], ai_weight: 0.5}
+  - id: border_skirmish
+    historical: false
+    scope: dyad
+    mtth_days: 120
+    one_shot: false
+    triggers: [{type: not_at_war}, {type: tension_score, min: 0.55, max: 1.0}]
+    summary: 接触线连级交火（04 有限交战，11 §4.9）。
+    options:
+      - {id: hold, effects: [{type: border_skirmish, arg: "edge_random:contact_line", value: 1}, {type: tension_delta, value: 0.06}]}
+  - id: osce_minsk_round
+    historical: false
+    scope: dyad
+    mtth_days: 180
+    one_shot: false
+    triggers: [{type: not_at_war}]
+    summary: 欧安组织明斯克小组会谈。
+    options:
+      - {id: engage, effects: [{type: tension_delta, value: -0.05}, {type: issue_delta, target: self, arg: hardline_vs_rival, value: -0.03}], ai_weight: 0.6}
+      - {id: stall, effects: [{type: tension_delta, value: 0.02}], ai_weight: 0.4}
+  - id: rival_large_exercise
+    historical: false
+    scope: dyad
+    mtth_days: 200
+    one_shot: false
+    triggers: [{type: not_at_war}]
+    summary: 对手（或土阿联合）举行大规模演习。
+    options:
+      - {id: raise_readiness, effects: [{type: tension_delta, value: 0.05}, {type: budget_bonus_musd, target: self, value: 0}], ai_weight: 0.5}
+      - {id: ignore, effects: [{type: tension_delta, value: 0.02}], ai_weight: 0.5}
+  - id: arms_deal_leak
+    historical: false
+    scope: country
+    mtth_days: 365
+    one_shot: false
+    triggers: [{type: flag_set, arg: big_contract_signed_last_90d}]
+    summary: 对手获得大额军购的消息曝光（推高本国强硬议题与预算议题）。
+    options:
+      - {id: demand_response, effects: [{type: issue_delta, target: self, arg: defense_budget_increase, value: 0.05}, {type: issue_delta, target: self, arg: hardline_vs_rival, value: 0.03}]}
+  - id: humanitarian_truce_offer
+    historical: false
+    scope: global
+    mtth_days: 7
+    one_shot: false
+    triggers: [{type: at_war}]
+    summary: 调停方提出人道主义停火（2020 年 10-10、10-17、10-26 三次，均未持续）。只影响关系，不暂停战斗（14 N-13）。
+    options:
+      - {id: accept_nominally, effects: [{type: relation_delta, arg: "self-RUS", value: 0.02}], ai_weight: 0.8}
+      - {id: refuse, effects: [{type: relation_delta, arg: "self-RUS", value: -0.03}], ai_weight: 0.2}

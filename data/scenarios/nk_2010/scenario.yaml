@@ -1,0 +1,204 @@
+# 剧本 nk_2010：十年备战（2010-01-01 开局）
+# 规格：docs/spec/14_scenario_nk.md §3.1、§4。来源键见 nk_common/countries.yaml 文件头与 data/equipment/nk_models.yaml 文件头。
+# 库存数字的 confidence 逐项标注；uncertain 的数字在 14 N-10 中列为“需用 IISS Military Balance 2010 核对”。
+
+scenario:
+  id: nk_2010
+  name: 纳卡：十年备战（2010）
+  theater: nk
+  start: 2010-01-01T00:00:00Z
+  suggested_horizon: 2020-12-31T23:59:00Z   # 沙盒无固定结束（总纲 §18.8）；挑战目标在此日期结算
+  playable: [ARM, AZE]
+  default_historical_mode: plausible        # 11 §4.12、S-14
+  includes: [nk_common/countries.yaml, nk_common/theater.yaml, nk_common/logistics_nodes.yaml, nk_common/procurement.yaml,
+             nk_common/events.yaml, nk_common/ai_profiles.yaml]
+  difficulty_note: 亚美尼亚为主要挑战剧本（总纲 §21-4）；阿塞拜疆目标不同（goals）。
+
+war_state_at_start: {wars: [], tension: {ARM-AZE: 0.45}}
+
+# ------------------------------------------------------------------ 开局库存（国家总量；按 01 §4.8 分配到营，余量入库）
+inventory:
+  ARM:
+    _confidence: "亚美尼亚本土 = stated（wp_arm_2010 引 IISS 2010）；纳卡部分 = uncertain（wp_nka_2010 只给总量：坦克 316、装甲车 324、>122mm 火炮 322、火箭炮 44；子型号拆分为估算）"
+    # --- 亚美尼亚本土（IISS 2010）---
+    t72a: 137
+    t80b: 20
+    t55: 8
+    bmp1: 80
+    brm1k: 12
+    bmp2: 55
+    btr60: 11
+    btr70: 21
+    btr80: 4
+    mtlb: 145
+    bmd1: 5
+    brdm2: 120
+    # --- 纳卡防卫军（总量来自 wp_nka_2010；拆分 uncertain）---
+    _nk_t72a: 316          # 下划线前缀 = 并入同名型号前的分项，加载时累加到 t72a（14 §4.2 规则 R3）
+    _nk_bmp1: 150
+    _nk_bmp2: 60
+    _nk_mtlb: 70
+    _nk_btr70: 44
+    _nk_d30: 150
+    _nk_d20: 80
+    _nk_2a36: 20
+    _nk_m46: 20
+    _nk_2s1: 30
+    _nk_2s3: 22
+    _nk_bm21: 44
+    _nk_su25: 2
+    _nk_mi24p: 5
+    # --- 亚方火炮/防空/航空（2010 年本土数字缺，按 2020 年数字近似，uncertain）---
+    2s1: 10
+    2s3: 28
+    d20: 34
+    d30: 69
+    2a36: 26
+    bm21: 47
+    osa_akm: 10
+    strela10: 10
+    s125_pechora: 8
+    krug: 27
+    kub: 10
+    s300ps: 8              # 2010-12 防长承认装备 S-300（wp_arm_2010），数量 uncertain
+    zsu23_4: 20
+    su25: 15               # wp Armenian Air Force 2010-12 修订版（oldid=404454121）
+    mig25: 1
+    l39: 4
+    mi24p: 16
+    mi8mt: 18
+    # --- 待 M2 类别的型号（data/equipment_pending/）---
+    scud_b: 8              # wp_arm_2010：“24 枚、8 部发射车”
+    # --- 通用（按模板需求自动补足到满编的 rifle/卡车等低价值装备，见 14 §4.2 规则 R5）---
+    _auto_fill_categories: [rifle, lmg, gpmg, dmr, reusable_launcher, disposable_launcher, agl, radio_handheld, truck_medium, truck_heavy,
+                            field_kitchen, armored_ambulance, armored_recovery_vehicle, armored_command_vehicle, engineer_vehicle, mine_clearing_vehicle,
+                            mortar_heavy, atgm_heavy, manpads]
+    _auto_fill_share: 0.9  # 低价值装备按需求的 90% 生成（bal）
+  AZE:
+    _confidence: "stated = wp_aze_2010 系列（Azerbaijani Land Forces 2010-12 修订版，引 IISS 2007 + 2009 交付）；uncertain 已逐项注明"
+    t72a: 182              # 120（IISS 2007）+ 62（2009 年自俄）
+    t55: 100
+    bmd1: 20
+    btr_d: 11
+    bmp1: 44
+    bmp2: 41
+    bmp3: 1
+    brm1k: 21
+    btr60: 25
+    btr70: 57              # 28 + 2009 年自乌 29
+    btr80: 11
+    btr80a: 90
+    mtlb: 393
+    m1938_120: 137
+    2s9: 29
+    d30: 182
+    d20: 34
+    m46: 36
+    2a36: 34
+    2s1: 81
+    2s3: 6
+    2s7: 12
+    bm21: 63
+    9a52_smerch: 18
+    lynx_mrl: 6            # uncertain：维基只写“有”，数量未给
+    strela10: 10           # uncertain：IISS 2007 称 SA-13/SA-4/SA-8 合计约 40
+    krug: 15
+    osa_akm: 15
+    s125_pechora: 12       # uncertain
+    zsu23_4: 20            # uncertain
+    mig29: 25              # uncertain：维基 50，Jane's 约 30
+    su25: 6                # IISS 2007
+    l39: 12
+    mi24p: 15
+    mi8mt: 23              # Mi-8 13 + Mi-17 4 + Mi-171 6
+    orbiter2: 4
+    aerostar: 6
+    tochka_u: 3            # pending M2
+    _auto_fill_categories: [rifle, lmg, gpmg, dmr, reusable_launcher, disposable_launcher, agl, radio_handheld, truck_medium, truck_heavy,
+                            field_kitchen, armored_ambulance, armored_recovery_vehicle, armored_command_vehicle, engineer_vehicle, mine_clearing_vehicle,
+                            mortar_heavy, atgm_heavy, manpads]
+    _auto_fill_share: 0.95
+
+# ------------------------------------------------------------------ 开局编制（01 Formation/OrgUnit 实例化；14 §4.3）
+# location：编组所在地块（坐标所在 H3 r4 单元）；子编组缺省继承。tier：01 ReadinessTier（active/reduced/cadre）。
+# priority：01 allocationPriority（越小越先分装备，PriorityFill）。
+# 结构依据：亚 = wp Armenian Ground Forces 2020-07 修订版（oldid=968891629）的军/团结构，2010 年按同一结构（亚军 1990s 末即为 5 个军）；
+#           阿 = wp_aze_2010（4 个军 + 纳希切万、23 个摩步旅）。各军下辖数量与位置为 estimated。
+oob:
+  ARM:
+    - id: arm_nk_army
+      name: 纳卡防卫军
+      echelon: corps
+      echelon_label: defence_army
+      hq_template: arm_bde_hq
+      lat: 39.8153
+      lon: 46.7519
+      tier: active
+      priority: 10
+      children:
+        - {template: arm_nk_defence_regt, name: 马尔塔克特方向团, lat: 40.2153, lon: 46.8106, priority: 10}
+        - {template: arm_nk_defence_regt, name: 阿斯克兰/阿格达姆方向团, lat: 39.9911, lon: 46.9297, priority: 10}
+        - {template: arm_nk_defence_regt, name: 马尔图尼方向团, lat: 39.7950, lon: 47.1150, priority: 10}
+        - {template: arm_nk_defence_regt, name: 哈德鲁特/菲祖利方向团, lat: 39.6003, lon: 47.1431, priority: 10}
+        - {template: arm_nk_defence_regt, name: 杰布拉伊尔方向团, lat: 39.3992, lon: 47.0264, priority: 10}
+        - {template: arm_rifle_regt, name: 克尔巴贾尔守备团, lat: 40.1053, lon: 46.0386, tier: reduced, priority: 30}
+        - {template: arm_rifle_regt, name: 拉钦/赞格兰守备团, lat: 39.3444, lon: 46.5797, tier: reduced, priority: 30}
+      direct: [{template: arm_mrl_bn, count: 1}, {template: arm_ad_bn, count: 1}, {template: arm_tank_bn, count: 1, tier: reduced}]
+      note: 团的数量与位置 estimated（G-13：纳卡部队作为亚方编组，14 N-01）
+    - {id: arm_1st_corps, name: 第 1 军, echelon: corps, echelon_label: army_corps, hq_template: arm_bde_hq, lat: 39.5111, lon: 46.3383, tier: active, priority: 20,
+       children: [{template: arm_mr_regt, count: 2}], direct: [{template: arm_tank_bn, count: 1}, {template: arm_mr_bn_bmp, count: 1, name: 独立侦察营（以机步营近似）}]}
+    - {id: arm_2nd_corps, name: 第 2 军, echelon: corps, echelon_label: army_corps, hq_template: arm_bde_hq, lat: 40.1000, lon: 45.2000, tier: active, priority: 40,
+       children: [{template: arm_mr_regt, count: 2}, {template: arm_rifle_regt, count: 1, tier: reduced}],
+       direct: [{template: arm_tank_bn, count: 1, tier: reduced}, {template: arm_arty_towed152_bn, count: 1}]}
+    - {id: arm_3rd_corps, name: 第 3 军, echelon: corps, echelon_label: army_corps, hq_template: arm_bde_hq, lat: 40.8128, lon: 44.4883, tier: reduced, priority: 50,
+       children: [{template: arm_mr_regt, count: 4}, {template: arm_rifle_regt, count: 1}],
+       direct: [{template: arm_tank_bn, count: 1}, {template: arm_arty_towed122_bn, count: 1}, {template: arm_mrl_bn, count: 1}]}
+    - {id: arm_4th_corps, name: 第 4 军, echelon: corps, echelon_label: army_corps, hq_template: arm_bde_hq, lat: 39.7611, lon: 45.3333, tier: reduced, priority: 50,
+       children: [{template: arm_mr_regt, count: 4}], direct: [{template: arm_arty_sp152_bn, count: 1}]}
+    - {id: arm_5th_corps, name: 第 5 军, echelon: corps, echelon_label: army_corps, hq_template: arm_bde_hq, lat: 40.1300, lon: 44.5600, tier: cadre, priority: 70,
+       children: [{template: arm_rifle_regt, count: 3, name: 筑垒地域 ×2 + 步兵团}, {template: arm_mr_regt, count: 1}]}
+    - {id: arm_army_troops, name: 陆军直属部队, echelon: division, echelon_label: army_troops, hq_template: arm_bde_hq, lat: 40.1792, lon: 44.4991, tier: active, priority: 30,
+       direct: [{template: arm_arty_towed152_bn, count: 2, name: 炮兵旅（以 2 个营近似）}, {template: arm_arty_sp152_bn, count: 1}, {template: arm_ad_bn, count: 2},
+                {template: arm_rifle_bn, count: 1, name: 特种团（以步兵营近似，阶段 1 无特种模板）}],
+       pending_m2: [{template: arm_tbm_bn, count: 2, binding: {tbm_launcher: scud_b}}]}
+  AZE:
+    - {id: aze_1st_corps, name: 第 1 军, echelon: corps, echelon_label: army_corps, hq_template: aze_bde_hq, lat: 40.6183, lon: 47.1500, tier: active, priority: 10,
+       children: [{template: aze_mr_bde, count: 4}, {template: aze_mr_bde_light, count: 2}], deploy_front: north_east,
+       note: 塔尔塔尔—阿格达姆方向}
+    - {id: aze_2nd_corps, name: 第 2 军, echelon: corps, echelon_label: army_corps, hq_template: aze_bde_hq, lat: 39.7756, lon: 47.6186, tier: active, priority: 10,
+       children: [{template: aze_mr_bde, count: 4}, {template: aze_mr_bde_light, count: 2}], deploy_front: south, note: 菲祖利—霍拉迪兹方向}
+    - {id: aze_3rd_corps, name: 第 3 军, echelon: corps, echelon_label: army_corps, hq_template: aze_bde_hq, lat: 40.8297, lon: 46.0181, tier: active, priority: 20,
+       children: [{template: aze_mr_bde, count: 2}, {template: aze_mr_bde_light, count: 2}], deploy_front: west, note: 穆罗夫山—克尔巴贾尔方向及亚阿北部国界}
+    - {id: aze_4th_corps, name: 第 4 军, echelon: corps, echelon_label: army_corps, hq_template: aze_bde_hq, lat: 40.4093, lon: 49.8671, tier: reduced, priority: 40,
+       children: [{template: aze_mr_bde, count: 2}, {template: aze_mr_bde_light, count: 1}], note: 阿布歇伦/战略预备}
+    - {id: aze_nakhchivan_army, name: 纳希切万独立合成集团军, echelon: corps, echelon_label: combined_arms_army, hq_template: aze_bde_hq, lat: 39.2089, lon: 45.4122, tier: active, priority: 30,
+       children: [{template: aze_mr_bde, count: 2}, {template: aze_mr_bde_light, count: 2}]}
+    - {id: aze_army_troops, name: 陆军直属部队, echelon: division, echelon_label: army_troops, hq_template: aze_bde_hq, lat: 40.6183, lon: 47.1500, tier: active, priority: 20,
+       children: [{template: aze_arty_bde, count: 1}, {template: aze_mrl_bde, count: 1}],
+       direct: [{template: aze_ad_bn, count: 2}, {template: aze_rifle_bn, count: 2, name: 特种部队（以步兵营近似）}],
+       pending_m2: [{template: aze_tbm_bn, count: 1, binding: {tbm_launcher: tochka_u}}]}
+
+air_force:                                  # 08 Flight 编组：按型号自动编成 4 机组（支援机 1–2 架），基地见 logistics_nodes.yaml
+  ARM: {su25: arm_airbase_erebuni, mig25: arm_airbase_erebuni, l39: arm_airbase_erebuni, mi24p: arm_airbase_erebuni, mi8mt: arm_airbase_erebuni}
+  AZE: {mig29: aze_airbase_nasosnaya, su25: aze_airbase_kurdamir, l39: aze_airbase_kurdamir, mi24p: aze_airbase_kurdamir, mi8mt: aze_airbase_kurdamir,
+        orbiter2: aze_airbase_kurdamir, aerostar: aze_airbase_kurdamir}
+
+personnel_start:                            # 02 开局练度（按国家统一值，14 N-14）
+  ARM: {general_skill: {active: 0.50, reduced: 0.40, cadre: 0.30}, type_skill: 0.50, nk_defence_army_general_bonus: 0.05}
+  AZE: {general_skill: {active: 0.45, reduced: 0.35, cadre: 0.30}, type_skill: 0.45}
+  basis: bal；常见评估认为纳卡防卫军长期驻守、熟悉地形（wp_nka_2020 历史段落），但无量化数据。
+  schools: {ARM: {armor: 600, mech: 1500, artillery: 1200, air_defense: 600, uav: 50, infantry: 8000}, AZE: {armor: 1500, mech: 3500, artillery: 2500, air_defense: 1200, uav: 100, infantry: 20000},
+            confidence: estimated, note: 每年培养人数（02 SchoolCapacity）；按义务兵年征召量的专业比例估算}
+
+goals:                                      # 11 §4.13 challengeProgress；14 §4.8
+  ARM:
+    - {id: arm_hold_2020, name: 守住接触线, type: war_outcome, deadline: 2020-12-31,
+       success: "若到期前发生战争：停火时保住开战时控制地块的 ≥ 70%，且 key_tiles {shusha, stepanakert, lachin} 全部仍由 ARM 控制",
+       alt_success: "若到期前未发生战争：2020-01-01 年报 netAssessment ≥ 0.5（12 §4.x 标准想定）"}
+    - {id: arm_no_dismissal, name: 不被解职, type: survival, deadline: 2020-12-31}
+    - {id: arm_budget_discipline, name: 预算纪律, type: budget, success: "2010–2020 无任何年度 shortfall"}
+  AZE:
+    - {id: aze_restore_districts, name: 收复周边地区, type: war_outcome, deadline: 2020-12-31,
+       success: "停火时 AZE 控制 seven_districts 的 ≥ 80% 地块", stretch: "同时控制 key_tile shusha"}
+    - {id: aze_cost_limit, name: 代价可控, type: war_cost, success: "该战争阵亡 ≤ 3,000 人，且未触发任何 forced_ceasefire 红线"}
+    - {id: aze_no_dismissal, name: 不被解职, type: survival, deadline: 2020-12-31}

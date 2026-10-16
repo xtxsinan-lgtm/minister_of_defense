@@ -1,0 +1,71 @@
+# 纳卡剧本 AI 国家配置（schema：docs/spec/12_ai.md §3.6 AiCountryProfile；14 提供数值）
+# 两个开局共用；nk_2010 / nk_2020 的 scenario.yaml 可用 ai_profile_overrides 覆盖个别字段。
+# 全部数值为 bal（平衡参数），依据写在 note。warAims 的 tiles 用 theater.yaml 的 region 引用，加载时展开成 H3 列表（14 §4.2）。
+# doctrine_id 取 12 §3.2 的预设：soviet / small_state_defensive / western。
+
+reference_templates:                   # 12 §4.x 的 RefBattalionTemplate 与各类型参考模板（CP 归一化用）
+  ref_mech_inf_bn: aze_mr_bn_bmp
+  by_type: {armor: aze_tank_bn, mech_infantry: aze_mr_bn_bmp, motor_infantry: aze_mr_bn_btr, light_infantry: arm_rifle_bn,
+            artillery: aze_arty_sp122_bn, air_defense: aze_ad_bn}
+  note: 两国模板同构（14 §3.6），取阿方一套作参考即可。
+
+formation_role_tags:                   # 12 ReformOption.attachToFormationRole 用到的标签（14 定义）
+  maneuver_brigade: [aze_mr_bde, arm_mr_regt]
+  defensive_regiment: [arm_nk_defence_regt, arm_rifle_regt, aze_mr_bde_light]
+  fires_brigade: [aze_arty_bde, aze_mrl_bde]
+
+profiles:
+  - country_iso3: AZE
+    doctrine_id: soviet
+    aggression: 0.7
+    caution: 0.4
+    war_start_p_min: 0.6
+    ceasefire_accept_fatigue: 0.6
+    war_aims:
+      - {id: south_districts, region: [fuzuli_district, jabrayil_district, zangilan_district, qubadli_district], value: 6}
+      - {id: shusha_axis, region: [nk_oblast], key_tiles: [shusha, hadrut], value: 9}
+      - {id: north_axis, region: [aghdam_district], key_tiles: [martakert], value: 4}
+      - {id: kalbajar_lachin, region: [kalbajar_district, lachin_district], value: 5}
+    category_priority: {uav_male: 0.9, loitering_munition: 0.9, mrl_long_range: 0.8, tbm_launcher: 0.6, sam_long: 0.6, sam_medium: 0.6,
+                        mbt: 0.5, ifv: 0.5, howitzer_heavy_sp: 0.5, radar_counter_battery: 0.4, ew_vehicle: 0.5}
+    preferred_origins: [ISR, TUR, RUS, BLR]
+    dependency_aversion: 0.4
+    budget_policy:
+      base_procurement_share: 0.65
+      base_infrastructure_share: 0.10
+      base_war_reserves_share: 0.25
+      threat_procurement_gain: 0.10
+      om_funding_ratio_peace: 1.0
+      om_funding_ratio_crisis: 1.1
+      training_peace: normal
+      training_crisis: high
+    reforms:
+      - {id: aze_2016_uav_battery_per_corps, earliest_year: 2016, template_id: aze_loitering_btry, count: 4, attach_to_formation_role: fires_brigade, utility_base: 0.6, pending_m2: true}
+      - {id: aze_2018_commando_units, earliest_year: 2018, template_id: aze_rifle_bn, count: 4, attach_to_formation_role: maneuver_brigade, utility_base: 0.4,
+         note: 土耳其式突击/特种部队扩编的近似（01 §4.17 末行）}
+    hub_count_per_front_sector: 1
+    note: 进攻方；2016 后无人机/巡飞弹优先（史实采购趋势，procurement.yaml historical_procurement）。
+
+  - country_iso3: ARM
+    doctrine_id: small_state_defensive
+    aggression: 0.2
+    caution: 0.7
+    war_start_p_min: 0.85
+    ceasefire_accept_fatigue: 0.6
+    war_aims: []                        # 防御方；12 默认目标 = 守住开战时控制的地块
+    category_priority: {sam_short: 0.8, sam_medium: 0.7, ew_vehicle: 0.7, mbt: 0.5, howitzer_heavy_towed: 0.5, mrl_long_range: 0.6,
+                        tbm_launcher: 0.5, radar_counter_battery: 0.5, atgm_heavy: 0.5, uav_tactical: 0.5, fighter: 0.3}
+    preferred_origins: [RUS, ARM, CHN]
+    dependency_aversion: 0.3
+    budget_policy:
+      base_procurement_share: 0.45
+      base_infrastructure_share: 0.25    # 前沿工事（04/06）
+      base_war_reserves_share: 0.30
+      threat_procurement_gain: 0.10
+      om_funding_ratio_peace: 0.95
+      om_funding_ratio_crisis: 1.05
+      training_peace: normal
+      training_crisis: high
+    reforms: []
+    hub_count_per_front_sector: 1
+    note: 默认 AI 只做“史实式”配置（V4 判据“默认策略接近史实”，14 §9.3）。

@@ -1,0 +1,77 @@
+# 纳卡剧本后勤节点种子与国家级运力（schema：docs/spec/06_logistics.md §6.3；14 填数）
+# 坐标见 theater.yaml 的说明（维基信息框，误差 < 2 km）。容量、吞吐、加固、分散度是游戏参数，不是公开数据：
+#   confidence: estimated，依据 = 06 第 5 节默认量级 + 节点重要性（bal）。真实仓库位置资料极少，采用“城市级”位置（14 N-07）。
+# 2010 与 2020 两个开局共用；某节点只在某年之后存在时写 from_year。
+
+nodes:
+  # ============================== 亚美尼亚（含纳卡） ==============================
+  - {id: arm_depot_yerevan,     owner: ARM, role: depot, lat_deg: 40.1300, lon_deg: 44.5600, storage_capacity_t: 20000, throughput_t_per_h: 300, hardening_level: 1, dispersion: 0.3, has_rail_access: true,  confidence: estimated, note: 首都地区（努巴拉申一带）中央储备}
+  - {id: arm_depot_vanadzor,    owner: ARM, role: depot, lat_deg: 40.8128, lon_deg: 44.4883, storage_capacity_t: 8000,  throughput_t_per_h: 150, hardening_level: 1, dispersion: 0.3, has_rail_access: true,  confidence: estimated, note: 3 军方向}
+  - {id: arm_depot_goris,       owner: ARM, role: depot, lat_deg: 39.5111, lon_deg: 46.3383, storage_capacity_t: 8000,  throughput_t_per_h: 150, hardening_level: 1, dispersion: 0.3, has_rail_access: false, confidence: estimated, note: 走廊亚美尼亚端（06 示例节点）}
+  - {id: arm_depot_yeghegnadzor, owner: ARM, role: depot, lat_deg: 39.7611, lon_deg: 45.3333, storage_capacity_t: 6000, throughput_t_per_h: 120, hardening_level: 1, dispersion: 0.3, has_rail_access: false, confidence: estimated, note: 2/4 军方向（面向纳希切万）}
+  - {id: arm_depot_stepanakert, owner: ARM, role: depot, lat_deg: 39.8153, lon_deg: 46.7519, storage_capacity_t: 10000, throughput_t_per_h: 150, hardening_level: 1, dispersion: 0.4, has_rail_access: false, confidence: estimated, note: 纳卡防卫军中央储备；完全依赖拉钦走廊补给}
+  - {id: arm_depot_martakert,   owner: ARM, role: depot, lat_deg: 40.2153, lon_deg: 46.8106, storage_capacity_t: 4000,  throughput_t_per_h: 80,  hardening_level: 1, dispersion: 0.5, has_rail_access: false, confidence: estimated}
+  - {id: arm_depot_hadrut,      owner: ARM, role: depot, lat_deg: 39.5200, lon_deg: 47.0300, storage_capacity_t: 4000,  throughput_t_per_h: 80,  hardening_level: 1, dispersion: 0.5, has_rail_access: false, confidence: estimated}
+  - {id: arm_airbase_erebuni,   owner: ARM, role: airbase, lat_deg: 40.1222, lon_deg: 44.4650, storage_capacity_t: 3000, throughput_t_per_h: 100, hardening_level: 1, dispersion: 0.2, has_rail_access: true, confidence: estimated, note: 埃里温埃雷布尼机场（亚空军；俄 102 基地航空大队亦驻此，不属亚方）}
+  - {id: arm_airbase_gyumri,    owner: ARM, role: airbase, lat_deg: 40.7500, lon_deg: 43.8593, storage_capacity_t: 2000, throughput_t_per_h: 80, hardening_level: 1, dispersion: 0.2, has_rail_access: true, confidence: estimated, note: 希拉克机场；俄 102 基地在久姆里（俄方资产不实例化）}
+  - {id: arm_gateway_bagratashen, owner: ARM, role: import_gateway, lat_deg: 41.2436, lon_deg: 44.8200, confidence: estimated,
+     gateway: {external_mode: road, transit_country: GEO, capacity_t_per_day: 3000, gauge_break: false, external_lead_time_h: {RUS: 48, BLR: 72, CHN: 720}}, note: 经格鲁吉亚（上拉尔斯—第比利斯—巴格拉塔申）}
+  - {id: arm_gateway_ayrum_rail, owner: ARM, role: import_gateway, lat_deg: 41.1900, lon_deg: 44.8900, confidence: estimated,
+     gateway: {external_mode: rail, transit_country: GEO, capacity_t_per_day: 4000, gauge_break: false, external_lead_time_h: {RUS: 96, BLR: 120}}, note: 经格鲁吉亚铁路（俄—格无直通铁路，经阿或黑海轮渡；外部时间取长）}
+  - {id: arm_gateway_agarak,    owner: ARM, role: import_gateway, lat_deg: 38.8700, lon_deg: 46.2000, confidence: estimated,
+     gateway: {external_mode: road, transit_country: IRN, capacity_t_per_day: 1000, gauge_break: false, external_lead_time_h: {RUS: 120, CHN: 600}}, note: 亚—伊梅格里口岸；俄货经里海/伊朗}
+  - {id: arm_gateway_zvartnots, owner: ARM, role: import_gateway, lat_deg: 40.1473, lon_deg: 44.3959, confidence: estimated,
+     gateway: {external_mode: air, transit_country: null, capacity_t_per_day: 300, gauge_break: false, external_lead_time_h: {RUS: 12}}, note: 俄方空运需经伊朗/里海空域（2020 年格鲁吉亚关闭军用过境，事件 geo_transit_ban_2020）}
+  - {id: arm_industry_yerevan,  owner: ARM, role: industry_node, lat_deg: 40.1792, lon_deg: 44.4991, confidence: estimated, note: 抽象国家工业节点（Garni-Ler、Aspar Arms、Avtomatika 等，wp_arm_2020 信息框“domestic suppliers”）}
+
+  # ============================== 阿塞拜疆 ==============================
+  - {id: aze_depot_baku,        owner: AZE, role: depot, lat_deg: 40.4500, lon_deg: 49.8000, storage_capacity_t: 40000, throughput_t_per_h: 500, hardening_level: 1, dispersion: 0.3, has_rail_access: true, confidence: estimated}
+  - {id: aze_depot_ganja,       owner: AZE, role: depot, lat_deg: 40.6828, lon_deg: 46.3606, storage_capacity_t: 20000, throughput_t_per_h: 300, hardening_level: 1, dispersion: 0.3, has_rail_access: true, confidence: estimated, note: 3 军/西线枢纽}
+  - {id: aze_depot_yevlakh,     owner: AZE, role: depot, lat_deg: 40.6183, lon_deg: 47.1500, storage_capacity_t: 15000, throughput_t_per_h: 300, hardening_level: 1, dispersion: 0.3, has_rail_access: true, confidence: estimated, note: 1 军方向铁路枢纽}
+  - {id: aze_depot_barda,       owner: AZE, role: depot, lat_deg: 40.3744, lon_deg: 47.1267, storage_capacity_t: 8000,  throughput_t_per_h: 150, hardening_level: 0, dispersion: 0.4, has_rail_access: false, confidence: estimated}
+  - {id: aze_depot_beylagan,    owner: AZE, role: depot, lat_deg: 39.7756, lon_deg: 47.6186, storage_capacity_t: 10000, throughput_t_per_h: 200, hardening_level: 0, dispersion: 0.4, has_rail_access: true, confidence: estimated, note: 2 军/南线}
+  - {id: aze_depot_mingachevir, owner: AZE, role: depot, lat_deg: 40.7700, lon_deg: 47.0489, storage_capacity_t: 10000, throughput_t_per_h: 200, hardening_level: 1, dispersion: 0.3, has_rail_access: true, confidence: estimated}
+  - {id: aze_depot_nakhchivan,  owner: AZE, role: depot, lat_deg: 39.2089, lon_deg: 45.4122, storage_capacity_t: 8000,  throughput_t_per_h: 150, hardening_level: 1, dispersion: 0.3, has_rail_access: true, confidence: estimated, note: 飞地；只能经土耳其/伊朗或空运补给}
+  - {id: aze_airbase_kurdamir,  owner: AZE, role: airbase, lat_deg: 40.3453, lon_deg: 48.1508, storage_capacity_t: 3000, throughput_t_per_h: 100, hardening_level: 1, dispersion: 0.2, has_rail_access: true, confidence: estimated, note: 城市坐标近似}
+  - {id: aze_airbase_ganja,     owner: AZE, role: airbase, lat_deg: 40.7377, lon_deg: 46.3176, storage_capacity_t: 2000, throughput_t_per_h: 80, hardening_level: 1, dispersion: 0.2, has_rail_access: true, confidence: estimated}
+  - {id: aze_airbase_dollyar,   owner: AZE, role: airbase, lat_deg: 40.8297, lon_deg: 46.0181, storage_capacity_t: 2000, throughput_t_per_h: 80, hardening_level: 1, dispersion: 0.2, has_rail_access: true, confidence: estimated, note: 沙姆基尔附近，城市坐标近似}
+  - {id: aze_airbase_nasosnaya, owner: AZE, role: airbase, lat_deg: 40.5900, lon_deg: 49.5500, storage_capacity_t: 3000, throughput_t_per_h: 100, hardening_level: 1, dispersion: 0.2, has_rail_access: true, confidence: estimated, note: 苏姆盖特附近（海达尔·宰纳拉比丁空军基地）}
+  - {id: aze_airbase_nakhchivan, owner: AZE, role: airbase, lat_deg: 39.1889, lon_deg: 45.4584, storage_capacity_t: 1500, throughput_t_per_h: 60, hardening_level: 1, dispersion: 0.2, has_rail_access: true, confidence: estimated}
+  - {id: aze_gateway_red_bridge, owner: AZE, role: import_gateway, lat_deg: 41.3300, lon_deg: 45.1000, confidence: estimated,
+     gateway: {external_mode: road, transit_country: GEO, capacity_t_per_day: 4000, gauge_break: false, external_lead_time_h: {TUR: 48, ISR: 240, BLR: 96}}, note: 红桥口岸（格鲁吉亚）}
+  - {id: aze_gateway_boyuk_kesik_rail, owner: AZE, role: import_gateway, lat_deg: 41.2700, lon_deg: 45.4100, confidence: estimated,
+     gateway: {external_mode: rail, transit_country: GEO, capacity_t_per_day: 8000, gauge_break: false, external_lead_time_h: {TUR: 96, UKR: 120, BLR: 120}}, note: 2017 年后巴库—第比利斯—卡尔斯铁路可直达土耳其（卡尔斯有轨距断点，已计入外部时间）}
+  - {id: aze_gateway_yalama,    owner: AZE, role: import_gateway, lat_deg: 41.7300, lon_deg: 48.6200, confidence: estimated,
+     gateway: {external_mode: rail, transit_country: null, capacity_t_per_day: 8000, gauge_break: false, external_lead_time_h: {RUS: 48, BLR: 96}}, note: 阿—俄萨穆尔/亚拉马口岸（公路 + 铁路）}
+  - {id: aze_gateway_baku_airport, owner: AZE, role: import_gateway, lat_deg: 40.4675, lon_deg: 50.0467, confidence: estimated,
+     gateway: {external_mode: air, transit_country: null, capacity_t_per_day: 500, gauge_break: false, external_lead_time_h: {ISR: 12, TUR: 6}}, note: 以色列 Il-76 包机航线（2020 年报道）}
+  - {id: aze_gateway_sadarak,   owner: AZE, role: import_gateway, lat_deg: 39.7100, lon_deg: 44.8800, confidence: estimated,
+     gateway: {external_mode: road, transit_country: null, capacity_t_per_day: 1500, gauge_break: false, external_lead_time_h: {TUR: 24}}, note: 土—纳希切万口岸；只连通纳希切万飞地网络}
+  - {id: aze_factory_modi_baku, owner: AZE, role: factory, lat_deg: 40.4093, lon_deg: 49.8671, confidence: estimated,
+     note: 国防工业部（MODI，2005 年成立，wp_aze_2010）下属工厂的抽象：轻武器、迫击炮（Komando 20N6MT、20N5）、MLRS-107、弹药}
+  - {id: aze_factory_azad_systems, owner: AZE, role: factory, lat_deg: 40.4093, lon_deg: 49.8671, confidence: estimated, from_year: 2011,
+     note: Azad Systems（MODI 与以色列 Aeronautics 合资）组装 Orbiter-2/3、Aerostar、Orbiter-1K（Zərbə）}
+  - {id: aze_factory_paramount, owner: AZE, role: factory, lat_deg: 40.4093, lon_deg: 49.8671, confidence: estimated, from_year: 2009,
+     note: 南非 Paramount 合资组装 Matador/Marauder（本地组装线史实例子）}
+  - {id: aze_industry_sumgait,  owner: AZE, role: industry_node, lat_deg: 40.5897, lon_deg: 49.6686, confidence: estimated}
+
+# ------------------------------------------------------------------ 国家级运力（06 §4.6 NationalRail / NationalRoad）
+country_logistics:
+  ARM:
+    rail_fleet_payload_t: 3000            # estimated：亚美尼亚铁路规模小（06 常数表备注）；bal
+    national_truck_payload_t: {strategic: 4000, operational: 2500}
+    strategic_direction_preset: {east_nk: 0.6, south_meghri: 0.15, west_nakhchivan: 0.15, north_tavush: 0.10}
+  AZE:
+    rail_fleet_payload_t: 15000           # estimated
+    national_truck_payload_t: {strategic: 9000, operational: 6000}
+    strategic_direction_preset: {west_nk: 0.75, nakhchivan: 0.15, north_tovuz: 0.10}
+
+# ------------------------------------------------------------------ 开局战备储备（06 §4.12 StockTarget 与年龄分布）
+# 天数 = 按 06 的“标准战时日消耗”计；全部 estimated/bal（双方真实储备未公开）。年龄分布缺省用 06 §4.12 的均匀分布。
+opening_stocks:
+  nk_2010:
+    ARM: {ammunition_days: 30, fuel_days: 20, spare_parts_days: 30, general_days: 30, age_distribution: uniform, note: 苏联遗留弹药偏老}
+    AZE: {ammunition_days: 30, fuel_days: 30, spare_parts_days: 30, general_days: 30, age_distribution: uniform}
+  nk_2020:
+    ARM: {ammunition_days: 25, fuel_days: 20, spare_parts_days: 25, general_days: 30, age_distribution: uniform}
+    AZE: {ammunition_days: 60, fuel_days: 45, spare_parts_days: 45, general_days: 45, age_distribution: {last_10y_share: 0.6}, note: 2011–2015 年高预算期大量采购}

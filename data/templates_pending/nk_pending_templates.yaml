@@ -1,0 +1,57 @@
+# 纳卡剧本：依赖新类别（loitering_munition、tbm_launcher，01 M2）的模板。
+# 不在 tools/validate_data.py 扫描范围；M2 落地后移入 data/templates/ 并删除本目录。
+# confidence: estimated（公开资料没有双方此类分队的编制表；结构按“发射单元 + 操作手 + 运输车”最小化估算）。
+
+templates:
+  - id: aze_loitering_sq
+    name: 巡飞弹发射组（Harop/SkyStriker/Orbiter-1K）
+    level: squad
+    branch: fire_support
+    personnel: {squad_leader: 1, uav_operator: 2, driver: 1}
+    slots: {loitering_munition: 1, truck_medium: 1, rifle: 4}
+    confidence: estimated
+    notes: 一个“发射单元”= 1 部发射箱/车，装若干枚（每枚弹作为 06 的弹药库存）。
+  - id: aze_loitering_btry
+    name: 巡飞弹连
+    level: company
+    children: [{template: aze_loitering_sq, count: 4}, {template: aze_btry_hq, count: 1}]
+    confidence: estimated
+  - id: aze_tbm_sq
+    name: 战术弹道导弹发射车组（Tochka-U/LORA）
+    level: squad
+    branch: artillery
+    personnel: {squad_leader: 1, rocket_artilleryman: 3, driver: 1}
+    slots: {tbm_launcher: 1, truck_heavy: 1, rifle: 5}
+    confidence: estimated
+  - id: aze_tbm_bn
+    name: 战术导弹营
+    level: battalion
+    children: [{template: aze_tbm_sq, count: 4}, {template: aze_arty_bn_hq, count: 1}, {template: aze_bn_support_sq, count: 1}]
+    default_bindings: {tbm_launcher: lora, truck_heavy: kamaz_5350}
+    confidence: estimated
+    notes: 独立营，直属国家或军（01 §4.17）。
+  - id: arm_tbm_sq
+    name: 战术弹道导弹发射车组（Scud-B/Iskander-E）
+    level: squad
+    branch: artillery
+    personnel: {squad_leader: 1, rocket_artilleryman: 4, driver: 1}
+    slots: {tbm_launcher: 1, truck_heavy: 1, rifle: 6}
+    confidence: estimated
+  - id: arm_tbm_bn
+    name: 战术导弹营
+    level: battalion
+    children: [{template: arm_tbm_sq, count: 4}, {template: arm_arty_bn_hq, count: 1}, {template: arm_bn_support_sq, count: 1}]
+    default_bindings: {tbm_launcher: scud_b, truck_heavy: kamaz_5350}
+    confidence: estimated
+  - id: arm_loitering_sq
+    name: 巡飞弹/无人机组（Krunk/HRESH）
+    level: squad
+    branch: fire_support
+    personnel: {squad_leader: 1, uav_operator: 2, driver: 1}
+    slots: {loitering_munition: 1, uav_tactical: 1, truck_medium: 1, rifle: 4}
+    confidence: estimated
+  - id: arm_loitering_btry
+    name: 无人机/巡飞弹连
+    level: company
+    children: [{template: arm_loitering_sq, count: 4}, {template: arm_btry_hq, count: 1}]
+    confidence: estimated

@@ -816,7 +816,10 @@ Planned → Inserting → OnStation → Exfiltrating → Completed
 | 03 / 04 | `GetLevel`、`GetAgeMs`、`ExposureAccuracyFactor` | 首轮精度、伏击条件（建议见 §6.3） |
 | 04 | `PrecisionStrikeAllowed`、`AreaStrikeAmmoMultiplier`、`TargetLocationErrorM` | 地面跨地块火力 |
 | 08 | 同上 + `SearchAcquireProbabilityPerMin`、`RegisterSelfFix`、`GetSignature(target)`（`S_phys`、`S_emit` 雷达部分）、`AreaReconTask.dwellShare` | 空袭门槛、巡飞弹、侦察轨道 |
-| 09 | `EmconState` → 命令延迟乘子：Partial ×1.15、Silent ×1.5（🟡 建议值，由 09 采纳） | |
+| 09 | `EmconState` → 命令延迟乘子：Partial ×1.15、Silent ×1.5（🟡 建议值，09 已采纳） | |
+| 09 | `GetCommsJamming(tile, victimCountry)` = `min(1, max_{敌国 e}(ewCoverage(e, tile), 0.5 × max_{相邻地块 t'} ewCoverage(e, t')))`（`ewCoverage` 见 §4.1.5；阶段 0 恒 0；09 T-18） | 命令延迟的干扰项；03 的 `JamIntensity` 也可读它 |
+| 09 | `StartAreaReconTask(owner, tiles, assets, desiredLevel, risk)`、`StartSofMission(sofCompany, tile, insertion, extraction, durationDays, reportIntervalH)`、`GetExposure(observer, target)`（返回 `IntelSnapshot` 所需的等级、时间戳、`TargetLocationErrorM`） | 侦察命令生效时；打击命令的情报快照 |
+| 03 | `SensorProfile` 追加字段（03 C-08）：`OpticsClass opticsClassDay, opticsClassNight`（枚举由 03 §4.2.2 定义，05 只承载数据）；`SignatureProfile` 追加 `double engagementSigMult`（片段内的被发现系数，缺省 1.0，03 使用） | 片段创建时 |
 | 12 | 只读 `IntelEstimate`（AI 和玩家一样只看情报画面） | 公平性 |
 | 13 | `IntelEstimate`、`SignatureState` 分解、`lastGainByMeans`、`OwnExposureEstimate`、`AreaReconTask` 状态、`SofMission` 状态 | 显示 |
 | 15 | 存档：全部 `ExposureRecord`、`DecoyGroup`、`AreaReconTask`、`SofMission`、`OwnExposureEstimate`；缓冲区（`ReconDwellSample`、`StripReconSample`）也要存，因为它们跨刻 | |

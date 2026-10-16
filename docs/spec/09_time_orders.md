@@ -80,7 +80,7 @@ public sealed class GameClock {
     public long currentTick;          // 下一个要执行的刻号 n；世界状态处于时刻 n 分
     public GameSpeed speed;           // 目标速度（不影响模拟结果）
     public bool isPaused;
-    public PauseReason pauseReasons;  // [Flags]；全部清零才恢复
+    public PauseReasons pauseReasons;  // [Flags]；全部清零才恢复
     public double achievedGameMinPerRealS;   // 实测达到的速度，只给界面
 }
 
@@ -90,8 +90,6 @@ public enum GameSpeed : int { Speed1 = 1, Speed2 = 2, Speed3 = 3, Speed4 = 4, Sp
     None = 0, Player = 1, AutoPauseBattle = 2, AutoPauseEvent = 4, Modal = 8, Loading = 16
 }
 ```
-> 字段 `pauseReasons` 的类型是 `PauseReasons`（上面 `PauseReason` 为笔误，以 `PauseReasons` 为准）。
-
 ### 3.2 命令
 ```csharp
 public readonly record struct OrderId(int value);    // 0 = 空；按创建顺序分配（00 §2.2）
@@ -463,6 +461,7 @@ $$
 | `F_attach` | 营配属（`currentFormationId ≠ organicFormationId`）时 `AttachFactor`，否则 1 | 01 |
 | `F_dist` | `1 + max(0, dKm − DistFreeKm) / DistScaleKm`，上限 `FDistMax`。`dKm` = 上级指挥部（营的当前编组的 `Hq` 营）所在地块中心到接收者所在地块中心的大圆距离；编组命令按**每个子单位**分别算（§4.3.5）；无上级编组或接收者本身是顶层 → 1 | 10 地块中心表、00 §3.4 |
 | `F_headless` | 接收者自身指挥部班/营已被歼灭或失去战斗力：`HeadlessFactor`，否则 1 | 01/07 |
+| `F_emcon`（追加乘入） | 接收者 `EmconState`：Active 1.0、Partial 1.15、Silent 1.5（05 §6.2 建议值，本文件采纳） | 05 / 01 D3 |
 
 **取整**：`totalMs = (long)Math.Ceiling(product)` 后再夹紧。
 
@@ -482,7 +481,7 @@ void ExpandFormationOrder(World w, Order parent) {
     if (f.kind == FormationKind.AdHoc) {
         // 临时编组：无指挥部、无机制效果 → 立即由编组 AI 分解，每个子命令按“营”层级各自计算延迟
         foreach (var sub in Ai.Formation.Decompose(w, f, parent))   // 12 §4.2
-            { sub.parentOrderId = parent.id; sub.recipient.kind == Battalion; ScheduleSingle(w, sub, n); }
+            { sub.parentOrderId = parent.id; /* sub.recipient.kind 已是 Battalion */ ScheduleSingle(w, sub, n); }
         parent.status = OrderStatus.Active; return;
     }
     // 建制编组：延迟按编组层级算；分解在“生效时”进行（编组 AI 用生效时刻的态势）
@@ -823,13 +822,14 @@ LightCondition GetLightCondition(ulong tile, SimTime t) {
 | `TileControl GetTileControl(ulong tile)` | 全部 | 任意 |
 | `FidelityTier GetTier(EdgeBattleId)` | 04 | 04 生成片段时 |
 | `LightCondition GetLightCondition(ulong tile, SimTime)`、`double SolarAltitudeDeg(...)` | 03、04、05、08 | 任意 |
+| `bool IsNight(ulong tile, SimTime)` = `SolarAltitudeDeg < 0`；`IsFrontline(battalion)` = 营所在地块与敌方控制地块相邻或营在活跃 `EdgeBattle` 中 | 01、05、06 | 任意（注：03 文中的 `LightLevel` 即本文件的 `LightCondition`，阈值相同） |
 | `void OnDisengaged(BattalionId, SimTime)` | 04 | 04 完成脱离接触时 |
 | `void PostNotification(Notification)` | 04、05、06、08、11 | 本刻任意阶段；在 150 统一排序发布 |
 
 ### 6.2 本文件需要（接口需求；签名由对应规格最终确定）
 | 来源 | 需要什么 | 用途 |
 |---|---|---|
-| 01 | `GetCommandQuality(hqId) ∈ [0,1]`、`CommandLoad`、`CommandCapacity`、营的 `organicFormationId/currentFormationId`、编组的 `Hq` 营、`FormationKind` | 命令延迟 |
+| 01 | `GetCommandQuality(hqId) ∈ [0,1]`（可由 01 `CommandState.comms` 与 `hqSkill` 归一化得到）、`CommandLoad`、`CommandCapacity`；**若 01 的 `CommandState.orderDelayMultiplier`（≥ 1）已含负荷/能力比，则 `F_load` 直接取该值，不再自算**；`ReorganizingDelayMult`（整编期间再乘）、营的 `organicFormationId/currentFormationId`、编组的 `Hq` 营、`FormationKind` | 命令延迟 |
 | 04 | `CreateEdgeBattle`、`JoinBattle`、`RequestDisengage`、`EndEdgeBattle`、`PenetrationProgress`、`IsCombatEffective`、`AttackerCompaniesAllOnOwnSide`、`frontageSlots`、`MakePeriodicReport`、`IsInStrikeRange`、`QueueCrossTileStrike` | 战斗生命周期、调度估算、打击 |
 | 05 | `GetCommsJamming(tile, country)`、`StartAreaReconTask`、`StartSofMission`、`GetExposure(observer, target)`（打击的情报快照） | 延迟、侦察命令 |
 | 06 | `MobilityProfile.roadSpeedMps`、`IsOutOfFuel`、`ApplyConfig` | 行军、后勤命令 |
