@@ -150,7 +150,7 @@ public enum ServiceType : byte {
 // 与 11 的 PayCategory 映射：Conscript→Conscript，Contract→Contract，Officer→Officer，
 // Reservist→ReservistMobilized，Volunteer→ReservistMobilized。
 
-public enum DetachReason : byte { None = 0, Casualty = 1, Discharge = 2, Transfer = 3, ToPool = 4, Training = 5 }
+public enum DetachReason : byte { None = 0, Casualty = 1, Discharge = 2, Transfer = 3, ToPool = 4, Training = 5, MedicalDischarge = 6 }   // MedicalDischarge：07 判定伤残退役
 
 public enum SkillPreset : byte { None = 0, Green = 1, Regular = 2, Veteran = 3, Elite = 4 }   // 阶段 0 试验场
 // TrainingIntensity 由 11 定义：Minimal / Low / Normal / High（本文件只读）
@@ -208,7 +208,6 @@ public readonly record struct SkillValue(double general, double type);   // GetS
 
 public sealed class FormationTrainingState {   // 组件，键 SkillHolderKey
     public SkillHolderKey holder;
-    public TrainingIntensity? overrideIntensity;  // null = 用全国设置（P-05）
     public bool refit;                         // 07 整建制轮换休整中：强度至少 High
     public double lastFulfillment;             // 上一小时训练资源满足率 [0,1]（显示）
 }
@@ -262,13 +261,13 @@ public sealed class CountryManpowerState {  // 每国一份
 
 ### 4.1 执行顺序（`TickPhase.Calendar` = 30）
 
-同一刻内 11 → 02 → 07 → 12（09 §5 表）。本文件：
+同一刻内 11 → 01 → 02 → 07 → 12（00 §5.2、09 §5 表）。本文件：
 
 | 频率 | 步骤 | 节 |
 |---|---|---|
 | 每天 00:00 | D1 学校毕业 → D2 义务兵退役 → D3 学校招训 → D4 预备役老化 → D5 向 11 同步预备役总数与练度 | §4.8、§4.10 |
 | 每 60 分钟 | H1 人数对账 → H2 实战经验结算（上一小时排队的报告）→ H3 训练资源请求 → H4 练度更新 → H5 动员到位 | §4.4.6、§4.7、§4.6、§4.11 |
-| 事件（即时） | `JoinSquad` / `LeaveSquad` / `OnCrewModelChange` / `OnModelUpgraded` / `OnSkillHolderChanged` | §4.4 |
+| 事件（即时） | `JoinSquad` / `LeaveSquad` / `OnCrewModelChange` / `OnEquipmentAssigned` / `OnModelUpgraded` / `OnSkillHolderChanged` | §4.4 |
 
 `dtH = 1`（小时步）；`dtD = 1/24`（以天为单位的速率常数用它）。
 
@@ -289,6 +288,8 @@ ModelHandle OperatedModel(PersonnelRecord p) {
 }
 ```
 （一个班两名同专业的人操作同一件装备时，两人都记到该型号——练度是“这个专业对这个型号的熟练程度”，不是“这件装备的”。）
+
+**在位人数** `PresentCount(squad)` = 名册中 `casualty == Healthy` 或（`LightWounded` 且 07 `stage == WithUnit`）的人数。01（指挥部人数）、07 都用它，不各自重述。
 
 ### 4.3 型号相似度 `Similarity(a, b)`（总纲 §4.2 🟡）
 
@@ -329,11 +330,12 @@ bool UpgradeLinked(m1, m2)   // 沿 upgrade_of 链（各自最多 3 步）相遇
 #### 4.4.1 离开 `LeaveSquad(person, reason)`
 ```text
 rec = Skill[HolderOf(p.squad), p.specialty]; m = OperatedModel(p)
-写 CarriedSkillState(p) = (rec.general, rec.type[m].value 或 TypeOf(rec, m), m, now)   // reason ≠ Discharge 时
-rec.headcount −= 1;  rec.type[m].headcount −= 1         // 均值不变
+写 CarriedSkillState(p) = (rec.general, rec.type[m].value 或 TypeOf(rec, m), m, now)   // reason ∉ {Discharge, MedicalDischarge} 时
+rec.headcount −= 1;  rec.type[m].headcount −= 1         // 均值不变（p.squad == 0 时跳过前三行：人已因 Casualty 离班）
 p.squad = 0
 reason == Discharge → 进入预备役池（§4.10.2），删除 PersonnelRecord
-reason == Casualty 且 07 判定阵亡 → 07 删除记录与 CarriedSkillState
+reason == MedicalDischarge → 不进预备役池，删除 CarriedSkillState 与 PersonnelRecord
+07 判定阵亡 → 删除 CarriedSkillState；PersonnelRecord 保留（统计用，squad = 0）
 ```
 人数降到 0 的条目保留其 `value`（“部队的记忆”），新人加入时按 0 权重被覆盖。
 
@@ -359,6 +361,9 @@ e.value = (e.headcount × e.value + t') / (e.headcount + 1); e.headcount += 1
       rec.type[to] 按 4.4.2 的方式加权并入 t'
 ```
 ✅ 总纲 §4.2：换装后专有练度 = 原值 × 相似度系数；不单设换装期（换装后的战斗力下降直接由练度体现）。
+
+#### 4.4.3b 装备入空位 `OnEquipmentAssigned(squad, item)`（01 发出）
+`≡ OnCrewModelChange(squad, item.slotCategory, 0, item.model)`（空位上原来没有装备，from = 0）。
 
 #### 4.4.4 升级改装 `OnModelUpgraded(item, from, to, retention)`（11 §4.6 发出）
 同 4.4.3，但相似度用 11 给的 `retention`（`UpgradePath.typeSkillRetention`，缺省 0.8）代替 `Similarity(from, to)`。
@@ -405,7 +410,7 @@ double TypeOf(SkillRecord rec, ModelHandle m) {
 ### 4.6 日常训练（总纲 §4.3 🟡）
 
 #### 4.6.1 训练强度
-`I(h) = overrideIntensity ?? 11.BudgetAllocation.trainingIntensity`；`refit == true` 时 `I = max(I, High)`。（11 在预算不足时会自动下调全国强度，11 §4.2。）
+`I(h) = 11.BudgetAllocation.trainingOverride.GetValueOrDefault(f, defaultTraining)`，f = 归属对应的 `FormationId`（独立营归属 → `defaultTraining`）；`refit == true` 时 `I = max(I, High)`。（11 在预算不足时会自动下调全国强度，11 §4.2。）
 
 **参与训练的比例** `share(h)` = 归属内**不在战斗中**（09 `IsInBattle(bn) == false`）且不在整编中、战备等级不是 `Cadre`（骨干营人员只做保管，P-13）的营的在位人数 / 归属在位总人数。
 
@@ -431,7 +436,7 @@ fFuel = reqFuelT > 0 ? gotFuelT / reqFuelT : 1
 f = min(fAmmo, fFuel);  lastFulfillment = f
 ```
 - 训练费（非弹药，人头费）由 11 按 `TrainCostPerHeadYear[I]` 计费，本文件提供人数。
-- 独立营归属（`isBattalion`）用该营作为“编组”参数调用 06（06 按营所在方向仓库扣）。
+- 独立营归属（`isBattalion`）调用 06 的 `OrgUnitId` 重载 `ComputeBasis(OrgUnitId)`、`ConsumeForTraining(OrgUnitId, ItemKey, double)`（06 按营所在方向仓库扣）。
 
 #### 4.6.3 练度更新（H4）
 ```text
@@ -533,6 +538,13 @@ List<PersonnelId> DrawFromTrainedPool(CountryId c, SpecialtyHandle s, int n, Ser
 // 服役类型优先顺序：prefer → Contract → Conscript → Officer（仅当 s 属于 officer 体系）
 // 随后 07 对每人调用 JoinSquad(person, squad)
 int TrainedPoolAvailable(CountryId c, SpecialtyHandle s);   // 01 传导提示用
+
+// 撤编、降级等把人退回国家人员池（07 DisbandBattalion、07 待编池清退调用）
+void ReleaseToPool(PersonnelId p);
+// p.squad ≠ 0 时先 LeaveSquad(p, ToPool)；练度取 CarriedSkillState（没有则 (NewcomerFloorG, TypeSkillFloor, 0)）
+// Contract / Officer → 并入 TrainedPool[(country, s, serviceType)]（加权平均；typeModel 不同时按 §4.8.4 换算）
+// Conscript / Reservist / Volunteer → 并入 ReservePool[(country, s)]（同 §4.10.2）
+// 然后删除 CarriedSkillState 与 PersonnelRecord
 ```
 
 ### 4.9 岗位、在编比例与名册填充
@@ -662,15 +674,15 @@ pool.count   −= pool.count × ReserveAttritionPerYear / 365      （累加器�
 
 | 函数 / 数据 | 调用方 | 时机 |
 |---|---|---|
-| `SkillValue GetSkill(FormationId, SpecialtyHandle, ModelHandle)`、`GetSkillForBattalion(OrgUnitId, …)`、`GetSkillOffSpecialty(…)` | 03（`0.4 × general + 0.6 × type`）、05、08 | 片段创建时；每小时可缓存 |
-| `UnitAverageGeneral(OrgUnitId)`、`UnitAverageType(OrgUnitId, specialties)` | 05（伪装、侦察）、01（指挥部练度 `G_hq`） | 每 Exposure 步 / 每小时 |
+| `SkillValue GetSkill(FormationId, SpecialtyHandle, ModelHandle)`、`GetSkillForBattalion(OrgUnitId, …)`、`GetSkillOffSpecialty(…)` | 03（`0.4 × general + 0.6 × type`）、05、08、01（指挥部练度 `G_hq`，用 `GetSkillForBattalion`） | 片段创建时；每小时可缓存 |
+| `UnitAverageGeneral(OrgUnitId)`、`UnitAverageType(OrgUnitId, specialties)` | 05（伪装、侦察） | 每 Exposure 步 / 每小时 |
 | `double Similarity(ModelHandle, ModelHandle)` | 01（替代顺序）、07（缴获装备）、13（换装预估） | 按需 |
 | 名册：`RosterState`、`PersonnelRecord`、`PresentCount(SquadId)`、岗位表 | 01（指挥部人数）、03、07 | 按需 |
 | `TierPersonnelFill(tier, specialty)` | 01（传导提示）、11（动员终值） | 按需 |
-| `TrainedPoolAvailable(country, specialty)`、`DrawFromTrainedPool(...)` | 01、07 | 按需（07 每小时补充） |
+| `TrainedPoolAvailable(country, specialty)`、`DrawFromTrainedPool(...)`、`ReleaseToPool(PersonnelId)` | 01、07 | 按需（07 每小时补充） |
 | `JoinSquad(PersonnelId, SquadId)`、`LeaveSquad(PersonnelId, DetachReason)` | 07（补充、后送、归队、重组）、11（复员） | 事件 |
 | `HeadcountByPayCategory(country)` | 11（人员费） | 年初、每小时 |
-| 训练强度覆盖、学校状态、缺口、毕业预测 | 13 | 界面 |
+| 学校状态、缺口、毕业预测（训练强度覆盖存于 11 `trainingOverride`） | 13 | 界面 |
 | 写 11：`ConscriptionSystem.reservePool`、`reserveGeneralSkill` | 11 | 每天 D5 |
 | `AirborneQualifiedShare(OrgUnitId)` | 08 | 按需 |
 | 学校扩建请求 `ExpandSchool(...)` → 11 建设项目 | 11 | 玩家下令 |
@@ -679,14 +691,15 @@ pool.count   −= pool.count × ReserveAttritionPerYear / 365      （累加器�
 
 | 来源 | 数据 / 函数 | 用途 |
 |---|---|---|
-| 01 | 编制树、`ItemsOf(squad)`、`GetMaintenanceOrg(bn)`（= 练度归属）、`PersonnelRequirement(bn)`、营 `tier`、营内填充顺序；事件 `OnCrewModelChange`、`OnSkillHolderChanged`、`OnBattalionCreated/Removed` | 归属、岗位、换装 |
+| 01 | 编制树、`ItemsOf(squad)`、`GetMaintenanceOrg(bn)`（= 练度归属）、`PersonnelRequirement(bn)`、营 `tier`、营内填充顺序；事件 `OnCrewModelChange`、`OnEquipmentAssigned`、`OnSkillHolderChanged`、`OnBattalionCreated/Removed` | 归属、岗位、换装 |
 | 03 | `CombatExperienceReport`（片段结束） | 实战经验 |
 | 04 | `CombatExperienceReport`（条带步，火力单位） | 实战经验 |
-| 06 | `ComputeBasis(FormationId)`、`ConsumeForTraining(FormationId, ItemKey, qty)`（需返回实际扣减量，P-18）、`MobilityProfile`、`FuelDensityTPerL(fuelType)` | 训练消耗 |
+| 06 | `ComputeBasis(FormationId / OrgUnitId)`、`ConsumeForTraining(FormationId / OrgUnitId, ItemKey, qty)`（需返回实际扣减量，P-18）、`MobilityProfile`、`FuelDensityTPerL(fuelType)` | 训练消耗 |
 | 07 | `CasualtyState`、待编池人数、是否后送；`refit` 状态（整建制轮换） | 人数、训练 |
 | 09 | `IsInBattle(bn)` | 训练 share |
 | 11 | `TrainingIntensity`、`ConscriptionSystem`（`conscription`、`termMonths`、`annualIntakeCap`、`contractShare`）、`MobilizationLevel`、`MobilizationTarget(bn, s, t)`、`OnModelUpgraded(..., retention)` | 训练、征召、动员、升级 |
 | 14 | 各国学校产能、开局预备役、开局练度（按编组 × 专业，或全国统一值） | 开局 |
+| 15 | 存档：`SectionId.Personnel`（= 21，15 §3.2）；组件：`PersonnelRecord`、`RosterState`、`CarriedSkillState`、`SkillRecord`、`FormationTrainingState`、`TrainedPoolState`、`SchoolState`、`ReservePoolState`、`CountryManpowerState`（不含 `schoolModelCache`）、本小时 `CombatExperienceReport` 队列；不存档（派生，读档后重建）：`schoolModelCache`、班内岗位表（§4.9.2）、相似度表 | 存档 |
 
 ### 6.3 时机（与 00 §5.2 一致）
 - `Calendar`（30）每日 D1–D5、每小时 H1–H5，排在 11 之后、07 之前（09 §5）。
@@ -835,7 +848,7 @@ pool.count   −= pool.count × ReserveAttritionPerYear / 365      （累加器�
 | 学校型号 | `SchoolModel` | 某专业在本国件数最多的操作型号，学校按它培训。 |
 | 学员批次 | `SchoolCohort` | 同日入学、同专业、同服役类型的一批学员。 |
 | 预备役池 | `ReservePoolState` | 按专业的预备役人数与练度，随时间老化。 |
-| 训练状态 | `FormationTrainingState` | 归属的训练强度覆盖、休整标志、上小时资源满足率。 |
+| 训练状态 | `FormationTrainingState` | 归属的休整标志、上小时资源满足率（强度覆盖存于 11）。 |
 | 训练参与比例 | `share` | 归属内不在战斗、不在整编、非骨干营的在位人员比例。 |
 | 实战经验报告 | `CombatExperienceReport` | 03/04 提交的（营, 专业, 型号, 存活人数, 交战分钟）。 |
 | 岗位下标 | `positionIndex` | 人员在班模板岗位表中的位置。 |
