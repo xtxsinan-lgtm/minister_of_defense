@@ -37,7 +37,7 @@
 - 军工企业利益交换要求（§18.2-7a 的“要求优先采购”等）**[阶段 2+]**。
 - 封存基地启封（`StorageBase`）**[阶段 2+]**；阶段 1 退役 = 处置。
 - 占领区管理、和约 **[阶段 2+]**；阶段 1 只做停火。
-- 海军舰艇采购、VLS 装填模板 **[阶段 3]**。
+- 海军舰艇采购 **[阶段 3]**。装填模板（含 `VlsLoadoutTemplate`）**不归本文件**：通用结构归 01 `LoadoutTemplate`（DC-075、01 O-15），行为由阶段 3 海军规格定义；本文件只在阶段 3 负责其中弹药的采购。
 
 ---
 
@@ -80,6 +80,7 @@
 ## 3. 数据结构
 
 > 命名空间 `MoD.Sim.Strategic`。货币一律 `Musd`（2020 年不变价美元，G-10）。归一化量 [0, 1]（G-09）。ID 按 00 §2.2 用强类型。
+> 型号在运行时一律用 01 的 `ModelHandle`（00 §2.2：静态数据加载后转整数句柄）；YAML 与界面仍写 snake_case 型号 id，由加载器转换。下文的 `FormationId`、`OrgUnitId`、`EquipmentItemId`、`ModelHandle`、`ReadinessTier` 归 01，`SpecialtyHandle`、`SchoolHandle` 归 02，`NodeId`、`ItemKey` 归 06，`SimTime` 归 09，`EdgeId` 归 10。
 
 ### 3.1 国家与政治状态
 
@@ -88,7 +89,7 @@ readonly record struct CountryId(int value);          // 加载时按 ISO3 字�
 readonly record struct WarId(int value);
 readonly record struct ContractId(int value);
 readonly record struct ProductionLineId(int value);
-readonly record struct ProjectId(int value);          // 基建/扩产/升级项目共用
+readonly record struct ProjectId(int value);          // 基建/扩产/升级/学校扩建项目共用
 readonly record struct MarketLotId(int value);
 readonly record struct EventInstanceId(int value);
 
@@ -106,9 +107,12 @@ sealed class Country {
     ConscriptionSystem conscription;     // 3.6
     PoliticalState politics;             // 3.3
     double deterrence;                   // [0,1]，威慑值
+    MobilizationLevel mobilization;      // 3.7；国家级（危机中无战争也可动员）；02/06/07 与 4.8 读取
+    long mobilizationOrderedMs;          // 当前等级的动员令下达时刻；-1 = 未动员
     List<CreditLine> creditLines;        // 3.2
     ExternalActorPolicy? externalPolicy; // 仅 role = ExternalActor / SupplierOnly
     ExportPolicy? exportPolicy;          // 作为卖方时的出口政策（3.4）
+    List<AiDirective> aiDirectives;      // 3.8；Historical 模式的“历史指令”（12 读取）；玩家国家恒为空
 }
 
 sealed class PoliticalState {
@@ -119,6 +123,10 @@ sealed class PoliticalState {
     SortedDictionary<IssueId, double> issueBaseline;   // 回落目标
     double leadershipHawkishness;        // [0,1]，剧本给出；影响方案审批与“主动开战”
     List<TrustLedgerEntry> trustLedger;  // 最近 365 天的变化明细（F4）
+    SortedDictionary<IssueId, double> cumulativeLobbyMusd;   // 4.7.4 各议题累计游说投入
+    bool lobbyingFrozen;                 // 丑闻曝光后冻结 Lobbying 线余额（4.7.4），到下一预算年解除
+    int crisisBonusGrantedYear;          // 已拨危机追加的年份（4.2.6 每年最多一次）；0 = 从未
+    SortedDictionary<CountryId, long> planCooldownUntilMs;   // 4.7.5 同一目标国的重交冷却
 }
 
 enum IssueId : int {                      // 阶段 1 只做 3 个；只能追加
@@ -164,7 +172,7 @@ enum BudgetLine : int {                    // 只能追加
     Personnel = 1,              // 人员：工资、津贴、给养（按人头计算，玩家不能直接设）
     OperationsMaintenance = 2,  // 运行维护：装备维护保养、备件日常消耗、节点维护、燃油（非训练）
     Procurement = 3,            // 采购：新合同首付、二手批次、升级项目、国内生产线的产品款
-    Training = 4,               // 训练：训练活动的非弹药成本（燃油、寿命、场地）；训练弹药从库存出（4.3.4）
+    Training = 4,               // 训练：训练活动的人头费（场地、教材、津贴等非消耗品成本）；训练弹药与训练燃油由 02 从 06 库存扣（02 §4.6.2、06 ConsumeForTraining），本线不再付钱，库存由 WarReserves 补
     Infrastructure = 5,         // 基础设施：仓库/加固/机场掩体（06 定义项目）、国内生产线扩产
     WarReserves = 6,            // 战备储备：按 06 的储备目标购买弹药、燃油、备件（采购路径同 4.4/4.5）
     Lobbying = 7                // 游说（可为 0；上限见常数 LobbyingCapShare）
@@ -189,7 +197,9 @@ sealed class DefenseBudget {
 sealed class BudgetAllocation {
     double omFundingRatio;                // O&M 拨款 / O&M 需求，[0.5, 1.2]，默认 1.0
     TrainingIntensity defaultTraining;    // 全军默认训练强度
-    SortedDictionary<FormationId, TrainingIntensity> trainingOverride;   // 按建制编组覆盖（FormationId 归 01）
+    SortedDictionary<FormationId, TrainingIntensity> trainingOverride;   // 按建制编组覆盖（FormationId 归 01）；缺键 = 用 defaultTraining
+    // 某编组的有效强度 = GetTrainingIntensity(country, f) = trainingOverride.GetValueOrDefault(f, defaultTraining)
+    // （02 §4.6.1 按同一式读取；独立营归属直接用 defaultTraining）。计费（4.2.3）、TrainWearFactor（07）都用有效强度。
     // 剩余可支配资金在下面 4 条线之间按比例分（和 = 1）
     double procurementShare, infrastructureShare, warReservesShare, lobbyingShare;
 }
@@ -218,10 +228,13 @@ enum ContractState : int {
 
 // EquipmentModel 的 ProcurementProfile（00 §4.3：11 归属；YAML 键 procurement）
 sealed class ProcurementProfile {
-    double costMusd;                      // 新品出口单价（2020 不变价）；没有数据时由剧本价格表给（14）
+    double costMusd;                      // 新品出口单价（2020 不变价），Musd/件；弹药 = Musd/发（枚）。没有数据时由剧本价格表给（14）
+                                          // 读取方：01（GetUnitCostMusd，6 节）、07（PartsUnitCostMusd、大修费）、08（选弹/拦截弹按单价排序、成本交换比）、13
     int serviceYear;                      // 可采购起始年（§18.3）
     int? endProductionYear;               // 停产年；之后只能二手
     string[] producers;                   // ISO3，可多国（如 T-72 系：RUS, UKR(1991–), BLR 修理厂…）
+    int? exportFromYear;                  // 卖方开始出口该型号的年份（14 §3.4 `export_from_year`）；当前年更早 → 批准概率 = 0（4.4.2），剧本 flag 可解除
+    string? exportUnlockFlag;             // 解除上一条限制的全局 flag 名（如 "tb2_export_aze_open"，14 数据）；null = 不可解除
     int sensitivity;                      // 0 = 通用（卡车、轻武器）… 3 = 战略敏感（弹道导弹、远程防空）
     int leadTimeDays;                     // 纯外购从批准到首批交付的天数；未给按类别默认（常数表 LeadTimeDefault*）
     int lotSize;                          // 每批交付数量；未给按 max(1, quantity/4)
@@ -236,7 +249,7 @@ sealed class ProcurementProfile {
 sealed class ProcurementContract {
     ContractId id;
     CountryId buyer, seller;              // 国内生产时 seller = buyer
-    string modelId;                       // EquipmentModel id（弹药也是 EquipmentModel）
+    ModelHandle model;                    // EquipmentModel 句柄（弹药也是 EquipmentModel）；工具组合同 = 0
     int quantity;
     AcquisitionKind kind;
     ProcurementMode mode;                 // kind = NewImport 时有效
@@ -252,13 +265,18 @@ sealed class ProcurementContract {
     double conditionOfDelivered;          // [0,1]；新品 = 1，二手 = 批次状态
     bool financedByCredit;                // 用 CreditLine 支付
     DependencyList dependency;            // §18.7（3.5）
-    int? marketLotId;                     // 二手批次来源
+    MarketLotId? marketLotId;             // 二手批次来源
+    ToolsetOrder? toolset;                // 非 null = 01 工具组采购（6 节 RequestToolsetPurchase）
 }
 record DeliveryLot(long dueMs, int quantity, bool delivered);
 record PaymentMilestone(long dueMs, double amountMusd, bool paid);
+record ToolsetOrder(SkillHolderKey org, string group);   // SkillHolderKey 归 02；group = 01 维护组
 
 record ApprovalBreakdown(double logitBase, double relationTerm, double blocTerm, double historyTerm,
-                         double sensitivityTerm, double warTerm, double rivalTerm, bool embargoed);
+                         double willingnessTerm, double sensitivityTerm, double warTerm, double rivalTerm,
+                         bool embargoed);
+// 各 term 为 4.4.2 中带符号的加数（sensitivityTerm、warTerm、rivalTerm ≤ 0）；logit = 全部 term 之和。
+// embargoed = true 表示 4.4.2 第一行的硬性 p = 0（禁运、敏感度超限或 exportFromYear 未到）。
 
 // 国内生产线（00：ProductionLine，挂在 Factory 上；Factory 是 06 的 LogisticsNode）
 enum LineState : int { Active = 1, Idle = 2, UnderConstruction = 3 }
@@ -266,8 +284,8 @@ sealed class ProductionLine {
     ProductionLineId id;
     NodeId factoryNodeId;                 // NodeId 归 06；NodeRole.Factory
     CountryId owner;
-    string[] modelIds;                    // 可生产的型号（同一线可切换，切换耗时 LineSwitchDays）
-    string activeModelId;
+    ModelHandle[] models;                 // 可生产的型号（同一线可切换，切换耗时 LineSwitchDays）
+    ModelHandle activeModel;
     double capacityPerYear;               // 单位：件/年（弹药：发/年）
     double nominalCapacityPerYear;        // 建成时的产能（萎缩前）
     double utilization;                   // [0,1] 玩家设定开工率
@@ -283,7 +301,7 @@ enum ConditionGrade : int { Poor = 1, Fair = 2, Good = 3 }
 sealed class MarketLot {
     MarketLotId id;
     CountryId seller;
-    string modelId;
+    ModelHandle model;
     int quantity;
     ConditionGrade grade;
     double condition;                     // [0,1]，由 grade 决定（常数表）
@@ -291,34 +309,48 @@ sealed class MarketLot {
     long availableFromMs, expiresAtMs;
     bool sold;
 }
+// 市场池条目（14 market_pool[] 的运行时形式；静态数据，不存档）
+sealed class MarketPoolEntry {
+    CountryId seller; ModelHandle model;
+    int fromYear, toYear;                 // 14 `years`：允许出现的年份区间（含端点）
+    double quarterlyP;                    // 每季度出现概率
+    int qtyMin, qtyMax;
+    double[] gradeWeights;                // 长度 3，下标 0/1/2 = Poor/Fair/Good
+}
 
-// 升级路径（数据：data/procurement/*.yaml 的 upgrades，见 14）
+// 升级路径（数据：data/procurement/*.yaml 的 upgrades，见 14；静态数据，不存档）
 sealed class UpgradePath {
     string id;                            // "t72a_to_t72b3"
-    string fromModelId, toModelId;
+    ModelHandle fromModel, toModel;       // 14 `from: "*"`（refurbish_generic）→ fromModel = 0，表示“任意型号，toModel = 原型号”（4.5.1 整修）
     double costPerUnitMusd;
     int daysPerUnit;                      // 单车在厂时间
     string[] providers;                   // ISO3（卖方提供升级）或 "domestic"
     NodeId? domesticFacility;             // 国内可升级的工厂
     double capacityPerYear;               // 每年最多升级多少
-    double typeSkillRetention;            // 型号专有练度保留系数（交给 02），默认 0.8
+    double typeSkillRetention;            // 型号专有练度保留系数（交给 02 OnModelUpgraded），默认 TypeSkillRetentionUpgrade
+    string[]? availability;               // 14 可选：允许下单的国家 ISO3；null = 不限
 }
 sealed class UpgradeProject {
     ProjectId id; CountryId owner; string upgradePathId; CountryId provider;
     int quantityOrdered, inShop, completed;
+    double intakeAccumulator;             // 4.6 第 2 步的“累加”小数部分
     ContractId? contractId;               // 外国提供时伴随一个采购合同（用于批准与付款）
 }
 
 // 基建与扩产项目
-enum ProjectKind : int { LineExpansion = 1, NewLineNewSite = 2, LineRestart = 3, InfrastructureFrom06 = 4, Upgrade = 5 }
+enum ProjectKind : int { LineExpansion = 1, NewLineNewSite = 2, LineRestart = 3, InfrastructureFrom06 = 4, Upgrade = 5, SchoolExpansion = 6 }
+enum InfraProjectKind : int { None = 0, NewDepot = 1, HardenNode = 2, AirbaseShelter = 3 }   // D7；参数与效果见 06（06 D5）
 sealed class Project {
     ProjectId id; CountryId owner; ProjectKind kind;
     double totalCostMusd, spentMusd;
     int nominalDays;                      // 满额拨款时的工期
     double progress;                      // [0,1]
     ProductionLineId? lineId;             // 扩产对象
-    double capacityDeltaPerYear;          // 扩产增量
-    string? infraRef;                     // 06 的项目引用
+    double capacityDeltaPerYear;          // 扩产增量；SchoolExpansion = 学校年产能增量（02）
+    InfraProjectKind infraKind;           // kind = InfrastructureFrom06 时有效
+    NodeId infraNode;                     // 加固/掩体的目标节点；NewDepot = 0（完工时由 06 创建）
+    ulong infraTile;                      // NewDepot 的地块（H3Index）
+    SchoolHandle school;                  // kind = SchoolExpansion 时有效（02）
 }
 ```
 
@@ -339,21 +371,35 @@ sealed class ExternalActorPolicy {
     SortedDictionary<CountryId, double> stance;        // [-1,1] 对各交战国的倾向
     InterventionRung maxRung;                          // 该行为体在本剧本中最高会走到哪一级
     List<RedLine> redLines;
-    CeasefireTemplateRef[] mediationTemplates;         // 作为调停方时可用的停火模板（14 定义）
+    string[] mediationTemplateIds;                     // 作为调停方时可用的停火模板 id（14 `CeasefireTemplate.id`），按优先顺序
     int mediationFirstDay;                             // 战争开始后第几天开始提出停火
     int mediationIntervalDays;
+    SortedDictionary<CountryId, double>? supplyInWarP; // 14 `supply_in_war`：覆盖 4.10.4 的 supplyContinueP（键 = 买方）；缺键用公式
 }
+
+// 地块集合引用（静态数据；运行时由 14 IScenarioService 展开为 H3 列表，展开结果按 H3Index 升序）
+enum TileSetKind : int { None = 0, DeJure = 1, Region = 2, Explicit = 3 }
+readonly record struct TileSetRef(TileSetKind kind, string key);
+// DeJure：key = ISO3，展开 = TileClaimTable 中 de jure 归该国的地块；Region：key = 14 RegionDef.id；
+// Explicit：key = 运行时生成的集合 id（如 12 warAim、停火维和区），展开表存在 StrategicState.explicitTileSets
+
 sealed class RedLine {
     string id;                            // "rus_csto_armenia_proper"
     CountryId protectedCountry;           // 被保护方
-    TileSetRef tiles;                     // 触发区域（14 给 H3 列表或“某国 de jure 领土”）
+    TileSetRef tiles;                     // 触发区域（14：`{de_jure: ISO3}` 或 `{region: id}`）
     RedLineTrigger trigger;               // EnemyGroundForcesEnter / StrikesOnTiles / CapitalThreatened
     int graceHours;                       // 进入后多少小时内撤出可免触发
-    RedLineEffect effect;                 // Warning → ForcedCeasefire → DirectIntervention（阶段 1 只做前两种）
+    List<RedLineStep> effects;            // 14 `effects`：按 afterHours 升序递进（如 Warning → ForcedCeasefire）；阶段 1 不允许 DirectIntervention
     double relationPenalty;               // 对违反方
 }
+record RedLineStep(int afterHours, RedLineEffect effect);   // afterHours：自 graceHours 期满起算
 enum RedLineTrigger : int { EnemyGroundForcesEnter = 1, StrikesOnTiles = 2, CapitalThreatened = 3 }
 enum RedLineEffect : int { Warning = 1, ForcedCeasefire = 2, DirectIntervention = 3 }   // 3 = [阶段 2+]
+sealed class RedLineState {               // 运行时（存档），每条红线一份
+    string redLineId; CountryId violator; long violationStartMs;   // -1 = 当前未违反
+    int nextStepIndex;                    // 下一个要执行的 effects 下标
+    bool forcedCeasefireIssued;           // 本场战争已因此红线发出强制停火（14 §4.8 目标判据读取）
+}
 ```
 
 ### 3.5 依赖清单（§18.7）
@@ -361,11 +407,12 @@ enum RedLineEffect : int { Warning = 1, ForcedCeasefire = 2, DirectIntervention 
 ```csharp
 enum DependencyChannel : int { Item = 1, SpareParts = 2, Ammunition = 3, Software = 4 }
 sealed class DependencyList {             // 每个“国家 × 型号”一份（合同交付后合并）
-    string modelId; CountryId owner;
+    ModelHandle model; CountryId owner;
     SortedDictionary<DependencyChannel, CountryId> source;   // 自给时 = owner
     SortedDictionary<DependencyChannel, double> vulnerability; // [0,1]：0 = 自给，1 = 完全依赖
     bool endUseRestricted;                // 使用限制（09 读取：禁止对受限地块下 CrossTileStrike）
     TileSetRef? restrictedTiles;
+    int softwareCutDays;                  // Software 通道供应国中断的连续天数（4.11；恢复供应后每天 −1 至 0）
 }
 ```
 
@@ -380,11 +427,12 @@ sealed class ConscriptionSystem {
     int annualIntakeCap;                  // 每年最多征召人数
     double contractShareTarget;           // 合同兵占士兵比例目标 [0,1]
     double contractShare;                 // 当前
-    int reservePool;                      // 可动员预备役人数（有服役经历）
-    double reserveGeneralSkill;           // 预备役平均通用练度 [0,1]（02 读取）
+    int reservePool;                      // 可动员预备役人数（有服役经历）；开局由 14 给，之后**只由 02 每天 D5 写入**（02 §4.10.4，DC-083），本文件只读
+    double reserveGeneralSkill;           // 预备役平均通用练度 [0,1]；写入规则同上
     SortedDictionary<PayCategory, double> payMusdPerHeadYear;   // 年人均人员费（剧本给）
 }
 enum PayCategory : int { Conscript = 1, Contract = 2, Officer = 3, ReservistMobilized = 4, Civilian = 5 }
+// 02 ServiceType 的映射见 02 §3.3（Reservist、Volunteer → ReservistMobilized）；人数由 02 HeadcountByPayCategory(country) 提供
 ```
 
 ### 3.7 战争、动员、停火
@@ -403,24 +451,29 @@ sealed class War {
     SortedDictionary<CountryId, WarSideState> sides;
     List<CeasefireOffer> offers;
     long? ceasefireMs;
+    string? ceasefireTemplateId;          // 生效的停火模板（14 §4.8 “≤ D 天内触发模板 T” 读取）
     double nuclearRisk;                   // 阶段 1 恒为 0 [阶段 2+]
+    // 派生（不存）：scope = 任一交战国 Country.mobilization == Full ? Total : Limited
+    //（与 4.8.1 的 TotalWar/LimitedConflict 判定一致；14 §4.7.1 的 WarScope 条件读取）
 }
 sealed class WarSideState {
-    CountryId country;
-    MobilizationLevel mobilization;
-    long mobilizationOrderedMs;
+    CountryId country;                    // 动员等级读 Country.mobilization（3.1），不在此重复存
     OperationPlan? approvedPlan;
     double fatigue;                       // [0,1]，4.8 的公式（无状态，每小时重算）
     FatigueBreakdown fatigueBreakdown;
-    int killedCumulative;                 // 07 汇总（KIA + 失踪中确认死亡；见 4.8）
+    int killedCumulative;                 // 本战争期间本国阵亡人数：07 在每次人员转入 CasualtyState.Killed（含伤重不治）时
+                                          // 对该国参与的每场 phase == Active 的 War 加 1（07 §4.1）；失踪/被俘不计（S-11）
     int coreTilesAtStart;                 // 开战时控制的地块数
     int coreTilesLost;                    // 其中目前被敌控制的数目
     int enemyTilesGained;                 // 开战时敌控、现在我控
     int objectiveTilesTotal, objectiveTilesHeld;
     double supplementSpentMusd;
     bool leadershipDemandsCeasefire;
+    int[] netTileHistory;                 // 长度 72 的环形缓冲：每小时记 (enemyTilesGained − coreTilesLost)，4.8.6 的 trend 用
+    int netTileHistoryHead;
 }
 record FatigueBreakdown(double time, double casualties, double territory, double cost, double gains);
+// gains 存的是**已带负号**的值（≤ 0，见 4.8.3）；fatigue = clamp(time + casualties + territory + cost + gains, 0, 1)
 
 sealed class OperationPlan {              // §18.2-2
     int id; CountryId owner; CountryId target;
@@ -441,12 +494,12 @@ sealed class CeasefireOffer {
     SortedDictionary<CountryId, bool?> responses;   // null = 未答复
 }
 
-sealed class PeacekeepingZone {           // 停火后维和区（如拉钦走廊）
-    CountryId actor; TileSetRef tiles; long startMs, endMs;
+sealed class PeacekeepingZone {           // 停火后维和区（如拉钦走廊）；由 14 IScenarioService.BuildPeacekeepingZone 生成
+    CountryId actor; List<ulong> tiles /* H3Index 升序，生成时展开 */; long startMs, endMs;
 }
 
 // 地块的法理归属（与 09 的 TileControl 区分）
-sealed class TileClaimTable {             // 每个 Tile 一个 de jure 所有者（14 初始化）
+sealed class TileClaimTable {             // 每个 Tile 一个 de jure 所有者（14 用 10 的 Tile.deJureIso3 初始化）
     SortedDictionary<ulong /*H3Index*/, CountryId> deJure;
 }
 ```
@@ -454,7 +507,8 @@ sealed class TileClaimTable {             // 每个 Tile 一个 de jure 所有�
 ### 3.8 危机事件（数据驱动）
 
 ```csharp
-sealed class CrisisEventDef {             // YAML：data/scenarios/<id>/events.yaml 或 data/events/*.yaml
+enum EventScope : int { Global = 1, Dyad = 2, Country = 3 }
+sealed class CrisisEventDef {             // YAML：data/scenarios/<id>/events.yaml 或 data/events/*.yaml（映射见 14 §3.8）
     string id;
     EventScope scope;                     // Global / Dyad / Country
     List<Condition> triggers;             // 全部满足才可能触发
@@ -481,7 +535,43 @@ enum EffectType : int {
     OfferCeasefire = 19, DeterrenceDelta = 20
 }
 sealed class EventInstance { EventInstanceId id; string defId; long firedMs; CountryId? country;
+                             ulong scopeKey;          // Global = 0；Country = countryId；Dyad = Mix(min(a,b)) ^ max(a,b)
                              string? chosenOptionId; long responseDeadlineMs; }
+
+// 历史指令（Effect.AiDirective 写入；12 CountryAi 读取，4.12）
+sealed class AiDirective {
+    string id;                            // = 产生它的事件 id + "/" + 选项 id
+    CountryId country;                    // 被指令的 AI 国家（指向玩家国家的指令在写入时丢弃，4.12）
+    string kind;                          // 阶段 1："offensive"（到期提交作战方案）、"mobilize"（到期申请动员）
+    string? warAimId;                     // 12/14 的 warAim id（kind = offensive）
+    long dueMs;                           // 到期时刻
+    bool consumed;                        // 12 执行后置 true
+}
+
+// 战略层全部运行时状态（存档单位，见 6 节存档表）
+sealed class StrategicState {
+    StrategicSettings settings;                               // 3.10
+    SortedDictionary<CountryId, Country> countries;
+    SortedDictionary<(CountryId, CountryId), Relation> relations;
+    SortedDictionary<(CountryId, CountryId), TensionState> tensions;
+    SortedDictionary<ContractId, ProcurementContract> contracts;
+    SortedDictionary<ProductionLineId, ProductionLine> lines;
+    SortedDictionary<MarketLotId, MarketLot> marketLots;
+    SortedDictionary<ProjectId, UpgradeProject> upgradeProjects;
+    SortedDictionary<ProjectId, Project> projects;
+    SortedDictionary<(CountryId, ModelHandle), DependencyList> dependencies;
+    SortedDictionary<WarId, War> wars;
+    List<PeacekeepingZone> peacekeepingZones;
+    List<RedLineState> redLineStates;                         // 按 (redLineId, violator) 升序
+    TileClaimTable claims;
+    SortedDictionary<EventInstanceId, EventInstance> events;
+    SortedSet<(string defId, ulong scopeKey)> firedOneShot;   // oneShot 事件已触发记录
+    SortedSet<string> flags;                                  // SetFlag/ClearFlag 的全局 flag（Ordinal 比较）；FlagSet/FlagNotSet 条件、exportUnlockFlag 读取
+    SortedDictionary<string, List<ulong>> explicitTileSets;   // TileSetKind.Explicit 的展开表
+    SortedDictionary<(CountryId, CountryId, ModelHandle), long> retryCooldownUntilMs;   // 4.4.3 (买方, 卖方, 型号)
+    SortedDictionary<(CountryId, CountryId), bool> supplierSuspended;                   // 4.11 (买方, 供应国)
+    List<DefenseReview> reviews;                              // 历年年报（F8）
+}
 ```
 
 ### 3.9 沙盒指标
