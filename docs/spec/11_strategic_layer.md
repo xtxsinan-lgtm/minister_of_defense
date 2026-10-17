@@ -264,6 +264,7 @@ sealed class ProcurementContract {
     double upfrontMusd;                   // 一次性前期投入（建组装厂/技术转让）
     ContractState state;
     long submittedMs, decisionDueMs;
+    long approvedMs;                      // 批准（state → Active）时刻；-1 = 未批准（系统旗标 big_contract_signed_last_90d 读取）
     double approvalProbability;           // 提交时计算并冻结（F2 显示）
     ApprovalBreakdown breakdown;
     List<DeliveryLot> schedule;
@@ -337,6 +338,7 @@ sealed class UpgradePath {
     double capacityPerYear;               // 每年最多升级多少
     double typeSkillRetention;            // 型号专有练度保留系数（交给 02 OnModelUpgraded），默认 TypeSkillRetentionUpgrade
     string[]? availability;               // 14 可选：允许下单的国家 ISO3；null = 不限
+    int? fromYear;                        // 14 可选：此年之前不可下单
 }
 sealed class UpgradeProject {
     ProjectId id; CountryId owner; string upgradePathId; CountryId provider;
@@ -385,6 +387,8 @@ sealed class ExternalActorPolicy {
     int mediationFirstDay;                             // 战争开始后第几天开始提出停火
     int mediationIntervalDays;
     SortedDictionary<CountryId, double>? supplyInWarP; // 14 `supply_in_war`：覆盖 4.10.4 的 supplyContinueP（键 = 买方）；缺键用公式
+    CountryId[] intelSharingTo;                        // 14 `intel_sharing.to`：情报共享受援国；空 = 不共享
+    int intelSharingFromYear;                          // 14 `intel_sharing.from_year`
 }
 
 // 地块集合引用（静态数据；运行时由 14 IScenarioService 展开为 H3 列表，展开结果按 H3Index 升序）
@@ -463,9 +467,13 @@ sealed class War {
     long? ceasefireMs;
     string? ceasefireTemplateId;          // 生效的停火模板（14 §4.8 “≤ D 天内触发模板 T” 读取）
     double nuclearRisk;                   // 阶段 1 恒为 0 [阶段 2+]
-    // 派生（不存）：scope = 任一交战国 Country.mobilization == Full ? Total : Limited
-    //（与 4.8.1 的 TotalWar/LimitedConflict 判定一致；14 §4.7.1 的 WarScope 条件读取）
+    WarScope scope;                       // 战争规模（14 §4.7.1 WarScope 条件读取）：事件 StartWar 的 arg `scope`（缺省 Total）；作战方案批准开战 = Total
+    int? maxDays;                         // StartWar arg `max_days`：有限战争的天数上限；null = 无上限
+    string? maxDaysTemplateId;            // StartWar arg `template`：第 maxDays 天强制停火所用的 14 模板 id
+    bool maxDaysOfferIssued;              // 已因 maxDays 发出强制停火提议
+    // 注意：TensionLevel 的 LimitedConflict/TotalWar 仍按动员等级判定（4.8.1），与 scope 无关
 }
+enum WarScope : int { Limited = 1, Total = 2 }
 sealed class WarSideState {
     CountryId country;                    // 动员等级读 Country.mobilization（3.1），不在此重复存
     OperationPlan? approvedPlan;
@@ -617,7 +625,7 @@ sealed class StrategicSettings { HistoricalMode mode; bool sandboxSupremeLeader;
 void OnCalendar(long tick) {
     var t = SimTime.FromTick(tick);                 // 09 §3
     ApplyPendingActions(t);                         // 本刻登记的 IStrategicActions（6 节）
-    if (IsJan1Midnight(t)) YearlyStep(t);           // 4.2.1–4.2.3（含 4.2.2 义务）、4.3 第 5 条（合同兵比例）、4.13 年报
+    if (IsJan1Midnight(t)) YearlyStep(t);           // 4.2.1–4.2.3（含 4.2.2 义务）、4.3 第 5 条（合同兵比例）、4.10.4 情报共享生效、4.13 年报
     if (tick % 1440 == 0) DailyStep(t);             // 见下
     if (tick % 60 == 0) HourlyStep(t);              // 下面 H1–H12
 }
@@ -854,7 +862,7 @@ if idleDaysConsecutive > LineIdleGraceDays:
 ```
 - 重启：`LineRestart` 项目，费用 = `LineRestartCostShare × (nominal − current) × line.expansionCostMusdPerUnitYear`，工期 `LineRestartDays`。
 - 扩产（D6）：`LineExpansion` 项目：`cost = ΔcapacityPerYear × line.expansionCostMusdPerUnitYear`（14 数据），工期 `ExpansionDays`；战时可选“加急”：工期 × `WartimeRushTimeFactor`，费用 × `WartimeRushCostFactor`；新址建线：费用 × `NewSiteCostFactor`，工期 + `NewSiteExtraDays`（§19.6 🟡 扩产选址）。
-- 项目进度（H6）：`progress += (spentThisHour / totalCost)`，`spentThisHour = min(balance(Infrastructure), totalCost / nominalDays / 24)`，计入 `spentMusd[Infrastructure]`。资金不足时按比例变慢。完工：`LineExpansion/NewLineNewSite/LineRestart` 改产能；`InfrastructureFrom06` 调用 06 `OnInfrastructureCompleted(owner, infraKind, infraNode, infraTile, infraCapacityT)`（06 §4.17）；`SchoolExpansion` 把 02 `SchoolState.capacityPerYear += capacityDeltaPerYear`（02 §4.8 “完工时 capacityPerYear += Δ”）。
+- 项目进度（H6）：`progress += (spentThisHour / totalCost)`，`spentThisHour = min(balance(Infrastructure), totalCost / nominalDays / 24)`，计入 `spentMusd[Infrastructure]`。资金不足时按比例变慢。`totalCostMusd == 0` 的项目（14 “外生建成”的 `NewLineNewSite`）不花钱：`progress += 1 / (nominalDays × 24)`，按 `nominalDays` 准时完工。完工：`LineExpansion/NewLineNewSite/LineRestart` 改产能；`InfrastructureFrom06` 调用 06 `OnInfrastructureCompleted(owner, infraKind, infraNode, infraTile, infraCapacityT)`（06 §4.17）；`SchoolExpansion` 把 02 `SchoolState.capacityPerYear += capacityDeltaPerYear`（02 §4.8 “完工时 capacityPerYear += Δ”）。
 
 #### 4.5.4 退役（D5，S-06）
 - 选中装备（按型号 × 数量，从未编入营的库存优先，再按 AllocationPolicy 的逆序从营中抽出）立即从 01 删除（01 §3.5 注释：11 退役时删除）；该型号 O&M 需求下降。
@@ -996,7 +1004,8 @@ annualSupplement = max(0, capShare × gdpMusd − B_base) × WarGrantFraction
 **触发来源**
 1. 调停方提议：外部行为体（`maxRung ≥ Mediation`）在战争第 `mediationFirstDay` 天起，每 `mediationIntervalDays` 天提出一次；或任一交战方 `leadershipDemandsCeasefire` 变为 true 时 24 小时内提出。模板选择：调用 14 `IScenarioService.SelectCeasefireTemplate(warId, mediator)`（14 §4.7.1：按 `mediationTemplateIds` 顺序取第一个条件满足的模板，都不满足取 `freeze_template`）。
 2. 红线触发 `ForcedCeasefire`（4.10.2）：立即生成一个**强制**提议（双方必须接受），模板同第 1 条（调停方 = 红线所属行为体）。
-3. 直接谈判：交战方达成 `objectiveTilesHeld / objectiveTilesTotal ≥ ObjectiveAchievedShare` 时，可向对方提出“按现控制线停火”（无移交、无维和区）。
+3. 有限战争到期：`War.maxDays != null && !maxDaysOfferIssued && days ≥ maxDays` → 生成**强制**提议（模板 = `maxDaysTemplateId`，直接按 id 取 14 模板，不经 `SelectCeasefireTemplate`；调停方 = 模板 `mediator`，为 "any" 时取发起方），`maxDaysOfferIssued = true`。
+4. 直接谈判：交战方达成 `objectiveTilesHeld / objectiveTilesTotal ≥ ObjectiveAchievedShare` 时，可向对方提出“按现控制线停火”（无移交、无维和区）。
 
 **接受规则**
 ```
@@ -1020,6 +1029,7 @@ trend = netTileHistory 最新值 − 72 小时前的值（不足 72 小时用最
 
 ### 4.9 危机事件（H8）
 ```
+14.RunScriptedStart(tick)          // H8 开头先执行 14 开局脚本到期条目（14 §4.9：Historical 强制事件、非玩家动员）
 for each def in eventDefs (按 id Ordinal 升序):
     for each scopeInstance (Global 一个；Country 按 CountryId 升序；Dyad 按 (a,b) 升序，a < b):
         if def.oneShot && firedOneShot.Contains((def.id, scopeKey)): continue
@@ -1029,8 +1039,11 @@ for each def in eventDefs (按 id Ordinal 升序):
         rng = Rng.For(Strategic, Mix(defHandle) ^ scopeKey, tick, SaltEvent)   // defHandle = def.id 的加载序号（00 §2.2 排序规则）
         if rng.Bernoulli(pHour): Fire(def, scopeInstance)
 ```
-- 触发后：创建 `EventInstance`，发 09 通知 `CrisisEvent`。玩家国家 → 弹出简报（游戏暂停可选），`responseDeadline = now + EventResponseHours`；超时按第一个选项。AI 国家 → 12 按 `aiWeight` 与效用选择（确定性：同权重时取第一个），经 `AnswerEvent` 提交。
+- 触发后：创建 `EventInstance`，发 09 通知 `CrisisEvent`。`Dyad` 事件（a < b）掷骰一次，触发时为两国**各创建一个** `EventInstance`（先 a 后 b，`country` = 响应国、`scopeKey` 相同），各自选项、各自执行效果；效果中的 `target: self` 与 arg 关系对里的 `self` 替换为该实例的响应国（14 §3.8）；`oneShot` 记录按 (defId, scopeKey) 只记一次。`Country` 事件 self = 该国；`Global` 事件创建一个实例（`country = null`），由玩家答复（无玩家国家时直接取第一个选项），其效果不得使用 `target: self`（加载时校验报错）。玩家国家 → 弹出简报（游戏暂停可选），`responseDeadline = now + EventResponseHours`；超时按第一个选项。AI 国家 → 12 按 `aiWeight` 与效用选择（确定性：同权重时取第一个），经 `AnswerEvent` 提交。
 - 同一小时多个事件触发：按（事件 id, 范围键）升序依次处理，前一个事件的效果对后一个的条件**不回溯**（条件在本小时开始时已判定）。
+- 系统旗标（不由 `SetFlag` 设置，条件求值时按范围实时计算；名字与普通 flag 同命名空间，剧本不得 `SetFlag` 同名）：
+  - `big_contract_signed_last_90d`：`Country` 范围 c → `rivalOf(c)` 在最近 90 天内有 `approvedMs ≥ now − 90 d` 且 `unitPriceMusd × quantity + upfrontMusd ≥ BigContractBudgetShare × B_base(rivalOf(c))` 的合同；`Dyad`/`Global` 范围 → 任一可玩国满足同一条件。
+- `StartWar` 效果：arg 键 `casus_belli`、`aims`（11 使用）以及 `scope`、`max_days`、`template`（存入 `War.scope/maxDays/maxDaysTemplateId`，14 §3.8）。
 - `AiDirective` 效果：`arg` 格式见 14 §3.8；写入 `Country.aiDirectives`。目标为玩家国家时丢弃（14 §4.9 第 4 条）。
 - `BorderSkirmish` 效果（**依赖 DC-046，未决**）：交界边由 14 `ResolveSkirmishEdge(arg, tick, eventHandle)` 解析；请求在该边生成一场**有限交战**（`EdgeBattle`，参战规模限连级、持续上限 `SkirmishMaxHours`，不触发 `War`、不改变 `TileControl` 以外的战争状态）；结果（伤亡、是否丢失阵地）回写事件链。按 DC-046 建议①，本功能需要：09 新增 `BattleTriggerKind.Skirmish`（09 负责创建触发）与 04 在创建战斗时接受规模上限（连级）和时长上限；在 04/09 给出这两个接口之前，`BorderSkirmish` 效果**只记日志、不生成战斗**（事件的其他效果照常执行）。若 DC-046 改选②（删除功能），删除 `EffectType.BorderSkirmish` 的执行（枚举值保留，只能追加的规则）。
 
@@ -1071,7 +1084,7 @@ lossRatio = enemyKilled / max(1, ownKilled)       // 双方 WarSideState.killedC
 
 #### 4.10.4 供应国战时行为（与 4.11 合并执行）
 - 每个外部行为体对每个交战国：`supplyContinueP = supplyInWarP[buyer]`（14 `supply_in_war` 有值时），否则 `clamp(0.5 + 0.5 × stance[buyer] − 0.3 × (stance[enemy] > 0.5 ? 1 : 0), 0, 1)`，用于 4.11 的中断判定。没有 `ExternalActorPolicy` 的纯卖方：`supplyContinueP = 1`（不会中断）。
-- 情报共享（`IntelSharing`）：把外部行为体的卫星加入受援国的共享名单——即在 05 的 `SatelliteAsset.sharesWith` 中加入受援国（05 R-12：MVP 盟国只共享卫星）；阶段 1 只有土耳其对阿塞拜疆（14 `external_actors.TUR.intel_sharing`）。
+- 情报共享（`IntelSharing`）：把外部行为体的卫星加入受援国的共享名单——即在 05 的 `SatelliteAsset.sharesWith` 中加入受援国（05 R-12：MVP 盟国只共享卫星）；阶段 1 只有土耳其对阿塞拜疆（14 `external_actors.TUR.intel_sharing`）。`intelSharingFromYear ≤ 开局年` 的由 14 开局写入；`intelSharingFromYear > 开局年` 的在该年 1 月 1 日（YearlyStep）由 11 把 `intelSharingTo` 加入该行为体拥有的每颗 `SatelliteAsset.sharesWith`（已在其中则跳过；05 存档保存运行时 `sharesWith`）。
 
 ### 4.11 供应依赖与战时中断（§18.7）
 每 7 天（DailyStep D6，`day % 7 == 0`，day = 自纪元起的天数）对每个（买方, 供应国）对（买方 CountryId 升序、再供应国升序；供应国 = 买方任一 `DependencyList.source` 或 Active 合同的 `seller`，且 ≠ 买方），若买方在 `phase == Active` 的战争中：
@@ -1269,6 +1282,7 @@ challengeProgress[g] = IScenarioService.GoalProgress(country, g)  // 14 §4.8
 | `SoftwareDecayDays` / `SoftwareDecayMax` | 180 / 0.3 | d / — | — | est |
 | `EventResponseHours` | 24 | h | 6–72 | bal |
 | `SkirmishMaxHours` | 12 | h | 2–48 | bal |
+| `BigContractBudgetShare` | 0.10 | 占对手 B_base | 0.05–0.3 | bal：系统旗标 `big_contract_signed_last_90d` 的“大额”门槛（4.9） |
 
 ### 5.5 RNG salt 表（`RngDomain.Strategic = 11`）
 | salt | 值 | 用途 |
@@ -1585,7 +1599,9 @@ sealed class EquipmentConditionState { EquipmentItemId itemId; double condition;
 | 战略查询接口 | `IStrategicQuery` | 供其他系统同步调用的查询与扣款接口（单价、训练强度、动员目标、软件衰减、战争状态、命令封锁） |
 | 命令封锁原因 | `OrderBlockReason` | 09 命令校验时 11 返回的封锁原因：和平跨境、停火、维和区、使用限制 |
 | 采购报价 | `ProcurementQuote` | `Quote` 的结果：单价、前期投入、批准概率与分项、交付与付款表 |
-| 基建项目类型 | `InfraProjectKind` | 新建仓库、节点加固、机场掩体（效果由 06 定义） |
+| 基建项目类型 | `InfraProjectKind` | 新建仓库、节点加固、机场掩体（价格、工期、效果见 06 §4.17） |
 | 软件衰减系数 | `SoftwareDegradeFactor` | 软件保障被切断后进口传感器效能的乘数（05/08 读取） |
 | 预算扣款 | `TryCharge` | 其他系统从指定预算线一次性扣款；余额不足返回 false |
 | 事件范围 | `EventScope` | `Global/Dyad/Country` |
+| 战争规模 | `WarScope` | `Limited/Total`；事件开战时由 arg 给出，供停火模板条件读取 |
+| 系统旗标 | `big_contract_signed_last_90d` | 11 实时计算的条件旗标：对手近 90 天签了大额军购 |
