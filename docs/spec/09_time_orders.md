@@ -156,45 +156,52 @@ public sealed class MoveOrderPayload : IOrderPayload {
 
 public sealed class CrossTileReconPayload : IOrderPayload {
     public ReconTaskKind kind;             // AreaRecon / SofMission
-    public List<ulong> areaTiles;          // AreaReconTask（05）的区域
-    public int durationDays;               // SofMission 用；AreaRecon = 0 表示持续
+    public List<ulong> areaTiles;          // AreaReconTask（05）的区域；SofMission 用 areaTiles[0]
+    public List<TilePriority> tilePriorities;   // AreaRecon 用：与 areaTiles 一一对应（05）
+    public List<ReconAssetRef> assets;     // AreaRecon 用：分配的侦察资产（05）
+    public ExposureLevel desiredLevel;     // AreaRecon 用：想达到的暴露等级（05）
+    public ReconRiskTolerance risk;        // AreaRecon 用（05）
+    public double durationDays;            // SofMission 用；AreaRecon = 0 表示持续
+    public double reportIntervalH;         // SofMission 用：回报间隔（05）
     public SofInsertion insertion;         // SofMission 用（05）
     public SofInsertion extraction;        // SofMission 用
 }
+// SofMission 的特种部队连 = Order.recipient（RecipientKind.Company）。
 public enum ReconTaskKind : int { None = 0, AreaRecon = 1, SofMission = 2 }
 
 public sealed class CrossTileStrikePayload : IOrderPayload {
-    public StrikeTargetKind targetKind;    // Tile（按暴露度自动选目标）/ KnownUnit / LogisticsNode / Bridge
+    public StrikeTargetKind targetKind;    // Tile（按暴露度自动选目标）/ KnownUnit / LogisticsNode / Bridge / AirDefenseUnit / Loc
     public ulong targetTile;
-    public int targetEntityId;             // KnownUnit: BattalionId；LogisticsNode: NodeId；Bridge: 10 的 BridgeNode id
+    public ulong targetEntityId;           // KnownUnit: OrgUnitId（营级 OrgUnit）；LogisticsNode: NodeId；Bridge: CrossingId.value（10）
     public int munitionModelHandle;        // 0 = 自动选
     public int roundsPerSalvo;             // 0 = 系统建议值（04 计算）
     public StrikeRepeat repeat;            // Once / UntilDestroyed / Count
     public int repeatCount;
     public IntelSnapshot intelAtIssue;     // 下令时的情报快照（✅ §11.1.1：打击用下令时的情报）
 }
-public enum StrikeTargetKind : int { None = 0, Tile = 1, KnownUnit = 2, LogisticsNode = 3, Bridge = 4 }
+public enum StrikeTargetKind : int { None = 0, Tile = 1, KnownUnit = 2, LogisticsNode = 3, Bridge = 4, AirDefenseUnit = 5, Loc = 6 }
 public enum StrikeRepeat : int { None = 0, Once = 1, UntilDestroyed = 2, Count = 3 }
 
-public readonly record struct IntelSnapshot(ExposureLevel level, SimTime intelTimestamp, double posErrorM);
+public readonly record struct IntelSnapshot(ExposureLevel level, SimTime intelTimestamp, double posErrorM, Posture observedPosture);   // 05 GetExposure 返回
 
 public sealed class AirMissionOrderPayload : IOrderPayload { public object missionSpec; } // 内容由 08 定义（AirMission）
 public sealed class LogisticsConfigPayload : IOrderPayload { public object configChange; } // 内容由 06 定义
 public sealed class UnitConfigPayload : IOrderPayload {
-    public UnitConfigField field;          // MarchMode / Emcon / InterceptPolicy / ReplacementMode / ReorgPolicy / AllocationPolicy
+    public UnitConfigField field;          // MarchMode / Emcon / InterceptPolicy / ReplacementMode / ReorgPolicy / AllocationPolicy / DeployDecoys / RelocateAfterFiring
     public int newValue;                   // 对应枚举的整数值
 }
-public enum UnitConfigField : int { None = 0, MarchMode = 1, Emcon = 2, InterceptPolicy = 3, ReplacementMode = 4, ReorgPolicy = 5, AllocationPolicy = 6 }
+public enum UnitConfigField : int { None = 0, MarchMode = 1, Emcon = 2, InterceptPolicy = 3, ReplacementMode = 4, ReorgPolicy = 5, AllocationPolicy = 6,
+                                    DeployDecoys = 7, RelocateAfterFiring = 8 }   // 7：05 ReconConfig.deployDecoys（0/1）；8：发射后转移开关（0/1，08/13）
 
 public sealed class OrderDelayBreakdown {
     public OrgLevel echelon;               // 计算用的层级
     public long baseMs;
-    public double classMult, fHq, fLoad, fJam, fState, fAttach, fDist, fHeadless;
+    public double classMult, fHq, fLoad, fJam, fState, fAttach, fDist, fHeadless, fEmcon, fReorg;
     public long totalMs;                   // 夹在 [MinDelayMs, MaxDelayMs] 之后
 }
 ```
 
-### 3.3 地块层移动（组件，键 = `BattalionId`）
+### 3.3 地块层移动（组件，键 = `OrgUnitId`，营级 OrgUnit）
 ```csharp
 public enum MarchMode : int { Dense = 1, Dispersed = 2 }         // 00 G 表；不叫 Formation
 
@@ -208,7 +215,7 @@ public enum MovePhase : int {
 }
 
 public sealed class BattalionMoveState {
-    public BattalionId battalionId;
+    public OrgUnitId battalionId;          // 营级 OrgUnit
     public ulong currentTile;              // 地块归属（00：营每时刻只属于一个地块）
     public ulong legFromTile, legToTile;   // 当前一段（相邻两格）；驻止时 = currentTile, 0
     public double legLengthM;              // 两格中心的距离（10 的预计算表）
@@ -216,6 +223,7 @@ public sealed class BattalionMoveState {
     public double headProgressM;           // 纵队头部沿本段走过的距离 [0, legLengthM]
     public double columnLengthM;           // 纵队长度 §4.4.1
     public double speedMps;                // 本段行军速度 §4.4.2
+    public double distanceMovedLastHourM;  // 上一小时纵队头部走过的距离（LandMove.Step 累加，整点重置；06 每小时油耗用）
     public MovePhase phase;
     public Posture posture;                // 00 的 Posture；05 读它算特征值
     public MarchMode marchMode;
@@ -243,7 +251,7 @@ public enum BattleTriggerKind : int { None = 0, Attack = 1, Meeting = 2 }   // �
 
 public readonly record struct BattleTrigger(
     EdgeId edge, CountryId attacker, CountryId defender,
-    BattleTriggerKind kind, BattalionId triggeringBattalion, SimTime atTime);
+    BattleTriggerKind kind, OrgUnitId triggeringBattalion, SimTime atTime);   // 营级 OrgUnit
 
 public enum BattleEndReason : int {
     None = 0, TileCaptured = 1, AttackerStopped = 2, AttackerWithdrew = 3,
@@ -280,7 +288,7 @@ public enum NotificationKind : int {
     None = 0, BattleStarted = 1, BattleEnded = 2, TileCaptured = 3, TileLost = 4,
     PeriodicBattleReport = 5, UnitCombatIneffective = 6, NewEnemyTypeObserved = 7,
     OrderFailed = 8, UnitEncircled = 9, AirMissionResult = 10, SupplyCut = 11,
-    CrisisEvent = 12, WarStateChanged = 13
+    CrisisEvent = 12, WarStateChanged = 13, ReserveGap = 14   // 14：06 §4.11 储备缺口
 }
 
 public sealed class Notification {
@@ -290,7 +298,7 @@ public sealed class Notification {
     public CountryId audience;             // 只给这个国家的玩家看
     public EdgeBattleId battleId;          // 可空
     public ulong tile;                     // 可空
-    public List<int> unitIds;              // 涉及的营（BattalionId.value，升序）
+    public List<int> unitIds;              // 涉及的营（OrgUnitId.value，营级 OrgUnit，升序）
     public BattleSummaryStats stats;       // BattleEnded/PeriodicBattleReport 时有
     public bool involvesStarred;           // 由本系统在生成时算好
 }
@@ -315,20 +323,20 @@ public sealed class BattleSummaryStats {
 |---|---|---|
 | 10 `AiDecision` | 战略/作战 AI：`n % 60 == 0`；编组 AI：`n % StripStepMinutes == 0`；和平时期国家 AI：`n % 1440 == 0` | 12 |
 | 20 `OrderIntake` | 每刻 | 本文件 §4.3 |
-| 30 `Calendar` | 年：`n` 是 1 月 1 日 00:00；日：`n % 1440 == 0`；时：`n % 60 == 0`；同刻内顺序 年 → 日 → 时 | 11/02/07/12 |
+| 30 `Calendar` | 年：`n` 是 1 月 1 日 00:00；日：`n % 1440 == 0`；时：`n % 60 == 0`；同刻内顺序 年 → 日 → 时 | 11 → 01 → 02 → 07 → 12（01 = 指挥状态、需求表） |
 | 40 `Logistics` | `n % 60 == 0` | 06 |
 | 50 `Exposure` | `n % ExposureStepMinutes == 0`（10） | 05 |
 | 60 `LandMovement` | `n % LandMoveStepMinutes == 0`（10） | 本文件 §4.4 |
 | 70 `BattleLifecycle` | 同 60 | 本文件 §4.6 → 04 |
 | 80 `StripStep` | `n % StripStepMinutes == 0`（5）；可选错峰见 T-20 | 04 |
-| 90 `AirStep` | 每刻（`AirStepMinutes` = 1） | 08 |
+| 90 `AirStep` | `n % AirStepMinutes == 0`（缺省 1 = 每刻） | 08 |
 | 100 `EngagementStep` | 每刻 | 03 |
 | 110 `GroundEventApply` | 每刻 | 04/06/07 |
-| 120 `Consumption` | 每刻（片段）、`n % 5 == 0`（条带）、`n % 60 == 0`（驻止部队） | 03/04/06 |
+| 120 `Consumption` | 每刻（片段）、`n % StripStepMinutes == 0`（条带）、`n % 60 == 0`（驻止部队） | 03/04/06 |
 | 130 `DamageRepair` | `n % 60 == 0` | 07 |
 | 140 `BattleEnd` | `n % StripStepMinutes == 0` | 本文件 §4.7（判定）、04（写回） |
 | 150 `Reporting` | 每刻 | 15/13；本文件 §4.9 |
-| 160 `Checksum` | `n % 60 == 0` 且（调试或多人） | 15 |
+| 160 `Checksum` | `n % ChecksumIntervalMin == 0`（常数归 15）且（调试或多人） | 15 |
 
 另外，本文件在 30 `Calendar` 的“时”分支里做精度档窗口重置（§4.8.2），在“日”分支里检查 24 小时阶段战报到期（§4.7.4）。
 
@@ -353,14 +361,14 @@ void RunTick(World w) {
     if (land) { LandMove.Step(w, n);                    // 60 §4.4
                 Battles.Lifecycle(w, n); }              // 70 §4.6
     if (strip) Strip.StepAll(w, n);                     // 80（04，按 EdgeBattleId 升序）
-    Air.Step(w, n);                                     // 90
+    if (n % C.AirStepMinutes == 0) Air.Step(w, n);      // 90
     Engagements.StepAll(w, n);                          // 100
     GroundEvents.Apply(w, n);                           // 110
     Consumption.Step(w, n, strip, hour);                // 120
     if (hour) DamageRepair.Step(w, n);                  // 130
     if (strip) Battles.End(w, n);                       // 140 §4.7
     Reporting.Step(w, n);                               // 150 §4.9
-    if (hour && w.checksumEnabled) Checksum.Step(w, n); // 160
+    if (n % C.ChecksumIntervalMin == 0 && w.checksumEnabled) Checksum.Step(w, n); // 160（ChecksumIntervalMin 归 15）
     w.clock.currentTick = n + 1;
 }
 ```
@@ -409,7 +417,8 @@ OrderId SubmitOrder(World w, Order o) {
     o.issuedAt = SimTime.FromTick(w.clock.currentTick);
     o.status = OrderStatus.Pending;
     w.orderInbox.Add(o);                       // 本刻 OrderIntake 处理；AI 在 10 阶段提交的也在同刻 20 处理
-    w.inputLog.Append(o);                      // 15：输入日志（仅 Player 来源；AI 命令可由回放重算，不记）
+    if (o.source == OrderSource.Player)
+        InputLog.Append(InputKind.Order, CanonicalBytes(o));   // 15：输入日志（仅 Player 来源；AI 命令可由回放重算，不记）
     return o.id;
 }
 ```
@@ -445,7 +454,7 @@ void ScheduleSingle(World w, Order o, long n) {
 #### 4.3.3 命令延迟公式 🟡 T-01
 
 $$
-\text{delayMs} = \text{clamp}\Big(\text{BaseDelayMs}[e] \cdot M_{class} \cdot F_{hq} \cdot F_{load} \cdot F_{jam} \cdot F_{state} \cdot F_{attach} \cdot F_{dist} \cdot F_{headless},\ \text{MinDelayMs}[class],\ \text{MaxDelayMs}\Big)
+\text{delayMs} = \text{clamp}\Big(\text{BaseDelayMs}[e] \cdot M_{class} \cdot F_{hq} \cdot F_{load} \cdot F_{jam} \cdot F_{state} \cdot F_{attach} \cdot F_{dist} \cdot F_{headless} \cdot F_{emcon} \cdot F_{reorg},\ \text{MinDelayMs}[class],\ \text{MaxDelayMs}\Big)
 $$
 
 各项（全部无量纲，除 BaseDelayMs）：
@@ -454,14 +463,15 @@ $$
 |---|---|---|
 | `e`（层级） | 接收者层级：特种部队连 → `Company`；营 → `Battalion`；建制编组 → 其 `echelon`（Brigade/Division/Corps） | 01 |
 | `M_class` | `Planned` 1.0；`Reactive` 0.5；`UrgentSimple` 0.25；`Administrative`、`Forced` → 直接 delay = 0（不算其他项） | 本文件 |
-| `F_hq` | `1.5 − 0.8 × q`，`q ∈ [0,1]` = 接收者自身指挥部的指挥质量 | 01 `GetCommandQuality(hqId)`（通信装备 × 部班练度，归一化；接口需求见 §6） |
-| `F_load` | `clamp(load / capacity, 1, FLoadMax)`；`capacity ≤ 0` 时取 `FLoadMax` | 01 `CommandLoad`、`CommandCapacity`（指接收者指挥部的） |
+| `F_hq` | `1.5 − 0.8 × q`，`q = 01.CommandState.Get(hq).quality ∈ [0,1]`（接收者自身指挥部的指挥质量） | 01 `CommandState Get(OrgUnitId)`（通信装备 × 部班练度，归一化） |
+| `F_load` | `min(01.CommandState.Get(hq).orderDelayMultiplier, FLoadMax)`（01：`orderDelayMultiplier = max(1, load / capacity)`） | 01 `CommandState Get(OrgUnitId)`（指接收者指挥部的） |
 | `F_jam` | `1 + JamDelayCoef × jam`，`jam ∈ [0,1]` = 接收者所在地块对 `issuer` 方的通信干扰强度 | 05 `GetCommsJamming(tile, victimCountry)`（阶段 0 恒 0；🟡 T-18） |
 | `F_state` | 按接收者（编组 = 其下属营的众数姿态，平局取较大系数）当前状态查表 §5 `StateFactor` | `BattalionMoveState.posture`；交战中 = 营在任一 `EdgeBattle` 中 |
 | `F_attach` | 营配属（`currentFormationId ≠ organicFormationId`）时 `AttachFactor`，否则 1 | 01 |
 | `F_dist` | `1 + max(0, dKm − DistFreeKm) / DistScaleKm`，上限 `FDistMax`。`dKm` = 上级指挥部（营的当前编组的 `Hq` 营）所在地块中心到接收者所在地块中心的大圆距离；编组命令按**每个子单位**分别算（§4.3.5）；无上级编组或接收者本身是顶层 → 1 | 10 地块中心表、00 §3.4 |
 | `F_headless` | 接收者自身指挥部班/营已被歼灭或失去战斗力：`HeadlessFactor`，否则 1 | 01/07 |
-| `F_emcon`（追加乘入） | 接收者 `EmconState`：Active 1.0、Partial 1.15、Silent 1.5（05 §6.2 建议值，本文件采纳） | 05 / 01 D3 |
+| `F_emcon` | 接收者 `EmconState`：Active 1.0、Partial 1.15、Silent 1.5（05 §6.2 建议值，本文件采纳） | 05 / 01 D3 |
+| `F_reorg` | `now < bn.reorganizingUntil` ? `01.ReorganizingDelayMult` : 1（编组命令：按其 Hq 营） | 01 |
 
 **取整**：`totalMs = (long)Math.Ceiling(product)` 后再夹紧。
 
@@ -471,7 +481,7 @@ $$
 - **同一接收者、同一槽位**的新命令进入 `ScheduleSingle` 时，原有 `Pending` 命令 → `Superseded`；新命令的延迟**从新的下令时刻重新完整计算**（✅ §11.1.1“延迟重新开始计算”）。
 - 原有 `Active` 命令**继续执行**，直到新命令生效时才被替换（现实：新命令传达前部队按原命令行动）。
 - 例外：`Halt`（`UrgentSimple`）生效时立即停止当前移动；`Forced` 立即生效并清除该槽位所有 `Pending`。
-- 玩家“取消”一条 `Pending` 命令：直接 `Cancelled`，不产生延迟。取消 `Active` 的移动命令 = 下达 `Halt`（有 UrgentSimple 延迟）。
+- 玩家“取消”一条 `Pending` 命令：直接 `Cancelled`，不产生延迟；Player 来源的 `CancelOrder` 记入输入日志：`InputLog.Append(InputKind.CancelOrder, orderId)`（15）。取消 `Active` 的移动命令 = 下达 `Halt`（有 UrgentSimple 延迟）。
 - 编组父命令被替换时，它的所有未生效子命令一并 `Superseded`；已生效的子命令继续，直到新的子命令生效。
 
 #### 4.3.5 编组命令的分解 🟡 T-05
@@ -502,10 +512,10 @@ void ExpandFormationOrder(World w, Order parent) {
 |---|---|
 | `Move`（营） | 若营在某 `EdgeBattle` 中且新路径第一步**不是**穿过该战斗边进入敌方地块 → 走脱离接触流程 §4.5；否则重设 `remainingPath`，若驻止则 `phase = Approach`、开始新段 |
 | `Move`（Halt） | 停在当前位置：`Approach` → 变回驻止（`headProgressM` 归零，视为仍在 `legFromTile` 内）；`Crossing` → **不能中途停止**，继续过完本边后停止（纵队不能停在边上）；`Depart` → 到达 `legToTile` 即停止（视为已在该地块） |
-| `CrossTileRecon` | 调 05 `StartAreaReconTask` / `StartSofMission` |
+| `CrossTileRecon` | AreaRecon：调 05 `StartAreaReconTask(owner = issuer 国家, tiles = areaTiles × tilePriorities, assets, desiredLevel, risk)`；SofMission：调 05 `StartSofMission(sofCompany = recipient, tile = areaTiles[0], insertion, extraction, durationDays, reportIntervalH)` |
 | `CrossTileStrike` | 调 04 `QueueCrossTileStrike(order)`；04 再加准备时间和飞行时间（✅ 响应 = 命令延迟 + 准备 + 飞行） |
 | `AirMission` | 调 08 `StartMission`（无命令延迟；起飞准备由 08 计算，🟡 T-02） |
-| `LogisticsConfig` | 调 06 `ApplyConfig`（无命令延迟，🟡 T-03） |
+| `LogisticsConfig` | 调 06 `ApplyConfig(LogisticsConfigPayload)`（无命令延迟，🟡 T-03） |
 | `UnitConfig` | 写对应组件字段（行军方式在下一段开始时才影响纵队长度和速度） |
 
 ### 4.4 地块层移动（`LandMovement`，每 10 分钟）🟡 T-07
@@ -519,39 +529,61 @@ columnLengthM = clamp( nVehicles × spacingM[marchMode] + nFootSquads × FootSqu
 
 #### 4.4.2 行军速度
 ```text
-speedMps = min_over_vehicle_models( roadSpeedMps(model) ) × RoadFactor[linkCapacityClass] × MarchModeSpeedFactor[marchMode]
+speedMps = min_over_vehicle_models( roadSpeedMps(model) ) × RoadFactor[RoadClassMap.ToMarchRoadClass(Map.RoadClass(edge))] × MarchModeSpeedFactor[marchMode]
          —— 营内无车时用 FootSpeedMps（负重修正由 03 的平均负重给出：× clamp(1.3 − loadRatio, 0.5, 1.0)）
 ```
-- `roadSpeedMps` 来自 `MobilityProfile`（G-17：归 06）。`linkCapacityClass` 来自 10（本段两格之间的道路等级）；无道路的地块之间用 `RoadFactor[None]`。
-- 燃油耗尽（06 `IsOutOfFuel(battalionId)`）→ 有车营速度 0（只能弃车步行，阶段 1 不做弃车，🟡 归 06/07）。
+- `roadSpeedMps` 来自 `MobilityProfile`（G-17：归 06）。`edge` = 本段两格之间的边；道路等级 = 10 `Map.RoadClass(edge)`，经 10 `RoadClassMap.ToMarchRoadClass` 映射为 `MarchRoadClass`；无道路的地块之间为 `MarchRoadClass.None`，用 `RoadFactor[None]`。
+- 不能机动（`06.GetMobilityFactor(bn) == 0`，06 §4.9：如燃油耗尽）→ 有车营速度 0（只能弃车步行，阶段 1 不做弃车，🟡 归 06/07）。
 
-#### 4.4.3 推进一步
+#### 4.4.3 推进一步（两遍）
 ```csharp
+public enum MarkKind : int { HeadAtEdge = 1, OwnershipSwitch = 2, TailCleared = 3, ReachedCenter = 4 }
+public readonly record struct MoveMarkEvent(
+    SimTime at, OrgUnitId battalion, MarkKind kind,
+    ulong legFromTile, ulong legToTile, List<ulong> pathAtMark,   // 关键点时刻本营的段快照（回退用）
+    double distanceAtMarkM);                                       // 关键点时刻的 distanceMovedLastHourM
+
 void LandMove.Step(World w, long n) {
     double dtS = C.LandMoveStepMinutes * 60.0;
     long stepStartMs = n * 60000;
+    var events = new List<MoveMarkEvent>();
+    // 第 1 遍：按营 ID 升序推进到“下一个关键点或步末”。只改本营的段内字段
+    //        （headProgressM、leg*、phase、posture、remainingPath、distanceMovedLastHourM），
+    //        不改 currentTile / TileControl；“头到边”先按“对面无敌”推进；每个关键点登记一条事件
     foreach (var m in w.moveStates.OrderBy(x => x.battalionId.value)) {     // ID 升序
+        if (n % 60 == 0) m.distanceMovedLastHourM = 0;  // 06 已在本刻 40 阶段读走上一小时的值
         if (m.phase is MovePhase.None or MovePhase.HeldAtEdge or MovePhase.WaitingDisengage) continue;
+        if (m.speedMps <= 0) continue;
         double remainingS = dtS, tS = 0;                // tS = 本步内已用时间
-        while (remainingS > 0 && m.phase != MovePhase.None && m.phase != MovePhase.HeldAtEdge) {
+        while (remainingS > 0 && m.phase != MovePhase.None) {
             double nextMark = NextMarkM(m);             // 下一个关键点：edgeAtM（头到边）/ edgeAtM + col/2（归属切换）/ edgeAtM + col（尾过边）/ legLengthM（到中心）
             double needS = (nextMark - m.headProgressM) / m.speedMps;
-            if (m.speedMps <= 0) break;
-            if (needS > remainingS) { m.headProgressM += m.speedMps * remainingS; break; }
+            if (needS > remainingS) {
+                double d = m.speedMps * remainingS; m.headProgressM += d; m.distanceMovedLastHourM += d; break;
+            }
+            m.distanceMovedLastHourM += nextMark - m.headProgressM;
             m.headProgressM = nextMark; remainingS -= needS; tS += needS;
             var at = new SimTime(stepStartMs + (long)Math.Floor(tS * 1000));   // 精确时刻（只用于记录和排序）
-            OnMark(w, m, nextMark, at);                 // 见下表
+            events.Add(new MoveMarkEvent(at, m.battalionId, KindOf(m, nextMark),
+                                         m.legFromTile, m.legToTile, new List<ulong>(m.remainingPath), m.distanceMovedLastHourM));
+            AdvancePastMark(m, nextMark, at);           // 见下表“第 1 遍”列
         }
     }
-    ApplyTileControlChanges(w, n);                       // §4.4.4，在所有营推进完之后统一做
+    // 第 2 遍：按 (at.ms, battalion.value) 升序应用归属变化，并对每个“头到边”重新判定对面是否有敌
+    var halted = new HashSet<OrgUnitId>();
+    foreach (var e in events.OrderBy(x => x.at.ms).ThenBy(x => x.battalion.value)) {
+        if (halted.Contains(e.battalion)) continue;     // 该营已在更早的关键点停住，其后的事件作废
+        OnMark(w, w.moveStates[e.battalion], e, halted); // 见下表“第 2 遍”列
+    }
+    ApplyTileControlChanges(w, n);                       // §4.4.4，在所有事件应用完之后统一做
 }
 ```
-| 关键点 | `OnMark` 做什么 |
-|---|---|
-| 头到边 `edgeAtM` | 查目的地块 `legToTile` 有没有**敌对国家的营**（归属在该地块，或正从该地块方向过同一条边）：有 → `phase = HeldAtEdge`，`headProgressM = edgeAtM`，登记 `BattleTrigger`（§4.6.1）并停止本营本步的推进；无 → `phase = Crossing`，`posture = CrossingEdge` |
-| 归属切换 `edgeAtM + col/2` | `currentTile = legToTile`，`arrivedTileAt = at`；记一条“归属变化”供 §4.4.4 使用 |
-| 尾过边 `edgeAtM + col` | `phase = Depart`，`posture = Marching` |
-| 到中心 `legLengthM` | 若 `remainingPath` 非空：开新段（`legFromTile = legToTile`，取 path 首个，重新查表 `legLengthM`、`edgeAtM`、`speedMps`，`headProgressM = 0`，`phase = Approach`）；否则 `phase = None`，`posture = Assembling`，在 `AssemblingToDefendingMin` 后自动转 `Defending`（工事增长由 04/05 处理） |
+| 关键点 | 第 1 遍 `AdvancePastMark`（只改本营段内字段） | 第 2 遍 `OnMark`（以已应用到 `e.at` 的归属为准） |
+|---|---|---|
+| 头到边 `edgeAtM` | `phase = Crossing`，`posture = CrossingEdge` | 查目的地块 `e.legToTile` 有没有**敌对国家的营**（归属在该地块，或正从该地块方向过同一条边）：有 → 回退：`legFromTile/legToTile/remainingPath` = 事件快照，`headProgressM = edgeAtM`，`distanceMovedLastHourM = e.distanceAtMarkM`，`phase = HeldAtEdge`，`posture = Marching`，登记 `BattleTrigger`（§4.6.1），`halted.Add(e.battalion)`；无 → 保持第 1 遍结果 |
+| 归属切换 `edgeAtM + col/2` | 无 | `currentTile = e.legToTile`，`arrivedTileAt = e.at`；发出事件 `BattalionTileChanged(e.battalion, e.legFromTile, e.legToTile, e.at)`；记一条“归属变化”供 §4.4.4 使用 |
+| 尾过边 `edgeAtM + col` | `phase = Depart`，`posture = Marching` | 记一条“完成过边”供 §4.4.4 第 2 条使用 |
+| 到中心 `legLengthM` | 若 `remainingPath` 非空：开新段（`legFromTile = legToTile`，取 path 首个，重新查表 `legLengthM`、`edgeAtM`、`speedMps`，`headProgressM = 0`，`phase = Approach`）；否则 `phase = None`，`posture = Assembling`，在 `AssemblingToDefendingMin` 后自动转 `Defending`（工事增长由 04/05 处理） | 无 |
 
 - 段长 `legLengthM` 和 `edgeAtM` 要求 `edgeAtM + columnLengthM ≤ legLengthM`；否则把 `columnLengthM` 截到 `legLengthM − edgeAtM`（只在异常小地块出现）。
 - 过边中被跨地块火力/空袭打击时“两边地块都能打到”和暴露比例：由 05/04/08 读 `phase == Crossing` 与 `crossFraction = (headProgressM − edgeAtM) / columnLengthM` 决定。
@@ -567,7 +599,7 @@ void LandMove.Step(World w, long n) {
 撤退命令激活 → BattalionMoveState.phase = WaitingDisengage
              → 04.RequestDisengage(battleId, battalionId, at)
 04 在若干条带步内组织撤退（组织时间、途中挨打、受损车辆遗弃概率上升，由 04/07 定义）
-04 回调 OnDisengaged(battalionId, at) → phase = None（营留在本地块内，或已在己方地块），然后开始执行新路径
+04 回调 OnDisengaged(battalionId, at) → phase = None（营留在本地块内，或已在己方地块），调用 OnBattalionLeftBattle(battalionId) 回调列表，然后开始执行新路径
 ```
 - 本文件给 04 的建议默认值（04 可改）：组织时间 `DisengageOrganizeMin` = 30 分钟 × `F_state`（交战 1.5）≈ 45 分钟，之后连逐个后撤；04 负责在组织期间与后撤途中让该营的连继续承受 A/C/E 线打击。
 - 撤退途中不能取消（再下 `Move` 回到战斗边 = 新命令，脱离完成后执行）。
@@ -582,8 +614,8 @@ void LandMove.Step(World w, long n) {
 #### 4.6.2 分类
 ```text
 对每条边 e（按 EdgeId 升序），合并该边本步所有触发：
-  若 e 上已有活跃 EdgeBattle 且参战国家相同 → JoinBattle（04 把新到的营的连放进条带预备位置），结束
-  attacker = 最早触发（at 最小，平局按 BattalionId 升序）的营所属国家；defender = 对方
+  若 e 上已有活跃 EdgeBattle 且参战国家相同 → 04.JoinBattle(battleId, bn, side, asCounterattack: false)（04 把新到的营的连放进条带预备位置），结束
+  attacker = 最早触发（at 最小，平局按 OrgUnitId 升序）的营所属国家；defender = 对方
   kind = Meeting  若：防守地块内所有敌营都满足  posture ∈ {Marching, Assembling, CrossingEdge}
                       或 (at − arrivedTileAt) < MeetingWindowMin
                   或：双方都在向这条边行军（对向）
@@ -594,8 +626,8 @@ void LandMove.Step(World w, long n) {
 - **进攻方参战营**：本步登记触发的己方营，加上以后到达这条边的己方营（`JoinBattle`）。
 - **防守方参战营**（`defenders`）：
   1. 防守地块内 `EdgeAssignment.edge == e` 的营（12 §3.3 的组件）；
-  2. 若为空：防守地块内 `EdgeAssignment` 为“地块预备”的营中 `BattalionId` 最小者；
-  3. 若仍为空：防守地块内当前参与战斗数最少、平局取 `BattalionId` 最小的营（营同时只能在一个 `EdgeBattle` 中 → 跳过已在战斗中的；全都在战斗中则 `defenders` 为空）；
+  2. 若为空：防守地块内 `EdgeAssignment` 为“地块预备”的营中 `OrgUnitId` 最小者；
+  3. 若仍为空：防守地块内当前参与战斗数最少、平局取 `OrgUnitId` 最小的营（营同时只能在一个 `EdgeBattle` 中 → 跳过已在战斗中的；全都在战斗中则 `defenders` 为空）；
   4. `defenders` 为空 → 仍然建立战斗（防守方暂时无人，攻方可以直接推进；04 的推进度按无抵抗处理），并立即通知防守方编组 AI（12）做 `Reactive` 调整。
 - 被选中的防守营自动参战，**不需要命令延迟**（就地防御是条令内的自动反应）。
 
@@ -603,7 +635,7 @@ void LandMove.Step(World w, long n) {
 - 营一旦是某 `EdgeBattle` 的参战营，就不能再加入别的战斗，直到该战斗结束或该营脱离接触。
 
 #### 4.6.4 反冲击
-- 防守方对攻方地块下 `Move`、且路径第一步穿过一场**正在进行**的战斗的边 → **不新建战斗**；该营加入原战斗（若尚未参战），04 把它的连的任务设为反冲击（`EngagementType.Counterattack`）。
+- 防守方对攻方地块下 `Move`、且路径第一步穿过一场**正在进行**的战斗的边 → **不新建战斗**；该营加入原战斗（若尚未参战）：调 04 `JoinBattle(battleId, bn, side, asCounterattack: true)`，04 立即把它的连的任务设为反冲击（`EngagementType.Counterattack`），指向接触最深的扇区。
 - 若这条边上没有战斗 → 这是一次新的进攻（按 4.6.2 新建，原防守方为 attacker）。
 
 ### 4.7 战斗结束（`BattleEnd`，每条带步）🟡 T-10、T-11
@@ -614,7 +646,7 @@ void LandMove.Step(World w, long n) {
 | 序 | 条件 | `BattleEndReason` | 地块结果 |
 |---|---|---|---|
 | 1 | 交战国之间停火/和约生效（11） | `WarEnded` | 不变 |
-| 2 | 双方在条带上都没有有战斗力的连 | `MutualAnnihilation` | 不变 |
+| 2 | 双方在条带上都没有有战斗力的连（04 `HasEffectiveCompanies(battleId, side)` 对两侧都为假） | `MutualAnnihilation` | 不变 |
 | 3 | `PenetrationProgress ≥ 1`（04） | `TileCaptured` | 防守地块 → 攻方 |
 | 4 | 防守方参战营全部 `!IsCombatEffective`（04）**且**防守地块内无其他有战斗力的防守方营可补入 | `DefenderIneffective` | 防守地块 → 攻方 |
 | 5 | 防守方参战营全部已脱离接触且地块内无防守方营 | `DefenderWithdrew` | 防守地块 → 攻方 |
@@ -627,6 +659,7 @@ void LandMove.Step(World w, long n) {
 #### 4.7.2 结束后的处理
 ```text
 04.EndEdgeBattle(battleId, reason, at)   // 写回营状态、解锁连、生成战报数据（04）
+对本战斗每个参战营（OrgUnitId 升序）：调用 OnBattalionLeftBattle(bn) 回调列表（订阅者 01）
 若地块结果 = 攻方占领：
    T = 防守地块
    1. controller(T) = attacker，controlSince = at；通知 TileCaptured / TileLost
@@ -640,13 +673,13 @@ void LandMove.Step(World w, long n) {
 ```text
 候选 = T 的邻格中满足：controller == 败方，且没有敌营，且不是正在以它为防守地块进行的战斗的地块
 若候选非空：选 score 最小者（平局 H3Index 小者）
-   score = 敌方已知威胁（12 的 InfluenceMap.EnemyThreat，用败方的视角） × 10
+   score = 敌方已知威胁（12 `InfluenceMap.Get(败方, InfluenceLayer.Threat, 邻格)`，用败方的视角） × 10
          + 到败方该营所属编组 Hq 营所在地块的大圆距离_km
    给每个营下 Forced Move（path = [该邻格]），直接从 T 内出发
 若候选为空：营进入“被包围”状态（Notify UnitEncircled）：
    - 不离开 T；T 的控制权仍改为攻方（地块“被占领”，包围圈在其中）
    - 被包围的营：06 视为补给完全切断；它可以对任意邻格下 Move 突围（按正常进攻触发战斗）
-   - 包围营失去战斗力后，其剩余人员按 07 的规则成为 MissingOrCaptured、装备成为遗弃（07）
+   - 包围营失去战斗力后，调用 07.OnUnitEncircledDestroyed(bn)（剩余人员成为 MissingOrCaptured 或 Killed、装备被俘或毁，07 §4.2.5）
 ```
 
 #### 4.7.4 阶段战报（✅ §11.3）
@@ -708,8 +741,8 @@ Priority(b) = 1000 × starred(b) + 300 × keyTile(b) + 200 × playerInvolved(b) 
 - 游戏速度**不**影响精度档（总纲 §9.3④ 原写“速度调快时自动更多改用缓存”，与 G-21 的可复现要求冲突；🟡 T-12 改为：速度只影响能否跑满）。
 
 ### 4.9 通知与自动暂停事件（`Reporting` 阶段）🟡 T-17
-- 各系统在本刻产生的事件先放入 `w.pendingNotifications`；`Reporting` 阶段按 `(at.ms, kind, battleId, tile, 第一个 unitId)` 升序排序后赋 `seq`，追加到每个 `audience` 国家的通知列表。
-- 本文件负责生成：`BattleStarted`、`BattleEnded`、`TileCaptured`、`TileLost`、`PeriodicBattleReport`、`OrderFailed`、`UnitEncircled`。其他种类由各系统生成（`UnitCombatIneffective` 04；`NewEnemyTypeObserved` 05；`AirMissionResult` 08；`SupplyCut` 06；`CrisisEvent`、`WarStateChanged` 11）。
+- 各系统在本刻产生的事件先放入 `w.pendingNotifications`；`Reporting` 阶段按 `(at.ms, kind, battleId, tile, 第一个 unitId, audience.value, 生成序号)` 升序排序后赋 `seq`（生成序号 = 事件进入 `pendingNotifications` 的顺序号，保证全序），追加到每个 `audience` 国家的通知列表。
+- 本文件负责生成：`BattleStarted`、`BattleEnded`、`TileCaptured`、`TileLost`、`PeriodicBattleReport`、`OrderFailed`、`UnitEncircled`。其他种类由各系统生成（`UnitCombatIneffective` 04；`NewEnemyTypeObserved` 05；`AirMissionResult` 08；`SupplyCut`、`ReserveGap` 06；`CrisisEvent`、`WarStateChanged` 11）。
 - **自动暂停判定**：`Reporting` 末尾，对玩家国家的新通知调用 13 的过滤器 `AutoPauseFilter.Matches(Notification)`；任一命中 → 设置 `PauseReasons.AutoPauseBattle`（战斗类）或 `AutoPauseEvent`（其他），当前刻结束后暂停。**自动暂停不影响模拟结果，不记入输入日志。**
 - 默认过滤条件（✅ §11.4 列出的五类，门槛 🟡）：
 
@@ -748,9 +781,14 @@ LightCondition GetLightCondition(ulong tile, SimTime t) {
     double a = SolarAltitudeDeg(c.latDeg, c.lonDeg, t);
     return a > DayAltDeg ? LightCondition.Day : (a > TwilightAltDeg ? LightCondition.Twilight : LightCondition.Night);
 }
+LightCondition GetLightConditionAtEdge(EdgeId e, SimTime t) {
+    var c = Map.EdgeMidpoint(e);                           // 10
+    double a = SolarAltitudeDeg(c.latDeg, c.lonDeg, t);
+    return a > DayAltDeg ? LightCondition.Day : (a > TwilightAltDeg ? LightCondition.Twilight : LightCondition.Night);
+}
 ```
 - 来源：NOAA 太阳位置简化公式（精度约 ±0.5°，对昼夜分档足够）。
-- 条带和片段按**战斗边中点**还是地块中心？用边两端点的大圆中点（`Edge.midpoint`，10 §3；经 `Map.EdgeMidpoint` 读取）。片段在生成时取一次光照（03 不在片段内部切换昼夜）。
+- 条带和片段按**战斗边中点**还是地块中心？用边两端点的大圆中点（`Edge.midpoint`，10 §3；经 `Map.EdgeMidpoint` 读取）。04/03 调用 `GetLightConditionAtEdge(edge, t)`。片段在生成时取一次光照（03 不在片段内部切换昼夜）。
 - 天气：阶段 1 恒为 `Clear`（总纲 §21-20 第二优先）；保留 `GetWeather(tile, t)` 接口，返回固定值。
 
 ---
@@ -788,7 +826,7 @@ LightCondition GetLightCondition(ulong tile, SimTime t) {
 | `SpacingM` Dense / Dispersed | 50 / 100 | m/车 | 30–80 / 80–150 | 常见行军间距 25–100m 量级，估算 |
 | `FootSquadSpacingM` | 30 | m/班 | 20–60 | 估算 |
 | `ColumnMinM` / `ColumnMaxM` | 1 000 / 10 000 | m | — | ✅ 总纲 3–8km 留余量 |
-| `RoadFactor` Motorway/Trunk/Ordinary/None | 0.7 / 0.6 / 0.5 / 0.25 | ×路速 | ±0.15 | 纵队平均行军速度远低于极速；估算 |
+| `RoadFactor`（键 `MarchRoadClass`，10）Motorway/Trunk/Ordinary/None | 0.7 / 0.6 / 0.5 / 0.25 | ×路速 | ±0.15 | 纵队平均行军速度远低于极速；估算 |
 | `MarchModeSpeedFactor` Dense/Dispersed | 1.0 / 0.85 | — | 0.7–0.95 | 🟡 §11.1.2 “疏散更慢” |
 | `FootSpeedMps` | 1.1 | m/s | 0.8–1.4 | ≈4km/h 徒步行军 |
 | `AssemblingToDefendingMin` | 60 | min | 30–180 | 估算 |
@@ -818,34 +856,45 @@ LightCondition GetLightCondition(ulong tile, SimTime t) {
 | `bool CancelOrder(OrderId)` | 13、12 | 任意 |
 | `IReadOnlyList<Order> GetOrders(OrderRecipient)` | 13、12 | 任意 |
 | `OrderDelayBreakdown PreviewDelay(Order)` | 13（命令卡预估）、12（AI 规划） | 任意；纯函数，不改状态 |
-| `BattalionMoveState GetMoveState(BattalionId)` | 04、05、06、08、12、13 | 任意 |
+| `BattalionMoveState GetMoveState(OrgUnitId)`（含 `distanceMovedLastHourM`） | 04、05、06、08、12、13 | 任意 |
+| `LatLon GetBattalionPosition(OrgUnitId)`：驻止 = `TileCenter(currentTile)`；移动中 = 沿本段 `TileCenter(legFromTile)` → `TileCenter(legToTile)` 按纵队中点 `clamp(headProgressM − columnLengthM/2, 0, legLengthM) / legLengthM` 插值 | 05、08 | 任意 |
+| `bool IsInBattle(OrgUnitId)` = 营是某活跃 `EdgeBattle` 的参战营（含 `heldInBattle ≠ 0`） | 02 | 任意 |
+| 事件 `BattalionTileChanged(OrgUnitId, ulong fromTile, ulong toTile, SimTime)` | 05 | 60 阶段第 2 遍归属切换时（§4.4.3） |
+| 回调列表 `OnBattalionLeftBattle(OrgUnitId)` | 01（订阅） | 140 阶段战斗结束时（§4.7.2）；04 `OnDisengaged` 完成时（§4.5） |
 | `TileControl GetTileControl(ulong tile)` | 全部 | 任意 |
 | `FidelityTier GetTier(EdgeBattleId)` | 04 | 04 生成片段时 |
-| `LightCondition GetLightCondition(ulong tile, SimTime)`、`double SolarAltitudeDeg(...)` | 03、04、05、08 | 任意 |
-| `bool IsNight(ulong tile, SimTime)` = `SolarAltitudeDeg < 0`；`IsFrontline(battalion)` = 营所在地块与敌方控制地块相邻或营在活跃 `EdgeBattle` 中 | 01、05、06 | 任意（注：03 文中的 `LightLevel` 即本文件的 `LightCondition`，阈值相同） |
-| `void OnDisengaged(BattalionId, SimTime)` | 04 | 04 完成脱离接触时 |
+| `LightCondition GetLightCondition(ulong tile, SimTime)`、`LightCondition GetLightConditionAtEdge(EdgeId, SimTime)`、`double SolarAltitudeDeg(...)` | 03、04、05、08 | 任意 |
+| `bool IsNight(ulong tile, SimTime)` = `SolarAltitudeDeg < 0`；`IsFrontline(battalion)` = 营所在地块与敌方控制地块相邻或营在活跃 `EdgeBattle` 中 | 01、05、06 | 任意 |
+| `void OnDisengaged(OrgUnitId, SimTime)` | 04 | 04 完成脱离接触时 |
 | `void PostNotification(Notification)` | 04、05、06、08、11 | 本刻任意阶段；在 150 统一排序发布 |
+| `UnitConfigField`（含 `DeployDecoys = 7`、`RelocateAfterFiring = 8`） | 05、08、13 | 命令时 |
 
 ### 6.2 本文件需要（接口需求；签名由对应规格最终确定）
 | 来源 | 需要什么 | 用途 |
 |---|---|---|
-| 01 | `GetCommandQuality(hqId) ∈ [0,1]`（可由 01 `CommandState.comms` 与 `hqSkill` 归一化得到）、`CommandLoad`、`CommandCapacity`；**若 01 的 `CommandState.orderDelayMultiplier`（≥ 1）已含负荷/能力比，则 `F_load` 直接取该值，不再自算**；`ReorganizingDelayMult`（整编期间再乘）、营的 `organicFormationId/currentFormationId`、编组的 `Hq` 营、`FormationKind` | 命令延迟 |
-| 04 | `CreateEdgeBattle`、`JoinBattle`、`RequestDisengage`、`EndEdgeBattle`、`PenetrationProgress`、`IsCombatEffective`、`AttackerCompaniesAllOnOwnSide`、`frontageSlots`、`MakePeriodicReport`、`IsInStrikeRange`、`QueueCrossTileStrike` | 战斗生命周期、调度估算、打击 |
-| 05 | `GetCommsJamming(tile, country)`、`StartAreaReconTask`、`StartSofMission`、`GetExposure(observer, target)`（打击的情报快照） | 延迟、侦察命令 |
-| 06 | `MobilityProfile.roadSpeedMps`、`IsOutOfFuel`、`ApplyConfig` | 行军、后勤命令 |
-| 07 | 车辆是否可行驶 | 纵队长度、速度 |
+| 01 | `CommandState Get(OrgUnitId)`：`quality`（F_hq）、`orderDelayMultiplier`（F_load）、`isHeadless`（F_headless）；`ReorganizingDelayMult` 与营的 `reorganizingUntil`（F_reorg）；营的 `organicFormationId/currentFormationId`、编组的 `Hq` 营、`FormationKind` | 命令延迟 |
+| 04 | `CreateEdgeBattle`、`JoinBattle(EdgeBattleId, OrgUnitId, int side, bool asCounterattack)`、`RequestDisengage`、`EndEdgeBattle`、`PenetrationProgress`、`IsCombatEffective`、`HasEffectiveCompanies(EdgeBattleId, int sideIndex)`、`AttackerCompaniesAllOnOwnSide`、`frontageSlots`、`MakePeriodicReport`、`IsInStrikeRange`、`QueueCrossTileStrike` | 战斗生命周期、调度估算、打击 |
+| 05 | `GetCommsJamming(tile, country)`、`StartAreaReconTask(owner, tiles, assets, desiredLevel, risk)`、`StartSofMission(sofCompany, tile, insertion, extraction, durationDays, reportIntervalH)`、`GetExposure(observer, target, now)`（打击的情报快照，返回 `IntelSnapshot`） | 延迟、侦察命令 |
+| 06 | `MobilityProfile.roadSpeedMps`、`GetMobilityFactor(OrgUnitId)`、`ApplyConfig(LogisticsConfigPayload)`；06 发 `SupplyCut`、`ReserveGap` 通知 | 行军、后勤命令 |
+| 07 | 车辆是否可行驶（`IsMobile`）、`OnUnitEncircledDestroyed(OrgUnitId)` | 纵队长度、速度、包围歼灭 |
 | 08 | `StartMission` | 空中命令 |
-| 10 | 邻接表、两格中心距离、中心到边中点距离、`LinkCapacityClass`、地块中心/边中点经纬度 | 移动、寻路、昼夜 |
+| 10 | 邻接表、两格中心距离、中心到边中点距离、`RoadClass(EdgeId)` + `RoadClassMap.ToMarchRoadClass`、`CrossingId`、地块中心/边中点经纬度 | 移动、寻路、昼夜 |
 | 11 | 战争状态、停火、使用限制 | 命令校验、战斗结束 |
-| 12 | `RunStrategic/RunFormation/RunPeacetimeCountry`、`Formation.Decompose`、`EdgeAssignment` 组件、`InfluenceMap.EnemyThreat` | AI 阶段、编组分解、防守营选择、撤退去向 |
+| 12 | `RunStrategic/RunFormation/RunPeacetimeCountry`、`Formation.Decompose`、`EdgeAssignment` 组件、`InfluenceMap.Get(CountryId, InfluenceLayer, ulong tile)`（`Threat` 层） | AI 阶段、编组分解、防守营选择、撤退去向 |
 | 13 | 星标集合（作为模拟输入）、`AutoPauseFilter.Matches` | 调度优先级、自动暂停 |
 | 14 | 关键地块表 | 调度优先级 |
-| 15 | 输入日志 `InputLog.Append`、`BattleEventLog`、ID 分配器、`DMath` | 记录与确定性 |
+| 15 | 输入日志 `InputLog.Append(InputKind, byte[])`、`ChecksumIntervalMin`、`BattleEventLog`、ID 分配器、`DMath` | 记录与确定性 |
 
 ### 6.3 寻路（`Move` 的 path 生成）
-- 在 `SubmitOrder` 时由本文件生成（玩家只点目的地块）：A\*，图 = 陆地地块邻接，边代价 = `legLengthM / (vRef × RoadFactor[class])`（`vRef` = 该营的最慢车速），进入敌方控制地块的边代价 × `EnemyTileCostMult`（3.0，让路径默认绕开敌方地块，目的地除外）。
+- 在 `SubmitOrder` 时由本文件生成（玩家只点目的地块）：A\*，图 = 陆地地块邻接，边代价 = `legLengthM / (vRef × RoadFactor[RoadClassMap.ToMarchRoadClass(Map.RoadClass(edge))])`（`vRef` = 该营的最慢车速），进入敌方控制地块的边代价 × `EnemyTileCostMult`（3.0，让路径默认绕开敌方地块，目的地除外）。
 - 平局：f 值相同按 `H3Index` 升序展开。启发式：大圆距离 / (vRef × 0.7)。
 - 路径在激活时**不**重算（玩家看到的就是会走的路）；途中目的地块变成有敌 → 到边触发战斗，这是预期行为。
+
+### 6.4 存档
+
+| 规格 | 内容 |
+|---|---|
+| 15 | 存档（值见 15 §3.2）：`SectionId.TimeOrders`（= 50）：`GameClock`（currentTick、speed、pauseReasons）、`FidelityProfile`、`BattalionMoveState`（含 `distanceMovedLastHourM`）、`TileControl`、`Order`（pending + active，含父子关系与 `OrderDelayBreakdown`）；`SectionId.Scheduler`（= 51）：`SimBudgetScheduler`（含 assignments）；`SectionId.Notifications`（= 101）：通知列表与 `Notification.seq` 计数器。不存档（派生，读档后重建）：昼夜/太阳高度缓存；`orderInbox`、`pendingNotifications`（刻之间恒为空） |
 
 ---
 
@@ -856,9 +905,9 @@ LightCondition GetLightCondition(ulong tile, SimTime t) {
 | 命令接收者在 `Pending` 期间被歼灭/解散 | 激活时 `Validate` 失败 → `Failed`，发 `OrderFailed` |
 | 同一刻同一接收者同一槽位收到多条命令 | 按 §4.3.2 的全序依次处理，后者把前者 `Superseded`；最终只留最后一条 |
 | 延迟计算结果 < 0 或 NaN | 不可能（全部因子 ≥ 0.1）；调试模式断言，发布版取 `MinDelayMs` |
-| 营速度为 0（燃油耗尽） | 本步不前进；若在 `Crossing` 中则停在边上（唯一允许停在边上的情形），`posture` 保持 `CrossingEdge`（最易被发现） |
+| 营速度为 0（`06.GetMobilityFactor == 0`，如燃油耗尽） | 本步不前进；若在 `Crossing` 中则停在边上（唯一允许停在边上的情形），`posture` 保持 `CrossingEdge`（最易被发现） |
 | 编组为空（所有营都被歼灭） | 编组命令 `Failed` |
-| 两国的营在同一步都完成过边进入同一个**空**地块 | 每个营完成过边时立即检查：先完成（`at` 更小，平局 `BattalionId` 小）者使控制权变更；后到的营在“头到边”时已看到前者（前者已归属该地块）→ 后到者 `HeldAtEdge` 并触发遭遇战。若两者“头到边”在同一步且都在对方之前看见空地块：按 `OnMark` 的执行顺序（营 ID 升序）——**问题**：后处理的营在同一步内能看到先处理的营已归属吗？规定：`LandMovement` 分两遍——第 1 遍所有营推进到“下一个关键点或步末”并只登记事件，不改归属；第 2 遍按事件 `(at, BattalionId)` 升序应用归属变化，并对每个“头到边”事件重新判定对面是否有敌（以已应用到该时刻的归属为准）。被判定为有敌的营回退到 `edgeAtM` 并 `HeldAtEdge`。 |
+| 两国的营在同一步都完成过边进入同一个**空**地块 | 按 §4.4.3 的两遍算法：第 1 遍只登记事件、不改归属；第 2 遍按 `(at, OrgUnitId)` 升序应用。先完成归属切换（`at` 更小，平局 `OrgUnitId` 小）者先归属该地块；后到者的“头到边”事件在第 2 遍重判时看到前者已归属 → 回退到 `edgeAtM` 并 `HeldAtEdge`，触发遭遇战。 |
 | 进攻目标地块里的敌营正在过边离开 | 它的归属仍是该地块直到半程 → 计为“有敌”，触发 `Meeting` |
 | `EdgeBattle` 的防守地块是**攻方**自己的地块（防守方反攻进来） | 不会出现：战斗的“防守地块”定义为被攻击的一侧；反冲击不新建战斗（§4.6.4） |
 | 地块易手时败方营正在 `Approach` 离开该地块 | 视为在地块内 → 收到 Forced 撤退，路径替换为撤退路径 |
@@ -984,5 +1033,5 @@ B1（id 1，星标，20 连，est 6e6）；B2（id 2，40 连，est 8e6）；B3�
 | 暂停原因 | `PauseReasons` | `[Flags]`：Player / AutoPauseBattle / AutoPauseEvent / Modal / Loading | 09 |
 | 通知 | `Notification` / `NotificationKind` | 通知列表条目 | 09（数据）/ 13（呈现） |
 | 被包围 | Encircled（`NotificationKind.UnitEncircled`） | 地块易手时无路可撤的营的状态 | 09 |
-| 情报快照 | `IntelSnapshot` | 下令时的暴露等级、时间戳、位置误差 | 09 |
+| 情报快照 | `IntelSnapshot` | 下令时的暴露等级、时间戳、位置误差、观察到的姿态 | 09 |
 | 防守分配 | `EdgeAssignment` | 营在所在地块内负责哪条边或作为地块预备（定义在 12） | 12 |
