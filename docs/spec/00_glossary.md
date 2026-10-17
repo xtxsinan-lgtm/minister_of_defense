@@ -64,7 +64,7 @@
 | 能力向量 | `CapabilityVector` | 连/营实际剩余能力（反装甲、压制、人数、弹药…）的向量；结果缓存的查询键和战斗力门槛的依据。 | §9.12(2) | 03 |
 | 待编池 | `UnassignedPool` | 营里凑不成完整班的人和装备的暂存处，等补充后再组班。 | §9.12(2) | 07 |
 | 重组 | `Reorganization` | 人和装备总数守恒的重新编班；按排内（战斗中）/连营内（休整）/营旅间（玩家下令）三级。 | §9.12(2) | 07 |
-| 重组策略 | `ReorgPolicy` | 枚举：`KeepStructure`（保持建制）、`Consolidate`（集中成完整单位）。 | §9.12(2) 🟡 | 07 |
+| 重组策略 | `ReorgPolicy` | 枚举：`KeepStructure = 1`（保持建制）、`Consolidate = 2`（集中成完整单位）。01 的 `CountryOrgSettings.fillMode` 也用此枚举。 | §9.12(2) 🟡 | 07 |
 | 留守分队 | `RearDetachment` | 空运/海运运不走而留下的人和装备，以后另行跟进。 | §15.3, §17.1 | 08（空运）/ 01（结构） |
 | 属性摘要 | `BattalionSummary` | 营的侦察距离、各类自给能力、压制火力、防护、平均负重、通信延迟等汇总值（只供界面和 AI 参考，不参与结算）。 | §9.10(7) | 03 |
 | 编制试验场 | `ProvingGround` | 拿模板在标准地形上批量对战看分布的工具；阶段 0 的核心。 | §9.9, §21-16 | 03（模拟）/ 13（界面） |
@@ -104,7 +104,7 @@
 | 库存 | `Stockpile` | 某个持有者（节点或部队）× 物资（弹药按型号、其他按类别）的数量。 | §19.6 | 06 |
 | 储备目标 | `StockTarget` | 陆军按“天数战时消耗”，海空军精确弹药按“枚”设置的囤积目标。 | §5.2, §19.7 | 06 |
 | 后勤节点 | `LogisticsNode` | 仓库、后勤中心、铁路终点站、机场、港口统一的节点类型；属性：容量、吞吐、加固、分散度。 | §5.2, §19.5 ✅ | 06 |
-| 节点角色 | `NodeRole` | 枚举：`Depot`（储备仓库）、`ForwardHub`（前进后勤中心）、`Airbase`、`Port`（阶段 3）、`Factory`、`ImportGateway`（进口口岸）、`IndustryNode`（国家工业节点）。 | §19.5, §19.6 | 06 |
+| 节点角色 | `NodeRole` | 枚举：`Depot`（储备仓库）、`ForwardHub`（前进后勤中心）、`Airbase`、`Port`（阶段 3）、`Factory`、`ImportGateway`（进口口岸）、`IndustryNode`（国家工业节点）、`FieldCache = 8`（临时堆放点，06 L-05）。整数值见 06 §3.1。 | §19.5, §19.6 | 06 |
 | 储备仓库 | `NodeRole.Depot` | 容量大、可加固、位置固定、新建要好几年的节点。 | §19.5 ✅ | 06 |
 | 前进后勤中心 | `NodeRole.ForwardHub` | 由后勤旅展开、容量小、能随战线移动的节点；有几个后勤旅就能开几个。 | §19.5 ✅ | 06 |
 | 后勤旅 | `LogisticsBrigade`（`Formation` 的一种用途标记） | 集团军级保障部队；展开前进后勤中心，负责运到旅保障区。 | §19.5, §19.8 | 06 |
@@ -114,7 +114,7 @@
 | 补给网络流 | `SupplyNetworkFlow` | 每小时按优先级在地块层做的简化最小费用流，算到旅保障区为止。 | §19.3 ✅ | 06 |
 | 运力等级 | `LinkCapacityClass` | 相邻两地块之间道路/铁路的运力等级（离线从 OSM 算出）。 | §19.4 ✅ | 10（数据）/ 06（使用） |
 | 铁路类型 | `RailClass` | 枚举：`ConventionalSingle, ConventionalDouble, HighSpeed`；另有布尔属性 `gaugeBreak`（轨距断点）。 | §19.4 | 10 |
-| 桥梁节点 | `BridgeNode` | 跨大河的连接，可被打击。 | §19.4 | 10（数据）/ 06（切断效果） |
+| 桥梁节点 | `BridgeNode` | 跨大河的连接，可被打击。实现类型为 10 的 `CrossingNode`（`CrossingKind` 区分桥/隧道，M-19）。 | §19.4 | 10（数据）/ 06（切断效果） |
 | 渠道策略 | `ImportChannelPolicy` | 枚举：`Distributed, Fastest, Safest`。 | §19.6 | 06 |
 | 战备储备 | `WarReserve` | 平时生产、存在储备仓库里的弹药和物资。 | §19.6 | 06 |
 | 封存基地 | `StorageBase` | 封存装备的场所；启封花时间、钱、备件；状态逐年下降。 | §19.6 | 06（存储）/ 11（启封决策），阶段 2+ |
@@ -134,7 +134,7 @@
 | 区域 | `Region` | 几十个地块组成，用于补给、行政、战略 AI 寻路。 | §9.3 🟡 | 10 |
 | 战区 | `Theater` | 剧本覆盖的一组区域（阶段 1 = 纳卡战区）。 | §9.3, §21-4 | 10 / 14 |
 | 地形构成 | `TerrainComposition` | 每格各地形类型的面积占比（城市、森林、开阔地、山地、水体……）、高程统计、道路密度。 | §9.3 | 10 |
-| 地形类型 | `TerrainType` | 地形构成和条带格子共用的枚举（具体成员由 10 定义）。 | §9.3 | 10 |
+| 地形类型 | `TerrainType` | 地形构成和条带格子共用的枚举：`None = 0, Open = 1, Mixed = 2, Forest = 3, Urban = 4, Mountain = 5, Marsh = 6, Water = 7`（10 §3，M-02；无 `Hills`/`Wetland`，起伏用 `elevStdM` 表达）。 | §9.3 | 10 |
 | 滩头属性 | `BeachProfile` | 沿海地块能否登陆、适合哪些载具、有无港口。阶段 3。 | §17.3 | 10 |
 | 地块控制权 | `TileControl` | 地块当前归哪个国家控制；没有部队时保持不变。 | §11.1.2, §13.3 | 09 |
 | H3 索引 | `H3Index` | H3 网格单元 ID（`ulong`）。 | §9.3 | 10 |
@@ -158,16 +158,16 @@
 | 交战类型 | `EngagementType` | 枚举：`AttackPosition`（攻击阵地）、`Meeting`（遭遇战）、`Counterattack`（反冲击）、`Infiltration`（渗透）、`Reconnaissance`（侦察，小规模）。 | §9.3①② | 03 |
 | 班级模拟 | `SquadSimulation` | 片段内部以 1 分钟为步长、步内按开火时刻排序的模拟。 | §9.3③, §9.6 | 03 |
 | 正面槽位 | `FrontSlot` | 片段内部横向的位置格。 | §9.3③ | 03 |
-| 片段纵深带 | `DepthBand` | 片段内部的纵深分档：`Close`（0–300m）、`Medium`（300m–1km）、`Far`（1–4km）。（不要和 §9.2 的“本级负责纵深”混淆，后者叫 `EchelonDepth`。） | §9.3③ | 03 |
+| 片段纵深带 | `DepthBand` | 片段内部的纵深分档：`Close`（0–300m）、`Medium`（300m–1km）、`Far`（1–4km）、`Beyond`（>4km，03 §3.2）。（不要和 §9.2 的“本级负责纵深”混淆，后者叫 `EchelonDepth`。） | §9.3③ | 03 |
 | 本级负责纵深 | `EchelonDepth` | 某层级单位负责的纵深距离，用来判断武器射程是否“白费”。 | §9.2 | 03 |
 | 空间单元 | `SpatialElement` | 班级模拟里有位置的点：一个班；乘车班下车后拆成“车＋车组”和“下车步兵”两个。 | §9.3③ 🟡 | 03 |
 | 乘车 / 下车 | `MountState` | 枚举：`Mounted, Dismounted`。 | §9.3③, §9.10(5) | 03 |
 | 战术步长 | `TacticalStep` | 1 分钟；陆战直瞄接触和空中交战共用；其他步长都是它的整数倍。 | §12.1 🟡, §11.1 ✅ | 09 |
 | 步内事件 | `IntraStepEvent` | 一个战术步内带毫秒时刻的事件（开火、命中、空袭到达），按时刻先后结算。 | §9.6 🟡 | 03（陆）/ 08（空）/ 15（排序规则） |
-| 目标类别 | `TargetClass` | 枚举：`PersonnelExposed, PersonnelCovered, PersonnelInBuilding, PersonnelReverseSlope, LightArmor, HeavyArmor, Fortification, Helicopter, Uav`。 | §9.4 | 03 |
+| 目标类别 | `TargetClass` | 枚举：`PersonnelExposed, PersonnelCovered, PersonnelInBuilding, PersonnelReverseSlope, LightArmor, HeavyArmor, Fortification, Helicopter, Uav, SoftVehicle`（`SoftVehicle = 10` 为 03 C-03 新增；整数值见 03 §3.1）。 | §9.4 | 03 |
 | 非杀伤效果 | `Suppression`、`Smoke` | 压制（降低开火、禁止移动、随时间消退）；烟雾（降低某纵深带视距）。 | §9.4, §9.10(4) | 03 |
 | 武器属性 | `WeaponProfile` | 总纲 §9.5 的 `WeaponModel`：效能矩阵、射程、命中曲线、射击方式、射速、重量、乘员、架设和瞄准时间、练度要求。挂在 `EquipmentModel` 上。 | §9.5 | 03 |
-| 射击方式 | `FireMode` | 枚举：`Direct`（直射）、`LowAngleIndirect`（低伸曲射）、`HighAngleIndirect`（高抛，唯一能打反斜面）。 | §9.5 | 03 |
+| 射击方式 | `FireMode` | 枚举：`Direct = 1`（直射）、`LowAngleIndirect = 2`（低伸曲射）、`HighAngleIndirect = 3`（高抛，唯一能打反斜面）、`Loitering = 4`（巡飞弹/FPV，03 C-02）。 | §9.5 | 03 |
 | 压制值 | `suppression`（字段） | [0, 1]，按期望值连续计算。 | §9.10(4), §21-1 | 03 |
 | 疲劳 | `fatigue`（字段） | [0, 1]；降低命中率和机动。 | §9.6, §9.10(6) | 03 |
 | 负重 | `loadKg`（字段） | 单兵负重 = 个人装备 + 武器 + 分到的弹药。 | §9.10(6) | 03 |
@@ -225,7 +225,7 @@
 | 中文 | 英文标识 | 定义 | 出处 | 归属 |
 |---|---|---|---|---|
 | 飞行编组 | `Flight` | 空军最小控制单位：作战飞机 4 架；预警/加油/电子战等高价值支援机 1–2 架；大型无人机为“组”。 | §2.1, §8 | 08 |
-| 空中任务 | `AirMissionType` | 枚举：`Ferry`（转场）、`Intercept`、`Cap`（空中战斗巡逻）、`Cas`（近距空中支援）、`Strike`、`Sead`（含 DEAD）、`Escort`、`SupportOrbit`（支援盘旋）、`Recon`；阶段 3 增加 `Asw, MaritimeSearch, Csar, MineWarfare, ShipShuttle`。 | §12.3, §14.5 | 08 |
+| 空中任务 | `AirMissionType` | 枚举：`Ferry`（转场）、`Intercept`、`Cap`（空中战斗巡逻）、`Cas`（近距空中支援）、`Strike`、`Sead`（含 DEAD）、`Escort`、`SupportOrbit`（支援盘旋）、`Recon`、`Airlift`（空运/空降，§15，08 §3）；阶段 3 增加 `Asw, MaritimeSearch, Csar, MineWarfare, ShipShuttle`。整数值见 08 §3。 | §12.3, §14.5 | 08 |
 | 任务包 | `MissionPackage` | 打击任务附带护航/SEAD/干扰，系统自动同时到达。 | §12.3 🟡 | 08 |
 | 飞行剖面 | `FlightProfile` | 枚举：`HiHiHi, HiLoHi, LoLoLo`。 | §12.4 ✅ | 08 |
 | 雷达地平线 | `RadarHorizon` | 探测距离_km ≈ 4.12 × (√雷达高度_m + √目标高度_m)。 | §12.4 🟡 | 08 |
@@ -283,6 +283,280 @@
 | 条令 AI（条带） | `StripDoctrineAi` | 条带上连的部署、轮换、预备队投入、炮兵分配。 | §9.3, §20.1 | 04 |
 | 战略 AI | `StrategicAi` | HTN + 效用评分 + 影响力图 + 代理模型；AI 国家的采购、编制、开战、集团军作战。 | §20.1 | 12 |
 | 效用 AI / 影响力图 / 分层任务规划 | `UtilityAi` / `InfluenceMap` / `Htn` | 通用 AI 技术构件。 | §20.1 | 12 |
+
+### 1.12 各规格新增术语（审查合并）
+
+> 以下由各规格第 11 节合并而来（01–10、15；11–14 的新增术语由第二轮审查合并）。“归属”= 定义该类型/字段的规格；与上面 1.1–1.11 冲突时以本节和对应规格为准。新增装备类别 `loitering_munition`、`fpv_drone`、`body_armor`、`tbm_launcher`、`camo_kit`、`decoy_vehicle`、`decoy_emitter`、`sam_missile` 已加入 `data/schema/categories.yaml`（01 归属）。
+
+#### 1.12.1 来自 01（编制与模板）
+
+| 中文 | 英文标识 | 定义 | 出处 | 归属 |
+|---|---|---|---|---|
+| 兵种 | `Branch` | 模板/营的兵种分类（装甲、机步、炮兵……），用于指挥负荷多样性、能力缺口规则、自动生成、05 的类型情报。 | 01 §11 | 01 |
+| 显示层级名 | `echelonLabel`（数据 `echelon_label`） | 编组的显示名称（团、防区、集团军等），不影响机制（O-01）。 | 01 §11 | 01 |
+| 武器层级 | `weaponEchelon`（数据 `weapon_echelon`） | 班模板的武器属于班用/排用/连用，决定超重阈值和职能重复比较范围。 | 01 §11 | 01 |
+| 直属队合成营 | `isSyntheticDirect`（`OrgUnit` 字段） | 编组模板直接引用的连/排/班被装进的营级单位（O-03）。 | 01 §11 | 01 |
+| 路径键 | `pathKey` | 节点在营内的稳定路径（模板 id + 序号），用于模板对齐与存档定位。 | 01 §11 | 01 |
+| 型号来源 | `BindingSource` | 某营某类别型号的来源：营覆盖/编组继承/营模板/国家默认。 | 01 §11 | 01 |
+| 全军需求行 | `ForceRequirementRow` | `ForceRequirement` 的一行：(类别, 型号) 的满编需求、平时目标、持有、库存。 | 01 §11 | 01 |
+| 国家编制设置 | `CountryOrgSettings` | 每国的分配策略、优先列表、营内填充方式、国家默认型号、默认风格。 | 01 §11 | 01 |
+| 营内填充方式 | `CountryOrgSettings.fillMode`（类型 `ReorgPolicy`（07）） | `Consolidate` / `KeepStructure`；全军装备分配时的营内填充方式。 | 01 §11 | 01 |
+| 库存索引 | `DepotIndex` | (国家, 型号) → 未发放装备实例集合。 | 01 §11 | 01 |
+| 指挥状态 | `CommandState` / `FormationCommandState` | 指挥负荷当量、指挥能力、比值、延迟倍率、协同系数、指挥质量、失能标志。 | 01 §11 | 01 |
+| 通信档 | `CommsTier` | 指挥部通信水平：无/手持/车载/数字化。 | 01 §11 | 01 |
+| 指挥质量 | `quality`（`GetCommandQuality`） | [0,1]，由通信档和指挥部练度归一化，供 09 使用。 | 01 §11 | 01 |
+| 指挥部失能 | `isHeadless` | 指挥部在位人数低于门槛或指挥部营被歼灭。 | 01 §11 | 01 |
+| 能力类别 | `CapabilityKind` | 能力缺口检查的能力（反重装甲、反轻装甲、高抛曲射、低空防空……）。 | 01 §11 | 01 |
+| 检查结果 | `CheckResult`（代码如 `W40_vehicle_capacity`） | 编辑器自动检查的一条结果，含严重度和数字。 | 01 §11 | 01 |
+| 传导报告 | `ImpactReport` | 模板修改对上级模板与全军需求、训练、采购的影响清单。 | 01 §11 | 01 |
+| 编制风格 / 连类型 | `OrgStyle` / `archetype` | 自动生成排班的规则表（`data/styles/`）。 | 01 §11 | 01 |
+| 生成参数 | `GenerateParams` | 自动生成的输入（风格、连类型、车型、排数、下车人数）。 | 01 §11 | 01 |
+| 维护组 | `maintenanceGroup` | 共用维护工具组的型号集合，缺省 = `family`。 | 01 §11 | 01 |
+| 维护组织 | `MaintenanceOrgKey` | 维护和练度的承载单位：建制旅，或自成一体的独立营。 | 01 §11 | 01 |
+| 工具组 | `ToolsetState` | 某维护组织对某维护组持有的维护/检测工具组套数。 | 01 §11 | 01 |
+| 装填模板（通用） | `LoadoutTemplate` / `host_classes` | 宿主装填单元的装填方案；阶段 3 的 `VlsLoadoutTemplate` 是其特例（O-15）。 | 01 §11 | 01 |
+
+#### 1.12.2 来自 02（人员与练度）
+
+| 中文 | 英文标识 | 定义 | 出处 | 归属 |
+|---|---|---|---|---|
+| 服役类型 | `ServiceType` | 义务兵、合同兵、军官、动员预备役、志愿者；映射到 11 的 `PayCategory`。 | 02 §11 | 02 |
+| 练度归属 | `SkillHolderKey` | 练度记录的承载单位：建制旅，或无旅级上级的营（= 01 的维护组织）。 | 02 §11 | 02 |
+| 型号练度条目 | `TypeSkillEntry` | (归属, 专业, 型号) 的人数与专有练度均值；型号键 0 = 专业技能。 | 02 §11 | 02 |
+| 练度值 | `SkillValue` | `GetSkill` 返回的 (通用, 专有) 二元组。 | 02 §11 | 02 |
+| 暂存练度 | `CarriedSkillState` | 人员离开归属期间（后送、待编池、在途）暂存的练度，归队时并入。 | 02 §11 | 02 |
+| 训练人员池 | `TrainedPoolState` / `SkillPool` | 毕业待分配人员的聚合（人数 + 练度均值 + 受训型号）。 | 02 §11 | 02 |
+| 学校型号 | `SchoolModel` | 某专业在本国件数最多的操作型号，学校按它培训。 | 02 §11 | 02 |
+| 学员批次 | `SchoolCohort` | 同日入学、同专业、同服役类型的一批学员。 | 02 §11 | 02 |
+| 预备役池 | `ReservePoolState` | 按专业的预备役人数与练度，随时间老化。 | 02 §11 | 02 |
+| 训练状态 | `FormationTrainingState` | 归属的训练强度覆盖、休整标志、上小时资源满足率。 | 02 §11 | 02 |
+| 训练参与比例 | `share` | 归属内不在战斗、不在整编、非骨干营的在位人员比例。 | 02 §11 | 02 |
+| 实战经验报告 | `CombatExperienceReport` | 03/04 提交的（营, 专业, 型号, 存活人数, 交战分钟）。 | 02 §11 | 02 |
+| 岗位下标 | `positionIndex` | 人员在班模板岗位表中的位置。 | 02 §11 | 02 |
+| 代岗 | `GetSkillOffSpecialty` | 人员操作非本专业岗位时的练度计算。 | 02 §11 | 02 |
+| 设计体系 | `DesignBloc` | 由 origin 推导的装备设计体系（苏式、中式、西方、其他），用于相似度。 | 02 §11 | 02 |
+| 相似度下限 | `SimilarityFloor` | 简单装备（枪械、电台）跨体系相似度的最低值。 | 02 §11 | 02 |
+| 练度预设 | `SkillPreset` | 试验场用的新兵/常备/老兵/精锐练度组合。 | 02 §11 | 02 |
+| 平衡点 | `X*` | 给定训练强度与人员轮换下，归属平均练度的长期稳定值（界面显示）。 | 02 §11 | 02 |
+
+#### 1.12.3 来自 03（班级战斗）
+
+| 中文 | 英文标识 | 定义 | 出处 | 归属 |
+|---|---|---|---|---|
+| 片段格子 | `EngagementCell` | 片段内 槽位 × 100 m 行 的地形格，带微地形、视距尺度、反斜面标记、雷障与烟幕 | 03 §11 | 03 |
+| 片段方 | `EngagementSide` | 枚举 `A`（片段内进攻方）/ `B`；与战斗的进攻方不一定相同（反冲击） | 03 §11 | 03 |
+| 片段结局 | `EngagementOutcome` | 枚举：`AttackerSeized, DefenderHeld, AttackerRepulsed, DefenderWithdrew, Stalemate, MutualBreak` | 03 §11 | 03 |
+| 片段结果 | `EngagementResult` | 片段结束时交给 04 的结果包 | 03 §11 | 03 |
+| 元素类型 | `ElementKind` | `Infantry, Vehicle, MountedSquad, IndirectFireSection, Uav` | 03 §11 | 03 |
+| 元素命令 | `ElementOrder` | `Hold, Advance, Assault, Overwatch, Withdraw, Mount` | 03 §11 | 03 |
+| 弹种 | `MunitionKind` | 弹药物理类型枚举（`Bullet … Mine`） | 03 §11 | 03 |
+| 效能行 | `EffectRow` | 弹药对某目标类别的 `pKillPerHit / lethalAreaM2 / suppPerShot` | 03 §11 | 03 |
+| 观瞄等级 | `OpticsClass` | `NakedEye, Binocular, NightVision, VehicleDayOptics, ThermalGen1, ThermalGen2, UavCamera` | 03 §11 | 03（05 的 SensorProfile 引用） |
+| 光照 | `LightCondition`（09） | `Day, Twilight, Night`；03 直接引用 09 的枚举 | 03 §11 | 09 |
+| 班战斗状态 | `SquadCombatState` | 跨片段持久的压制、疲劳、战斗力标志（组件） | 03 §11 | 03 |
+| 片段弹药缓存 | `EngagementAmmoCache` | 片段内班的随身/车载弹药缓存；持久存储是 06 的 `SquadCarriedState` | 03 §11 | 03 |
+| 单兵负重状态 | `PersonLoadState` | 单兵负重（组件） | 03 §11 | 03 |
+| 武器运行态 | `WeaponRuntime` | 片段内每件武器的操作者、目标、下次可射时刻 | 03 §11 | 03 |
+| 威胁记录 | `ThreatRecord` | 威胁从发现到被处理的时间与等待期间损失 | 03 §11 | 03 |
+| 武器统计 | `WeaponStats` | 开火、杀伤、压制、闲置秒数 | 03 §11 | 03 |
+| 战斗力 | `CombatStrength` | 能力向量加权得到的 [0,1+] 标量；片段结束判据与缓存网格坐标 | 03 §11 | 03 |
+| 缓存键 / 样本 | `OutcomeKey` / `OutcomeSample` / `OutcomeCacheEntry` | 结果分布缓存的键与条目 | 03 §11 | 03 |
+| 标准地形类 | `TerrainClassPg` | 试验场与缓存的 5 类标准地形：`Open, Mixed, Forest, Urban, Mountain` | 03 §11 | 03 |
+| 损失来源 | `LossSource` | 伤亡/损伤的归因标签（阶段线、来源型号、弹种、射手、误伤） | 03 §11 | 03（04、07 共用） |
+| 本级负责纵深（取值） | `EchelonDepth` 表 | 班 300 m、排 600 m、连 1500 m、营 4000 m、旅 20 km（V1-c 与编辑器提示用）🟡 | 03 §11 | 03 |
+| 请求优先级 | `RequestPriority` | `Emergency, Immediate, Normal` | 03 §11 | 03 |
+| 扇区上下文 | `SectorContext` | 04 生成片段时传入的全部初始条件 | 03 §11 | 03（类型）/ 04（填写） |
+
+#### 1.12.4 来自 04（条带层）
+
+| 中文 | 英文标识 | 定义 | 出处 | 归属 |
+|---|---|---|---|---|
+| 条带侧 | `StripSide` | `Negative = −1`（y<0）/ `Positive = +1`；06 的 `int side` 即此值 | 04 §11 | 04 |
+| 战斗角色 | `BattleRole` | `Attacker / Defender`（开战时） | 04 §11 | 04 |
+| 条带元素类型 | `StripElementKind` | `Company, FireUnit, SupportDetachment, Headquarters, AirDefense, LoiteringBattery, Logistics` | 04 §11 | 04 |
+| 条带任务 | `StripTask` | `Hold, Advance, Reserve, Withdraw, Counterattack, FireSupport, Relocate, Breach, Recon, Reorganize, Deploy` | 04 §11 | 04 |
+| 元素状态 | `ElementState` | `Idle, Moving, Locked, Relocating, Firing, Disengaging, Gone` | 04 §11 | 04 |
+| 扇区 | `SectorState` | 正面宽度的一个“槽”：每扇区至多 1 个活跃片段；带雷障密度、破障进度 | 04 §11 | 04 |
+| 扇区地形摘要 | `SectorTerrainSummary` | 扇区的地形占比、车辆通道、起伏、视距 | 04 §11 | 04 |
+| 条带格子 | `StripCell` | 250 m 地形格 | 04 §11 | 04 |
+| 条令参数 | `DoctrineProfile` | 按国家的条带条令参数（正面、梯队比例、下车距离…） | 04 §11 | 04（14 填数据） |
+| 火力单位状态 | `FireUnitState` | 间瞄火力单位的炮管、射程、队列、反炮兵暴露 | 04 §11 | 04 |
+| 火力任务 | `FireMission` / `FireMissionKind` | 条带层间瞄/远程火力任务及其类型 | 04 §11 | 04 |
+| 支援火力共享队列 | `SupportFireBroker` | 全局唯一的火力单位队列管理器，阶段末按全序键统一排队 | 04 §11 | 04 |
+| 火力支援优先 | `FireSupportPriority` | 旅设置：`CloseSupport, Balanced, CounterFire` 🟡 | 04 §11 | 04 |
+| 地面事件 | `ScheduledGroundEvent` | 已排程的落点事件 | 04 §11 | 04 |
+| 损失账本 | `BattleLossLedger` / `BattleLossEntry` | 战斗内所有损失及其 `BattleLine` 归因 | 04 §11 | 04 |
+| 线计数 | `LineCounters` | 五条线的任务、出动、拦截、定位等累计统计 | 04 §11 | 04 |
+| 阶段战报数据 | `PeriodicBattleReportData` | 24 h 报告的数据包 | 04 §11 | 04 |
+| 瓶颈提示 | `BottleneckHint` | 条带视图的规则化提示（H1–H6） | 04 §11 | 04 |
+| 共享资产 | `isSharedAsset` / `tileLocalPosM` | 地块级资产在条带上的投影 | 04 §11 | 04 |
+| 工兵当量 | `EngineerEquivalent`（公式量） | 工兵班、扫雷车、工程车折算的破障/布雷能力 | 04 §11 | 04 |
+| 威胁场 | `TruckKillIntegral` / `density(x,y)` | 条带上卡车每米被毁期望，供 06 车队 | 04 §11 | 04 |
+
+#### 1.12.5 来自 05（侦察与暴露度）
+
+| 中文 | 英文标识 | 定义 | 出处 | 归属 |
+|---|---|---|---|---|
+| 物理特征值 / 电磁特征值 | `S_phys` / `S_emit`（`SignatureState.physical / emitter`） | 特征值的两个通道 | 05 §11 | 05 |
+| 车辆当量 | `vehicleEquivalent`（VE） | 计算规模项用的“相当于几辆车” | 05 §11 | 05 |
+| 特征值状态 | `SignatureState` | 营的特征值组件（含各乘子） | 05 §11 | 05 |
+| 暴露目标引用 | `ExposureTargetId` / `ExposureTargetKind` | 营、SOF 小队、假目标组、后勤节点 | 05 §11 | 05 |
+| 情报估计 | `IntelEstimate` | 带误差的情报快照，玩家和 AI 只读它 | 05 §11 | 05 |
+| 观测样本 | `ReconDwellSample` | 08 写给 05 的空中观测时长 | 05 §11 | 05 |
+| 条带侦察样本 | `StripReconSample` | 04 写给 05 的地面侦察速率 | 05 §11 | 05 |
+| 卫星资产 | `SatelliteAsset` | 剧本给出的卫星过顶参数 | 05 §11 | 05 |
+| 假目标组 | `DecoyGroup` / `DecoyGroupId` | 营布设的假目标集合，被敌方当作一个营观察 | 05 §11 | 05 |
+| 识破进度 | `decoyRevealProgress` | [0,1]，到 1 识破 | 05 §11 | 05 |
+| 地块反侦察状态 | `TileCounterReconState` | 地块 × 国家的 `vsUav`、`vsGround` | 05 §11 | 05 |
+| 地面侦察力量 | `groundReconPower` | 营的侦察能力汇总（侦察连 ≈ 1） | 05 §11 | 05 |
+| 自主获取 | `RegisterSelfFix` | 平台自己找到目标并把暴露度提到 L4 | 05 §11 | 05 |
+| 精确打击许可 | `PrecisionStrikeAllowed` | L4 且定位未过时 | 05 §11 | 05 |
+| 目标定位误差 | `TargetLocationErrorM` | GNSS 弹药使用的定位误差 | 05 §11 | 05 |
+| SOF 任务阶段 | `SofMissionPhase` | 任务状态机 | 05 §11 | 05 |
+| 区域任务风险容忍度 | `ReconRiskTolerance` | Low / Medium / High | 05 §11 | 05 |
+| 地块优先级 | `TilePriority` | 区域任务里地块的权重 | 05 §11 | 05 |
+| 情报类型猜测 | `IntelTypeGuess` | 敌方营的类型（L3） | 05 §11 | 05 |
+
+#### 1.12.6 来自 06（后勤）
+
+| 中文 | 英文标识 | 定义 | 出处 | 归属 |
+|---|---|---|---|---|
+| 临时堆放点 | `NodeRole.FieldCache`（= 8） | 断路滞留、库容溢出、转移遗留的货物形成的临时节点；无人看管，一定时间后散失；可被缴获 | 06 §11 | 06 |
+| 物资键 | `ItemKey` | (物资大类, 句柄)：弹药按型号、备件按装备型号、燃油按油种 | 06 §11 | 06 |
+| 油种 | `FuelType` | `Diesel, JetFuel` | 06 §11 | 06 |
+| 承运方 / 运力池 | `CarrierPool` / `CarrierKind` | 国家铁路、国家公路、后勤旅、旅属、营属卡车的运力；以“吨·时”预算计 | 06 §11 | 06 |
+| 吨·时预算 | （规则） | 承运方每小时可发吨位 = 可用载重 ÷ 往返小时 | 06 §11 | 06 |
+| 在途货物 | `Shipment` | 已发出、沿路径逐弧推进的货物 | 06 §11 | 06 |
+| 条带补给车队 | `SupplyConvoy` / `ConvoyState` | 条带上 BSA→BT、BT→连往返的卡车组 | 06 §11 | 06（逻辑）/ 04（调用） |
+| 补给请求 | `SupplyRequest` | 每小时生成的 (汇点, 物资大类) 需求 | 06 §11 | 06 |
+| 补给优先层 | `SupplyPriorityTier` | `P0`–`P4` | 06 §11 | 06 |
+| 空陆运力优先 | `AirLandPriority` | `Balanced, AirFirst, LandFirst` | 06 §11 | 06 |
+| 前沿补给方式 | `ForwardResupplyPolicy` | `Auto, Continuous, NightOnly` | 06 §11 | 06 |
+| 班随身库存 | `SquadCarriedState` | 班的弹药/燃油/给养实际数量与满载参考；`CarriedLoad` 的落地 | 06 §11 | 06 |
+| 战略方向 | `StrategicDirection` | 一组 Region + 权重；`StrategicDirectionWeight` 的载体 | 06 §11 | 06 |
+| 前置命令 | `PrepositionOrder` | 把弹药提前推到某方向或机场 | 06 §11 | 06 |
+| 交通线威胁 | `TileLocThreat` | 某国在某地块上观察到的卡车/货物损失率（EMA）与通行能力下降 | 06 §11 | 06 |
+| 打击事件 | `NodeStrikeEvent` / `CrossingStrikeEvent` | 04/08 交给 06 的命中事件 | 06 §11 | 06 |
+| 战斗部等级 | `WarheadClass` | `Small (<50kg)`、`Medium (50–250kg)`、`Large (>250kg)` | 06 §11 | 06（03/08 填） |
+| 保质期分类 | `MunitionShelfClass` | `SmallArms, UnguidedGunMortar, UnguidedRocket, Guided` | 06 §11 | 06 |
+| 标准战时日消耗 | `StdDay` | 用于“天数”目标的标准消耗率（与实际战况无关） | 06 §11 | 06 |
+| 关键节点报告 | `KeyNodeReport` | 逐个删节点重算得到的补给下降排行 | 06 §11 | 06 |
+| 包围圈 | `PocketInfo` | 与国家主源不连通的己方地块连通分量及其耐久预测 | 06 §11 | 06 |
+| 口岸数据 | `ImportGatewayData` | 进口口岸的外部方式、过境国、日处理能力、轨距断点、外部运输时间 | 06 §11 | 06 |
+
+#### 1.12.7 来自 07（损伤、修复、重组）
+
+| 中文 | 英文标识 | 定义 | 出处 | 归属 |
+|---|---|---|---|---|
+| 医疗阶段 | `MedicalStage` | `WithUnit, AwaitingEvac, Evacuating, Role1, Role2, Hospital, ReturnedToDuty, Discharged, Dead` | 07 §11 | 07 |
+| 人员伤亡状态组件 | `PersonCasualtyState` | 每个受过伤的人的伤情、医疗阶段、原属单位 | 07 §11 | 07 |
+| 损伤等级 | `DamageLevel` | `Operational, FieldRepairable, DepotRepair, Destroyed, Abandoned, Captured` | 07 §11 | 07 |
+| 损伤标志 | `DamageFlags` | `Mobility, Firepower, Sensor, Catastrophic, Mine, Breakdown, Cannibalized` | 07 §11 | 07 |
+| 损伤原因 | `DamageCause` | `Combat, Mine, Interdiction, Breakdown, Strike, Scuttled`（06 引用） | 07 §11 | 07 |
+| 弹药毁伤组 | `MunitionGroup` | 由 03 `MunitionKind` 映射的 6 组，用于损伤等级表 | 07 §11 | 07 |
+| 回收状态 | `RecoveryState` | `NeedsRecovery … AtDepot` | 07 §11 | 07 |
+| 回收类别 | `RecoveryClass` | `HeavyTracked, MediumTracked, Wheeled, Towed, ManPortable` | 07 §11 | 07 |
+| 可靠性属性 | `ReliabilityProfile` | 故障间隔、备件消耗、修理工时、大修费用、启封备件 | 07 §11 | 07 |
+| 备件单位 | （定义） | 1 单位 = 该型号 1 个标准修理工时的零件 | 07 §11 | 07 |
+| 修理队列 / 医疗队列 | `RepairQueue` / `MedicalQueue` | 营/旅维修队列；营后送队列 | 07 §11 | 07 |
+| 大修单 | `DepotRepairOrder` | 后方大修记录 | 07 §11 | 07 |
+| 重组范围 | `ReorgScope` | `Platoon, CompanyBattalion, InterBattalion` | 07 §11 | 07 |
+| 旅保障设置 | `BrigadeSustainSettings` | 重组策略、补充方式、是否拆东补西 | 07 §11 | 07 |
+| 轮换状态 | `RotationState` / `RotationPhase` | 整建制轮换的阶段 | 07 §11 | 07 |
+| 补充请求 | `ReplacementRequest` | 发给 06 的运输请求 | 07 §11 | 07 |
+| 补充需求 | `ReplacementNeeds` | 模板 − 实际 − 待编 − 预计归队/修复 − 在途 | 07 §11 | 07 |
+| 满编率报告 | `FillRateReport` | 人员、专业、装备、能力各项满编率 | 07 §11 | 07 |
+| 损失状态汇总 | `LossStatusSummary` | 永久 / 可修 / 已修 / 遗弃 / 医疗 | 07 §11 | 07 |
+| 跨专业系数 | `CrossTrainFactor` | 非对口人员操作某岗位时的练度系数 | 07 §11 | 07（03 调用） |
+| 缴获池 | `CapturedPool` | 国家级缴获装备（可选使用） | 07 §11 | 07 |
+
+#### 1.12.8 来自 08（空中）
+
+| 中文 | 英文标识 | 定义 | 出处 | 归属 |
+|---|---|---|---|---|
+| 空中元素 | `FlightElement` / `FlightElementId` | 一起在空中飞的一组飞机（有人机编组整体；无人机组每架一个） | 08 §11 | 08 |
+| 机体状态 | `AirframeState` / `AirframeStatus` | 每架飞机的出动状态组件 | 08 §11 | 08 |
+| 空中任务 | `AirMission` / `AirMissionId` | 一次任务的完整规格 | 08 §11 | 08 |
+| 飞机型号参数 | `AircraftProfile`（YAML `aircraft`） | 08 归属的型号 Profile | 08 §11 | 08 |
+| 挂载方案 | `LoadoutOption` | 某任务可用的一套挂载，按优先级 | 08 §11 | 08 |
+| 空中弹药字段 | `AirMunitionFields`（YAML `munition.air`） | `MunitionProfile` 的空中扩展 | 08 §11 | 08 |
+| 防空系统参数 | `AirDefenseProfile`（YAML `air_defense`） | 新 Profile：通道、反应时间、待发弹、再装填等（建议补入 00 §4.3 表，归 08） | 08 §11 | 08 |
+| 飞机角色 | `AircraftRole` | Fighter / Strike / UavStrike / UavRecon / Sead / Support / Transport / 直升机 / Decoy | 08 §11 | 08 |
+| 空中目标类别 | `AirTargetClass` | 拦截率表的列 | 08 §11 | 08 |
+| 制导类别 | `GuidanceClass` | 弹药制导方式 | 08 §11 | 08 |
+| 空情航迹 | `AirTrack` | 国家对空中目标的实时航迹（不同于暴露度） | 08 §11 | 08 |
+| 营属防空 | `OrganicAirDefense` | 非防空营的便携导弹、高炮汇总 | 08 §11 | 08 |
+| 对地事件 | `GroundStrikeEvent` | 08 交给 03/04/06 的带时刻的对地命中/落点事件 | 08 §11 | 08 |
+| 打击后备 | `StrikeFallback` | Abort / AreaAttack / SelfAcquire | 08 §11 | 08 |
+| 无人机高度档 | `AltitudeBand` | Low / Medium / High | 08 §11 | 08 |
+| 防空火力单元类型 | `AdFireUnitType` | SelfContained（单车）/ BatteryRadar（以连为单元） | 08 §11 | 08 |
+| 拦截机会数 | m（`opportunities`） | 目标在包线内还能“打一发、看一发”的次数 | 08 §11 | 08 |
+| 国家级拦截去重账本 | `TargetEngagementLedger` | 每步记录各目标已有在途拦截弹的合成概率 | 08 §11 | 08 |
+| 中队营 | “squadron unit”（`OrgUnit`） | 承载中队飞机与人员的营级编制单元（A-25） | 08 §11 | 08 |
+
+#### 1.12.9 来自 09（时间与命令）
+
+| 中文 | 英文标识 | 定义 | 出处 | 归属 |
+|---|---|---|---|---|
+| 命令类别 | `OrderClass` | `Planned / Reactive / UrgentSimple / Administrative / Forced`，决定延迟系数 | 09 §11 | 09 |
+| 命令槽位 | `OrderSlot` | 同一单位同一槽位只允许 1 条 Pending + 1 条 Active | 09 §11 | 09 |
+| 命令状态 | `OrderStatus` | `Pending / Active / Completed / Superseded / Cancelled / Failed` | 09 §11 | 09 |
+| 延迟明细 | `OrderDelayBreakdown` | 命令延迟各乘数的记录，供界面解释 | 09 §11 | 09 |
+| 停止 | Halt（`Move` 且 path 为空） | 停止移动、就地防守的紧急简单命令 | 09 §11 | 09 |
+| 移动阶段 | `MovePhase` | `Approach / Crossing / Depart / HeldAtEdge / WaitingDisengage` | 09 §11 | 09 |
+| 营移动状态 | `BattalionMoveState` | 营的地块归属、段内进度、纵队长度等组件 | 09 §11 | 09 |
+| 战斗触发 | `BattleTrigger` / `BattleTriggerKind` | 触发交界边战斗的记录；`Attack / Meeting` | 09 §11 | 09 |
+| 战斗结束原因 | `BattleEndReason` | 见 §3.5 | 09 §11 | 09 |
+| 精度档设置 | `FidelityProfile` | `Low / Standard / High / AllFull / AllCached`；决定每小时实时模拟预算 | 09 §11 | 09 |
+| 精度分配 | `FidelityAssignment` | 某战斗本小时窗口的精度档与原因 | 09 §11 | 09 |
+| 配对分钟 | pair-minutes | 调度成本单位：（空间单元数）² × 分钟 | 09 §11 | 09 |
+| 光照条件 | `LightCondition` | `Day / Twilight / Night` | 09 §11 | 09 |
+| 暂停原因 | `PauseReasons` | `[Flags]`：Player / AutoPauseBattle / AutoPauseEvent / Modal / Loading | 09 §11 | 09 |
+| 通知 | `Notification` / `NotificationKind` | 通知列表条目 | 09 §11 | 09（数据）/ 13（呈现） |
+| 被包围 | Encircled（`NotificationKind.UnitEncircled`） | 地块易手时无路可撤的营的状态 | 09 §11 | 09 |
+| 情报快照 | `IntelSnapshot` | 下令时的暴露等级、时间戳、位置误差 | 09 §11 | 09 |
+| 防守分配 | `EdgeAssignment` | 营在所在地块内负责哪条边或作为地块预备（定义在 12） | 09 §11 | 12 |
+
+#### 1.12.10 来自 10（地图数据）
+
+| 中文 | 英文标识 | 定义 | 出处 | 归属 |
+|---|---|---|---|---|
+| 交通中心 | `Tile.hub` | 地块内道路网的代表点（最大城镇附近的高等级道路节点）；边链路的起止点 | 10 §11 | 10 |
+| 道路链路 / 路线 | `RoadLink` / `RoadRoute` | 两相邻地块 hub 之间最多 3 条互不共边的道路路线，各有瓶颈等级、长度、山地系数、依赖的 crossing | 10 §11 | 10 |
+| 铁路链路 | `RailLink` | 两相邻地块之间的铁路连接：类型、长度、两侧轨距、轨距断点、电气化 | 10 §11 | 10 |
+| 山地系数 | `mountainFactor` | [0.3, 1]，由路线平均坡度算出；06 用来折减容量和车速 | 10 §11 | 10 |
+| 桥隧节点 | `CrossingNode` / `CrossingKind` / `CrossingId` | 可被打击的桥梁或隧道；`BridgeNode`（00）的实现 | 10 §11 | 10（数据）/ 06（状态） |
+| 绕行路线 | `BypassRoute` | 某 crossing 断掉时某条路线的替代路线（预计算） | 10 §11 | 10 |
+| 历史版本 | `LinkVariant` | 在某日期区间内（可附控制条件）替换某边道路/铁路链路的版本 | 10 §11 | 10 |
+| 基础设施覆盖清单 | dated override（`data/map/overrides/*.yaml`） | 手工维护的历史路网差异 | 10 §11 | 10 |
+| 控制快照 | `ControlSnapshot` | 某日期的地块控制归属（由手工控制线多数决得到），供 14 初始化 `TileControl` | 10 §11 | 10 |
+| 外围格 | `TileFlags.IsContext` | 战区外的不可进入显示格 | 10 §11 | 10 |
+| 边界类型 | `EdgeBorderKind` | `None, International, ContextBoundary` | 10 §11 | 10 |
+| 条带地形输入 | `StripTerrainInput` | 每条边的真实地形采样文件（250 m × 320 行） | 10 §11 | 10（04 读取） |
+| 分析格 | `AnalysisCellM`（250 m） | 地块构成统计与条带采样共用的分类单元 | 10 §11 | 10 |
+| 地图查询接口 | `IMapQuery` | 模拟核心读地图的唯一入口 | 10 §11 | 10 |
+| 行军道路档 | `MarchRoadClass` | `None, Ordinary, Trunk, Motorway`：`LinkCapacityClass` 到 09 `RoadFactor` 键的映射结果 | 10 §11 | 10（映射）/ 09（使用） |
+| 地图数据版本 | `dataVersion` | 流水线输出内容的版本号；写入每个地图文件头与条带输入 | 10 §11 | 10 |
+
+#### 1.12.15 来自 15（存档与确定性）
+
+| 中文 | 英文标识 | 定义 | 出处 | 归属 |
+|---|---|---|---|---|
+| 存档段 | `SectionId` / `SectionEntry` / `SectionFlags` | 存档中按系统划分、独立版本与压缩的数据块 | 15 §11 | 15 |
+| 存档头 | `SaveHeader` | 格式版本、游戏版本、数据哈希、种子、状态哈希、段表 | 15 §11 | 15 |
+| 静态 ID 表 | `StaticIdTable` / `StaticKind` | 运行时句柄 → snake_case id 的映射，读档时用于重映射 | 15 §11 | 15 |
+| 规范化写入器 | `CanonicalWriter` / `CanonicalReader` | 保证同一状态得到同一字节序列的序列化器 | 15 §11 | 15 |
+| 段序列化器 | `ISectionSerializer` / `SaveRegistry` | 各规格注册自己状态的读写 | 15 §11 | 15 |
+| 状态哈希 | `stateHash` / `sectionHashes` | 规范化序列化后的 XxHash64，确定性检查与去同步定位 | 15 §11 | 15 |
+| 校验和记录 | `ChecksumRecord` | 某刻的状态哈希与分段哈希 | 15 §11 | 15 |
+| 输入日志 | `InputLog` / `InputRecord` / `InputKind` | 影响模拟结果的玩家输入序列，用于完整回放 | 15 §11 | 15 |
+| 完整回放 | full replay | 初始条件 + 输入日志重新模拟 | 15 §11 | 15 |
+| 战斗记录段 | `BattleLog` / `BattleLogSegment` / `BattleEventRecord` / `BattleEventKind` | `BattleEventLog` 的具体存储结构 | 15 §11 | 15 |
+| 与世界无关的流 | `Rng.ForKey` | worldSeed 视为 0 的键派生随机流 | 15 §11 | 15 |
+| 确定性数学库 | `DMath` | fdlibm 移植的纯 C# 超越函数 | 15 §11 | 15 |
+| 黄金哈希 | golden hashes | 仓库中固定场景的期望状态哈希序列 | 15 §11 | 15 |
+| 派生缓存段 | `AiDerivedCache` | 需要存档的 AI 派生数据（见 12） | 15 §11 | 15 / 12 |
+
 
 ---
 
@@ -435,7 +709,7 @@
 
 - 暴露度连续值 `exposure ∈ [0, 5]`（`double`）；`ExposureLevel = (ExposureLevel)Math.Floor(exposure)`，即达到 k 时为 Lk。🟡 G-16
 - 每种侦察手段有“最高能到的等级”上限：该手段的贡献不能把值推过上限（具体规则 05 定义）。
-- 其他系统**只读 `ExposureLevel` 和情报时间戳**，不要自己解读连续值（03、04、08 要“命中率随暴露度变化”时，用 05 提供的函数 `ExposureAccuracyFactor(level, ageMs)`）。
+- 其他系统**只读 `ExposureLevel` 和情报时间戳**，不要自己解读连续值（03、04、08 要“命中率随暴露度变化”时，用 05 提供的函数 `ExposureAccuracyFactor(level, ageMs, posture)`；05 另提供两参重载，`posture` 缺省 = `Posture.Defending`，05 R-08）。
 
 ---
 
@@ -522,6 +796,17 @@ erDiagram
 | 视图模型、`AutoPauseFilter`、AAR 呈现 | 界面 | 13 | — | 0/1 |
 | 纳卡剧本数据（国家、开局部队、地块范围、事件） | 剧本 | 14 | — | 1 |
 | 存档格式、`BattleEventLog`、RNG 实现、校验和 | 存档与确定性 | 15 | 全部 | 0 |
+| `CommandState` / `FormationCommandState`、`CountryOrgSettings`、`ToolsetState`、`DepotIndex`、`RearDetachment`（结构） | 指挥状态、国家编制设置、工具组、库存索引、留守分队 | 01 | 07, 08, 09, 11, 13 | 0/1 |
+| `TypeSkillEntry`、`CarriedSkillState`、`TrainedPoolState`、`ReservePoolState`、`FormationTrainingState`、`SchoolCohort` | 练度与训练组件 | 02 | 03, 07, 08, 11 | 0/1 |
+| `SquadCombatState`、`PersonLoadState`（组件）；`EngagementAmmoCache`（片段内缓存） | 班战斗组件 | 03 | 04, 07, 13 | 0 |
+| `SectorState`、`FireUnitState`、`FireMission`、`SupportFireBroker`、`ScheduledGroundEvent`、`BattleLossLedger`、`DoctrineProfile` | 条带层运行时 | 04 | 03, 08, 13 | 0 |
+| `SignatureState`、`IntelEstimate`、`DecoyGroup`、`TileCounterReconState`、`ReconConfig` | 侦察组件 | 05 | 04, 08, 09, 12, 13 | 1 |
+| `SquadCarriedState`（班随身库存，**弹药/燃油/给养的唯一持久存储**）、`ItemKey`、`Shipment`、`CarrierPool`、`SupplyConvoy`、`StrategicDirection` | 后勤运行时 | 06 | 03, 04, 07, 08, 13 | 0/1 |
+| `PersonCasualtyState`、`BrigadeSustainSettings`、`RotationState`、`DepotRepairOrder`、`CapturedPool` | 伤亡、保障设置、轮换、大修、缴获 | 07 | 02, 06, 13 | 0/1 |
+| `FlightElement`、`AirframeState`、`AirTrack`、`OrganicAirDefense`、`GroundStrikeEvent`、`TargetEngagementLedger` | 空中层运行时 | 08 | 03, 04, 05, 06 | 1 |
+| `BattalionMoveState`、`BattleTrigger`、`FidelityAssignment`、`Notification`、`IntelSnapshot`、`LightCondition` | 移动、触发、精度分配、通知、情报快照、光照 | 09 | 03, 04, 05, 08, 12, 13 | 0/1 |
+| `CrossingNode`（数据；被打击后的状态归 06）、`RoadLink`、`RailLink`、`LinkVariant`、`ControlSnapshot`、`StripTerrainInput`、`IMapQuery` | 地图派生数据与查询接口 | 10 | 04, 05, 06, 09, 14 | 1 |
+| `SaveHeader`、`StaticIdTable`、`InputLog`、`BattleLog`、`ChecksumRecord` | 存档结构 | 15 | 全部 | 0 |
 
 ### 4.3 `EquipmentModel` 的分 Profile 归属
 
@@ -530,13 +815,14 @@ erDiagram
 | Profile（C# 类型 / YAML 键） | 内容 | 归属 |
 |---|---|---|
 | `WeaponProfile` / `weapon` | 总纲 §9.5 全部武器属性、默认基数 | 03 |
-| `MunitionProfile` / `munition` | 弹药对目标类别的效能、口径组、单发重量、制导 | 03（地面通用）；空中专有字段由 08 扩展 |
+| `MunitionProfile` / `munition` | 弹药对目标类别的效能、口径组（`caliberGroup`）、保质期分类（`shelfClass`）、单发重量（`roundWeightKg`）、战斗部质量（`warheadKg`）、制导 | 03（地面通用）；空中专有字段由 08 的 `AirMunitionFields`（YAML `munition.air`）扩展 |
 | `ArmorProfile` / `armor` | 车辆防护等级（与 `ratings.protection` 衔接）、载员容量 | 03 |
 | `SensorProfile` / `sensor` | 观瞄/雷达/电子侦察能力，侦察手段 | 05 |
 | `SignatureProfile` / `signature` | 型号对特征值的贡献 | 05 |
 | `MobilityProfile` / `mobility` | 速度、油耗、载重、可空投/可吊挂 | 06（油耗、载重）/ 09（速度）——🟡 G-17 建议整体归 06 |
 | `ReliabilityProfile` / `reliability` | 故障率、备件消耗、维修工时 | 07 |
 | `AircraftProfile` / `aircraft` | 作战半径（按剖面）、RCS、挂点、出动率 | 08 |
+| `AirDefenseProfile` / `air_defense` | 通道、反应时间、待发弹、再装填、拦截弹列表 | 08 |
 | `ProcurementProfile` / `procurement` | 单价（`cost_musd`）、服役年份、生产国、可出口性 | 11 |
 
 ---
