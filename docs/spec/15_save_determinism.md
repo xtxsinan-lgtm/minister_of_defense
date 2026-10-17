@@ -88,7 +88,7 @@ public enum SectionId : int {                  // 只能追加；写入顺序 = 
     Org = 20, Personnel = 21,                  // 01, 02
     SquadCombat = 30, Strip = 31,              // 03, 04
     Exposure = 40, Logistics = 41, Damage = 42, Air = 43,   // 05, 06, 07, 08
-    TimeOrders = 50, Scheduler = 51,           // 09
+    TimeOrders = 50, Scheduler = 51,           // 09；Scheduler = 09 SimBudgetScheduler + 13 StarredSet
     Ai = 60, AiDerivedCache = 61,              // 12
     Scenario = 70,                             // 14
     InputLog = 90, ChecksumLog = 91,           // 15
@@ -180,7 +180,10 @@ public enum InputKind : int {                  // 只能追加
     AiDifficulty = 5,                          // 12
     EventAnswer = 6, CeasefireAnswer = 7,      // 11（也可并入 StrategicAction，单列便于检查）
     DoctrineChange = 8,                        // 12 旅条令预设
-    SettingWithSimEffect = 9                   // 其他影响模拟的设置（白名单，§4.8）
+    SettingWithSimEffect = 9,                  // 其他影响模拟的设置（白名单，§4.8）
+    OrgEdit = 10,                              // 13 IUiCommands 的编制编辑（01 模板提交、绑定等）
+    UnitAdmin = 11,                            // 13 IUiCommands 的单位管理（01/02/06：战备、弹药构成、学校设置等）
+    CancelOrder = 12                           // 09 CancelOrder（Player 来源）；payload = orderId
 }
 
 public sealed class InputRecord {
@@ -358,7 +361,7 @@ void WriteFile(string path, SaveHeader h, byte[][] raws) {   // 可在后台线�
 }
 ```
 - **只能在两刻之间存档**（09 §4.1 规则 1）：玩家点“保存”→ 当前刻结束后暂停（`PauseReasons.Modal`）→ 快照 → 恢复。
-- 自动存档：在 `n % (AutosaveIntervalMin) == 0` 的刻**结束后**（即世界时刻为整日 00:00 时）触发，槽位轮换 `autosave_0..K−1`。另在“战争开始”“停火”事件所在刻结束后各存一份 `autosave_event`（覆盖式）。
+- 自动存档：在 `(n+1) % AutosaveIntervalMin == 0` 的刻**结束后**（即世界时刻为整日 00:00 时）触发，槽位轮换 `autosave_0..K−1`。另在“战争开始”“停火”事件所在刻结束后各存一份 `autosave_event`（覆盖式）。
 - 存档时追加一条 `ChecksumRecord`（即使未开启每小时校验），供读档后自检。
 
 ### 4.7 读档流程与版本
@@ -388,7 +391,7 @@ World Load(Stream s) {
 
 ### 4.8 输入日志 `InputLog` 与完整回放
 **什么算输入**：改变模拟结果的一切玩家行为（白名单）：
-- 09 `SubmitOrder`（Player 来源）、`CancelOrder`；11 `IStrategicActions` 的每次调用；事件与停火答复；星标增删；`FidelityProfile`；AI 难度；旅条令预设切换；其他列入 `SettingWithSimEffect` 白名单的设置（新增需要在本文件登记）。
+- 09 `SubmitOrder`（Player 来源）、`CancelOrder`（`InputKind.CancelOrder`）；11 `IStrategicActions` 的每次调用；13 `IUiCommands` 的编制编辑（`OrgEdit`）与单位管理（`UnitAdmin`）；事件与停火答复；星标增删；`FidelityProfile`；AI 难度；旅条令预设切换；其他列入 `SettingWithSimEffect` 白名单的设置（新增需要在本文件登记）。
 **不是输入**：暂停、速度、镜头、界面过滤器、自动暂停设置、打开哪个视图、存档/读档本身。
 
 **记录**：每条输入提交时 `tick = clock.currentTick`（即将执行的刻），`seq` = 本刻内提交序号。AI 命令**不记录**（回放时由 AI 重新产生）。
@@ -470,6 +473,8 @@ stateHash = XxHash64( 拼接( VarU(SectionId_i) · u64LE(h_i) ) , seed = 0 )
 | 12 影响力图、情报画面 | 是 | 周期重建 → **存档**（`AiDerivedCache`）、进哈希 |
 | 05 `TileCounterReconState` | 是 | 每步开头整体重算、不跨刻 → 不存档 |
 | 05/04/08 的跨刻缓冲（`ReconDwellSample` 等） | 是 | 跨刻存在 → 存档（05 §6.2 已列） |
+| 10 `MapState`（当前生效的道路/铁路变体、`topologyVersion`） | 是 | 是 (SimTime 日, 09 `TileControl`) 的纯函数 → 读档时重算，不存档；`topologyVersion` 不存档（10 §3.8） |
+| 06 `SupplyGraph`、`AmmoBasis` | 是 | 读档后重建（06 §4.2.1），不存档 |
 | 13 视图模型 | 否 | 不存档 |
 | 12 `AiDecisionTrace` | 否 | 不进哈希；可写入 `Debug` 段 |
 
@@ -546,7 +551,7 @@ P:System.Environment.TickCount   P:System.Environment.ProcessorCount
 | `SaveRegistry.Register(ISectionSerializer)` | 每个持有状态的规格 | 启动时注册；`SectionId` 见 §3.2（新规格新增段：追加枚举值） |
 | `CanonicalWriter/Reader` | 同上 | §4.4 |
 | `Save(World, Stream)`、`Load(Stream) → World`、`ReadMeta(Stream)` | 13（菜单）、`MoD.Game` | §4.6–§4.7 |
-| `InputLog.Append(InputKind, payload)` | 09（玩家命令）、11（玩家战略动作）、13（星标、设置）、12（难度、条令预设） | §4.8 |
+| `InputLog.Append(InputKind, payload)` | 09（玩家命令、取消命令）、11（玩家战略动作）、13（星标、设置、编制编辑、单位管理）、12（难度、条令预设） | §4.8 |
 | `BattleLogWriter.Begin/Append/End(EdgeBattleId, …)` | 04、03 | §4.9 |
 | `BattleLogReader` | 13（回放视图） | 解码段，按时刻迭代事件 |
 | `StateHash.Compute(World)`、`Checksum.Step(World, long n)` | 09（阶段 160）、测试 | §4.10 |
