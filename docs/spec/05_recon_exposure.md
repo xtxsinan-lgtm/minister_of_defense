@@ -867,7 +867,7 @@ Planned → Inserting → OnStation → Exfiltrating → Completed
 | 03 | `SensorProfile` 追加字段（03 C-08）：`OpticsClass opticsClassDay, opticsClassNight`（枚举由 03 §4.2.2 定义，05 只承载数据）；`SignatureProfile` 追加 `double engagementSigMult`（片段内的被发现系数，缺省 1.0，03 使用） | 片段创建时 |
 | 12 | `ExposureRecord`（`lastKnownTile`、`lastObservedTime`、`isKnownDecoy`、`estimate`）只读（AI 和玩家一样只看情报画面） | 公平性 |
 | 13 | `IntelEstimate`、`SignatureState` 分解、`lastGainByMeans`、`OwnExposureEstimate`、`AreaReconTask` 状态、`SofMission` 状态 | 显示 |
-| 15 | 存档：`SectionId.Exposure = 40`（值见 15 §3.2）；组件：全部 `ExposureRecord`、`DecoyGroup`、`AreaReconTask`、`SofMission`、`OwnExposureEstimate`、`ReconConfig`；缓冲区（`ReconDwellSample`、`StripReconSample`）也要存，因为它们跨刻；不存档（派生，读档后按 §4.1 重建）：`SignatureState`、`TileCounterReconState` | |
+| 15 | 存档：`SectionId.Exposure = 40`（值见 15 §3.2）；组件：全部 `ExposureRecord`、`DecoyGroup`、`AreaReconTask`、`SofMission`、`OwnExposureEstimate`、`ReconConfig`；每个 `SatelliteAsset` 的当前 `sharesWith`（11 §4.10.4 运行时会追加受援国，读档后先载入 14 的静态卫星数据，再用存档里的 `sharesWith` 覆盖；其他字段不存）；缓冲区（`ReconDwellSample`、`StripReconSample`）也要存，因为它们跨刻；不存档（派生，读档后按 §4.1 重建）：`SignatureState`、`TileCounterReconState` | |
 
 ### 6.3 给 04 的建议（04 决定是否采纳）
 - 战斗开始时，B 线的初始局部暴露度 = 05 的营级 `exposure`。
