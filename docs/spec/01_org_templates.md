@@ -147,6 +147,8 @@ public readonly record struct StyleHandle(int value);
 public readonly record struct LoadoutTemplateHandle(int value);
 
 public readonly record struct NodeRef(NodeKind kind, int id);  // 编制树里的子节点引用（OrgUnit 或 Squad）；Formation 用于优先顺序表与 §4.11 火力单位归属
+// 便捷构造（14、13 使用）：NodeRef.Unit(OrgUnitId u) = new(NodeKind.Unit, u.value)；NodeRef.Squad(SquadId s) = new(NodeKind.Squad, s.value)；
+//                         NodeRef.Formation(FormationId f) = new(NodeKind.Formation, f.value)
 ```
 
 ### 3.3 静态数据：装备类别与型号（核心字段）
@@ -946,6 +948,24 @@ bool IsAttachedHop(SquadId requester, NodeRef fireOwner)
 | 撤编营 | 见 07 §4.6.3 | 见 07 §4.6.3 `DisbandBattalion`（13 调用 07；人员交 02 `ReleaseToPool`，装备退回库存） | 见 07 §4.6.3 |
 | 合并营 | 见 07（重组） | — | — |
 
+**`CreateOrganicFormation` 完整签名与规则**（调用方：13 编制编辑、14 开局实例化；12 改革经 13 同一入口）：
+
+```csharp
+// members：Formation 与营（NodeKind.Unit 且 level == Battalion）混合；NodeKind.Squad 或连/排级 Unit → 违规。
+// 返回新 Organic Formation 的 FormationId；任一前置条件不满足 → 返回 default(FormationId)（value = 0），不做任何修改，
+// 并写一条 Warning 日志（原因码见下）；13 把原因显示给玩家。
+FormationId CreateOrganicFormation(OrgLevel echelon, OrgUnitId hqBn, IEnumerable<NodeRef> members);
+```
+
+1. 前置检查（按顺序，第一个失败即返回 0）：`echelon ∈ {Brigade, Division, Corps}`（`E_echelon`）；`hqBn` 存在、level = Battalion、模板 `role == Hq`、不是任何编组的 `hqBattalionId`（`E_hq`）；
+   每个成员存在、同国、类型合法，层级（营 = Battalion，编组 = 其 `echelon`）**严格低于** `echelon`（`E_member`）；成员不重复、不含 `hqBn`、不含新编组的祖先（防环，`E_member`）；
+   `hqBn` 与成员都不在进行中的 `Engagement`（`E_combat`）。
+2. 新建 `Formation{kind = Organic, echelon, hqBattalionId = hqBn, defaultTier = hqBn.tier}`，ID 按 00 §2.2 顺序分配；`name`、`echelonLabel`、`allocationPriority` 由调用方之后写入（14 写剧本值，13 用缺省名）。
+3. `hqBn` 与每个成员按 `members` 的遍历顺序（确定性）执行与 `Reassign(member, 新编组)` 相同的效果：`organic* = current* = 新编组`（营改 `organicFormationId`，编组改 `organicParentId`），对练度归属改变的营调用 02 `OnSkillHolderChanged`。
+   原先所在建制编组若因此失去全部成员，不自动解散（玩家手动处理）。
+4. 发 `OnStructureChanged`（对每个受影响的营）；返回新 ID。
+5. 战时的命令延迟（09）由调用方在命令生效时才调用本函数；本函数本身总是立即生效。
+
 ### 4.13 按国家风格自动生成排和班（总纲 §9.11(1)）
 
 #### 4.13.1 风格数据格式 `data/styles/<style>.yaml`
@@ -1288,6 +1308,8 @@ public sealed class LoadoutTemplate {
 | `double RepairThroughputMult(SkillHolderKey, string group)` | 07 | 每 60 分钟 |
 | `int PartsTarget(ModelHandle)` | 06、11 | 每天 |
 | `CheckResult[] RunChecks(TemplateHandle, scope)`、`ImpactReport BuildImpact(edit)` | 13（编辑器） | 编辑时 |
+| `OrgUnitId InstantiateBattalion(TemplateHandle, CountryId, FormationId organic, ReadinessTier tier)`（§4.4.1）、`FormationId InstantiateFormation(TemplateHandle, CountryId, FormationId organicParent)`（§4.4.2） | 14（开局）、12（改革新建营）、13（编辑器新建） | 初始化 / 命令生效时 |
+| `FormationId CreateOrganicFormation(OrgLevel echelon, OrgUnitId hqBn, IEnumerable<NodeRef> members)`（§4.12；失败返回 0）、`CreateAdHoc(IEnumerable<NodeRef>)`、`Attach`、`Detach`、`Reassign` | 14（开局）、13（编制编辑）、09（命令生效） | 初始化 / 命令生效时 |
 | `EquipmentModel.massKg`、核心字段 | 06、03 | 加载后只读 |
 | `LoadoutTemplate` 及按枚需求汇总 | 06（阶段 3） | 每天 |
 | `RearDetachmentId CreateRearDetachment(OrgUnitId bn, ulong tile, IEnumerable<PersonnelId> persons, IEnumerable<EquipmentItemId> items)`、`void DissolveRearDetachment(RearDetachmentId)` | 08（空运，§4.14） | 空运判定时 / 后续运抵时 |

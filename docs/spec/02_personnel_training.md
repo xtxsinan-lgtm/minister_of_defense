@@ -136,6 +136,15 @@ schools:
 
 各国学校产能由剧本给（14）：`manpower.schools: {armor: {capacity_per_year: N}, ...}`。
 
+**未列出学校的缺省产能**（🟡 P-22）：剧本加载完开局编制之后（14 §4.4 之后、第一个模拟小时之前）对每国每个 `schools.yaml` 中的学校 `sch` 执行一次：
+```text
+若 manpower.schools 列出 sch → capacityPerYear = 剧本值（0 也算列出）
+否则若 sch.qualification_only → capacityPerYear = 0
+否则 capacityPerYear = ceil( Σ_{s: s.school == sch} required[s] × SchoolDefaultIntakeShare )      // required[s] 同 §4 的平时目标公式
+     并写一条 Info 日志：“{ISO3} 学校 {sch} 未在剧本中给出产能，按需求推算 = N 人/年”
+```
+之后产能只随 `ExpandSchool` 改变，不随编制变化自动重算。
+
 ### 3.3 枚举与 ID
 
 ```csharp
@@ -633,6 +642,7 @@ pool.count   −= pool.count × ReserveAttritionPerYear / 365      （累加器�
 | `SimUpgrade` | 0.8 | — | 0.7–0.9 | 总纲 §4.2 表“同一型号的升级版 0.7–0.9” |
 | `SimSameBloc` | 0.5 | — | 0.4–0.6 | 总纲 §4.2“同一系列、同一国家的设计体系 0.4–0.6” |
 | `SimCrossBloc` | 0.15 | — | 0.1–0.2 | 总纲 §4.2“同类但不同体系 0.1–0.2” |
+| `SchoolDefaultIntakeShare` | 0.5 | 1/年 | 0.3–1.0 | 剧本未列出学校时，年产能 = 该校负责专业平时需求 × 本值（§3.2）；0.5 ≈ 24 个月义务兵役期的年轮换量（P-22） |
 | `SimSovietChinese` | 0.25 | — | 0.15–0.4 | 估算：早期中国装备源于苏式 |
 | `SimilarityFloor[small_arms / c4i]` | 0.5 / 0.5 | — | 0.3–0.8 | 估算：枪械、电台换型快 |
 | `TypeSkillFloor` | 0.05 | — | 0–0.1 | 约定：完全陌生型号的最低值 |
@@ -832,6 +842,7 @@ pool.count   −= pool.count × ReserveAttritionPerYear / 365      （累加器�
 | P-19 | 凝聚力 | 阶段 1 不做 | 00 `Cohesion` 🟡、总纲 §9.12(5) | — |
 | P-20 | 专业表新增字段 | `operates`、`crew_of`、`pay_category`、`fill_priority` 均可选，缺省表见 §3.1 | 03 需要车组标记；练度需要“谁操作什么” | 写死在代码 |
 | P-21 | 动员到位目标的语义 | 11 给“新增到位人数”，终值 = 满编 − 动员时在位 | 避免重复计算已在位人员 | 11 给“总在位人数”目标 |
+| P-22 | 剧本未列出的学校产能 | 🟡 建议：按本国该校负责专业的平时需求 × `SchoolDefaultIntakeShare`（0.5/年）推算，开局算一次并记 Info 日志（§3.2） | 剧本通常只列主要学校（纳卡剧本只给 6 所），缺省 0 会让驾驶员、通信、卫生等专业永远无法补充；推算值让未列出的学校“够用但不富余” | 未列出 = 0 并加载警告（剧本必须列全）；或用全国统一缺省值 |
 
 ---
 
