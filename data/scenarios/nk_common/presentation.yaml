@@ -32,7 +32,7 @@ display_utc_offset_min: 240
 # ------------------------------------------------------------------ 地名（叙事中立；14 §3.9、N-22）
 # disputed: true = 冲突区内（法理属 AZE、1994–2020 由亚方控制或有亚方官方名）的地名：两国官方名并列显示。
 # name_hy = 亚美尼亚官方名的拉丁转写；name_az = 阿塞拜疆官方拉丁字母名；name_en = 英语常用名。
-# 坐标与 theater.yaml 的 key_tiles / control_anchors 相同（维基信息框）；界面语言译名走本地化键 place.<id>。
+# 坐标与 theater.yaml 的 key_tiles / control_anchors 相同（维基信息框）；界面语言译名走本地化键 data.place.<id>.name（13 §4.5.2）。
 place_name_policy:
   disputed_order: player_first        # 14 N-22（🟡）
   separator: " / "

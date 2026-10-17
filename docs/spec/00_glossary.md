@@ -172,7 +172,7 @@
 | 疲劳 | `fatigue`（字段） | [0, 1]；降低命中率和机动。 | §9.6, §9.10(6) | 03 |
 | 负重 | `loadKg`（字段） | 单兵负重 = 个人装备 + 武器 + 分到的弹药。 | §9.10(6) | 03 |
 | 威胁窗口 | `ThreatWindow` | 某威胁不处理时多久造成严重杀伤；响应超过窗口就出现损失。 | §9.10(3) | 03 |
-| 闲置原因 | `IdleReason` | 枚举：`NoSuitableTarget, OutOfRange, NoLineOfSight, NoAmmo, Suppressed, AwaitingOrders`。 | §9.8 | 03 |
+| 闲置原因 | `IdleReason` | 枚举：`NoSuitableTarget, OutOfRange, NoLineOfSight, NoAmmo, Suppressed, AwaitingOrders`（整数值 1–6，见 03 §3.7）。 | §9.8 | 03 |
 | 火力支援请求 | `FireSupportRequest` | 下级向拥有支援武器的上级申请间瞄火力的请求；进入支援武器的队列。 | §9.6, §9.3② | 03 |
 | 请求链 | `RequestChain` | 请求从班到支援武器持有者经过的层级路径；响应时间 = 通信时间 + 排队时间 + 射击准备时间。观察员可跳级。 | §9.2, §9.10(2) | 03（结算）/ 01（层级路径） |
 | 结果分布缓存 | `OutcomeCache` | 按“能力向量 × 敌方能力向量 × 地形 × 交战类型 × 支援等级”预先跑出的片段结果分布。 | §9.3④, §9.12(2) | 03 |
@@ -366,6 +366,14 @@
 | 本级负责纵深（取值） | `EchelonDepth` 表 | 班 300 m、排 600 m、连 1500 m、营 4000 m、旅 20 km（V1-c 与编辑器提示用）🟡 | 03 §11 | 03 |
 | 请求优先级 | `RequestPriority` | `Emergency, Immediate, Normal` | 03 §11 | 03 |
 | 扇区上下文 | `SectorContext` | 04 生成片段时传入的全部初始条件 | 03 §11 | 03（类型）/ 04（填写） |
+| 闲置原因（取值） | `IdleReason` | `NoSuitableTarget = 1 … AwaitingOrders = 6`；`WeaponStats.idleS` 下标 = 值 − 1 | 03 §3.7 | 03 |
+| 片段统计 | `EngagementStats` | 片段内全部 AAR 原始统计的容器（武器、威胁、发现、暴露招致打击、支援响应、班模板） | 03 §3.7 | 03 |
+| 发现统计 | `DetectionStats` | 每方发现次数与发现距离之和（按片段光照） | 03 §3.7 | 03 |
+| 暴露招致的打击 | `ExposureCausedStrike` / `StrikeExposureCause` | 因开火暴露被发现后招来的敌方间瞄打击记录 | 03 §3.7 | 03 |
+| 支援响应记录 | `FireSupportResponse` / `ResponseSegment` | 一次火力请求的反应/通信/排队与调炮/飞行四段耗时 | 03 §3.7 | 03 |
+| 班模板统计 | `SquadTemplateStats` | 按班模板汇总的压制、杀伤（含按类别压制） | 03 §3.7 | 03 |
+| 威胁汇总 | `ThreatSummary` | 按目标类别汇总的威胁窗口数据 | 03 §3.7 | 03 |
+| 试验场规格 / 报告 | `ProvingGroundSpec` / `PgSideSpec` / `ProvingGroundRun` / `ProvingGroundReport` / `DistributionSummary` | 编制试验场批量模拟的输入、单场结果与汇总 | 03 §3.7 | 03 |
 
 #### 1.12.4 来自 04（条带层）
 
@@ -590,6 +598,60 @@
 | 事件范围 | `EventScope` | `Global/Dyad/Country` | 11 §11 | 11 |
 | 战争规模 | `WarScope` | `Limited/Total`；事件开战时由 arg 给出，供停火模板条件读取 | 11 §11 | 11 |
 | 系统旗标 | `big_contract_signed_last_90d` | 11 实时计算的条件旗标：对手近 90 天签了大额军购 | 11 §11 | 11 |
+
+#### 1.12.13 来自 13（界面）
+
+| 中文 | 英文标识 | 定义 | 出处 | 归属 |
+|---|---|---|---|---|
+| 世界快照 | `WorldSnapshot` | 模拟线程在两刻之间发布给界面的不可变读模型 | 13 §11 | 13 |
+| 快照发布器 | `SnapshotPublisher`（`PublishIfDue`） | 决定何时构建并发布快照的模拟线程组件 | 13 §11 | 13 |
+| 视图订阅 | `ViewSubscription` | 界面声明“正在看什么”，模拟线程只为订阅对象构建聚焦投影；不影响模拟 | 13 §11 | 13 |
+| 聚焦投影 | `ProjectionKind` | 某类视图模型的构建函数种类（不是地图投影；地图投影见 14 `MapProjectionKind`） | 13 §11 | 13 |
+| 界面查询 | `QueryRequest` / `QueryResult` | 在两刻之间调用各规格纯函数的预览/报价/分析请求 | 13 §11 | 13 |
+| 界面命令总线 | `UiCommandBus` / `IUiCommands` | 界面写入模拟的唯一通道 | 13 §11 | 13 |
+| 命令草稿 | `OrderDraft` | 界面填写、提交时转换为 09 `Order` 的命令内容 | 13 §11 | 13 |
+| 模板草稿 | `TemplateDraftId` | 编辑器在模拟线程沙盒里的模板副本，提交前不影响 `World` | 13 §11 | 13 |
+| 解释树 | `WhyNode` / `ExplainedValue` | 派生数字的“为什么”分解，供提示框渲染 | 13 §11 | 13 |
+| 本地化文本 | `LocText` / `LocArg` | 键 + 参数，显示时才解析 | 13 §11 | 13 |
+| 展示密度 | `DisclosureLevel` | `Basic = 1, Standard = 2, Expert = 3`，只改变显示多少 | 13 §11 | 13 |
+| 星标集合 | `StarredSet` | 玩家标星的营与编组（模拟输入） | 13 §11 | 13 |
+| 界面存档状态 | `UiSaveState`（段 `UiState`） | 相机、图层、过滤器、已读、AAR 等，不进状态哈希 | 13 §11 | 13 |
+| 战报档案 | `AarArchive` / `AfterActionReport` | 固化的战后报告集合 | 13 §11 | 13 |
+| 结论规则 | `ConclusionRule`（C1–C14） | 从 AAR 数据生成可读结论句的规则 | 13 §11 | 13 |
+| 自动暂停规则 | `AutoPauseRule` | `AutoPauseFilter` 的一条条件 | 13 §11 | 13 |
+| 引导钩子 | `TutorialHook` | 界面关键动作事件，驱动引导步骤 | 13 §11 | 13 |
+| 画面 / 图层标识 | `ScreenId` / `LayerId` | 画面与地图图层的枚举 | 13 §11 | 13 |
+| 军标 | `App6Symbol` | APP-6 子集的符号描述（身份、主图标、层级、机动、状态） | 13 §11 | 13 |
+| 界面格式化 | `UiFormat` | 按语言与单位把内部数值转成显示文本（只在界面线程） | 13 §11 | 13 |
+| 能力行键 | `CapabilityRowKey` | 营卡能力行与衰减曲线的键，与 03 `CapabilityVector` 分量一一对应 | 13 §11 | 13 |
+
+#### 1.12.14 来自 14（纳卡剧本）
+
+| 中文 | 英文标识 | 定义 | 出处 | 归属 |
+|---|---|---|---|---|
+| 剧本定义 | `ScenarioDefinition` | 一个剧本全部静态数据的加载结果 | 14 §11 | 14 |
+| 剧本初始化选项 | `ScenarioInitOptions` | 剧本 id、玩家国家（可空）、历史模式、沙盒、世界种子 | 14 §11 | 14 |
+| 剧本服务 | `IScenarioService` | 剧本列表、加载、初始化、开局脚本、停火模板选择、维和区、地块集合展开、目标求值、事件边解析 | 14 §11 | 14 |
+| 库存规格 | `InventorySpec` | 剧本给出的国家库存（含纳卡分项、弹药枚数与自动补足规则） | 14 §11 | 14 |
+| 编组规格 | `FormationSpec` / `ChildSpec` | 剧本开局编制的描述（模板、位置、战备等级、优先级、绑定） | 14 §11 | 14 |
+| 区域定义 | `RegionDef` | 剧本中按规则定义的地块集合（法理领土、代表点、折线、连通等） | 14 §11 | 14 |
+| 控制锚点 | `ControlAnchor` | 用于校验开局控制方的地名坐标 | 14 §11 | 14 |
+| 关键地块定义 | `KeyTileDef` | 09 调度与 12 地块价值使用的剧本关键地块 | 14 §11 | 14 |
+| 停火模板 | `CeasefireTemplate` | 停火的条件、移交条款与维和条款（11 引用） | 14 §11 | 14 |
+| 移交条款 / 维和条款 | `HandoverClause` / `PeacekeepingClause` | 停火模板的组成部分 | 14 §11 | 14 |
+| 剧本目标 | `GoalDef` / `GoalType` | 可选挑战目标及其判据 | 14 §11 | 14 |
+| 校准目标 | `CalibrationDef` | 史实对照值与验收区间（V2） | 14 §11 | 14 |
+| 开局脚本 | `ScriptedStartItem` | Historical 模式下按时刻执行的事件/动员条目 | 14 §11 | 14 |
+| 纳卡分项 | `_nk_<modelId>`（数据键） | 并入 ARM 库存前的纳卡防卫军数量（G-13 / DC-002） | 14 §11 | 14 |
+| 剧本呈现数据 | `ScenarioPresentation` | 供 13 使用的剧本列表、配色、投影、时区、地名、主要对手、引导文件、默认展示密度 | 14 §11 | 14 |
+| 剧本列表条目 | `ScenarioListEntry` | 新游戏界面中一个剧本的 id、标题/简介键、开始时刻、可玩国家、难度说明键 | 14 §11 | 14 |
+| 国家配色 | `CountryColors` | 地图控制色（主色、辅色，十六进制） | 14 §11 | 14 |
+| 战区投影 | `TheaterProjection` / `MapProjectionKind` | 显示用地图投影参数；阶段 1 只有 `LambertConformalConic`（与 13 `ProjectionKind` 无关） | 14 §11 | 14 |
+| 地名 / 地名规则 | `PlaceName` / `PlaceNamePolicy` / `DisputedNameOrder` | 地名的亚、阿、英三种写法与争议地名并列显示规则 | 14 §11 | 14 |
+| 关键地块引用 | `KeyTileRef` | 关键地块 id、所在地块、价值（由 `key_tiles` 生成） | 14 §11 | 14 |
+| 卫星定义 | `SatelliteDef` | 剧本中的卫星数据（生成 05 `SatelliteAsset`） | 14 §11 | 14 |
+| 剧本运行时状态 | `ScenarioRuntimeState` | 14 唯一存档的状态（段 `Scenario = 70`）：剧本 id、初始化选项、数据哈希、开局脚本进度 | 14 §11 | 14 |
+| 国家级运力参数 | `rail_fleet_payload_t` / `national_truck_payload_t`（数据键） | 06 `NationalRail` / `NationalRoad` 承运方的总载重（t；后者按 11 `MobilizationLevel`） | 14 §11 | 14 |
 
 #### 1.12.15 来自 15（存档与确定性）
 
