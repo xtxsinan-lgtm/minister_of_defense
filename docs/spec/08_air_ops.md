@@ -63,7 +63,7 @@
 
 ## 3. 数据结构
 
-> 命名空间 `MoD.Sim.Air`。坐标：经纬度 `double` 度 + 海拔 `altMslM`（00 §3.4）；离地高 `altAglM = altMslM − TileMeanElevationM(所在地块)`（10 提供）。
+> 命名空间 `MoD.Sim.Air`。坐标：经纬度 `double` 度 + 海拔 `altMslM`（00 §3.4）；离地高 `altAglM = altMslM − Tile.terrain.elevMeanM`（所在地块，10 `TerrainComposition.elevMeanM`）。
 
 ### 3.1 枚举
 
@@ -101,8 +101,7 @@ enum AirframeStatus { Ready = 0, Preparing = 1, Airborne = 2, Turnaround = 3,
 enum ElementState { Taxi = 0, Transit = 1, Holding = 2, OnStation = 3, Attacking = 4,
                     Engaging = 5, Rtb = 6, Landed = 7 }
 enum StrikeFallback { Abort = 1, AreaAttack = 2, SelfAcquire = 3 }
-enum StrikeTargetKind { None = 0, Tile = 1, KnownUnit = 2, LogisticsNode = 3, Bridge = 4,
-                        AirDefenseUnit = 5, Loc = 6 }        // 1–4 与 09 同值
+// StrikeTargetKind：归 09 §3.2（含 AirDefenseUnit = 5、Loc = 6）
 enum MissileState { Boost = 0, Midcourse = 1, Search = 2, Terminal = 3, Impact = 4,
                     Intercepted = 5, Lost = 6 }
 enum MissileKind { Aam = 1, Sam = 2, AirToGround = 3, Arm = 4, Loitering = 5,
@@ -140,7 +139,6 @@ class AircraftProfile {
     double survivabilityOnHit;            // 被命中后“不坠毁”的概率（返航为 DepotRepair）
     double turnaroundMin;                 // 再次出动准备（加油、挂弹、检查）
     double maintElapsedPerFlightH;        // 每飞行小时追加的维护耗时（小时）
-    double failurePerFlightH;             // 非战斗故障率（07 有 ReliabilityProfile 时以 07 为准）
     double datalinkRangeM;                // 无人机视距数据链半径（相对地面站）
     int defaultFlightSize;                // 4 / 2 / 1；无人机组 = 系统机体数
     int gcsPerSystem;                     // 无人机组的地面站数（= 同时在空架数上限）
@@ -165,7 +163,6 @@ class AirMunitionFields {
     double[] pkVs;                        // 下标 = (int)AirTargetClass；单发拦截/命中概率（防空弹、空空弹）
     double cepM;                          // 空对地：圆概率误差
     // warheadKg：使用 03 `MunitionProfile.warheadKg`（通用字段），本扩展不再重复定义
-    double costMusd;                      // 单发价格（拦截成本、F7）
     bool isInterceptable;                 // 飞行中能否被拦截（巡航、弹道、反辐射、巡飞弹、制导炸弹）
     AirTargetClass inFlightClass;         // 被拦截时的类别
     double rcsM2;                         // 飞行中 RCS
@@ -215,7 +212,8 @@ class AirDefenseProfile {
 - id: mam_l
   category: asm_antitank
   munition: {air: {role: air_to_ground, guidance: laser_semi_active, range_km: 8, cep_m: 1,
-                   warhead_kg: 10, cost_musd: 0.1, seeker_footprint_m: 300}}   # 03 另给 is_top_attack: true
+                   warhead_kg: 10, seeker_footprint_m: 300}}   # 03 另给 is_top_attack: true
+  procurement: {cost_musd: 0.1}      # 单价归 11 ProcurementProfile
   confidence: estimated
 - id: harop
   category: loitering_munition
@@ -223,7 +221,8 @@ class AirDefenseProfile {
   munition: {air: {role: loitering, guidance: loiter_eo_rf, speed_kph: 417, cruise_alt_agl_m: 3000,
                    loiter_endurance_h: 6, range_km: 1000, rcs_m2: 0.05, in_flight_class: small_uav,
                    rf_seeker_range_km: 25, seeker_quality: 0.9, seeker_footprint_m: 1000,
-                   warhead_kg: 23, cost_musd: 1.0, is_interceptable: true}}
+                   warhead_kg: 23, is_interceptable: true}}
+  procurement: {cost_musd: 1.0}
   confidence: estimated
 - id: osa_akm
   category: sam_short
@@ -237,10 +236,11 @@ class AirDefenseProfile {
 - id: m9m33m3
   category: sam_missile            # 新类别（防空导弹弹药），见第 11 节
   munition: {air: {role: surface_to_air, guidance: command, range_km: [1.5, 10], alt_m: [25, 5000],
-                   speed_mach: 2.4, cost_musd: 0.15,
+                   speed_mach: 2.4,
                    pk_vs: {fast_jet: 0.55, slow_aircraft: 0.70, helicopter: 0.60, male_uav: 0.55,
                            small_uav: 0.30, loitering_terminal: 0.15, cruise_missile: 0.30,
                            ballistic_missile: 0, anti_radiation_missile: 0.10}}}
+  procurement: {cost_musd: 0.15}
   confidence: estimated
 - id: an2_decoy
   category: uav_male                # 改装靶机，按无人机处理
@@ -351,9 +351,9 @@ class AirDefenseRegistration {
     EquipmentItemId radarItem;            // BatteryRadar：雷达车；SelfContained：第一辆发射车
     double latDeg, lonDeg, siteAglM;      // 位置；天线离地高
     AdState state; SimTime stateUntil;
-    EmconState emcon;                     // 营设置（05/09）
+    EmconState emcon;                     // 每步复制 05 `ReconConfig.emcon`（09 UnitConfig 写入）
     InterceptPolicy policy;               // 营设置（09 UnitConfig）
-    bool relocateAfterFiring;
+    bool relocateAfterFiring;             // 营设置（09 `UnitConfigField.RelocateAfterFiring`）
     bool radarOnThisStep;
     double radarOnSecondsWindow;          // 本 Exposure 窗口（10 分钟）内累计开机秒数
     double radarOnFraction;               // 上一窗口的开机比例（05 §4.1.3 读）
@@ -499,7 +499,7 @@ avoidKnownAd = true 时：对直线航段与“已知敌防空包线”（敌方
 #### 4.3.2 降落后
 ```
 availableAt = landAt + turnaroundMin + maintElapsedPerFlightH × 本次飞行小时 × 60（分钟）
-故障：Bernoulli(1 − exp(−failurePerFlightH × 本次飞行小时))（RNG SaltMaintFail，键 = itemId）
+故障：Bernoulli(1 − exp(−本次飞行小时 / mtbfH))（mtbfH 读 07 `ReliabilityProfile`，飞机按飞行小时计；缺省值归 07；RNG SaltMaintFail，键 = itemId）
      命中 → 07.ApplyVehicleDamage(item, FieldRepairable, Breakdown, …)，status = Damaged（07 修好后回到 Ready）
 战损返航（被命中未坠毁）→ 07.ApplyVehicleDamage(item, DepotRepair, Firepower, …)
 ```
@@ -540,7 +540,7 @@ fuelFrac ≤ needToBase + BingoMargin → 进入 Rtb
 - 对地：所有对地弹投完 → 返航（`Cas` 若剩机炮 / 火箭，仍可继续）。
 
 #### 4.4.3 无人机高度档（D5）
-- 无人机元素的巡航海拔 = `orbitAltM_byBand[band]`（离地高按所在地块平均高程换算，至少 `UavMinAglM`）。
+- 无人机元素的巡航海拔 = `orbitAltM_byBand[band]`（离地高按所在地块 `Tile.terrain.elevMeanM`（10）换算，至少 `UavMinAglM`）。
 - 缺省 `Medium`。TB2 的 Medium = 5500 m：高于 Osa（5 km）、Strela-10/便携（3.5 km）、ZSU-23-4（1.5 km）的射高 → **这些系统打不到**；低于 Kub/Buk/S-300/Tor 的射高 → 这些能打到（**自然涌现**，A-04、A-05）。
 - 高度对光电观测质量的影响：`sensorQualityEffective = eoQuality × BandEoFactor[band]`（Low 1.1、Medium 1.0、High 0.85）。
 
@@ -551,7 +551,7 @@ fuelFrac ≤ needToBase + BingoMargin → 进入 Rtb
 2. 到站后，每个 CAS 周期（CasCycleS[平台类]）每架有弹的飞机：
    (target, aimPosM, tleSigmaM, directlyObserved) = 04.SelectCasTarget(battleId, side, platformClass, orbitPosM)
    target == 0 → 本周期不攻击
-3. 选弹：对车辆目标优先 asm_antitank / 制导弹；对人员与阵地优先非制导航弹、火箭；同类按 costMusd 升序
+3. 选弹：对车辆目标优先 asm_antitank / 制导弹；对人员与阵地优先非制导航弹、火箭；同类按 `ProcurementProfile.costMusd`（11）升序
 4. 攻击航路：
    无人机、带制导弹的高空投放：保持当前高度
    非制导弹药、火箭、机炮：下降到 attackAltAglM 做一次攻击（本周期内该元素高度临时取 attackAltAglM，
@@ -585,9 +585,10 @@ ARM 到达时：
 ```text
 分配：dwellShare 来自 05 §4.10（每 60 分钟更新）；本元素在“轨道块”（ReconBlockMin 分钟）粒度上选地块：
    deficit_t = dwellShare_t × 已用块总数 − 在 t 上已用块数；取 deficit 最大的地块（平局 tile 升序）
-轨道中心 = 地块中心；若任务的风险容忍度要求避开（05 RiskThreshold）而地块被已知防空包线覆盖：
+轨道中心 = 地块中心；若 risk ∈ {Low, Medium} 且地块被已知（≥Type）敌防空包线覆盖：
    轨道中心 = 从地块中心沿指向本方机场方向移到包线外 AvoidMarginM 处（standoff）
-每步写 05.ReconDwellSample(observer, tile, means, dwellS = 60, sensorQuality, standoffFactor, sourceId = 元素 id)
+每步写 05.ReconDwellSample(observer, tile, means, dwellS = 60, sensorQuality, standoffFactor, sourceId = 元素 id,
+                           sourceKind = 1, nightFactor = SensorProfile.nightFactor)
    means = SensorProfile.reconMeans（大型无人机 LargeUav；侦察吊舱 ReconPod；对地监视雷达机 GmtiAircraft；电子侦察吊舱 Elint）
    standoffFactor = clamp(1 − max(0, d(轨道中心, 地块中心) − TileRadiusM) / EoSlantRangeM, 0, 1)
    过境中（未到站）经过地块上空也写样本（dwellS = 本步在该地块上空的秒数，按插值）
@@ -709,8 +710,9 @@ emcon == Partial → 雷达只在以下情况开：
 emcon == Silent  → 雷达关；radarRequiredToFire 的系统不能开火
 ArmShutdown：探测到飞向本登记的反辐射弹且 policy ∈ {Balanced, Conserve}（或该登记没有能打 ARM 的弹）→
      立即关机 ArmShutdownS 秒（期间不开火；已在制导中的指令/半主动导弹失去制导 → 作废）
-每步：radarOnThisStep 记录；radarOnSecondsWindow += 60（开机时）；每到 Exposure 步：
-     radarOnFraction = radarOnSecondsWindow / (ExposureStepMinutes × 60)，清零（05 §4.1.3 读）
+每步：radarOnThisStep 记录；radarOnSecondsWindow += 60（开机时）；
+每步末：若 (n+1) % ExposureStepMinutes == 0：radarOnFraction = radarOnSecondsWindow / (ExposureStepMinutes × 60)，清零
+     （覆盖刻 n−9..n，由刻 n+1 的 Exposure 步读，05 §4.1.3）
 ```
 
 #### 4.7.3 威胁评估（每步，每个能开火的登记，AdRegistrationId 升序）
@@ -742,14 +744,14 @@ switch (policy) {
 s = Min(s, PolicySalvoCap[policy], readyRoundsOfChosenType, missileChannels - guidedMissilesInFlight);
 // MinS(pk, P, k) = 最小的 s ≥ 1，使 1 − (1 − pk)^(s × k) ≥ P；pk ≤ 0 → 不开火
 ```
-- **弹药节省的放过规则**：policy == Conserve 且目标排序级别为 4 或 5（无人机）且不是飞向本登记或其保护目标、且本登记最便宜的可用拦截弹 `costMusd > ConserveCheapCostMusd` → 不打（F3 记“放过”）。
+- **弹药节省的放过规则**：policy == Conserve 且目标排序级别为 4 或 5（无人机）且不是飞向本登记或其保护目标、且本登记最便宜的可用拦截弹 `ProcurementProfile.costMusd`（11）`> ConserveCheapCostMusd` → 不打（F3 记“放过”）。
 - `tExit`：按目标当前速度外推，离开包线的时刻（最多看 `EngageLookaheadS`）；`tFirstShot = max(now, tEnter) + (本目标首次交战 ? reactionTimeS : 0)`。
 - 开火后若目标仍存活且还在包线内：下一次机会再按同一规则重新计算（“打一发、看结果、再补射”）。
 
 #### 4.7.5 选弹与单发概率
 ```
 可行弹 = interceptorIds 中有待发弹、且目标在 tFirstShot 时刻处于其包线内的
-Safe：选 rangeMaxM 最大的（最早拦截）；Balanced / Conserve：选 costMusd / pk 最小的（单位命中成本最低）；平局 munitionId 升序
+Safe：选 rangeMaxM 最大的（最早拦截）；Balanced / Conserve：选 `ProcurementProfile.costMusd`（11）/ pk 最小的（单位命中成本最低）；平局 munitionId 升序
 pk = pkVs[class] × EdgeFactor × LowAltFactor × SkillAd × EcmFactor × FlareFactor × (无自身雷达 ? NoOwnRadarPkFactor : 1)
   class = 观测方分类（诱饵按 SlowAircraft）
   EdgeFactor   = (r / rangeMaxM ≤ 0.7) ? 1 : 1 − 0.3 × (r / rangeMaxM − 0.7) / 0.3       // 包线边缘降到 0.7
@@ -795,11 +797,11 @@ flightTimeS = 出膛时斜距 / (AvgSpeedFrac × speedMps)；impactAt = 出膛 +
 ```text
 在投放前 RecheckBeforeTotMin 分钟和投放时刻各检查一次：
 targetKind == KnownUnit / AirDefenseUnit：
-   (lvl, age, posture) = 05.GetLevel / GetAgeMs / 观察时姿态
+   (lvl, age, posture) = 05.GetLevel / GetAgeMs / 观察时姿态（05 `IntelEstimate.observedPosture`）
    precise = 05.PrecisionStrikeAllowed(lvl, age, posture)
 targetKind == Tile：
    候选 = 05 情报中该地块内的敌方目标（营、未识破假目标），PrecisionStrikeAllowed == true，
-          按 TargetValue[typeGuess] × estVE 降序（平局 target id 小），取第一个
+          按 AirTargetValue[typeGuess] × estVE 降序（平局 target id 小），取第一个
    无候选 → precise = false
 targetKind == LogisticsNode / Bridge：05 §4.8 固定设施恒为 L4 → precise = true
 precise == false → 按 fallback：
@@ -808,7 +810,7 @@ precise == false → 按 fallback：
    SelfAcquire：仅当平台有光电搜索能力（loadout.hasTargetingPod 或无人机/巡飞弹）：
                 在目标区盘旋最多 SelfAcquireMaxMin[平台]，每分钟按 05 §4.4.5 获取（见 §4.8.3）；成功 → precise
                 （无人机缺省）
-瞄准点：观察方相信的位置 = 05 lastKnownTile 内目标的最后观测位置（营的地块内位置由 09 给真位置；
+瞄准点：观察方相信的位置 = 05 `ExposureRecord.lastObservedLatDeg/lastObservedLonDeg`（观测时由 09 `GetBattalionPosition` 给真位置；
         若观察后目标移动过，瞄准点仍是旧位置 → 真实偏差由 04/03 结算时体现）
 ```
 
@@ -828,8 +830,11 @@ precise == false → 按 fallback：
   timeMs = 投放时刻 + 飞行时间（毫秒，MidpointRounding.ToEven）；sourceEntityId = 元素 id；seq = 本元素本刻第几枚
 目标是 Node / Crossing：08 自己算命中数（06 只接受 hits）：
    σ = cepM / 1.1774；pHitNode = pHitDirect > 0 ? pHitDirect : 1 − DMath.Exp(−NodeRadiusM² / (2σ²))（NodeRadiusM 用 04 的常数）
-   hits = Σ Bernoulli(pHitNode)（SaltGroundHit）；WarheadClass 按 warheadKg（06）；调 06.OnNodeStrike / OnCrossingStrike
-目标是 Loc（交通线）：trucksKilledExpected = 投放枚数 × LocKillPerWeapon × min(1, 06.GetTrafficTrucksPerH(victim, tile) / LocTrafficNorm)；调 06.OnLocStrike
+   hits = Σ Bernoulli(pHitNode)（SaltGroundHit）；WarheadClass 按 warheadKg（06）
+   08 在投放时算出 hits，把 NodeStrikeEvent / CrossingStrikeEvent（带 timeMs）入队；在阶段 110（GroundEventApply）
+   当 timeMs < (n+1)·60000 时调 06.OnNodeStrike / OnCrossingStrike
+目标是 Loc（交通线）：trucksKilledExpected = 投放枚数 × LocKillPerWeapon × min(1, 06.GetTrafficTrucksPerH(victim, tile) / LocTrafficNorm（04 常数））；
+   同样带 timeMs 入队（LocStrike），在阶段 110 当 timeMs < (n+1)·60000 时调 06.OnLocStrike
 其他目标：事件进入 04 的队列（04 在阶段 100/110 交 03 或自己结算，毁伤与 AAR 归因由 03/04/07 负责）
 ```
 
@@ -837,7 +842,7 @@ precise == false → 按 fallback：
 ```text
 带对地弹的无人机元素在站期间，每分钟：
   候选 = 元素所在地块（及轨道覆盖的相邻地块，standoffFactor > 0）中，本国对其 PrecisionStrikeAllowed 的敌方目标
-         （含本元素自己刚获取的）；Recon 任务只打 TargetValue ≥ HunterMinValue 的目标
+         （含本元素自己刚获取的）；Recon 任务只打 AirTargetValue ≥ HunterMinValue 的目标
   无候选且任务允许 SelfAcquire：对地块内每个敌方目标 i（S_phys 降序，平局 id 小）依次：
       p_i = 05.SearchAcquireProbabilityPerMin(S_phys_i, eoQuality × BandEoFactor, priorLevel_i, isNight, nightFactor)
       Bernoulli(p_i)（SaltSelfAcquire，键 = Mix(elementId) ^ target）→ 成功：05.RegisterSelfFix(c, i, LargeUav)，停止本分钟判定
@@ -880,21 +885,22 @@ LaunchId LaunchLoiteringSearch(OrgUnitId launcherBattalion, string munitionId, S
 #### 4.10.2 状态机
 ```text
 Boost（LmBoostS）→ Midcourse：以 cruiseAltAglM、AvgSpeedFrac × speedMps 飞向目标区中心
-  目标区中心：条带目标 = 目标元素的位置（发射时）；地块 = 地块中心；已知营 / 防空营 = 05 最后观测位置
+  目标区中心：条带目标 = 目标元素的位置（发射时）；地块 = 地块中心；已知营 / 防空营 = 05 `ExposureRecord.lastObservedLatDeg/lastObservedLonDeg`
 → Search（到达目标区）：以 LmSearchRadiusM 盘旋；每分钟：
    (1) RF：若 rfSeekerRangeM > 0，且有敌方登记本步雷达开机、距离 ≤ rfSeekerRangeM → Bernoulli(RfAcquirePerMin)（SaltLmAcquire）
        → 成功：锁定该登记（preferredItem = radarItem）
    (2) 否则 EO：候选 = 条带模式：目标元素（priorLevel = 04 直接观察 ? 4 : 05 等级）；
                      搜索模式：目标区半径内的敌方目标（营、假目标），S_phys 降序
        依次 Bernoulli(05.SearchAcquireProbabilityPerMin(S_phys, seekerQuality, priorLevel, isNight, nightFactor))，第一个成功者锁定
-   同时写 05.ReconDwellSample(observer, tile, MediumUav, 60, seekerQuality × LmReconQualityFactor, 1, sourceId = missileId)
+   同时写 05.ReconDwellSample(observer, tile, MediumUav, 60, seekerQuality × LmReconQualityFactor, 1, sourceId = missileId,
+                              sourceKind = 2, nightFactor = 1.0)
    续航耗尽 → Lost（04 回调“未获取”）
 → Terminal：俯冲时长 = 当前离地高 / LmDiveSpeedMps；俯冲期间 inFlightClass = LoiteringTerminal、速度 = LmDiveSpeedMps
 → Impact：GroundStrikeEvent（targetKind = StripElement 或 Battalion，preferredItem，pHitDirect = GuidanceReliability[guidance]
           × (RF 锁定且雷达在俯冲期间关机 ? RfOffTerminalFactor : 1)，sourceTag = Loitering）
 被拦截（任何阶段）→ Intercepted，04 回调“被拦截”（04 counters.lmIntercepted）
 ```
-- 获取后 05：`RegisterSelfFix`（巡飞弹的光电画面实时回传；Harop 类为人在回路）。
+- 获取后 `05.RegisterSelfFix(c, target, ReconMeans.MediumUav)`（巡飞弹的光电画面实时回传；Harop 类为人在回路）。
 - 巡飞弹在 Midcourse/Search 阶段的目标类别 = `inFlightClass`（Harop：SmallUav）；Terminal 阶段 = `LoiteringTerminal`（拦截率低：04 的 `AdPkVsLm` 与本文件表一致，§5.5）。
 
 ### 4.11 空中诱饵
@@ -939,7 +945,7 @@ BurnPerM(低空段) = 1 / (2 × radiusLoLoLoM × (1 + RadiusMarginFrac))
    装备：Paradrop 需 06 MobilityProfile.isAirdroppable；SlingLoad 需 isSlingLoadable；AirLanding 只看质量
          单件质量 ≤ cargoKg（吊挂：≤ 吊挂上限 SlingMaxKg）
    班结果：Full / PersonnelOnly / None；CompleteSquadsOnly 时 PersonnelOnly 班视为 None
-   留下的人和装备 → 01 的 RearDetachment（00 §1.1）
+   留下的人和装备 → 01 的 RearDetachment（00 §1.1；由 08 调 01 `CreateRearDetachment` 建立，见 01 §3）
 2. 架次：totalMassKg = Σ 可运人员 × PaxMassKg + Σ 可运装备质量；
    sortiesNeeded = max(ceil(totalMassKg / (cargoKg × LoadFactor)), ceil(人数 / paxCount))
    cycleH = 2 × 距离 / cruiseMps / 3600 + LoadUnloadH[method] + turnaroundMin / 60
@@ -948,7 +954,7 @@ BurnPerM(低空段) = 1 / (2 × radiusLoLoLoM × (1 + RadiusMarginFrac))
 4. 落地：AirLanding 要求目的地块有本国控制的机场或简易跑道（10/06 节点）；直升机任意地块
    Paradrop：落地后集结 ParaAssemblyH（夜间 × 1.5）；集结期间营姿态 Assembling，战斗力 × ParaAssemblingCombatFactor（04/03 读取）
 ```
-- SOF 的伞降/机降投送（05 §4.11）使用本流程，被运营 = SOF 连。
+- SOF 的伞降/机降投送（05 §4.11）使用本流程，被运营 = SOF 连；方式映射：`SofInsertion.Parachute` → `Paradrop`（+ `ParaAssemblyH`），`SofInsertion.HeliInsertion` → `FastRope`；装卸时间用 `LoadUnloadH[method]`。
 
 ### 4.15 给 06 的预计消耗 `ExpectedDailyUse(airbase, item)`
 ```
@@ -959,7 +965,7 @@ JetFuel：Σ 架数 × PlanningSortiesPerDay × fuelKg / 1000（吨）
 
 ### 4.16 输出给 AAR / 13
 - 每次开火、命中、损失、放过、诱饵被打都写 `BattleEventLog`（15）；按机型/弹种/防空系统汇总 F3、F6、F7。
-- **成本交换比**：对每个防空营：`Σ 消耗拦截弹 costMusd` vs `Σ 击落目标的单价`（11 的 `ProcurementProfile.cost_musd`），显示“打一架 Orbiter-3 花了 2 枚 9M33（0.30 M$）”。
+- **成本交换比**：对每个防空营：`Σ 消耗拦截弹 ProcurementProfile.costMusd (11)` vs `Σ 击落目标的单价`（11 的 `ProcurementProfile.costMusd`），显示“打一架 Orbiter-3 花了 2 枚 9M33（0.30 M$）”。
 
 ---
 
@@ -981,7 +987,6 @@ JetFuel：Σ 架数 × PlanningSortiesPerDay × fuelKg / 1000（吨）
 | `MinLoadoutFill` | 0.5 | — | 0.25–1 | 缺弹降级门槛 |
 | `TurnaroundMin`（缺省） | 战斗机 60 / 攻击机 75 / 大型无人机 120 / 直升机 45 / 运输机 90 | min | ×0.5–2 | 战时再次出动 1–2 h 量级 |
 | `MaintElapsedPerFlightH`（缺省） | 战斗机 0.5 / 攻击机 0.4 / 无人机 0.12 / 直升机 0.6 | h/飞行 h | ×0.5–2 | 维护工时 ÷ 地勤人数的折算 |
-| `FailurePerFlightH`（缺省） | 有人机 0.03 / 无人机 0.01 | /h | ×0.3–3 | 07 ReliabilityProfile 优先 |
 | `PilotMaxSortiesPerDay` | 3 | 次 | 2–4 | 战时高强度量级 |
 | `PilotMinRestH` | 2 | h | 1–4 | |
 | `UavOperatorsPerAirborne` | 6 | 人 | 4–9 | 每架在空 = 3 班 × 2 人 |
@@ -1007,6 +1012,8 @@ JetFuel：Σ 架数 × PlanningSortiesPerDay × fuelKg / 1000（吨）
 | `BandEoFactor` | Low 1.1 / Medium 1.0 / High 0.85 | — | — | 高度越高看得越粗 |
 | `LongRangeThresholdM` | 500 000 | m | — | A-26 |
 | `GcsAntennaAglM` | 15 | m | 5–30 | |
+| `TileRadiusM` | 20 000 | m | — | H3 r4 中心到边约 20 km（00 §3.6） |
+| `EoSlantRangeM` | 15 000 | m | 8 000–25 000 | 光电有效斜距 |
 
 ### 5.3 探测
 
@@ -1127,7 +1134,7 @@ JetFuel：Σ 架数 × PlanningSortiesPerDay × fuelKg / 1000（吨）
 | `CasCycleS` | 喷气 180 / 无人机 300 / 直升机 240 | s | — | |
 | `AttackRunS` | 喷气 40 / 无人机 20 / 直升机 30 | s | — | |
 | `CasOrbitOffsetM` | 15 000 | m | 5–25 km | 盘旋在本方一侧 |
-| `LocKillPerWeapon` / `LocTrafficNorm` | 0.6 / 20 | 辆 / 辆·h⁻¹ | — | 交通线打击 |
+| `LocKillPerWeapon` | 0.6 | 辆 | — | 交通线打击；归一化用 04 的 `LocTrafficNorm` |
 | `LmBoostS` | 30 | s | — | |
 | `LmSearchRadiusM` | 3 000 | m | 1–10 km | |
 | `MinSearchMin` | 10 | min | 5–30 | |
@@ -1138,7 +1145,7 @@ JetFuel：Σ 架数 × PlanningSortiesPerDay × fuelKg / 1000（吨）
 | `BallisticApogeeFrac` | 0.25 | — | 0.15–0.35 | |
 | `BallisticFlightTimeS`（建议给 04） | 120 + 0.6 × 射程km | s | — | 飞毛腿 300 km ≈ 5 min，圆点 120 km ≈ 3 min |
 | `BallisticTerminalS` | 30 | s | 15–60 | 末段可拦截窗口 |
-| `TargetValue[IntelTypeGuess]` | AirDefense 5 / Artillery 4 / Headquarters 4 / Armor 3 / MechInfantry 2 / Logistics 2 / Infantry 1 / 其他 1 | — | — | 打击选择 |
+| `AirTargetValue[IntelTypeGuess]` | AirDefense 5 / Artillery 4 / Headquarters 4 / Armor 3 / MechInfantry 2 / Logistics 2 / Infantry 1 / 其他 1 | — | — | 打击选择 |
 
 ### 5.7 空运
 
@@ -1148,7 +1155,7 @@ JetFuel：Σ 架数 × PlanningSortiesPerDay × fuelKg / 1000（吨）
 | `LoadFactor` | 0.85 | — | 0.7–1 | |
 | `LoadUnloadH` | AirLanding 0.5 / Paradrop 0.1 / FastRope 0.05 / SlingLoad 0.2 | h | — | |
 | `SlingMaxKg` | 由机型数据 | kg | — | |
-| `ParaAssemblyH` | 3 | h | 1–6 | 与 05 同名常数一致 |
+| `ParaAssemblyH` | 3 | h | 1–6 | 05 SOF 伞降也读本常数 |
 | `ParaAssemblingCombatFactor` | 0.5 | — | 0.3–0.8 | §15.4 |
 | `TransportLossKilledFrac` | 0.7 | — | 0.5–0.9 | |
 
@@ -1180,7 +1187,7 @@ JetFuel：Σ 架数 × PlanningSortiesPerDay × fuelKg / 1000（吨）
 | 可出动 `Flight` 列表与 `AircraftRole`、作战半径、`AirDefenseRegistration` 汇总、机场弹药库存视图 | 12 | 每小时 |
 | `AirTrack`（本国空情） | 05（我方暴露度估算，05 §4.9）、13 | 每刻 |
 | 视图：飞行编组卡、防空卡、包线图、出动率、AAR 空中部分 | 13 | 界面刷新 |
-| 存档 `SectionId.Air = 43`：全部 `Flight`、`AirframeState`、`FlightElement`、`AirMission`、`MissionPackage`、`MissileInFlight`、`AirTrack`、`AirDefenseRegistration`（含窗口累计）、未消费的 `GroundStrikeEvent` | 15 | 存档 |
+| 存档：`SectionId.Air = 43`（值见 15 §3.2）；组件：全部 `Flight`、`AirframeState`、`FlightElement`、`AirMission`、`MissionPackage`、`MissileInFlight`、`AirTrack`、`AirDefenseRegistration`（含窗口累计）、未消费的 `GroundStrikeEvent` 与未结算的 `NodeStrikeEvent`/`CrossingStrikeEvent`/`LocStrike`；不存档（派生，读档后重建）：`OrganicAirDefense`（按营汇总）、`TargetEngagementLedger`（每步清空） | 15 | 存档 |
 
 ### 6.2 08 需要
 | 来源 | 需要 |
@@ -1192,7 +1199,7 @@ JetFuel：Σ 架数 × PlanningSortiesPerDay × fuelKg / 1000（吨）
 | 05 | `GetLevel`、`GetAgeMs`、`PrecisionStrikeAllowed`、`TargetLocationErrorM`、`SearchAcquireProbabilityPerMin`、`RegisterSelfFix`、`GetSignature`、`AreaReconTask.dwellShare`、`SensorProfile`、`EmconState`、`IntelEstimate`（目标选择只读情报，不读真值） |
 | 06 | 机场节点库存（只读）、`TryDrawFromNode`、`ReturnToNode(NodeId, ItemKey, qty)`（06 §6.1）、`TryConsume`/`GetAvailable`（防空弹）、`throughputDamage`、`OnNodeStrike`/`OnCrossingStrike`/`OnLocStrike`、`GetTrafficTrucksPerH`、`MobilityProfile.isAirdroppable/isSlingLoadable`、`WarheadClass` |
 | 07 | `ApplyVehicleDamage`（飞机、无人机、发射车被毁）、`ApplyCasualty`（机组）、飞机修复状态、`ReliabilityProfile` |
-| 09 | `StartMission` 路由、`GetLightCondition`、营位置与速度（外推）、`GetMoveState`、`PostNotification`、`UnitConfig`（拦截策略、电磁管控、转移开关） |
+| 09 | `StartMission` 路由、`GetLightCondition`、营位置与速度（外推）、`GetMoveState`、`PostNotification`、`UnitConfig`（拦截策略、电磁管控、转移开关 `UnitConfigField.RelocateAfterFiring`） |
 | 10 | 地块中心、平均高程、`TerrainComposition`（主地形）、机场/简易跑道 |
 | 11 | 单价（成本交换比）；装备与弹药交付入库 |
 | 14 | 无人机前出地面站位置（可选）、开局部署 |
