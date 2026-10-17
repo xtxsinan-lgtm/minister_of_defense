@@ -13,7 +13,12 @@ scenario:
   playable: [ARM, AZE]
   default_historical_mode: historical
   includes: [nk_common/countries.yaml, nk_common/theater.yaml, nk_common/logistics_nodes.yaml, nk_common/procurement.yaml,
-             nk_common/events.yaml, nk_common/ai_profiles.yaml]
+             nk_common/events.yaml, nk_common/ai_profiles.yaml, nk_common/presentation.yaml]
+  control_snapshot: nk_loc_1994             # 10 ControlSnapshot（data/map/nk/control/nk_loc_1994.yaml），开局 TileControl（14 §4.2，DC-170）
+
+presentation_overrides: {tutorial_file: data/tutorial/nk_2020.yaml}   # 14 §3.9
+
+ai_profile_overrides: {AZE: {doctrine_id: western}}   # 12 I-02：2020 年阿方反映土耳其顾问影响（14 §3.11）
 
 war_state_at_start:
   wars: []                                  # 战争由事件 aze_2020_september_offensive 在 03:00Z 创建（Historical）；玩家为阿方时由玩家决定
@@ -91,11 +96,14 @@ inventory:
     _nk_zsu23_4: 15
     _nk_su25: 2
     _nk_mi24p: 5
-    # --- pending M2 ---
-    iskander_e: 4
+    # --- 战术弹道导弹 / 巡飞弹（01 M2 类别；发射单元按“部”，弹按“枚”= 14 §3.7 R6）---
+    iskander_e: 4          # 发射车
+    9m723_iskander_e: 8    # 弹（R6）；uncertain：按每车 2 枚估算
     scud_b: 8
     _nk_scud_b: 4
-    hresh: 0
+    r17_scud_b: 24         # 弹（R6）；uncertain：沿用 2010 年 24 枚（wp_arm_2010），未计后续补充
+    hresh: 0               # 弹（R6）
+    hresh_launcher: 0
     _auto_fill_categories: [rifle, lmg, gpmg, dmr, reusable_launcher, disposable_launcher, agl, radio_handheld, truck_medium, truck_heavy,
                             field_kitchen, armored_ambulance, armored_recovery_vehicle, armored_command_vehicle, engineer_vehicle, mine_clearing_vehicle,
                             mortar_heavy, atgm_heavy, manpads]
@@ -165,12 +173,17 @@ inventory:
     aerostar: 10           # uncertain
     bayraktar_tb2: 12      # uncertain（常见估计 6–24）
     1l219_zoopark: 0
-    # --- pending M2 ---
-    tochka_u: 4
-    lora: 4
-    harop: 50              # uncertain（每枚）
-    skystriker: 100        # uncertain
-    orbiter_1k: 100        # uncertain
+    # --- 战术弹道导弹 / 巡飞弹（01 M2 类别；发射单元按“部”，弹按“枚”= 14 §3.7 R6）---
+    tochka_u: 4            # 发射车
+    9m79_tochka_u: 12      # 弹（R6）；uncertain：按每车 3 枚估算
+    lora: 4                # 发射车
+    lora_missile: 8        # 弹（R6）；uncertain：按每车 2 枚估算
+    harop: 50              # 弹（R6），uncertain（每枚）
+    skystriker: 100        # 弹（R6），uncertain
+    orbiter_1k: 100        # 弹（R6），uncertain
+    harop_launcher: 8      # 发射单元（loitering_launcher）；uncertain：2 个巡飞弹营 = 16 个发射组，三型合计 16
+    skystriker_launcher: 4 # uncertain
+    orbiter_1k_launcher: 4 # uncertain
     _auto_fill_categories: [rifle, lmg, gpmg, dmr, reusable_launcher, disposable_launcher, agl, radio_handheld, truck_medium, truck_heavy,
                             field_kitchen, armored_ambulance, armored_recovery_vehicle, armored_command_vehicle, engineer_vehicle, mine_clearing_vehicle,
                             mortar_heavy, atgm_heavy, manpads]
@@ -183,8 +196,8 @@ oob:
     overrides:
       - {id: arm_nk_army, tier: active}
       - {id: arm_1st_corps, lat: 39.5111, lon: 46.3383, note: 支援拉钦—库巴德利方向}
-      - {id: arm_army_troops, add_direct: [{template: arm_mrl_lr_bn, count: 1, binding: {mrl_long_range: 9a52_smerch}}],
-         add_pending_m2: [{template: arm_tbm_bn, count: 1, binding: {tbm_launcher: iskander_e}}]}
+      - {id: arm_army_troops, add_direct: [{template: arm_mrl_lr_bn, count: 1, binding: {mrl_long_range: 9a52_smerch}}, {template: arm_tbm_bn, count: 1, binding: {tbm_launcher: iskander_e}}],
+         add_direct_note: 伊斯坎德尔营原写在 add_pending_m2，已并入 add_direct（DC-205）}
   AZE:
     inherit_from: nk_2010
     overrides:
@@ -192,8 +205,10 @@ oob:
       - {id: aze_1st_corps, lat: 40.3417, lon: 46.9311}
       - {id: aze_2nd_corps, lat: 39.4481, lon: 47.3361}
       - {id: aze_3rd_corps, lat: 40.5000, lon: 46.4000, note: 穆罗夫山北麓（estimated）}
-      - {id: aze_army_troops, add_direct: [{template: aze_mrl_lr_bn, count: 1, binding: {mrl_long_range: polonez}}, {template: aze_mrl_lr_bn, count: 1, binding: {mrl_long_range: lynx_mrl}}],
-         add_pending_m2: [{template: aze_tbm_bn, count: 1, binding: {tbm_launcher: lora}}, {template: aze_loitering_btry, count: 4, binding: {loitering_munition: harop}}]}
+      - {id: aze_army_troops, add_direct: [{template: aze_mrl_lr_bn, count: 1, binding: {mrl_long_range: polonez}}, {template: aze_mrl_lr_bn, count: 1, binding: {mrl_long_range: lynx_mrl}},
+                                           {template: aze_tbm_bn, count: 1, binding: {tbm_launcher: lora}},
+                                           {template: aze_loitering_bn, count: 2, binding: {loitering_launcher: harop_launcher}}],
+         note: 巡飞弹营 = 营级模板 aze_loitering_bn（原 4 个巡飞弹连 = 2 个营）；发射单元缺 harop_launcher 时由 01 同类替代（skystriker/orbiter_1k 发射单元）}
 
 air_force:
   ARM: {su30sm: arm_airbase_erebuni, su25: arm_airbase_erebuni, l39: arm_airbase_erebuni, mi24p: arm_airbase_erebuni, mi8mt: arm_airbase_erebuni, krunk: arm_depot_stepanakert}
@@ -205,8 +220,15 @@ personnel_start:
   ARM: {general_skill: {active: 0.50, reduced: 0.40, cadre: 0.30}, type_skill: 0.55, nk_defence_army_general_bonus: 0.05}
   AZE: {general_skill: {active: 0.55, reduced: 0.45, cadre: 0.35}, type_skill: 0.55, note: 2010 年代土耳其协助训练（bal）}
   basis: bal
+  schools:                                  # = 02 §3.2 manpower.schools（每国：学校 id → capacity_per_year，人/年）；14 §4.4
+    ARM: {infantry: {capacity_per_year: 8000}, mech: {capacity_per_year: 1500}, armor: {capacity_per_year: 600}, artillery: {capacity_per_year: 1200},
+          air_defense: {capacity_per_year: 600}, uav: {capacity_per_year: 100}, officer: {capacity_per_year: 400}, nco: {capacity_per_year: 800}}
+    AZE: {infantry: {capacity_per_year: 20000}, mech: {capacity_per_year: 3500}, armor: {capacity_per_year: 1500}, artillery: {capacity_per_year: 2500},
+          air_defense: {capacity_per_year: 1200}, uav: {capacity_per_year: 300}, officer: {capacity_per_year: 900}, nco: {capacity_per_year: 2000}}
+    confidence: estimated
+    note: 按义务兵年征召量的专业比例估算；officer/nco 按军官、士官约占现役 10% / 15%、服役 10 年左右反推。未列出的学校按 02 缺省（14 §6.2）
 
-fortification_start:                        # 04 FortificationLevel 初值（26 年固守的接触线；04 定义等级刻度）
+fortification_start:                        # 开局工事（26 年固守的接触线）；映射待 DC-165：若采用 ①，写 09 EntrenchProgress（14 §4.3 O3）
   arm_contact_line_tiles: {level: high, note: 亚方沿接触线有多层阵地（公开报道普遍提及），具体等级刻度由 04 定}
   aze_contact_line_tiles: {level: medium}
 

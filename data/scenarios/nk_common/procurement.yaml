@@ -59,7 +59,7 @@ procurement_profiles:
   mig29:         {cost_musd: 10.0, end_production_year: 1991, producers: [RUS, UKR, BLR], sensitivity: 2, historical_exports_to: [AZE], confidence: uncertain, basis: 二手（阿 2006 年自乌购入）}
   mi35m:         {cost_musd: 15.0, producers: [RUS], sensitivity: 2, historical_exports_to: [AZE], confidence: uncertain}
   mi8mt:         {cost_musd: 6.0, producers: [RUS], sensitivity: 1, historical_exports_to: [ARM, AZE], confidence: uncertain}
-  bayraktar_tb2: {cost_musd: 5.0, producers: [TUR], sensitivity: 3, historical_exports_to: [AZE], service_year: 2014, export_from_year: 2018, lead_time_days: 120, lot_size: 6, confidence: uncertain, basis: 单机 + 地面站分摊（各国合同报道差异大）}
+  bayraktar_tb2: {cost_musd: 5.0, producers: [TUR], sensitivity: 3, historical_exports_to: [AZE], service_year: 2014, export_from_year: 2018, export_open_flag: tb2_export_aze_open, lead_time_days: 120, lot_size: 6, confidence: uncertain, basis: 单机 + 地面站分摊（各国合同报道差异大）}
   hermes_450:    {cost_musd: 4.0, producers: [ISR], sensitivity: 2, historical_exports_to: [AZE], confidence: uncertain}
   hermes_900:    {cost_musd: 10.0, producers: [ISR], sensitivity: 2, historical_exports_to: [AZE], confidence: uncertain}
   heron1:        {cost_musd: 10.0, producers: [ISR], sensitivity: 2, historical_exports_to: [AZE], confidence: uncertain}
@@ -74,7 +74,7 @@ procurement_profiles:
   ural4320:      {cost_musd: 0.08, producers: [RUS], sensitivity: 0, historical_exports_to: [ARM, AZE], confidence: estimated}
   kamaz_5350:    {cost_musd: 0.10, producers: [RUS], sensitivity: 0, historical_exports_to: [ARM, AZE], confidence: estimated}
   ak74:          {cost_musd: 0.0005, producers: [RUS, AZE], sensitivity: 0, historical_exports_to: [ARM, AZE], confidence: estimated}
-  # ---- 需要 01 M2 新类别的型号（data/equipment_pending/）----
+  # ---- 01 M2 新类别的型号（已并入 data/equipment/nk_models.yaml；巡飞弹按枚、发射单元另列，DC-205 ①）----
   iskander_e:    {cost_musd: 60.0, producers: [RUS], sensitivity: 3, historical_exports_to: [ARM], service_year: 2016, lot_size: 2, confidence: uncertain, basis: 发射车 + 首批导弹分摊}
   scud_b:        {cost_musd: 3.0, end_production_year: 1987, producers: [RUS], sensitivity: 3, historical_exports_to: [ARM], confidence: uncertain, basis: 只能二手}
   tochka_u:      {cost_musd: 8.0, end_production_year: 1989, producers: [RUS], sensitivity: 3, historical_exports_to: [AZE], confidence: uncertain}
@@ -83,6 +83,10 @@ procurement_profiles:
   skystriker:    {cost_musd: 0.15, producers: [ISR], sensitivity: 3, historical_exports_to: [AZE], service_year: 2016, lot_size: 50, confidence: uncertain}
   orbiter_1k:    {cost_musd: 0.1, producers: [AZE, ISR], sensitivity: 3, historical_exports_to: [AZE], service_year: 2016, local_assembly_allowed: true, confidence: uncertain}
   hresh:         {cost_musd: 0.05, producers: [ARM], sensitivity: 2, historical_exports_to: [], service_year: 2020, confidence: uncertain}
+  harop_launcher:      {cost_musd: 3.0, producers: [ISR], sensitivity: 3, historical_exports_to: [AZE], service_year: 2009, confidence: uncertain, basis: 车载发射箱组（不含弹）数量级}
+  skystriker_launcher: {cost_musd: 0.5, producers: [ISR], sensitivity: 3, historical_exports_to: [AZE], service_year: 2016, confidence: uncertain}
+  orbiter_1k_launcher: {cost_musd: 0.2, producers: [AZE, ISR], sensitivity: 3, historical_exports_to: [AZE], service_year: 2016, local_assembly_allowed: true, confidence: uncertain}
+  hresh_launcher:      {cost_musd: 0.1, producers: [ARM], sensitivity: 2, historical_exports_to: [], service_year: 2020, confidence: uncertain}
 
 # ------------------------------------------------------------------ 国内生产线（11 ProductionLine）
 # 产能全部 estimated/bal：公开资料只能确认“生产什么”，不能确认“每年多少”。
@@ -90,10 +94,10 @@ production_lines:
   - {id: aze_line_mortar_120, owner: AZE, factory: aze_factory_modi_baku, models: [2b11], capacity_per_year: 60, utilization: 0.5, unit_cost_musd: 0.03, confidence: estimated, note: 以 2b11 代表 MODI 的 Komando 20N6MT 等国产迫击炮}
   - {id: aze_line_small_arms, owner: AZE, factory: aze_factory_modi_baku, models: [ak74], capacity_per_year: 20000, utilization: 0.3, unit_cost_musd: 0.0004, confidence: estimated}
   - {id: aze_line_uav, owner: AZE, factory: aze_factory_azad_systems, models: [orbiter2, orbiter3, aerostar], capacity_per_year: 20, utilization: 0.5, unit_cost_musd: 0.4, is_assembly_only: true, from_year: 2011, confidence: estimated, note: 依赖以色列零件包（11 §4.4.4 本地组装）}
-  - {id: aze_line_loitering, owner: AZE, factory: aze_factory_azad_systems, models: [orbiter_1k], capacity_per_year: 100, utilization: 0.5, unit_cost_musd: 0.08, is_assembly_only: true, from_year: 2016, pending_m2: true, confidence: estimated}
+  - {id: aze_line_loitering, owner: AZE, factory: aze_factory_azad_systems, models: [orbiter_1k], capacity_per_year: 100, utilization: 0.5, unit_cost_musd: 0.08, is_assembly_only: true, from_year: 2016, confidence: estimated}
   - {id: aze_line_mpv, owner: AZE, factory: aze_factory_paramount, models: [matador_mpv, marauder_mpv], capacity_per_year: 40, utilization: 0.5, unit_cost_musd: 0.45, is_assembly_only: true, from_year: 2009, confidence: estimated}
   - {id: arm_line_uav, owner: ARM, factory: arm_industry_yerevan, models: [krunk], capacity_per_year: 10, utilization: 0.5, unit_cost_musd: 0.25, from_year: 2011, confidence: estimated}
-  - {id: arm_line_loitering, owner: ARM, factory: arm_industry_yerevan, models: [hresh], capacity_per_year: 20, utilization: 0.0, unit_cost_musd: 0.05, from_year: 2020, pending_m2: true, confidence: uncertain}
+  - {id: arm_line_loitering, owner: ARM, factory: arm_industry_yerevan, models: [hresh], capacity_per_year: 20, utilization: 0.0, unit_cost_musd: 0.05, from_year: 2020, confidence: uncertain}
 expansion_cost_musd_per_unit_year:          # 11 §4.5.3 LineExpansion 的单位扩产成本（bal）
   default_share_of_unit_cost: 0.8           # 每增加 1 件/年产能 ≈ 0.8 × 单件国产价
 

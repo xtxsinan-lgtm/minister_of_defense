@@ -11,8 +11,12 @@ scenario:
   playable: [ARM, AZE]
   default_historical_mode: plausible        # 11 §4.12、S-14
   includes: [nk_common/countries.yaml, nk_common/theater.yaml, nk_common/logistics_nodes.yaml, nk_common/procurement.yaml,
-             nk_common/events.yaml, nk_common/ai_profiles.yaml]
+             nk_common/events.yaml, nk_common/ai_profiles.yaml, nk_common/presentation.yaml]
+  control_snapshot: nk_loc_1994             # 10 ControlSnapshot（data/map/nk/control/nk_loc_1994.yaml），开局 TileControl（14 §4.2，DC-170）
   difficulty_note: 亚美尼亚为主要挑战剧本（总纲 §21-4）；阿塞拜疆目标不同（goals）。
+
+presentation_overrides: {tutorial_file: data/tutorial/nk_2010.yaml}   # 14 §3.9
+
 
 war_state_at_start: {wars: [], tension: {ARM-AZE: 0.45}}
 
@@ -67,8 +71,9 @@ inventory:
     l39: 4
     mi24p: 16
     mi8mt: 18
-    # --- 待 M2 类别的型号（data/equipment_pending/）---
-    scud_b: 8              # wp_arm_2010：“24 枚、8 部发射车”
+    # --- 战术弹道导弹（01 M2 类别，DC-205 ①：发射车按“部”，弹体按“枚”= 14 §3.7 R6）---
+    scud_b: 8              # 发射车；wp_arm_2010：“24 枚、8 部发射车”
+    r17_scud_b: 24         # 弹（R6，进 06 库存）；同上
     # --- 通用（按模板需求自动补足到满编的 rifle/卡车等低价值装备，见 14 §4.2 规则 R5）---
     _auto_fill_categories: [rifle, lmg, gpmg, dmr, reusable_launcher, disposable_launcher, agl, radio_handheld, truck_medium, truck_heavy,
                             field_kitchen, armored_ambulance, armored_recovery_vehicle, armored_command_vehicle, engineer_vehicle, mine_clearing_vehicle,
@@ -113,7 +118,8 @@ inventory:
     mi8mt: 23              # Mi-8 13 + Mi-17 4 + Mi-171 6
     orbiter2: 4
     aerostar: 6
-    tochka_u: 3            # pending M2
+    tochka_u: 3            # 发射车（tbm_launcher）
+    9m79_tochka_u: 12      # 弹（R6）；uncertain：按每车 4 枚估算
     _auto_fill_categories: [rifle, lmg, gpmg, dmr, reusable_launcher, disposable_launcher, agl, radio_handheld, truck_medium, truck_heavy,
                             field_kitchen, armored_ambulance, armored_recovery_vehicle, armored_command_vehicle, engineer_vehicle, mine_clearing_vehicle,
                             mortar_heavy, atgm_heavy, manpads]
@@ -159,8 +165,8 @@ oob:
        children: [{template: arm_rifle_regt, count: 3, name: 筑垒地域 ×2 + 步兵团}, {template: arm_mr_regt, count: 1}]}
     - {id: arm_army_troops, name: 陆军直属部队, echelon: division, echelon_label: army_troops, hq_template: arm_bde_hq, lat: 40.1792, lon: 44.4991, tier: active, priority: 30,
        direct: [{template: arm_arty_towed152_bn, count: 2, name: 炮兵旅（以 2 个营近似）}, {template: arm_arty_sp152_bn, count: 1}, {template: arm_ad_bn, count: 2},
-                {template: arm_rifle_bn, count: 1, name: 特种团（以步兵营近似，阶段 1 无特种模板）}],
-       pending_m2: [{template: arm_tbm_bn, count: 2, binding: {tbm_launcher: scud_b}}]}
+                {template: arm_rifle_bn, count: 1, name: 特种团（以步兵营近似，阶段 1 无特种模板）},
+                {template: arm_tbm_bn, count: 2, binding: {tbm_launcher: scud_b}}]}
   AZE:
     - {id: aze_1st_corps, name: 第 1 军, echelon: corps, echelon_label: army_corps, hq_template: aze_bde_hq, lat: 40.6183, lon: 47.1500, tier: active, priority: 10,
        children: [{template: aze_mr_bde, count: 4}, {template: aze_mr_bde_light, count: 2}], deploy_front: north_east,
@@ -175,8 +181,8 @@ oob:
        children: [{template: aze_mr_bde, count: 2}, {template: aze_mr_bde_light, count: 2}]}
     - {id: aze_army_troops, name: 陆军直属部队, echelon: division, echelon_label: army_troops, hq_template: aze_bde_hq, lat: 40.6183, lon: 47.1500, tier: active, priority: 20,
        children: [{template: aze_arty_bde, count: 1}, {template: aze_mrl_bde, count: 1}],
-       direct: [{template: aze_ad_bn, count: 2}, {template: aze_rifle_bn, count: 2, name: 特种部队（以步兵营近似）}],
-       pending_m2: [{template: aze_tbm_bn, count: 1, binding: {tbm_launcher: tochka_u}}]}
+       direct: [{template: aze_ad_bn, count: 2}, {template: aze_rifle_bn, count: 2, name: 特种部队（以步兵营近似）},
+                {template: aze_tbm_bn, count: 1, binding: {tbm_launcher: tochka_u}}]}
 
 air_force:                                  # 08 Flight 编组：按型号自动编成 4 机组（支援机 1–2 架），基地见 logistics_nodes.yaml
   ARM: {su25: arm_airbase_erebuni, mig25: arm_airbase_erebuni, l39: arm_airbase_erebuni, mi24p: arm_airbase_erebuni, mi8mt: arm_airbase_erebuni}
@@ -187,8 +193,13 @@ personnel_start:                            # 02 开局练度（按国家统一�
   ARM: {general_skill: {active: 0.50, reduced: 0.40, cadre: 0.30}, type_skill: 0.50, nk_defence_army_general_bonus: 0.05}
   AZE: {general_skill: {active: 0.45, reduced: 0.35, cadre: 0.30}, type_skill: 0.45}
   basis: bal；常见评估认为纳卡防卫军长期驻守、熟悉地形（wp_nka_2020 历史段落），但无量化数据。
-  schools: {ARM: {armor: 600, mech: 1500, artillery: 1200, air_defense: 600, uav: 50, infantry: 8000}, AZE: {armor: 1500, mech: 3500, artillery: 2500, air_defense: 1200, uav: 100, infantry: 20000},
-            confidence: estimated, note: 每年培养人数（02 SchoolCapacity）；按义务兵年征召量的专业比例估算}
+  schools:                                  # = 02 §3.2 manpower.schools（每国：学校 id → capacity_per_year，人/年）；14 §4.4
+    ARM: {infantry: {capacity_per_year: 8000}, mech: {capacity_per_year: 1500}, armor: {capacity_per_year: 600}, artillery: {capacity_per_year: 1200},
+          air_defense: {capacity_per_year: 600}, uav: {capacity_per_year: 50}, officer: {capacity_per_year: 400}, nco: {capacity_per_year: 800}}
+    AZE: {infantry: {capacity_per_year: 20000}, mech: {capacity_per_year: 3500}, armor: {capacity_per_year: 1500}, artillery: {capacity_per_year: 2500},
+          air_defense: {capacity_per_year: 1200}, uav: {capacity_per_year: 100}, officer: {capacity_per_year: 900}, nco: {capacity_per_year: 2000}}
+    confidence: estimated
+    note: 按义务兵年征召量的专业比例估算；officer/nco 按军官、士官约占现役 10% / 15%、服役 10 年左右反推。未列出的学校按 02 缺省（14 §6.2）
 
 goals:                                      # 11 §4.13 challengeProgress；14 §4.8
   ARM:

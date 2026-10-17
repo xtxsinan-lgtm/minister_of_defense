@@ -1,7 +1,7 @@
 # 纳卡剧本 AI 国家配置（schema：docs/spec/12_ai.md §3.6 AiCountryProfile；14 提供数值）
 # 两个开局共用；nk_2010 / nk_2020 的 scenario.yaml 可用 ai_profile_overrides 覆盖个别字段。
-# 全部数值为 bal（平衡参数），依据写在 note。warAims 的 tiles 用 theater.yaml 的 region 引用，加载时展开成 H3 列表（14 §4.2）。
-# doctrine_id 取 12 §3.2 的预设：soviet / small_state_defensive / western。
+# 全部数值为 bal（平衡参数），依据写在 note。war_aims 的 region / key_tiles 加载时展开成 12 WarAim.tiles（H3 列表，14 §3.11）。
+# doctrine_id 取 12 §3.2 的预设：soviet / small_state_defensive / western；映射对齐 12 I-02（ARM soviet；AZE 2010 soviet、2020 western 由 nk_2020 覆盖）。
 
 reference_templates:                   # 12 §4.x 的 RefBattalionTemplate 与各类型参考模板（CP 归一化用）
   ref_mech_inf_bn: aze_mr_bn_bmp
@@ -26,7 +26,9 @@ profiles:
       - {id: shusha_axis, region: [nk_oblast], key_tiles: [shusha, hadrut], value: 9}
       - {id: north_axis, region: [aghdam_district], key_tiles: [martakert], value: 4}
       - {id: kalbajar_lachin, region: [kalbajar_district, lachin_district], value: 5}
-    category_priority: {uav_male: 0.9, loitering_munition: 0.9, mrl_long_range: 0.8, tbm_launcher: 0.6, sam_long: 0.6, sam_medium: 0.6,
+      - {id: talish_heights, region: [], key_tiles: [martakert], value: 2, note: 2016 年四月战争北线（塔利什高地）；只供事件 aze_2016_april_war 的有限进攻引用}
+      - {id: lelatap_heights, region: [], key_tiles: [hadrut], value: 2, note: 2016 年四月战争南线（列拉塔普高地，霍拉迪兹方向）；同上}
+    category_priority: {uav_male: 0.9, loitering_munition: 0.9, loitering_launcher: 0.7, mrl_long_range: 0.8, tbm_launcher: 0.6, sam_long: 0.6, sam_medium: 0.6,
                         mbt: 0.5, ifv: 0.5, howitzer_heavy_sp: 0.5, radar_counter_battery: 0.4, ew_vehicle: 0.5}
     preferred_origins: [ISR, TUR, RUS, BLR]
     dependency_aversion: 0.4
@@ -40,14 +42,15 @@ profiles:
       training_peace: normal
       training_crisis: high
     reforms:
-      - {id: aze_2016_uav_battery_per_corps, earliest_year: 2016, template_id: aze_loitering_btry, count: 4, attach_to_formation_role: fires_brigade, utility_base: 0.6, pending_m2: true}
+      - {id: aze_2016_uav_battery_per_corps, earliest_year: 2016, template_id: aze_loitering_bn, count: 2, attach_to_formation_role: fires_brigade, utility_base: 0.6,
+         note: 营级模板（2 个巡飞弹连）；12 ReformOption.templateId 必须是营模板}
       - {id: aze_2018_commando_units, earliest_year: 2018, template_id: aze_rifle_bn, count: 4, attach_to_formation_role: maneuver_brigade, utility_base: 0.4,
          note: 土耳其式突击/特种部队扩编的近似（01 §4.17 末行）}
     hub_count_per_front_sector: 1
     note: 进攻方；2016 后无人机/巡飞弹优先（史实采购趋势，procurement.yaml historical_procurement）。
 
   - country_iso3: ARM
-    doctrine_id: small_state_defensive
+    doctrine_id: soviet                    # 12 I-02；small_state_defensive 为玩家可选
     aggression: 0.2
     caution: 0.7
     war_start_p_min: 0.85

@@ -1,7 +1,7 @@
 # 纳卡剧本后勤节点种子与国家级运力（schema：docs/spec/06_logistics.md §6.3；14 填数）
 # 坐标见 theater.yaml 的说明（维基信息框，误差 < 2 km）。容量、吞吐、加固、分散度是游戏参数，不是公开数据：
 #   confidence: estimated，依据 = 06 第 5 节默认量级 + 节点重要性（bal）。真实仓库位置资料极少，采用“城市级”位置（14 N-07）。
-# 2010 与 2020 两个开局共用；某节点只在某年之后存在时写 from_year。
+# 2010 与 2020 两个开局共用；全部节点开局即创建。from_year 只允许写在 factory 节点上，表示其生产线的启用年份（14 §3.4、§4.5）。
 
 nodes:
   # ============================== 亚美尼亚（含纳卡） ==============================
@@ -55,19 +55,26 @@ nodes:
      note: 南非 Paramount 合资组装 Matador/Marauder（本地组装线史实例子）}
   - {id: aze_industry_sumgait,  owner: AZE, role: industry_node, lat_deg: 40.5897, lon_deg: 49.6686, confidence: estimated}
 
-# ------------------------------------------------------------------ 国家级运力（06 §4.6 NationalRail / NationalRoad）
+# ------------------------------------------------------------------ 战略方向预设（06 StrategicDirection；14 §4.5 第 3 步）
+# 国家级运力（rail_fleet_payload_t、national_truck_payload_t）已移到 countries.yaml（14 §3.10）。
+# anchors = theater.yaml 的 key_tiles / control_anchors 名；方向的 Region = 各锚点所在地块的 10 RegionOf（先列的方向优先占用）。
+# 权重 bal；未覆盖的 Region 归 06 的“其他”方向。
 country_logistics:
   ARM:
-    rail_fleet_payload_t: 3000            # estimated：亚美尼亚铁路规模小（06 常数表备注）；bal
-    national_truck_payload_t: {strategic: 4000, operational: 2500}
-    strategic_direction_preset: {east_nk: 0.6, south_meghri: 0.15, west_nakhchivan: 0.15, north_tavush: 0.10}
+    strategic_direction_preset:
+      east_nk:         {weight: 0.60, anchors: [stepanakert, shusha, martakert, hadrut, lachin, goris]}
+      south_meghri:    {weight: 0.15, anchors: [zangilan]}
+      west_nakhchivan: {weight: 0.15, anchors: [yerevan]}
+      north_tavush:    {weight: 0.10, anchors: [berd]}
   AZE:
-    rail_fleet_payload_t: 15000           # estimated
-    national_truck_payload_t: {strategic: 9000, operational: 6000}
-    strategic_direction_preset: {west_nk: 0.75, nakhchivan: 0.15, north_tovuz: 0.10}
+    strategic_direction_preset:
+      west_nk:         {weight: 0.75, anchors: [tartar, barda, beylagan, horadiz, ganja]}
+      nakhchivan:      {weight: 0.15, anchors: [nakhchivan_city]}
+      north_tovuz:     {weight: 0.10, anchors: [tovuz]}
 
-# ------------------------------------------------------------------ 开局战备储备（06 §4.12 StockTarget 与年龄分布）
-# 天数 = 按 06 的“标准战时日消耗”计；全部 estimated/bal（双方真实储备未公开）。年龄分布缺省用 06 §4.12 的均匀分布。
+# ------------------------------------------------------------------ 开局战备储备（06 StockTargetSettings.landDays 与 §4.13 年龄分布；14 §4.5 第 4 步）
+# 天数 = 按 06 的“标准战时日消耗”计；全部 estimated/bal（双方真实储备未公开）。年龄分布缺省用 06 §4.13 的均匀分布。
+# 巡飞弹、战术弹道导弹等按枚给出的弹药不在这里，见 scenario.yaml inventory（14 §3.7 R6）。
 opening_stocks:
   nk_2010:
     ARM: {ammunition_days: 30, fuel_days: 20, spare_parts_days: 30, general_days: 30, age_distribution: uniform, note: 苏联遗留弹药偏老}

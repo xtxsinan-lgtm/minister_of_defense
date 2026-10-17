@@ -1103,10 +1103,11 @@ else:
 ```
 readinessScore = 0.35 × avgFillRate + 0.25 × avgGeneralSkill + 0.15 × avgTypeSkill
                + 0.15 × min(1, ammoDaysOfWar / ammoDaysTarget) + 0.10 × omFundingRatioCapped
-netAssessment  = ProxyModel.StandardScenario(country, rival)    // 12：“对手沿接触线全面进攻 14 天”想定下我方守住/达成目标的概率
+netAssessment  = ProxyModel.StandardScenario(country, rival)    // 12 §4.6.8：“对手沿接触线全面进攻 14 天”想定下我方守住/达成目标的概率
 budgetExecution= Σ spent / B_total
-challengeProgress[g] = 剧本目标的进度函数（14 定义）
+challengeProgress[g] = IScenarioService.GoalProgress(country, g)  // 14 §4.8
 ```
+- 输入来源（全部按营在位人数加权、营 OrgUnitId 升序累加）：`avgFillRate` = 07 `GetFillRate(bn)` 的人员满编率；`avgGeneralSkill` = 02 `UnitAverageGeneral(bn)`；`avgTypeSkill` = 02 `UnitAverageType(bn, 全部专业)`；`ammoDaysOfWar` = 06 §4.11 弹药类 `DaysCovered` 的最小值（`ReserveGapReport`）；`ammoDaysTarget` = 06 `landDays[Ammunition]`；`omFundingRatioCapped = min(1, omFundingRatio)`。
 - 年报只供显示，不改变规则（沙盒没有胜利条件，§18.8 ✅）。
 - 年报中给出与上一年的差值和“主要拖累项”（分项中下降最多的一项）。
 
@@ -1257,8 +1258,9 @@ challengeProgress[g] = 剧本目标的进度函数（14 定义）
 | `FatigueSeekCeasefire` | 0.6 | — | 0.5–0.75 | bal |
 | `FatigueForceAccept` | 0.9 | — | 0.8–0.95 | 校准：亚美尼亚 11-09 接受停火 |
 | `ObjectiveAchievedShare` | 0.8 | — | 0.6–1 | bal |
-| `CeasefireWindDownHours` | 6 | h | 1–24 | bal |
-| `HandoverDays` | 10 | d | 7–21 | 史实：2020-11-20/25、12-01 三次移交 |
+| ~~`CeasefireWindDownHours`~~ | — | — | — | 已删除：停火后的战斗由 09 在下一个 `BattleEnd` 以 `WarEnded` 立即结束（09 §4.7.1，4.8.6 第 1 条） |
+| `HandoverDays` | 10 | d | 7–21 | 史实：2020-11-20/25、12-01 三次移交；仅在 14 模板未给 `days` 时使用 |
+| `ToolsetLeadTimeDays` | 90 | d | 30–180 | est：01 工具组国内采购的交货期（6 节 `RequestToolsetPurchase`） |
 | `RelationRefuseMediation` | −0.10 | — | — | bal |
 | `RelationWarPenalty[Self/Ally/Claim/Unprovoked]` | 0 / −0.05 / −0.10 / −0.30 | — | — | §18.5 |
 | `DeterWin` / `DeterExchange` / `DeterBaseline` / `DeterRevertPerYear` | 0.15 / 0.05 / 0.5 / 0.1 | — | — | bal |
@@ -1282,35 +1284,76 @@ challengeProgress[g] = 剧本目标的进度函数（14 定义）
 
 ## 6. 与其他系统的接口
 
-| 对方 | 方向 | 内容 | 时机 |
+### 6.1 调用的其他系统
+
+| 对方 | 方向 | 内容（被调方的名字） | 时机 |
 |---|---|---|---|
-| 01 编制 | 读 | `ForceRequirement`、营的 `ReadinessTier`、`AllocationPolicy`、`EquipmentItem` 计数 | 年初；采购面板打开时 |
-| 01 | 写 | 交付时创建 `EquipmentItem`（库存）；升级时改 `modelId`；退役时删除 | H4、4.5.4、4.6 |
-| 02 人员 | 读 | 按 `PayCategory` 的人数、`School` 产能 | 年初、H1 |
-| 02 | 写 | `TrainingIntensity`、动员到位目标、预备役练度、升级后的练度保留系数 | 变更时 |
-| 05 侦察 | 写 | `SatelliteAsset.sharesWith`（外部行为体情报共享，05 R-12）；软件支持中断的效能衰减 | 4.10.4、4.11 |
-| 06 后勤 | 读 | 节点维护费、储备目标缺口、`ImportGateway` 状态 | 年初、H1 |
-| 06 | 写 | 新交付物资入口岸、口岸开关、工厂节点产出、训练弹药扣减请求、`WarReserves` 采购的弹药 | H4、H5、事件 |
-| 07 损伤 | 写 | `FaultRateMultiplier`（O&M、二手状态）、备件入库、供应中断标志 | H1、4.11 |
-| 07 | 读 | 本国阵亡累计 `killedCumulative` | H11 |
-| 09 时间/命令 | 读 | `TileControl`、战斗结果（营级以上胜负）| H11 |
-| 09 | 写 | 战争状态（和平时禁止跨国界 `Move`/`CrossTileStrike`）、停火时的命令封锁、移交撤出、维和区禁入、使用限制 | 状态变化时 |
-| 04 条带 | 写 | 停火时结束所有 `EdgeBattle`；`BorderSkirmish` 有限交战请求 | 4.8.6、4.9 |
-| 12 AI | 读/写 | AI 国家通过与玩家**相同的** `IStrategicActions` 调用；12 提供 `ProxyModel.Evaluate`（方案）与 `StandardScenario`（年报） | 随时 |
-| 13 UI | 读 | 全部 F1–F9 视图模型 | — |
-| 14 剧本 | 读 | 国家参数、预算路径、合同、生产线、市场池、事件、红线、停火模板、目标 | 加载时 |
-| 15 存档 | 读/写 | 本文件所有状态类；RNG 不存流状态（00 §6.2） | 存/读档 |
+| 01 编制 | 读 | `GetForceRequirement(CountryId)`、营 `tier`（`ReadinessTier`）、`AllocationPolicy`、`EquipmentItem`（`owner`、`model`、`holder`）、`PersonnelRequirement(OrgUnitId)`、`ToolsetState`、常数 `ToolsetCostFactor`/`ToolsetUpkeepPerYear` | 年初；H1；动员选营；采购面板打开时 |
+| 01 | 写 | 交付/产出时创建 `EquipmentItem`（库存，`holder = 0`）并调用 `AllocateEquipment(CountryId, IEnumerable<OrgUnitId>)`；升级完工时改 `EquipmentItem.model`；退役时删除；动员时把选中营 `tier` 改为 `Active`；`ToolsetState.held += Δ`（工具组到货） | H4、H5、4.5.4、4.6、4.8.2 |
+| 02 人员 | 读 | `HeadcountByPayCategory(country)`、名册在位人数、`UnitAverageGeneral/UnitAverageType`、`ConscriptionSystem.reservePool/reserveGeneralSkill`（02 每天 D5 写入本文件字段） | 年初、H1、动员、年报 |
+| 02 | 写 | `OnModelUpgraded(itemId, from, to, retention)`；学校扩建完工 `SchoolState.capacityPerYear += Δ` | 4.6、H6 |
+| 02 | 被读 | `BudgetAllocation.trainingOverride/defaultTraining`（`GetTrainingIntensity`）、`ConscriptionSystem` 字段、`Country.mobilization`、`MobilizationTarget(bn, s, t)` | 02 每小时 |
+| 04 条带 | — | 停火结束战斗改由 09 `WarEnded` 处理（不直接调用 04）；`BorderSkirmish` 有限交战**待 DC-046**（需 04 规模上限，见 4.9） | 4.8.6、4.9 |
+| 05 侦察 | 写 | `SatelliteAsset.sharesWith`（外部行为体情报共享，05 R-12） | 4.10.4 |
+| 05、08 | 被读 | `SoftwareDegradeFactor(CountryId, ModelHandle)`（05 §4.2.2/§4.2.4、08 §4.4.3） | 每个 Exposure/空中步 |
+| 06 后勤 | 读 | `GetAnnualStorageCostMusd(CountryId)`、`ComputeBasis(FormationId)`、`GetProcurementShortfall(CountryId)`（采购面板/12）、`ImportGatewayData.isOpen` | 年初、边境演习、采购面板 |
+| 06 | 写 | `OnImportArrival(ImportBatch)`（进口弹药）、`AddProduced(NodeId, ItemKey, qty)`（国产弹药）、`ImportGatewayData.isOpen/closedReason`（事件、过境国禁运）、`ConsumeForTraining(FormationId, ItemKey, qty)`（仅边境演习，4.8.1；常规训练由 02 调用） | H4、H5、事件、D9 |
+| 06 | 被读 | `Country.mobilization`（`NationalTruckPayloadT`）、`OnOrderQty(CountryId, ItemKey)`（已下订单，06 §4.11）、`TryCharge(…, Infrastructure, …)`（桥梁修复） | 06 每日/修复时 |
+| 07 损伤 | 写 | `AddPartsFunding(CountryId, ModelHandle, double musd)` | H1 |
+| 07 | 读 | `PartsUnitCostMusd(ModelHandle)`（只用于界面换算）、`IsLost(EquipmentItemId)`、`GetFillRate(OrgUnitId)` | H1、年报 |
+| 07 | 被读/被写 | 读 `OmFaultMultiplier(CountryId)`、`EquipmentConditionState.condition`、常数 `UsedFaultSlope`、`TrainWearFactor[GetTrainingIntensity]`、`ProcurementProfile.costMusd`；写 `WarSideState.killedCumulative`（每次 `Killed` +1）；调用 `TryCharge(…, OperationsMaintenance, …)`（大修） | 07 每小时/事件时 |
+| 09 时间/命令 | 读 | `GetTileControl(ulong)`、`IsInBattle(OrgUnitId)`、营位置（红线判定）、`SimTime` | H11、4.6 |
+| 09 | 写 | `PostNotification`（`NotificationKind.CrisisEvent = 12`、`WarStateChanged = 13`）；移交撤出用 `SubmitOrder`（`OrderSource.System`、`OrderClass.Forced`，见第 3 节请求）；`TileControl` 移交改写（经 09 接口，待 09 补） | 事件、停火 |
+| 09 | 被读 | `IStrategicQuery`（下）：战争状态、停火、维和区、使用限制，供 09 `Validate`（09 §4.3.2）与 `BattleEnd`（09 §4.7.1 第 1 条） | 命令校验、140 阶段 |
+| 10 | 读 | `Tile.deJureIso3`（经 14 初始化 `TileClaimTable`） | 开局 |
+| 12 AI | 读/写 | AI 国家通过与玩家**相同的** `IStrategicActions` 调用；12 提供 `ProxyModel.EvaluatePlan(OperationPlan)`（4.7.5）与 `ProxyModel.StandardScenario(CountryId, CountryId)`（4.13）；12 读 `Country.aiDirectives`、`TensionState`、`issueSupport`、`RedLineState` | 随时 |
+| 13 UI | 读 | 全部 F1–F9 视图模型；`IStrategicActions.Quote` 作为预览函数 | — |
+| 14 剧本 | 读 | 国家参数、预算路径、合同、生产线、市场池、事件、红线、停火模板、目标（加载时）；运行时调用 `IScenarioService.SelectCeasefireTemplate`、`BuildPeacekeepingZone`、`GoalProgress`、`ResolveSkirmishEdge`，以及地块集合展开（`TileSetRef`，见第 3 节请求） | 加载时、停火、年报、事件 |
+| 15 存档 | 读/写 | 见 6.4；RNG 不存流状态（00 §6.2） | 存/读档 |
+
+### 6.2 本文件提供的查询与系统接口
 
 ```csharp
-interface IStrategicActions {                     // 玩家 UI 与 AI 共用，所有调用在 OrderIntake 后、下一次 Calendar 生效
-    ProcurementQuote Quote(CountryId buyer, string modelId, CountryId seller, ProcurementMode mode, int qty);
+interface IStrategicQuery {                       // 同步、只读（TryCharge 除外）；任意阶段可调用
+    double GetUnitCostMusd(ModelHandle m);        // = ProcurementProfile.costMusd（Musd/件，弹药 Musd/发）；无 Profile → 14 价格表；仍无 → 0 并写日志。01 §4.7、13 使用
+    TrainingIntensity GetTrainingIntensity(CountryId c, FormationId f);   // 3.2
+    double MobilizationTarget(OrgUnitId bn, SpecialtyHandle s, SimTime t); // 4.8.2；02 §4.11 每小时调用
+    MobilizationLevel GetMobilization(CountryId c);                        // = Country.mobilization
+    double OmFaultMultiplier(CountryId c);                                 // 4.2.5；07 §4.8.1
+    double SoftwareDegradeFactor(CountryId owner, ModelHandle m);          // 4.11；05、08
+    double OnOrderQty(CountryId c, ItemKey k);    // Active/PendingApproval 合同 + 生产线待交付中该物资尚未到货的数量；06 §4.11 采购缺口
+    bool TryCharge(CountryId c, BudgetLine line, double musd, string reasonKey);   // 4.2.7；06、07
+    bool AtWar(CountryId a, CountryId b);         // a、b 之间存在 phase == Active 的 War
+    bool InCeasefire(CountryId a, CountryId b);   // a、b 之间存在 phase == Ceasefire 的 War
+    OrderBlockReason CanCrossOrStrike(CountryId issuer, ulong fromTile, ulong toTile, LandOrderType type, ModelHandle strikeModel);
+        // 09 Validate 调用：
+        //   toTile 的 TileControl 属于他国且 !AtWar(issuer, 该国) → InCeasefire ? Ceasefire : PeacetimeBorder
+        //   toTile ∈ 任一未到期 PeacekeepingZone.tiles → PeacekeepingZone
+        //   type == CrossTileStrike 且 dependencies[(issuer, strikeModel)].endUseRestricted 且 toTile ∈ restrictedTiles → EndUseRestricted
+        //   否则 None
+    void RequestToolsetPurchase(SkillHolderKey org, string group, int delta);   // 01 §4.15.1 调用：
+        // 建一份 ProcurementContract(kind = Domestic, seller = buyer, toolset = (org, group), quantity = delta,
+        // unitPrice = toolsetUnitPrice(org, group)（4.2.3）)；交货 = 提交后 ToolsetLeadTimeDays 一次到齐，到货时付全款（Procurement 线）、ToolsetState.held += delta
+}
+enum OrderBlockReason : int { None = 0, PeacetimeBorder = 1, Ceasefire = 2, PeacekeepingZone = 3, EndUseRestricted = 4 }
+// 13 命令失败原因表的键 peacetime_border / ceasefire / end_use_restricted 对应 1/2/4；PeacekeepingZone 需 13 补键
+```
+
+### 6.3 玩家与 AI 的战略动作
+
+```csharp
+interface IStrategicActions {   // 玩家 UI 与 AI 共用。除 Quote（纯查询，立即返回、不记输入）外，
+                                // 调用在 OrderIntake（20）登记，于同一刻 Calendar（30）开头按提交顺序应用（4.0）
+    ProcurementQuote Quote(CountryId buyer, ModelHandle model, CountryId seller, ProcurementMode mode, int qty);
     ContractId Submit(ProcurementQuote q, bool useCredit);
     void BuyMarketLot(CountryId buyer, MarketLotId lot);
-    ProjectId OrderUpgrade(CountryId owner, string upgradePathId, CountryId provider, int qty);
-    void Retire(CountryId owner, string modelId, int qty);
+    ProjectId OrderUpgrade(CountryId owner, string upgradePathId, CountryId provider, int qty, ModelHandle refurbishModel);   // 非整修路径 refurbishModel = 0
+    void Retire(CountryId owner, ModelHandle model, int qty);
     void SetAllocation(CountryId owner, BudgetAllocation a);
     void SetLineUtilization(ProductionLineId line, double u);
     ProjectId ExpandLine(ProductionLineId line, double deltaPerYear, bool newSite, bool rush);
+    ProjectId OrderInfrastructure(CountryId owner, InfraProjectKind kind, NodeId node, ulong tile);   // D7；费用/工期/完工效果由 06 给出（第 3 节请求）
+    ProjectId ExpandSchool(CountryId owner, SchoolHandle school, double deltaPerYear);               // 02 §4.8：费用 SchoolExpansionCostMusdPerSeat × Δ、工期 SchoolExpansionDays（常数归 02），走 Infrastructure 线
     void BorderAction(CountryId owner, CountryId target, BorderActionType t);
     void Lobby(CountryId owner, IssueId issue, double musd);
     int SubmitPlan(OperationPlan p);
@@ -1320,12 +1363,24 @@ interface IStrategicActions {                     // 玩家 UI 与 AI 共用，�
     void AnswerCeasefire(WarId w, CountryId c, bool accept);
 }
 enum BorderActionType : int { Patrol = 1, Exercise = 2 }
+record ProcurementQuote(CountryId buyer, CountryId seller, ModelHandle model, ProcurementMode mode, AcquisitionKind kind,
+                        int quantity, double unitPriceMusd, double upfrontMusd, double totalMusd,
+                        double approvalProbability, ApprovalBreakdown breakdown, List<DeliveryLot> schedule,
+                        List<PaymentMilestone> payments, MarketLotId? marketLotId);
 ```
+- 输入日志（15 §3.4）：`AnswerEvent` → `InputKind.EventAnswer = 6`；`AnswerCeasefire` → `InputKind.CeasefireAnswer = 7`；其余（`Quote` 除外）→ `InputKind.StrategicAction = 2`，payload = 方法枚举（按上面声明顺序从 1 编号，只能追加）+ 参数。AI 的调用不记录（15 §4.8）。
 
 组件（00 §0 第 2 条）：
 ```csharp
-sealed class EquipmentConditionState { EquipmentItemId itemId; double condition; bool inUpgradeShop; long shopUntilMs; }  // on EquipmentItem（01）
+sealed class EquipmentConditionState { EquipmentItemId itemId; double condition; bool inUpgradeShop; long shopUntilMs; }  // on EquipmentItem（01）；无组件视为 condition = 1（01 §4.8 选件顺序）
 ```
+
+### 6.4 存档（15 §3.2）
+| `SectionId` | 内容 |
+|---|---|
+| `Countries = 10` | `StrategicState.countries`（含 `PoliticalState`、`DefenseBudget`、`ConscriptionSystem`、`CreditLine`、`aiDirectives`、`mobilized`）、`relations`、`tensions` |
+| `Strategic = 11` | `StrategicState` 其余全部字段（合同、生产线、二手批次、升级与基建项目、依赖清单、战争与停火提议、维和区、`RedLineState`、`TileClaimTable`、事件实例与 `firedOneShot`、`flags`、`explicitTileSets`、冷却表、`supplierSuspended`、年报）；`EquipmentConditionState` 组件（按 `EquipmentItemId` 升序）；`StrategicSettings`（`worldSeed` 另存于 15 `SaveHeader`） |
+- 不存档（静态数据，读档后从数据重建）：`ProcurementProfile`、`UpgradePath`、`MarketPoolEntry`、`CrisisEventDef`。`Country` 内的 `ExternalActorPolicy`/`ExportPolicy` 随 `Countries` 段整体保存（事件会改动它们）。ID 分配器（`ContractId`、`ProjectId`、`MarketLotId`、`WarId`、`EventInstanceId`、`ProductionLineId`）存于 `IdAllocators = 4`。
 
 ---
 

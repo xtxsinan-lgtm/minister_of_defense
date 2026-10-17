@@ -1,7 +1,10 @@
 # 纳卡剧本危机事件（11 CrisisEventDef；YAML 键为 snake_case，枚举 snake_case → PascalCase，00 §2.4）
 # historical: true 的事件受历史模式控制（11 §4.12）：Historical = 按日期确定触发（mtth_days 视为 0，窗口内第一刻）；
 #   Plausible = 保留条件、按 mtth_days 抽样；Free = 不触发。
-# 文案 text_key 指向本地化表（开发期预生成、人工审核，总纲 §20.4），这里的 summary 只给实现者看。
+# 文案 text_key 指向本地化表（开发期预生成、人工审核，总纲 §20.4）；缺省 = strat.event.<id> / strat.event.<id>.<optionId>（14 §3.8）。
+#   这里的 summary 只给实现者看。
+# start_war 的 aims、ai_directive 的 warAim 列表引用 ai_profiles.yaml 中发起国的 war_aims[].id（14 §3.8）。
+# border_skirmish 的锚点名 = theater.yaml control_anchors[].name。
 # 效果数值均为 bal（平衡参数），依据是事件的定性影响。
 
 events:
@@ -25,7 +28,7 @@ events:
     triggers: [{type: not_at_war}, {type: tension_score, min: 0.3, max: 1.0}]
     summary: 2014-11-12 亚方击落阿方 Mi-24 武装直升机。
     options:
-      - {id: retaliate_limited, effects: [{type: border_skirmish, arg: "edge_near:aghdam", value: 1}, {type: tension_delta, value: 0.12}], ai_weight: 0.6}
+      - {id: retaliate_limited, effects: [{type: border_skirmish, arg: "edge_near:aghdam_city", value: 1}, {type: tension_delta, value: 0.12}], ai_weight: 0.6}
       - {id: restraint, effects: [{type: tension_delta, value: 0.05}, {type: trust_delta, target: AZE, value: -0.03}], ai_weight: 0.4}
   - id: aze_2016_april_war
     historical: true
@@ -39,7 +42,7 @@ events:
       - id: limited_offensive
         effects:
           - {type: start_war, target: AZE, arg: "scope=limited;aims=talish_heights,lelatap_heights;max_days=7;template=local_skirmish_template"}
-          - {type: ai_directive, target: AZE, arg: "limited_offensive:north_martakert,south_horadiz"}
+          - {type: ai_directive, target: AZE, arg: "limited_offensive:talish_heights,lelatap_heights"}
         ai_weight: 1.0
     note: 剧本可选（14 N-12）。玩家扮演阿方时以“机会事件”形式出现（可选择不打）。
   - id: rus_2015_arm_loan
@@ -48,17 +51,18 @@ events:
     window: [2016-02-01, 2016-03-01]
     mtth_days: 15
     one_shot: true
-    triggers: [{type: player_country_is, arg: any}]
+    triggers: []                            # 无条件（窗口内按模式触发）
     summary: 俄罗斯向亚美尼亚提供 2 亿美元军贷（限购俄制装备）。
     options:
-      - {id: accept, effects: [{type: grant_credit_line, target: ARM, arg: rus_arm_loan_2015}, {type: relation_delta, arg: "ARM-RUS", value: 0.03}]}
+      - {id: accept, effects: [{type: grant_credit_line, target: ARM, arg: rus_arm_loan_2015}, {type: relation_delta, arg: "ARM-RUS", value: 0.03},
+                               {type: set_flag, arg: rus_arm_loan_2015_granted}]}
   - id: rus_2017_arm_loan
     historical: true
     scope: country
     window: [2017-10-01, 2017-11-01]
     mtth_days: 15
     one_shot: true
-    triggers: [{type: flag_set, arg: rus_arm_loan_2015_drawn_50pct}]
+    triggers: [{type: flag_set, arg: rus_arm_loan_2015_granted}]   # 原设想“首笔贷款已用一半”需要 11 的系统旗标，阶段 1 简化为“首笔贷款已授予”
     summary: 俄罗斯追加 1 亿美元军贷。
     options:
       - {id: accept, effects: [{type: grant_credit_line, target: ARM, arg: rus_arm_loan_2017}]}
@@ -110,8 +114,8 @@ events:
     options:
       - id: general_offensive
         effects:
-          - {type: start_war, target: AZE, arg: "scope=total;casus_belli=territorial_claim"}
-          - {type: ai_directive, target: AZE, arg: "historical_2020_axes"}
+          - {type: start_war, target: AZE, arg: "scope=total;casus_belli=territorial_claim;aims=south_districts,shusha_axis,north_axis,kalbajar_lachin"}
+          - {type: ai_directive, target: AZE, arg: "offensive:south_districts,shusha_axis,north_axis"}   # 史实主攻：南线、舒沙方向、北线（塔利什）
     note: 只对 AI 控制的阿方生效；玩家是阿方时转为提示“领导层已批准作战方案”（11 §4.7.5 自动批准）。
   - id: geo_transit_ban_2020
     historical: true
@@ -186,13 +190,13 @@ events:
     scope: country
     mtth_days: 365
     one_shot: false
-    triggers: [{type: flag_set, arg: big_contract_signed_last_90d}]
+    triggers: [{type: flag_set, arg: big_contract_signed_last_90d}]   # 系统旗标，须由 11 定义（14 §6.2）
     summary: 对手获得大额军购的消息曝光（推高本国强硬议题与预算议题）。
     options:
       - {id: demand_response, effects: [{type: issue_delta, target: self, arg: defense_budget_increase, value: 0.05}, {type: issue_delta, target: self, arg: hardline_vs_rival, value: 0.03}]}
   - id: humanitarian_truce_offer
     historical: false
-    scope: global
+    scope: dyad                             # 交战双方各自响应（self = 响应国）
     mtth_days: 7
     one_shot: false
     triggers: [{type: at_war}]

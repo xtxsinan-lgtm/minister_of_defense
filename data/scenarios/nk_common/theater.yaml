@@ -1,12 +1,13 @@
 # 纳卡战区地图范围、区域（地块集合）、控制锚点、关键地块、卫星资产
-# 规格：docs/spec/14_scenario_nk.md §3.3、§4.1–4.2。地块 = H3 第 4 级（00 §3.5）。
-# 本文件不写 H3 索引：10 的离线流水线按下面的规则把经纬度/多边形换成地块列表，输出到 data/map/nk/（10 定义格式）。
+# 规格：docs/spec/14_scenario_nk.md §3.3、§3.12、§4.1–4.2。地块 = H3 第 4 级（00 §3.5）。
+# 本文件不写 H3 索引，也不引用任何多边形：运行时 14 只用 10 的地图产物（data/map/*.bin、regions.yaml，10 §3.9）
+#   与 H3 计算（latLngToCell）把下面的坐标/规则展开成地块列表（14 §4.1.3）。
 # 坐标：WGS84 度；取自各地名的英文维基百科信息框（访问 2026-10），误差 < 2 km，远小于地块尺度（对边约 40 km）。
-#       confidence: estimated（未逐一与 OSM 核对；10 的流水线会用 OSM place 节点覆盖，见 14 N-06）。
+#       confidence: estimated（未逐一与 OSM 核对）。
 
 theater:
   id: nk
-  include_rule: "H3 r4 单元中心落在 ARM ∪ AZE 法理领土（Natural Earth admin-0 1:10m，含纳希切万与纳卡）内的单元"
+  include_rule: "战区地块 = 10 输出中 TileFlags.IsTheater 的地块（10 §4.11：法理归属按 Natural Earth admin-0 陆地面积多数，ARM ∪ AZE，含纳希切万与纳卡）"
   expected_tile_count: {estimate: 66, basis: "亚 29,743 km² + 阿 86,600 km²（含纳希切万）≈ 116,343 km² ÷ H3 r4 平均 1,770 km² ≈ 65.7；总纲 §21-4 写“约 65 格”"}
   outside_neighbors: [GEO, RUS, IRN, TUR]
   outside_rule: 战区外地块不实例化；与战区外相邻的交界边不可通行（不能移动、不触发战斗）；空中层不限（越界飞行由 08/11 事件处理，阶段 1 只记日志）。
@@ -14,34 +15,41 @@ theater:
 
 # ------------------------------------------------------------------ 法理归属（11 TileClaimTable）
 de_jure:
-  rule: 按 Natural Earth admin-0：单元中心在阿塞拜疆境内（含纳卡、七区、纳希切万）→ AZE；在亚美尼亚境内 → ARM。
+  rule: 每个战区地块的 Tile.deJureIso3（10 §4.11，按陆地面积多数；纳卡、七区、纳希切万属 AZE）。
   note: 叙事中立（总纲 §21-4）：法理归属只用于红线判定与“本土”定义，界面只显示“控制方”。
 
-# ------------------------------------------------------------------ 区域（地块集合引用；10 产出，11/12/14 使用）
-# 区域多边形来源：GADM 4.1 阿塞拜疆二级行政区（rayon）https://gadm.org/download_country.html （AZE level 2）
-#   rayon 名称按 GADM 拼写；GADM 不含 1991 年前的纳卡自治州（NKAO）边界，NKAO 用 rayon 并集近似（14 N-05）。
+# ------------------------------------------------------------------ 区域（地块集合；14 §4.1.3 规则，11/12/13/14 使用）
+# 规则种类：de_jure / tiles_at / polyline / component_of / adjacent_to_outside / union / not / all / computed_at_ceasefire。
+# 行政区（rayon）级区域用代表点近似（14 N-23）：纳卡七区单区 700–3,000 km²，小于或接近一格，代表点 = 区首府
+#   （维基信息框坐标）；nk_oblast 用 1988 年 NKAO 内的 6 个城镇。地块精度下与 GADM 多边形的误差相近（14 N-05 的近似精神不变）。
 regions:
-  armenia_proper:   {rule: "de_jure == ARM"}
-  nakhchivan:       {gadm_l1: ["Nakhchivan"], note: GADM 中纳希切万为一级单位}
-  nk_oblast:        {gadm_l2_union: ["Xankəndi", "Xocalı", "Şuşa", "Xocavənd", "Ağdərə"], confidence: uncertain,
-                     note: 1991 年后阿方重划 rayon，Ağdərə/Xocavənd 部分属原 NKAO 以外；以地块精度可接受}
-  aghdam_district:  {gadm_l2: "Ağdam"}
-  fuzuli_district:  {gadm_l2: "Füzuli"}
-  jabrayil_district: {gadm_l2: "Cəbrayıl"}
-  zangilan_district: {gadm_l2: "Zəngilan"}
-  qubadli_district: {gadm_l2: "Qubadlı"}
-  lachin_district:  {gadm_l2: "Laçın"}
-  kalbajar_district: {gadm_l2: "Kəlbəcər"}
+  armenia_proper:   {de_jure: ARM}
+  aze_all:          {de_jure: AZE}
+  nakhchivan:       {component_of: {de_jure: AZE, seed: [39.2089, 45.4122]}, note: 从纳希切万城出发、只经法理 AZE 地块连通的部分 = 飞地}
+  nk_oblast:        {tiles_at: [[39.8153, 46.7519], [39.7583, 46.7489], [40.2153, 46.8106], [39.5200, 47.0300], [39.7950, 47.1150], [39.9400, 46.8300]],
+                     confidence: estimated, note: 斯捷潘纳克特、舒沙、马尔塔克特、哈德鲁特、马尔图尼、阿斯克兰}
+  aghdam_district:  {tiles_at: [[39.9911, 46.9297]], note: 阿格达姆城}
+  fuzuli_district:  {tiles_at: [[39.6003, 47.1431]], note: 菲祖利城}
+  jabrayil_district: {tiles_at: [[39.3992, 47.0264]], note: 杰布拉伊尔城}
+  zangilan_district: {tiles_at: [[39.0856, 46.6525]], note: 赞格兰城}
+  qubadli_district: {tiles_at: [[39.3444, 46.5797]], note: 库巴德利城}
+  lachin_district:  {tiles_at: [[39.6425, 46.5469]], note: 拉钦城}
+  kalbajar_district: {tiles_at: [[40.1053, 46.0386]], note: 克尔巴贾尔城}
   seven_districts:  {union: [aghdam_district, fuzuli_district, jabrayil_district, zangilan_district, qubadli_district, lachin_district, kalbajar_district]}
   conflict_zone:    {union: [nk_oblast, seven_districts]}
-  aze_proper_outside_conflict_zone: {rule: "de_jure == AZE && !conflict_zone && !nakhchivan"}
-  lachin_corridor:  {rule: "地块与 Goris(39.511,46.338)→Lachin(39.643,46.547)→Stepanakert(39.815,46.752) 折线相交", note: 2020 停火声明的 5 km 宽走廊在地块精度下即沿线 2–3 格}
-  araz_border_strip: {rule: "de_jure == AZE && 地块与伊朗边界（阿拉斯河）相邻"}
-  nk_contact_line_arm_side: {rule: "停火时计算：ARM 控制且与 AZE 控制地块相邻的 nk_oblast 地块（14 §4.7.2）"}
+  outside_conflict_zone: {not: conflict_zone}
+  outside_nakhchivan: {not: nakhchivan}
+  aze_proper_outside_conflict_zone: {all: [aze_all, outside_conflict_zone, outside_nakhchivan]}
+  lachin_corridor:  {polyline: [[39.5111, 46.3383], [39.6425, 46.5469], [39.8153, 46.7519]],
+                     note: 戈里斯 → 拉钦 → 斯捷潘纳克特；2020 停火声明的 5 km 宽走廊在地块精度下即沿线 2–3 格}
+  iran_adjacent:    {adjacent_to_outside: IRN}
+  araz_border_strip: {all: [aze_all, iran_adjacent], note: 阿方一侧与伊朗相邻（阿拉斯河）的地块}
+  nk_contact_line_arm_side: {computed_at_ceasefire: true, note: 停火时计算：ARM 控制且与 AZE 控制地块相邻的 nk_oblast 地块（14 §4.7.2）}
 
 # ------------------------------------------------------------------ 控制锚点（开局 TileControl 的校验点）
-# 开局 TileControl 规则（14 §4.2）：conflict_zone 内按 1994–2020 接触线多边形（10 的输入 data/map/nk/sources/loc_1994.geojson，
-# 由 10 按公开地图数字化，14 N-06）判定；其余地块 = 法理归属。下列锚点所在地块的控制方必须与表一致（加载校验，否则报错）。
+# 开局 TileControl（14 §4.2 第 3.2 步）= 10 的控制快照 data/map/nk/control/nk_loc_1994.yaml（ControlSnapshot，10 §3.6；
+#   10 已按 1994 年停火线多数决得到每个地块的控制方，DC-170），nk_2010 与 nk_2020 共用；快照未记录的地块 = 法理归属。
+#   14 不读接触线多边形。下列锚点所在地块的控制方必须与表一致（加载校验，否则报错）。
 control_anchors:
   # name: [lat, lon, controller_2010, controller_2020_start]
   - {name: stepanakert, lat: 39.8153, lon: 46.7519, nk_2010: ARM, nk_2020: ARM}
