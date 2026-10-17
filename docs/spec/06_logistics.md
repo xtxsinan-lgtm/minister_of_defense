@@ -125,6 +125,7 @@ public enum ConvoyState : byte { None = 0, Loading = 1, Outbound = 2, WaitingFor
 public enum MunitionShelfClass : byte { None = 0, SmallArms = 1, UnguidedGunMortar = 2, UnguidedRocket = 3, Guided = 4 }
 
 public enum WarheadClass : byte { None = 0, Small = 1, Medium = 2, Large = 3 }   // < 50kg / 50–250kg / > 250kg 装药+战斗部
+// WarheadClass WarheadClassOf(double warheadKg) => warheadKg <= 0 ? None : warheadKg < 50 ? Small : warheadKg <= 250 ? Medium : Large;   // 04/08 调用；输入 = 03 MunitionProfile.warheadKg
 ```
 
 ### 3.2 物资键与数量单位

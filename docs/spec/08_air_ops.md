@@ -113,6 +113,7 @@ enum AirResultReason { None = 0, Success = 1, Degraded = 2, NoMunitions = 3, NoF
                        NoCrew = 5, NoAirframes = 6, IntelInsufficient = 7, RunwayClosed = 8,
                        OutOfRange = 9, Lost = 10, TargetGone = 11, DatalinkRange = 12 }
 enum AltitudeBand { Low = 1, Medium = 2, High = 3 }    // 无人机巡航高度档（D5）
+enum CasPlatformClass { None = 0, Jet = 1, Uav = 2, Helicopter = 3 }   // CAS 平台类：CasCycleS 的键；04 SelectCasTarget 参数
 ```
 
 ### 3.2 静态数据 Profile（08 归属）
@@ -148,7 +149,7 @@ class AircraftProfile {
 class LoadoutOption {
     AirMissionType[] missions;            // 适用任务
     int priority;                         // 小者优先
-    List<(string munitionId, int count)> items;
+    List<(ModelHandle munitionId, int count)> items;
     bool hasTargetingPod;                 // 能自主照射（激光）/ 光电搜索
 }
 ```
@@ -272,7 +273,7 @@ class AirframeState {
     AirframeStatus status;
     SimTime availableAt;                  // Preparing/Turnaround/Maintenance 的结束时刻
     double flightHoursToday;              // 本游戏日（UTC 0 点重置）
-    SortedDictionary<string,int> loaded;  // 当前挂载（munitionId → 数量）
+    SortedDictionary<ModelHandle,int> loaded;  // 当前挂载（弹药型号句柄 → 数量；00 §2.2 运行时句柄）
 }
 
 // 空中元素：一起飞的一组飞机（有人机 = 整个编组一起飞；无人机组 = 每架单独一个元素）
@@ -320,7 +321,7 @@ class MissionPackage {
 
 // 飞行中的弹药（00：归 08）
 class MissileInFlight {
-    MissileInFlightId id; MissileKind kind; string munitionId; CountryId owner;
+    MissileInFlightId id; MissileKind kind; ModelHandle munitionId; CountryId owner;
     ulong shooterId;                      // FlightElementId / AdRegistrationId / 04 的 FireMissionId / 巡飞弹发射营
     AirTargetRef target;                  // 空中目标（Aam/Sam）或 0
     GroundAimRef groundAim;               // 对地：目标引用 + 瞄准点
@@ -372,7 +373,7 @@ class OrganicAirDefense {
 
 // 交给 03/04/06 的对地事件（03 §6 期望的字段）
 readonly record struct GroundStrikeEvent(
-    long timeMs, string munitionId, CountryId attacker,
+    long timeMs, ModelHandle munitionId, CountryId attacker,
     GroundTargetKind targetKind,          // StripElement / Battalion / Node / Crossing / Loc / Point
     ulong targetId,                       // StripElementId / OrgUnitId / NodeId / CrossingId / tile
     EquipmentItemId preferredItem,        // 防空单位的雷达车等（0 = 由 04 选）
@@ -876,9 +877,9 @@ AbstractUavAttritionPerH(observer c, tile t, model) =
 #### 4.10.1 发射入口
 ```csharp
 // 04 C 线（条带目标）调用
-LaunchId LaunchLoiteringMunition(StripElementId battery, string munitionId, StripElementId targetElement, SimTime launchTime);
+LaunchId LaunchLoiteringMunition(StripElementId battery, ModelHandle munition, StripElementId targetElement, SimTime launchTime);
 // 04 A 线（跨地块打击命令，目标为地块/已知营/防空营）调用
-LaunchId LaunchLoiteringSearch(OrgUnitId launcherBattalion, string munitionId, StrikeTargetKind kind, ulong tile, ulong entityId, SimTime launchTime);
+LaunchId LaunchLoiteringSearch(OrgUnitId launcherBattalion, ModelHandle munition, StrikeTargetKind kind, ulong tile, ulong entityId, SimTime launchTime);
 ```
 - 发射位置 = 发射营位置（条带：元素位置换经纬度；否则营位置）。距离 + `MinSearchMin` 分钟搜索所需续航超过 `loiterEnduranceH`，或超过 `rangeMaxM` 的一半以上不能返回也无所谓（一次性）——只检查单程：距离 / 平均速度 + `MinSearchMin` ≤ 续航，否则拒绝（返回 0，04 记“射程不足”）。
 
@@ -910,7 +911,7 @@ Boost（LmBoostS）→ Midcourse：以 cruiseAltAglM、AvgSpeedFrac × speedMps 
 
 ### 4.12 地面发射的弹道导弹与巡航导弹（04 发射，08 飞行和拦截）
 ```csharp
-void RegisterGroundLaunchedMissile(FireMissionId mission, int roundIndex, string munitionId,
+void RegisterGroundLaunchedMissile(FireMissionId mission, int roundIndex, ModelHandle munition,
                                    double launchLat, double launchLon, double aimLat, double aimLon,
                                    SimTime launchTime, SimTime impactTime);
 ```

@@ -191,7 +191,7 @@ public sealed class UnitConfigPayload : IOrderPayload {
     public int newValue;                   // 对应枚举的整数值
 }
 public enum UnitConfigField : int { None = 0, MarchMode = 1, Emcon = 2, InterceptPolicy = 3, ReplacementMode = 4, ReorgPolicy = 5, AllocationPolicy = 6,
-                                    DeployDecoys = 7, RelocateAfterFiring = 8 }   // 7：05 ReconConfig.deployDecoys（0/1）；8：发射后转移开关（0/1，08/13）
+                                    DeployDecoys = 7, RelocateAfterFiring = 8, FireSupportPriority = 9 }   // 7：05 ReconConfig.deployDecoys（0/1）；8：发射后转移开关（0/1，08/13）；9：旅的 04 `FireSupportPriority`（值 = 枚举整数，生效时调 04 `SetFireSupportPriority`）
 
 public sealed class OrderDelayBreakdown {
     public OrgLevel echelon;               // 计算用的层级
@@ -338,7 +338,7 @@ public sealed class BattleSummaryStats {
 | 150 `Reporting` | 每刻 | 15/13；本文件 §4.9 |
 | 160 `Checksum` | `n % ChecksumIntervalMin == 0`（常数归 15）且（调试或多人） | 15 |
 
-另外，本文件在 30 `Calendar` 的“时”分支里做精度档窗口重置（§4.8.2），在“日”分支里检查 24 小时阶段战报到期（§4.7.4）。
+另外，本文件在 30 `Calendar` 的“时”分支里做精度档窗口重置（§4.8.2），在 150 `Reporting` 阶段检查 24 小时阶段战报到期（§4.7.4，按每场战斗自己的开始时刻计，00 §5.2）。
 
 ```csharp
 void RunTick(World w) {
@@ -354,7 +354,7 @@ void RunTick(World w) {
     if (day)  Ai.RunPeacetimeCountry(w, n);             // 10（12）
     Orders.Intake(w, n);                                // 20 §4.3
     if (year) Calendar.Year(w, n);                      // 30
-    if (day)  { Calendar.Day(w, n); Battles.CheckPeriodicReports(w, n); }
+    if (day)  { Calendar.Day(w, n); }
     if (hour) { Calendar.Hour(w, n); Scheduler.OpenWindow(w, n); }
     if (hour) Logistics.Step(w, n);                     // 40
     if (expo) Exposure.Step(w, n);                      // 50
@@ -367,6 +367,7 @@ void RunTick(World w) {
     Consumption.Step(w, n, strip, hour);                // 120
     if (hour) DamageRepair.Step(w, n);                  // 130
     if (strip) Battles.End(w, n);                       // 140 §4.7
+    Battles.CheckPeriodicReports(w, n);                 // 150 §4.7.4（每刻检查各战斗自身的 24h 锚点）
     Reporting.Step(w, n);                               // 150 §4.9
     if (n % C.ChecksumIntervalMin == 0 && w.checksumEnabled) Checksum.Step(w, n); // 160（ChecksumIntervalMin 归 15）
     w.clock.currentTick = n + 1;
@@ -683,7 +684,7 @@ void LandMove.Step(World w, long n) {
 ```
 
 #### 4.7.4 阶段战报（✅ §11.3）
-- 每场战斗自开始起每满 `PeriodicReportHours`（24）小时，在 `Calendar` 日分支之后（实际在每个满 24h 的刻）调用 04 `MakePeriodicReport(battleId, periodIndex)`，并发 `PeriodicBattleReport` 通知。实现：在 `Reporting` 阶段检查 `(n − battleStartTick) % 1440 == 0 && n > battleStartTick`。（`Calendar` 日分支里的 `CheckPeriodicReports` 只处理以 0 点对齐的需求，阶段 1 不用，保留空实现。）
+- 每场战斗自开始起每满 `PeriodicReportHours`（24）小时，在 150 `Reporting` 阶段（每个满 24h 的刻）调用 04 `MakePeriodicReport(battleId, periodIndex)`，并发 `PeriodicBattleReport` 通知。实现：在 `Reporting` 阶段检查 `(n − battleStartTick) % 1440 == 0 && n > battleStartTick`。（`Calendar` 日分支里的 `CheckPeriodicReports` 只处理以 0 点对齐的需求，阶段 1 不用，保留空实现。）
 
 ### 4.8 时间预算调度 `SimBudgetScheduler` 🟡 T-12、T-13、T-14
 
