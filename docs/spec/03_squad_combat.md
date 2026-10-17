@@ -156,7 +156,7 @@ public sealed class ArmorProfile {             // YAML 键：armor
 ```csharp
 public enum EngagementType : int { AttackPosition = 1, Meeting = 2, Counterattack = 3, Infiltration = 4, Reconnaissance = 5 }
 public enum DepthBand : int { Close = 1, Medium = 2, Far = 3, Beyond = 4 }   // 0–300 / 300–1000 / 1000–4000 / >4000 m
-public enum LightLevel : int { Day = 1, Twilight = 2, Night = 3 }
+// 光照使用 09 定义的 `enum LightCondition : int { Day = 1, Twilight = 2, Night = 3 }`（09 §4，按太阳高度），本文件不另定义。
 public enum EngagementSide : int { A = 0, B = 1 }   // A = 片段内进攻方（反冲击时 A 是反冲击方）
 public enum EngagementOutcome : int { None = 0, AttackerSeized = 1, DefenderHeld = 2, AttackerRepulsed = 3,
                                       DefenderWithdrew = 4, Stalemate = 5, MutualBreak = 6 }
@@ -171,7 +171,7 @@ public sealed class Engagement {                 // 归属 03（实体）；创�
     public int stepIndex;                        // 已执行的步数
     public int maxSteps;                         // 见 §5 MaxDurationMin[type]
     public FidelityTier fidelity;                // Full | Cached（09 决定）
-    public LightLevel light;
+    public LightCondition light;
     public double visibilityFactor;              // (0,1]，雾/降水；阶段 1 默认 1
     public int slotCount;                        // 正面槽位数
     public double slotWidthM;                    // = FrontSlotWidthM
@@ -337,7 +337,7 @@ public sealed class BattalionSummary {           // 只供界面与 AI；不参�
 
 public readonly record struct OutcomeKey(
     ulong ownProfileHash, ulong enemyProfileHash, TerrainClassPg terrain,
-    EngagementType type, int supportLevel, LightLevel light, bool ownIsAttacker);
+    EngagementType type, int supportLevel, LightCondition light, bool ownIsAttacker);
 
 public sealed class OutcomeSample {     // 一场模拟的压缩结果
     public double[] casualtyFracBySide;            // [side]：人员失去战斗力比例
@@ -1152,7 +1152,7 @@ ProvingGroundReport Run(ProvingGroundSpec spec) {
 | 05 | `ExposureLevel`（双方对敌方连）、`ExposureAccuracyFactor(level, ageMs)`、`SensorProfile`（需要字段：`opticsClassDay`, `opticsClassNight`，枚举 `OpticsClass` 见 §4.2.2——C-08）、`SignatureProfile.engagementSigMult` | 片段创建时 |
 | 06 | `SquadCarriedState` 的当前值，经 `GetAvailable(SquadId, ItemKey)` 读取，用于初始化 `EngagementAmmoCache`（§3.3）；`GetFatigueFloor(SquadId)` | 片段创建时 |
 | 07 | `RollVehicleDamage()`、`ApplyCasualty()`、`ApplyVehicleDamage()`、`CrossTrainFactor()`、`PlatoonReorgInCombat()` | 片段内调用 |
-| 09 | 本刻号、`FidelityTier`、`LightLevel`（按太阳高度：> 0° Day，−6°…0° Twilight，< −6° Night） | 每刻 |
+| 09 | 本刻号、`FidelityTier`、`LightCondition`（按太阳高度：> 0° Day，−6°…0° Twilight，< −6° Night） | 每刻 |
 | 15 | `Pcg32`、`For()`、`NextGaussian()`、`DMath` | — |
 
 ### 6.2 输出
@@ -1321,7 +1321,7 @@ ProvingGroundReport Run(ProvingGroundSpec spec) {
 | 弹种 | `MunitionKind` | 弹药物理类型枚举（`Bullet … Mine`） | 03 |
 | 效能行 | `EffectRow` | 弹药对某目标类别的 `pKillPerHit / lethalAreaM2 / suppPerShot` | 03 |
 | 观瞄等级 | `OpticsClass` | `NakedEye, Binocular, NightVision, VehicleDayOptics, ThermalGen1, ThermalGen2, UavCamera` | 03（05 的 SensorProfile 引用） |
-| 光照 | `LightLevel` | `Day, Twilight, Night` | 03 |
+| 光照 | `LightCondition`（09） | `Day, Twilight, Night`；03 直接引用 09 的枚举 | 09 |
 | 班战斗状态 | `SquadCombatState` | 跨片段持久的压制、疲劳、战斗力标志（组件） | 03 |
 | 片段弹药缓存 | `EngagementAmmoCache` | 片段内班的随身/车载弹药缓存；持久存储是 06 的 `SquadCarriedState` | 03 |
 | 单兵负重状态 | `PersonLoadState` | 单兵负重（组件） | 03 |

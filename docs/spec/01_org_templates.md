@@ -398,11 +398,11 @@ public sealed class CountryOrgSettings {      // 每国一份，随存档保存
     public CountryId country;
     public AllocationPolicy policy = AllocationPolicy.Even;
     public List<NodeRef> priorityList;        // PriorityFill 的手动顺序（Formation 或营）；空 = 按 allocationPriority
-    public ReorgFillMode fillMode = ReorgFillMode.Consolidate;   // 营内槽位填充方式，见 §4.8.5
+    public ReorgPolicy fillMode = ReorgPolicy.Consolidate;   // 营内槽位填充方式，见 §4.8.5；类型 = 07 的 `ReorgPolicy`（07 归属）
     public SortedDictionary<CategoryHandle, ModelHandle> countryDefaults; // 剧本给出（14）
     public string defaultStyle;               // 自动生成默认风格
 }
-public enum ReorgFillMode : byte { None = 0, Consolidate = 1, KeepStructure = 2 }  // 与 07 的 ReorgPolicy 一一对应
+// 填充方式直接使用 07 定义的 `enum ReorgPolicy { KeepStructure = 1, Consolidate = 2 }`，本文件不另定义枚举。
 ```
 
 ### 3.7 指挥负荷与检查结果
@@ -821,7 +821,7 @@ int[] EvenSplit(int A, int[] held, int[] t, OrgUnitId[] ids) {
   1. 班的 `role`：`Hq` → `Line` → `Support` → `EquipmentPool`；
   2. `fillMode == Consolidate`：按班的 DFS 顺序（先把前面的连排补满）；
      `fillMode == KeepStructure`：轮转——先按“所属连在营中的序号”分桶，每轮从每个连各取 DFS 顺序的第一个空槽，直到用完（各连平均缺编）。
-- `fillMode` 与 07 的 `ReorgPolicy` 一一对应（07 修改时同步）。
+- `fillMode` 的类型就是 07 的 `ReorgPolicy`。
 - 每放入一件：`item.holder = squad`，并调用 02 `OnCrewModelChange`（若替换了不同型号）或 `OnEquipmentAssigned`。
 
 #### 4.8.6 退役/换装：退回旧型号
@@ -1454,7 +1454,7 @@ public sealed class LoadoutTemplate {
 | 型号来源 | `BindingSource` | 某营某类别型号的来源：营覆盖/编组继承/营模板/国家默认。 |
 | 全军需求行 | `ForceRequirementRow` | `ForceRequirement` 的一行：(类别, 型号) 的满编需求、平时目标、持有、库存。 |
 | 国家编制设置 | `CountryOrgSettings` | 每国的分配策略、优先列表、营内填充方式、国家默认型号、默认风格。 |
-| 营内填充方式 | `ReorgFillMode` | `Consolidate` / `KeepStructure`，与 07 的 `ReorgPolicy` 对应。 |
+| 营内填充方式 | `CountryOrgSettings.fillMode`（类型 `ReorgPolicy`（07）） | `Consolidate` / `KeepStructure`；全军装备分配时的营内填充方式。 |
 | 库存索引 | `DepotIndex` | (国家, 型号) → 未发放装备实例集合。 |
 | 指挥状态 | `CommandState` / `FormationCommandState` | 指挥负荷当量、指挥能力、比值、延迟倍率、协同系数、指挥质量、失能标志。 |
 | 通信档 | `CommsTier` | 指挥部通信水平：无/手持/车载/数字化。 |

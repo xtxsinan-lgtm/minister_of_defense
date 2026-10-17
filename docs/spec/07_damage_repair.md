@@ -78,7 +78,7 @@ public enum DamageCause : int { None = 0, Combat = 1, Mine = 2, Interdiction = 3
 public enum MunitionGroup : int { Kinetic = 1, ShapedCharge = 2, TopAttack = 3, HeBlast = 4, Mine = 5, Interdiction = 6 }
 public enum RecoveryState : int { None = 0, NeedsRecovery = 1, BeingRecovered = 2, AtTrains = 3,
                                   InFieldRepair = 4, AwaitingParts = 5, InTransitToDepot = 6, AtDepot = 7 }
-public enum ReorgPolicy : int { KeepStructure = 1, Consolidate = 2 }   // 与 01 的 ReorgFillMode 一一对应
+public enum ReorgPolicy : int { KeepStructure = 1, Consolidate = 2 }   // 01 的 CountryOrgSettings.fillMode 也使用本枚举
 public enum ReplacementMode : int { Individual = 1, UnitRotation = 2 }
 public enum ReorgScope : int { Platoon = 1, CompanyBattalion = 2, InterBattalion = 3 }
 public enum RotationPhase : int { None = 0, Requested = 1, Withdrawing = 2, Refitting = 3, Retraining = 4 }
@@ -696,7 +696,7 @@ mechanic、medic、uav_operator、radar_operator、jtac、forward_observer 作�
 
 | 来源 | 需要 | 用途 |
 |---|---|---|
-| 01 | 编制树、DFS 顺序、`SquadTemplate` 人员表与槽位、`ResolveModel`、替代规则、`AllocationPolicy` 与 §4.8 的分配算法、`EquipmentDepotStock`、`reorganizingUntil`、`ReorgFillMode`、`usageHours`、战备等级 | 重组、补充、故障 |
+| 01 | 编制树、DFS 顺序、`SquadTemplate` 人员表与槽位、`ResolveModel`、替代规则、`AllocationPolicy` 与 §4.8 的分配算法、`EquipmentDepotStock`、`reorganizingUntil`、`CountryOrgSettings.fillMode`、`usageHours`、战备等级 | 重组、补充、故障 |
 | 02 | `RosterState` 读写、`GetSkill`、`TrainedPoolAvailable`、`TakeFromTrainedPool`（H-10，需 02 提供）、`OnPersonJoined`、`OnPersonReturned`、新兵练度 | 补充、归队、维修效率 |
 | 03 | `MunitionKind`、`ArmorProfile.catastrophicGivenKill`、`TargetValue`、`CombatStrength`、`BattalionSummary.fillRate`、`LossSource` | 损伤、排序、满编率 |
 | 04 | `BattlefieldControllerAt`、`TruckKillIntegral`、`RecordLoss`、营辎重队/BSA 在条带上的位置 | 回收、后送、账本 |
