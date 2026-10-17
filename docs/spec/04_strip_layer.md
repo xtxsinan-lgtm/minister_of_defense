@@ -91,6 +91,7 @@ public enum StripTask : int {
 }
 public enum ElementState : int { Idle = 1, Moving = 2, Locked = 3, Relocating = 4, Firing = 5, Disengaging = 6, Gone = 7 }
 public enum FireSupportPriority : int { CloseSupport = 1, Balanced = 2, CounterFire = 3 }   // 🟡 E-05
+// 方的编码：IStripQuery / StripLogistics（06）用 StripSide（±1）；其余 API 与结构体用 sideIndex（0 = 进攻方，1 = 防守方）。
 public enum FireMissionKind : int {
     EngagementSupport = 1,  // E 线请求（03 的 FireSupportRequest）
     CounterBattery = 2, Interdiction = 3, PrepFire = 4, BreachSuppression = 5,
@@ -158,6 +159,7 @@ public sealed class EdgeBattle {                    // 归属 04
     public List<EngagementId> activeEngagements;    // 按 id 升序
     public List<FireMission> missions;              // 未完成的任务（按 missionId 升序）
     public List<ScheduledGroundEvent> pendingEvents;// 已排程、未到时刻的地面事件（按 00 §6.4 排序键）
+    public List<GroundStrikeEvent> pendingAirEvents; // 08 交来的、未到时刻的对地事件（类型归属 08 §4.4）
     public BattleLossLedger ledger;
     public LineCounters counters;                   // 五条线的累计统计（AAR）
     public int periodicIndex;                       // 已出的 24h 报告数
@@ -231,6 +233,9 @@ public sealed class StripElement {                  // 归属 04
     public double footprintW, footprintD;           // 展开时的正面×纵深（§4.4.4）
 }
 
+public readonly record struct StripElementInfo(     // IStripQuery.CompaniesOf 的返回项（06 只读）
+    StripElementId id, OrgUnitId company, Vec2D posM, bool isLocked);
+
 public sealed class FireUnitState {                 // 组件，键 = StripElementId（kind == FireUnit / LoiteringBattery）
     public StripElementId elementId;
     public int tubes;                               // 有足够乘员、未损坏的炮/管/发射车数（每条带步刷新）
@@ -255,7 +260,7 @@ public sealed class FireMission {
     public TargetRef target;                        // StripElement | Battalion(地块内) | Node | Crossing | Loc | Point
     public Vec2D aimPointM;                         // 下达时的瞄准点（含情报误差，§4.4.2）
     public double tleSigmaM;                        // 目标定位误差 σ
-    public string munitionId;
+    public ModelHandle munition;                    // 弹种（YAML id 加载时转句柄，00 §2.2）
     public int rounds;                              // 总发数
     public SimTime fireAt, impactAt;
     public BattleLine lineTag;                      // AAR 归因（§4.14.1）
@@ -294,6 +299,8 @@ public sealed class LineCounters {
     public List<double> supportResponseS;           // 03 的请求从发现到首发落地
 }
 
+public readonly record struct BottleneckHint(int rule /*1–6 = §4.14.3 的 H1–H6*/, StripElementId subject, double[] numbers);
+
 public sealed class PeriodicBattleReportData {
     public EdgeBattleId battleId; public int periodIndex; public SimTime from, to;
     public LossBreakdown[] bySide;                  // 按线、按来源类别、按严重度、按班模板
@@ -313,10 +320,10 @@ public sealed class PeriodicBattleReportData {
 | `TickPhase` | 频率 | 本文件做什么 |
 |---|---|---|
 | 70 `BattleLifecycle` | 每 10 min | 09 判定触发后调用 `CreateEdgeBattle` / `JoinBattle`（按 `EdgeId` 升序） |
-| 80 `StripStep` | 每 `StripStepMinutes`（5），对每个活跃战斗按 `EdgeBattleId` 升序 | §4.3 的 10 个子步骤 |
+| 80 `StripStep` | 每 `StripStepMinutes`（5），对每个活跃战斗按 `EdgeBattleId` 升序 | §4.3 的子步骤 |
+| 80 `StripStep`（§4.3 第 10 步） | 每条带步 | 未锁定元素的疲劳、压制消退、燃油（00 阶段 120 `Consumption` 的条带部分在此完成） |
 | 100 `EngagementStep` 末 | 每刻 | `SupportFireBroker.Commit()`：把本刻所有片段缓冲的请求统一入队（§4.9.4） |
 | 110 `GroundEventApply` | 每刻 | 应用本刻到时的地面事件（不属于任何活跃片段的落点、巡飞弹命中、08 的对地事件）（§4.4.3） |
-| 120 `Consumption` | 每条带步 | 未锁定元素的疲劳、压制消退、燃油（§4.3 第 9 步） |
 | 140 `BattleEnd` | 每条带步 | 先算指标（§4.10、§4.13）；09 判定后调用 `EndEdgeBattle`（§4.13.3） |
 | 150 `Reporting` | 每刻 | 24h 报告（09 调用 `MakePeriodicReport`） |
 
@@ -328,6 +335,7 @@ public sealed class PeriodicBattleReportData {
 - `p0` = 面朝 +y（从 tileA 看向 tileB）时左手边的端点；`ex = (p1 − p0)/|p1 − p0|`；`ey` = `ex` 逆时针转 90°，并保证 `ey` 指向 tileB 中心（若点积 < 0 则取反并交换端点）。
 - 规范坐标 ↔ 平面：`P = p0 + x·ex + y·ey`；`x = (P − p0)·ex`，`y = (P − p0)·ey`。
 - 战斗坐标 ↔ 规范坐标：`orientation = +1` 相同；`−1` 时 `(x, y)_battle = (L − x, −y)_canonical`。
+- 经纬度 ↔ 战斗坐标（08 用）：`Vec2D LatLonToBattle(EdgeBattleId, LatLon)` = 经纬度 → 地块局部平面（上面的等距圆柱近似）→ 规范坐标 → 战斗坐标；`LatLon BattleToLatLon(EdgeBattleId, Vec2D)` 为其逆（`LatLon` 见 10）。
 - **共享资产（G-08 的映射规则，E-03）**：地块级资产（旅属炮兵、防空、巡飞弹分队）只存一个“地块局部平面位置” `tileLocalPosM`（相对于**所在地块中心**的平面坐标）。在某条带里的位置 = 把它换到该边的平面（两平面原点差由 10 的经纬度算出，常量）后用上式投影。同一资产在同一地块的多条边上有不同的投影，但是同一个实体、同一个弹药库存、同一个任务队列。
 
 #### 4.1.2 真实地形采样（阶段 1，`fromRealDem = true`）
@@ -338,13 +346,13 @@ public sealed class PeriodicBattleReportData {
 
 ```text
 输入：两个地块的 TerrainComposition（10）：各 TerrainType 占比 f_A[t], f_B[t]；高程均值/标准差 μ, σ；道路密度 ρ（km/km²）
-RNG：Rng.For(RngDomain.MapGen, edgeKey = Mix(tileA) ^ tileB, tick = 0, salt = SaltTerrainNoise)   // 与世界种子无关？见 E-04
+RNG：Rng.ForKey(RngDomain.MapGen, Mix(tileA) ^ tileB, SaltTerrainNoise)   // 与世界种子无关（E-04）
 1. 值噪声 n1(ix, iy)：在 2 km 网格上取 U[0,1) 随机值，双线性插值到 250 m 格（同一 RNG 流按格网点 (gy, gx) 升序抽）
 2. 每个格子的目标占比：y<0 用 f_A，y>0 用 f_B；|y| < 2000 m 时线性混合
 3. 分类：按半边分别对 n1 排序（平局按格子下标），按顺序 Water → Urban → Forest → Marsh → Mountain → Mixed → Open
    依次划给累计占比（这样每半边的面积占比精确等于 f）
 4. 高程：elev = μ_side + σ_side × (2·n2 − 1) × 1.7，n2 为另一张 4 km 值噪声；Mountain 格再 + σ_side
-5. 坡度：由相邻格高程差算；vehiclePassability = VehPass[terrain] × max(0, 1 − slopeDeg / VehSlopeMaxDeg)
+5. 坡度：读 10 的 slopeHalfDeg/2（无输入文件时由相邻格高程差算）；vehiclePassability = VehPass[terrain] × max(0, 1 − slopeDeg / VehSlopeMaxDeg)
                               footPassability = FootPass[terrain] × max(0.2, 1 − slopeDeg / FootSlopeMaxDeg)
 6. 道路：干线数 = round(ρ × L × 80 km / 1000 / 20)，至少 1；每条为沿 y 方向的折线，起点 x 由 RNG 均匀抽，
    每 1 km 横向偏移 ±250 m（RNG），所经格子 roadClass = 2（第一条为 3）；道路格 vehiclePassability = 1
@@ -373,7 +381,7 @@ RNG：Rng.For(RngDomain.MapGen, edgeKey = Mix(tileA) ^ tileB, tick = 0, salt = S
 8. 通知 05：本战斗双方营进入战斗（05 改用 StripReconSample）
 ```
 
-- `JoinBattle(battleId, battalionId, side)`：该营的连以纵队放在本方 `ArrivalDepthM` 处，`EchelonRole.Reserve`，`task = Deploy`。
+- `JoinBattle(battleId, battalionId, sideIndex, asCounterattack)`：该营的连以纵队放在本方 `ArrivalDepthM` 处，`EchelonRole.Reserve`，`task = Deploy`；`asCounterattack == true`（09 的反冲击营）时，其连立即 `task = Counterattack`，目标扇区 = contact 最深者（§4.11.3）。
 - 防守方无营（09 §4.6.2 第 4 条）：照常创建；E 线不生成片段，攻方按 §4.10.2 无抵抗推进。
 
 #### 4.2.2 正面宽度与扇区（00 `Frontage`）
@@ -398,14 +406,15 @@ void StripStep(EdgeBattle b, long tick) {
     LineD_Breaching(b);                 // 6. §4.7：布雷、破障、工事
     DoctrineMove(b);                    // 7. §4.11：梯队、轮换、预备队、移动、炮兵阵位
     LineE_SpawnEngagements(b, tick);    // 8. §4.9：生成片段（同刻阶段 100 执行第一步）
-    for (side in [Negative, Positive]) StripLogistics.Step(b.id, (int)side, 300, this);   // 9. 06 §4.8（攻方坐标侧先）
-    StripConsumption(b, 300);           // 10. 未锁定元素的疲劳/压制消退/燃油（00 阶段 120 的条带部分在此完成）
+    for (side in [Negative, Positive]) StripLogistics.Step(b.id, (int)side, C.StripStepMinutes * 60, this);   // 9. 06 §4.8（攻方坐标侧先）
+    StripConsumption(b, C.StripStepMinutes * 60);           // 10. 未锁定元素的疲劳/压制消退/燃油（00 阶段 120 的条带部分在此完成）
     UpdateContactAndPenetration(b);     // 11. §4.10
     UpdateHintsAndCounters(b);          // 12. §4.14.3
+    SubmitFireUnitExperience(b);        // 13. 本步有开火、拦截或出动的火力单位（炮兵、防空、无人机班）按（营, 专业, 型号）提交 02 CombatExperienceReport，contactMinutes = StripStepMinutes
 }
 ```
 
-**同一刻内的共享资源**：同一个旅属炮兵连被多条边引用时，各战斗在第 5 步只**提出**任务（缓冲），所有战斗的第 5 步结束后，按 `(fireUnitId, priorityClass, 请求战斗的 EdgeBattleId, missionId)` 统一入队（00 §5.2 规则 6）。实现上：阶段 80 末尾调用 `SupportFireBroker.CommitPlanned()`。
+**同一刻内的共享资源**：同一个旅属炮兵连被多条边引用时，各战斗在第 5 步只**提出**任务（缓冲），所有战斗的第 5 步结束后，按 §4.9.4 的全序键统一入队（00 §5.2 规则 6）。实现上：阶段 80 末尾调用 `SupportFireBroker.CommitPlanned()`。
 
 ### 4.4 A 线：纵深打击与地面跨地块火力
 
@@ -413,7 +422,7 @@ void StripStep(EdgeBattle b, long tick) {
 
 | 来源 | 说明 | `lineTag` |
 |---|---|---|
-| 09 `QueueCrossTileStrike(order)` | 玩家/AI 对其他地块的打击命令；在命令生效时刻（09）到达本文件 | `DeepStrike` |
+| 09 `QueueCrossTileStrike(Order o)`（`o.payload is CrossTileStrikePayload`，09 §3.2） | 玩家/AI 对其他地块的打击命令；在命令生效时刻（09）到达本文件 | `DeepStrike` |
 | 条带内纵深目标（条令自动） | 攻守双方射程足够的火力单位，对敌方己方纵深 ≥ `DeepTargetDepthM`（5 km）的目标：指挥所、预备队、集结中的连、炮兵以外的保障元素、BSA/BT 标记 | `DeepStrike` |
 | 08 空袭（非 CAS） | 08 结算后给出 `GroundStrikeEvent`，04 在阶段 110 应用到条带元素 | `DeepStrike` |
 
@@ -422,33 +431,38 @@ void StripStep(EdgeBattle b, long tick) {
 #### 4.4.2 一次打击的瞄准与弹数（地面远程火力，00：04 负责）
 
 ```text
-情报快照（下令时）：level = 05.GetLevel(c, target)，ageMs = 05.GetAgeMs，posture = 05 记录的观察时姿态
+情报快照（下令时）：level = 05.GetLevel(c, target)，ageMs = 05.GetAgeMs，posture = 05 IntelEstimate.observedPosture（观察时姿态）
 直接观察：若本方有元素（FO、无人机轨道）在本条带步内直接观察到目标连（§4.5.3），σ_TLE 取 03 §4.5.3 表的观察者值
 否则：σ_TLE = 05.TargetLocationErrorM(level, ageMs, posture)
 精确打击许可：precise = 05.PrecisionStrikeAllowed(level, ageMs, posture)
 弹数：rounds = BaseRounds[target kind, munition] × (precise ? 1 : 05.AreaStrikeAmmoMultiplier(level, ageMs, posture))，
       再截断到火力单位可用弹药与 MaxRoundsPerMission
 瞄准点 aim = 目标“观察方相信的位置”= 真位置 + 偏移，偏移 ~ N(0, σ_TLE²) 每轴（RNG SaltStrikeOffset，一次任务一个偏移）
-时间：fireAt = max(命令生效或任务入队, freeAt) + (isDeployed ? 0 : setupTimeS) + layTimeS；impactAt = fireAt + 距离 / speedMps
-每发落点时刻：impactAt + k × 60/(rofSustainedRpm × tubes)（火箭炮：整齐射时间 / 发数）
+时间：fireAt = max(命令生效或任务入队, freeAt) + (isDeployed ? 0 : setupTimeS)
+              + layTimeS × (autoLay ? AutoLayFactor : 1) × LaySkillMult × 1/(1 − 0.7 × fireSupportSuppression)（03 §4.5.4）；
+      impactAt = fireAt + 距离 / speedMps
+每发落点时刻：impactAt + floor(k / tubes) × 60 / rofSustainedRpm（各管同时射击；火箭炮：整齐射时间 / 发数）
 ```
 
 - 精确制导弹药（`isGuided`）：每发落点偏移 = 公共偏移（σ_TLE）+ `guidedCepM` 散布；非制导：公共偏移 + `cepPerKmM × 距离km` 散布（03 §4.6.4 的 σ_tot）。
+- 交给 08 的发射：`isInterceptable` 弹药（战术弹道导弹、巡航导弹）在 fireAt 调用 `08.RegisterGroundLaunchedMissile(...)`（08 §4.12），被拦截时 08 回调 `CancelScheduledEvent`；巡飞弹的跨地块打击（A 线）调用 `08.LaunchLoiteringSearch(...)`（08 §4.10.1），结果经 `OnLoiteringResult` 回传。
 - 目标在移动：观察方相信的位置 = 情报时位置；目标真实位置 = 当前位置——**情报越旧，偏得越远**，由 05 的 `AgeFactor` 和真实移动共同体现。
 
 #### 4.4.3 落点结算（阶段 110，按 00 §6.4 事件排序）
 
 ```text
-对每个到时的 ScheduledGroundEvent（按 timeMs, sourceEntityId, seq 升序）：
+对每个到时的 ScheduledGroundEvent 与 pendingAirEvents（两表合并，按 (timeMs, TickPhase, domainOrder, sourceEntityId, seq) 升序；domainOrder：04 地面事件 0、08 对地事件 1）：
   若落点所在位置属于某活跃 Engagement 的格子范围（x∈扇区、y 在片段范围）→ 已在阶段 100 作为 ExternalImpactEvent 交给 03，此处跳过
   否则按目标类型：
    StripElement（连等）：展开为班（§4.4.4 布局），对落点周围 3·Rs 内的每个班调用 03 的面杀伤单发结算
        AreaFire.ResolveRound(munition, impactPoint, squadsNearby, classOf, rng)   // 03 §4.6.4；含工事削减与误伤
    攻顶直接命中（巡飞弹、MAM-L）：选中元素中的一件车辆（§4.6.5 的选择规则），按 03 §4.6.3 Top 方位结算
-   地块内营（未参战，A 线跨地块）：营的班按“地块内布局”展开：中心 = 营在地块的位置（09），散布半径 TileFootprintM[posture]，
+   地块内营（未参战，A 线跨地块）：营的班按“地块内布局”展开：中心 = 09.GetBattalionPosition(bn)（换到地块局部平面），散布半径 TileFootprintM[posture]，
        班按 SquadId 升序放在半径内的确定性螺旋点上（黄金角螺旋，r_j = R√((j+0.5)/n)，θ_j = j × 2.39996 rad）
-   Node / Crossing：hits = Σ_rounds Bernoulli(1 − exp(−NodeRadiusM² / (2σ_round²)))，调用 06.OnNodeStrike / OnCrossingStrike
-   Loc（打道路上的卡车）：trucksKilledExpected = rounds × LocKillPerRound × 06.GetTrafficTrucksPerH(victim, tile) / LocTrafficNorm，调用 06.OnLocStrike
+   Node / Crossing：hits = Σ_rounds Bernoulli(1 − exp(−NodeRadiusM² / (2σ_round²)))，
+        调用 06.OnNodeStrike(new NodeStrikeEvent(node, attacker, WarheadClassOf(munition.warheadKg) /*06 §3.1 阈值*/, hits, timeMs, (int)missionId))
+        或 06.OnCrossingStrike(new CrossingStrikeEvent(crossing, WarheadClassOf(munition.warheadKg), hits, timeMs, (int)missionId))
+   Loc（打道路上的卡车）：trucksKilledExpected = rounds × LocKillPerRound × min(1, 06.GetTrafficTrucksPerH(victim, tile) / LocTrafficNorm)，调用 06.OnLocStrike
 RNG：Rng.For(RngDomain.Strip, Mix(missionId) ^ (ulong)roundIndex, tick, SaltStrikeRound)
 损失标签：LossSource { line = mission.lineTag, sourceModelId = 火力单位型号, kind = 弹种 }
 ```
@@ -456,8 +470,8 @@ RNG：Rng.For(RngDomain.Strip, Mix(missionId) ^ (ulong)roundIndex, tick, SaltStr
 #### 4.4.4 条带元素展开布局
 
 ```text
-footprint：展开 Hold/Defend：W = min(sectorWidthM, doctrine.companyDefenseFrontageM) × 0.8，D = DeployedDepthM（500）
-           Advance/Moving：W = 300，D = CompanyColumnM（1000）；Assembling/Reserve：W = D = 600；FireUnit：W = 400，D = 300
+footprint：展开 Hold：W = min(sectorWidthM, doctrine.companyDefenseFrontageM) × 0.8，D = DeployedDepthM（500）
+           Advance 或 state == Moving：W = 300，D = CompanyColumnM（1000）；Reserve 或 Deploy：W = D = 600；FireUnit：W = 400，D = 300
 n = 班数；nCols = ceil(sqrt(n × W / D))；nRows = ceil(n / nCols)
 第 j 个班（SquadId 升序）：x = pos.x − W/2 + (j % nCols + 0.5) × W/nCols；y = pos.y + (side==攻方 ? −1 : +1) × ((j / nCols + 0.5) × D/nRows − D/2)
 班的 TargetClass：按 03 §4.6.1 规则（没有射手时，反斜面只对非高抛弹生效；工事用元素 fortLevel）；σe = 03 的 spreadM
@@ -476,6 +490,7 @@ ContactRecon(k, β) = GroundReconRatePerH × reconPower(k) × max_{β 的连 j} 
    LosFrac(k, j) = exp(−dist(k, j) / meanLosScale(沿线 4 个采样格))
 UavRecon(u, β) = UavReconRatePerH[category] × availability(u) × [β 的任一连在 u 的覆盖圆内（半径 = 型号 range_km，缺省 UavRangeM[category]）]
    availability(u) = min(1, endurance_h / (endurance_h + UavTurnaroundH))
+reconRatePerH(c → β) += Σ_{本条带步写回的、c 方与 β 的连交战的片段 r} EngReconRatePerH × r.reconCoverage[c]   （03 EngagementResult，§4.9.6）
 inContact = 过去 60 分钟内 c 与 β 有过 E 线片段
 写入 05.StripReconSample(battleId, c, β, reconRatePerH, inContact, sampleMinutes = StripStepMinutes)
 ```
@@ -497,7 +512,7 @@ p = 1 − exp(−λ_loss × dtH)；Bernoulli（RNG SaltUavLoss，键 = 该无人
 
 #### 4.5.3 条带内“直接观察”（给 C、A 线定位用）
 
-本方在本条带步内**直接观察**到敌方元素 j，当且仅当：存在本方元素 k（有 `forward_observer`/侦察兵/车辆光学的连、FO 小组）满足 `dist ≤ ObserveRangeM[k 的最佳观瞄等级]`（03 §4.2.2 表的白天/夜间射程）且 `LosFrac(k, j) ≥ ObserveLosMin`；或 j 在本方无人机轨道覆盖圆内且 j 的 05 特征值（`S_phys`）≥ `UavObserveSigMin`。直接观察不改暴露度（暴露度由 05 积分），只决定**本步**射击的 σ_TLE（§4.4.2）。
+本方在本条带步内**直接观察**到敌方元素 j，当且仅当：存在本方元素 k（有 `forward_observer`/侦察兵/车辆光学的连、FO 小组）满足 `dist ≤ ObserveRangeM[k 的最佳观瞄等级]`（03 §4.2.2 表的白天/夜间射程）且 `LosFrac(k, j) ≥ ObserveLosMin`；或 j 在本方无人机轨道覆盖圆内且 j 的 05 特征值 `05.GetSignature(battalionOf(j)).physical` ≥ `UavObserveSigMin`。直接观察不改暴露度（暴露度由 05 积分），只决定**本步**射击的 σ_TLE（§4.4.2）。
 
 ### 4.6 C 线：反炮兵与火力消耗
 
@@ -567,7 +582,7 @@ LoiteringBattery u（装备 loitering_munition 类别，C-18 新类别；或 08 
   阶段 0 与 08 缺失时的后备公式（E-07）：
      到达时刻 = 发射 + 距离 / speedMps
      P_intercept = 1 − Π_{目标附近 AdCoverRangeM 内的敌防空元素 a}(1 − AdPkVsLm[a 的类别] × (a 雷达开机 ? 1 : OpticalOnlyFactor))
-     P_acquire  = 1 − exp(−SearchK × S_phys(目标) × seekerQuality × LoiterMin)   （同 05 §4.4.5 的形式）
+     P_acquire  = 1 − exp(−SearchK × 05.GetSignature(battalionOf(目标)).physical × seekerQuality × LoiterMin)   （同 05 §4.4.5 的形式）
      到达后：Bernoulli(P_intercept) → 被拦截（counters.lmIntercepted++）；否则 Bernoulli(P_acquire × pHitDirect) → 命中
 命中：选中目标元素里的一件车辆：防空 → 雷达/发射车；火力单位 → 炮/发射车；连 → 按 TargetValue（03）降序取第一件可用车辆（平局 itemId 小）
       按 03 §4.6.3 Top 方位结算（topMm 很薄 → 几乎必然击穿），车内人员按 03 表
@@ -636,7 +651,7 @@ prepH = 守方营在防守地块连续处于 Defending/Entrenched 的小时数�
 
 ### 4.8 （保留编号：与 03 对齐的扇区地形摘要用法）
 
-片段生成时，04 给 03 的地形以条带格子为准（03 §4.1 第 2 步直接读 `StripTerrain`）；`OutcomeCache` 用的地形类（03 §4.14.1）由 `SectorTerrainSummary.terrainFraction` 与 `reliefM` 判定。
+片段生成时，04 给 03 的地形以条带格子为准（03 §4.1 第 2 步经 `TerrainAtBattle` 读 `StripTerrain`，已做方向变换）；`OutcomeCache` 用的地形类（03 §4.14.1）由 `SectorTerrainSummary.terrainFraction` 与 `reliefM` 判定。
 
 ### 4.9 E 线：片段生成、支援火力共享、写回
 
@@ -650,7 +665,7 @@ prepH = 守方营在防守地块连续处于 Defending/Entrenched 的小时数�
   触发：k 与 D 中最近者距离 d ≤ EngageTriggerRangeM，且（本方对 D 所属营 05 等级 ≥ Presence 或 d ≤ BlindContactRangeM）
   类型：
      k.task == Counterattack                                → Counterattack
-     D 最近者 task ∈ {Advance, Moving, Deploy}               → Meeting
+     D 最近者 task ∈ {Advance, Deploy} 或 state == Moving     → Meeting
      O_i > ObstacleNegligible 且 B_i < BreachAttackGate      → 夜间且 doctrine.allowNightInfiltration 且 k 有徒步/乘车步兵 ? Infiltration : Reconnaissance
      否则                                                   → AttackPosition，额外要求：
         LocalForceRatio = CombatStrength(k) / max(ε, Σ_{D 中参战部分} CombatStrength) ≥ doctrine.attackMinForceRatio，
@@ -659,8 +674,9 @@ prepH = 守方营在防守地块连续处于 Defending/Entrenched 的小时数�
   参战班：A 方 = k 的全部班（车辆 vehicleAvenue_i < AvenuePassMin 时，k 的车辆不参战、留在后方 1 km——山地只能步兵进攻）；
          B 方 = D 中：若 D 的连正面宽于 1.5 × sectorWidth，只取其排中 x 范围与扇区相交的排（排按 OrgUnitId 升序均分连的正面），
                      加上 4 km 内的营属支援分队中的反坦克/机枪/迫击炮班
-  ctx（03 §6.1 SectorContext）：x0M = 扇区 xMin，frontageM = sectorWidthM，contactYAt = contact.YAt，attackDir = (A 方是战斗攻方 ? +1 : −1)，
-       light = 09.GetLightCondition(边中点所在地块, now)，obstacleDensity = O_i，breach = B_i，fortificationLevel = B 方元素 F，
+  ctx（03 §3.2 SectorContext）：battleId，type（上面判定的类型），x0M = 扇区 xMin，frontageM = sectorWidthM，contactYAt = contact.YAt，attackDir = (A 方是战斗攻方 ? +1 : −1)，
+       light = 09.GetLightConditionAtEdge(edgeId, now)，visibilityFactor = 1（阶段 1），obstacleDensity = O_i，breach = B_i，
+       fortificationLevel = B 方各元素 F 的人数加权平均，
        knowledgeOfEnemy[s] = 05.GetLevel(s 国家, 对方营)，supportAssets[s] = §4.9.3，fireSupportSuppression[s]，
        doctrine[s]，fidelity = 09.GetTier(battleId)
   03.CreateEngagement(ctx, squadsA, squadsB) → engagementId；锁定参战元素（state = Locked，G-18）；activeEngagement = id
@@ -668,7 +684,7 @@ prepH = 守方营在防守地块连续处于 Defending/Entrenched 的小时数�
 同一战斗同时活跃片段数 ≤ sectorCount（每扇区至多 1 个，自然满足）
 ```
 
-- **伏击（05 §6.3 建议，采纳）**：守方对攻方营 ≥ `Type` 且攻方对守方营 ≤ `Size` → 03 的守方 `knowledgeOfEnemy` 已给出起始航迹，攻方无 —— 不需要另设修正。
+- **伏击（05 §6.3 建议，采纳）**：守方对攻方营 ≥ `Targetable` 时 03 给守方起始航迹；= `Type` 时只有 `CueFactor`（03 §4.1 第 5 步）；攻方对守方营 ≤ `Size` 时攻方无 —— 不需要另设修正。
 - `Reconnaissance` 片段结束后，进攻元素回到原位置；它的价值在 03 写给 05 的侦察贡献，以及 E 线下一次的 `knowledgeOfEnemy`。
 
 #### 4.9.2 车辆可通行扇区
@@ -691,6 +707,7 @@ supportAssets[s] = { u ∈ s 的火力单位 | tubes > 0 ∧ u.reservedForE ∧ 
 Commit（阶段 100 末执行 E 请求；阶段 80 末执行计划任务）：
   1. 把所有新请求按全序键排序：(priorityClass, sameEchelonOwner ? 0 : 1, arrivedAtFdcAt, requestId)
      priorityClass：Emergency 1，Immediate 2，Normal 3，PrepFire 4，BreachSuppression 4，CounterBattery 5，Interdiction 6，DeepStrike 7
+     FireMission（C/A 线计划任务）取：sameEchelonOwner = 1，arrivedAtFdcAt = 规划所在刻起点，平局键 = (EdgeBattleId, missionId)
   2. 依次处理每个请求：候选火力单位 = 请求给出的可达列表（03：supportAssets 中可达者；C/A：规划时指定的那一个）
      对每个候选 u 计算预计 fireAt（§4.4.2，含队列：在 u.queue 中按同一全序键找到插入位置；排在它前面的任务的结束时刻）
      选 fireAt 最早者；平局：层级低者（排 < 连 < 营 < 旅），再 orgUnitId 小者
@@ -781,7 +798,7 @@ nFirst = min(可用连数 − ceil(可用连数 × (reserveFraction + secondEche
 
 #### 4.11.3 轮换、预备队、反冲击
 
-- **轮换**：第一梯队连 `CombatStrength < rotateThreshold` 且未锁定 → 与同营（无则同旅、同战斗方）的第二梯队有效连互换位置；被换下的连 `task = Reorganize`，移到 `ReserveDepthM`；不在片段中满 `RestReorgMinH` 后 07 自动做连/营内重组（07 §4.6.2）。
+- **轮换**：第一梯队连 `CombatStrength < rotateThreshold` 且未锁定 → 与同营（无则同旅、同战斗方）的第二梯队有效连互换位置；被换下的连 `task = Reorganize`，移到 `ReserveDepthM`；不在片段中满 `RestReorgMinH`（07）后 07 自动做连/营内重组（07 §4.6.2）。
 - **攻方投入第二梯队**：某扇区 `AttackerSeized` 后，若该扇区 contact 推进 ≥ `ExploitTriggerM`，第二梯队连前出接替（超越），原第一梯队连转第二梯队。
 - **守方反冲击**：若存在扇区 contact.yM ≥ `CounterattackTriggerM` 或 penetrationProgress ≥ `CounterattackTriggerP`，且守方有有效预备队连 → 该连 `task = Counterattack`，目标扇区 = contact 最深者；E 线把它当 A 方生成 `Counterattack` 片段（09 §4.6.4 的反冲击营也走这里）。成功的反冲击按 §4.9.6 把 contact 推回（attackDir = −1）。
 
@@ -789,10 +806,10 @@ nFirst = min(可用连数 − ceil(可用连数 × (reserveFraction + secondEche
 
 ```text
 每条带步：元素朝 targetPosM 直线移动 d = v × dtS（不越过目标）
-v（m/s）= 元素中最慢的车辆 06.MobilityProfile 战术越野速度 × 路径平均 vehiclePassability（沿线每 250 m 采样）
+v（m/s）= 元素中最慢的车辆 06.MobilityProfile.offroadSpeedMps × 路径平均 vehiclePassability（沿线每 250 m 采样）
          或 徒步 = 03 BaseFootSpeedMpm[terrain] / 60 × 负重与疲劳修正（03 §4.8.2，用元素平均值）
          × 06.GetMobilityFactor(battalion)（燃油）
-沿道路：若起止两点都在道路格 2 km 内，取 max(越野, 道路速度 × RoadMult)
+沿道路：若起止两点都在道路格 2 km 内，取 max(越野, 道路速度 × RoadMult（03 §5.5）)
 越过接触线：攻方元素 y 不得超过 contact.YAt(x) − ContactStandoffM（只能通过片段夺取或 §4.10.2 前推）；守方对称
 火力单位阵位：己方纵深 = clamp(ArtyRangeUseFrac × rangeMaxM, ArtyMinDepthM, ArtyMaxDepthM)；营迫击炮在本营连后 MortarDepthM
 防空：与所保护的火力单位/指挥所同位，横向 500 m；指挥所：己方纵深 HqDepthM
@@ -806,7 +823,7 @@ v（m/s）= 元素中最慢的车辆 06.MobilityProfile 战术越野速度 × �
 2. 撤离：组织完成后，元素按“离接触线由远到近”的顺序每条带步放行一个（掩护后撤），task = Withdraw，
    targetPos = 己方纵深 DisengageSafeDepthM；锁定在片段中的元素等片段结束后放行
 3. 撤离途中：元素布局为 Moving（纵队），特征值高（05 按 Marching），自然成为对方 C 线 Interdict 目标
-4. 失去机动的受损车辆：调用 07.OnDisengage(battalionId, battleId) —— 07 按其规则决定拖走或遗弃（07 §4.2.3）
+4. 失去机动的受损车辆：调用 07.OnDisengage(battalionId, battleId) —— 07 按其规则决定拖走或遗弃（07 §4.2.4）
 5. 该营所有元素 己方纵深 ≥ DisengageSafeDepthM 或已离开条带 → 从 sides[].battalions 移到 disengagingBattalions，
    元素 state = Gone，调用 09.OnDisengaged(battalionId, now)
 6. 该营原覆盖的扇区若再无守方有效元素 → §4.10.2 的无抵抗推进生效
@@ -830,7 +847,8 @@ IsCombatEffective = CS_bn ≥ BattalionEffectiveThreshold（0.30，09 建议值�
 | `int FrontageSlots(battleId)` | `sectorCount`（09 调度成本估计用） |
 | `int CompaniesOnStrip(battleId)` | 双方 `kind == Company` 且 state ≠ Gone 的元素数 |
 | `bool IsInStrikeRange(OrgUnitId shooterBn, TargetRef t)` | 射手营中射程最远的可用间瞄武器 `rangeMaxM` ≥ 射手位置（战斗中 = 条带投影；否则地块位置）到目标位置的平面距离 |
-| `void QueueCrossTileStrike(StrikeOrder o)` | §4.4.1；09 在命令生效时调用 |
+| `bool HasEffectiveCompanies(EdgeBattleId, int sideIndex)` | 该方存在 `kind == Company`、state ≠ Gone 且 CombatStrength ≥ `CompanyIneffective` 的元素（09 结束规则 2） |
+| `void QueueCrossTileStrike(Order o)` | `o.payload is CrossTileStrikePayload`（09 §3.2）；§4.4.1；09 在命令生效时调用 |
 
 #### 4.13.3 `EndEdgeBattle(battleId, BattleEndReason reason, SimTime at)`（09 判定后调用）
 
@@ -914,7 +932,7 @@ EstimatedEnemyTubeRangeM(s) = max_{e 方火力单位 u，s 方对 u 所属营 05
 
 | 名称 | 初始值 | 单位 | 调参范围 | 来源/理由 |
 |---|---|---|---|---|
-| `StripStepMinutes` | 5 | min | 5/6/10 | 00 G-04 |
+| `StripStepMinutes` | 5 | min | 5/6/10 | 00 G-04；引用 09/00，不在 04_strip_layer.yaml 中定义 |
 | `StripTerrain.CellM` | 250 | m | 100–500 | 总纲“分辨率几百米”；23 km × 80 km ≈ 2.9 万格 |
 | `DoctrineAttackFrontage`（`companyAttackFrontageM` 缺省） | 1200 | m | 800–1500 | 总纲 §9.3：每连 1–1.5 km |
 | `companyDefenseFrontageM` 缺省 | 1800 | m | 1000–3000 | 苏式连防御正面 1–1.5 km，北约可达 3 km |
@@ -982,6 +1000,7 @@ EstimatedEnemyTubeRangeM(s) = max_{e 方火力单位 u，s 方对 u 所属营 05
 | `AdKillPerH`（便导 / 高射机枪 / 自行高炮 / 近程弹） | 0.3 / 0.2 / 0.8 / 1.0 | /h | — | 对小型无人机 |
 | `SmallArmsUavKillPerH` | 0.02 | /h | — | |
 | `ObserveLosMin` / `UavObserveSigMin` | 0.5 / 0.3 | — | — | |
+| `EngReconRatePerH` | 0.5 | /h | — | 片段航迹覆盖率折算的侦察速率；估算，由 R-V1 校准（E-17） |
 
 ### 5.5 D 线与工事
 
@@ -1010,10 +1029,8 @@ EstimatedEnemyTubeRangeM(s) = max_{e 方火力单位 u，s 方对 u 所属营 05
 | `CompanyIneffective` | 0.25 | — | — | |
 | `ReplanMin` | 60 | min | — | |
 | `ExploitTriggerM` / `CounterattackTriggerM` / `CounterattackTriggerP` | 1500 / 2500 / 0.25 | m / m / — | — | |
-| `RestReorgMinH` | 2 | h | — | 与 07 一致 |
 | `ArtyRangeUseFrac` / `ArtyMinDepthM` / `ArtyMaxDepthM` | 0.4 / 3000 / 15000 | — / m / m | — | 总纲：火炮部署在接触线后 5–15 km |
 | `MortarDepthM` / `HqDepthM` | 1500 / 6000 | m | — | |
-| `RoadMult` | 1.5 | — | — | |
 | `DisengageOrganizeMin` / `DisengageEngagedMult` | 30 / 1.5 | min / — | — | 09 建议值 |
 | `DisengageSafeDepthM` | 8000 | m | — | 出敌身管炮兵主要射程 |
 | `BattalionEffectiveThreshold` | 0.30 | — | 0.2–0.4 | 09 建议值 |
@@ -1039,12 +1056,14 @@ EstimatedEnemyTubeRangeM(s) = max_{e 方火力单位 u，s 方对 u 所属营 05
 | 接口 | 调用者 | 时机 |
 |---|---|---|
 | `EdgeBattleId CreateEdgeBattle(EdgeId, CountryId attacker, CountryId defender, BattleTriggerKind, List<OrgUnitId> attackers, List<OrgUnitId> defenders, SimTime at)` | 09 | 阶段 70 |
-| `void JoinBattle(EdgeBattleId, OrgUnitId battalion, int side)` | 09 | 阶段 70 |
+| `void JoinBattle(EdgeBattleId, OrgUnitId battalion, int sideIndex /*0=attacker,1=defender*/, bool asCounterattack)` | 09 | 阶段 70 |
 | `void RequestDisengage(EdgeBattleId, OrgUnitId battalion, SimTime at)` | 09 | 命令生效时 |
 | `void EndEdgeBattle(EdgeBattleId, BattleEndReason, SimTime at)` | 09 | 阶段 140 |
-| `double PenetrationProgress(EdgeBattleId)`、`bool IsCombatEffective(OrgUnitId)`、`bool AttackerCompaniesAllOnOwnSide(EdgeBattleId)`、`int FrontageSlots(EdgeBattleId)`、`int CompaniesOnStrip(EdgeBattleId)` | 09（结束判定、调度） | 阶段 140 / 调度开窗 |
+| `double PenetrationProgress(EdgeBattleId)`、`bool IsCombatEffective(OrgUnitId)`、`bool AttackerCompaniesAllOnOwnSide(EdgeBattleId)`、`int FrontageSlots(EdgeBattleId)`、`int CompaniesOnStrip(EdgeBattleId)`、`bool HasEffectiveCompanies(EdgeBattleId, int sideIndex)` | 09（结束判定、调度） | 阶段 140 / 调度开窗 |
 | `PeriodicBattleReportData MakePeriodicReport(EdgeBattleId, int periodIndex)` | 09 | 每 24 h |
-| `bool IsInStrikeRange(OrgUnitId, TargetRef)`、`void QueueCrossTileStrike(StrikeOrder)` | 09 | 命令校验 / 生效 |
+| `bool IsInStrikeRange(OrgUnitId, TargetRef)`、`void QueueCrossTileStrike(Order o)`（`o.payload is CrossTileStrikePayload`） | 09 | 命令校验 / 生效 |
+| `void SetFireSupportPriority(FormationId, FireSupportPriority)` | 13（作为模拟输入经 09 命令队列生效） | 命令生效时 |
+| `StripCell TerrainAtBattle(EdgeBattleId, double xM, double yM)`（按 orientation 做规范 → 战斗坐标变换） | 03 | 片段创建时 |
 | `SupportFireBroker.Submit(FireSupportRequest)`、`Commit()` | 03 / 本文件 | 阶段 100 内 / 末 |
 | `IEnumerable<ExternalImpactEvent> EventsForEngagement(EngagementId, long tick)` | 03 | 阶段 100 开始 |
 | `void RecordLoss(EdgeBattleId, BattleLossEntry)` | 07（单位在战斗中时） | 事件发生时 |
@@ -1052,6 +1071,11 @@ EstimatedEnemyTubeRangeM(s) = max_{e 方火力单位 u，s 方对 u 所属营 05
 | `fortLevel01(OrgUnitId battalion)`、`bool InActiveBattle(OrgUnitId)`、`bool FiredThisStep(OrgUnitId artilleryBattalion)`、`StripReconSample` 缓冲 | 05 | 条带步写，暴露步读 |
 | `StripView`（元素、接触线、扇区、任务连线、提示） | 13 | 界面刷新 |
 | `BattlefieldControllerAt(EdgeBattleId, Vec2D)` | 07 | 回收/遗弃判定 |
+| `(StripElementId target, Vec2D aimPosM, double tleSigmaM, bool directlyObserved) SelectCasTarget(EdgeBattleId, int side, CasPlatformClass, Vec2D orbitPosM)`：候选 = 对 side 而言的敌方元素中被直接观察（§4.5.3）或 05 等级 ≥ `Type` 者；按 §4.6.3 的 `TargetValueC` 降序（平局：距 orbitPosM 近者，再 id 小）取第一个；aimPosM = 目标元素当前位置，tleSigmaM = 直接观察 ? 03 §4.5.3 观察者值 : 05.TargetLocationErrorM（偏移由 08 §4.8.2 施加）；无候选返回 target = 0 | 08 | 阶段 90 |
+| `void CancelScheduledEvent(FireMissionId, int roundIndex)` | 08（导弹被拦截） | 阶段 90 |
+| `void OnLoiteringResult(LaunchId, MissileState result /*Impact / Intercepted / Lost*/)` | 08 | 阶段 90 |
+| `Vec2D LatLonToBattle(EdgeBattleId, LatLon)`、`LatLon BattleToLatLon(EdgeBattleId, Vec2D)`（§4.1.1） | 08 | 任意 |
+| `void SetTileLocalPos(OrgUnitId sharedAsset, Vec2D tileLocalPosM)`（共享资产转移后更新，§4.1.1） | 08（防空转移） | 阶段 90 |
 
 ### 6.2 本文件需要
 
@@ -1059,12 +1083,12 @@ EstimatedEnemyTubeRangeM(s) = max_{e 方火力单位 u，s 方对 u 所属营 05
 |---|---|---|
 | 03 | `CreateEngagement`、`EngagementResult`、`ForceEnd(EngagementId)`（03 §4.10）、`AreaFire.ResolveRound`、直射 Top 方位结算函数、`CombatStrength`/`CapabilityVector`、`ClassOf`、`OutcomeCache` | E 线、条带上的火力结算、指标 |
 | 01 | 编制树、`GetRequestChain`、`EquipmentModel` 与 03 的 Profile、营的建制编组 | 元素构成、请求链 |
-| 02 | `GetSkill` | 工兵当量、侦察技能 |
-| 05 | `GetLevel`、`GetAgeMs`、`ExposureAccuracyFactor`、`TargetLocationErrorM`、`PrecisionStrikeAllowed`、`AreaStrikeAmmoMultiplier`、`S_phys`、`EmconState`、`groundReconValue` 缺省表 | B/C/A 线 |
+| 02 | `GetSkill`；提交 `CombatExperienceReport`（§4.3 第 13 步） | 工兵当量、侦察技能；火力单位实战经验 |
+| 05 | `GetLevel`、`GetAgeMs`、`ExposureAccuracyFactor`、`TargetLocationErrorM`、`PrecisionStrikeAllowed`、`AreaStrikeAmmoMultiplier`、`GetSignature(battalion).physical`（S_phys）、`IntelEstimate.observedPosture`、`EmconState`、`groundReconValue` 缺省表 | B/C/A 线 |
 | 06 | `StripLogistics.Step`、`GetAvailable/TryConsume`、`GetMobilityFactor`、`MobilityProfile`、`OnNodeStrike/OnCrossingStrike/OnLocStrike`、`GetTrafficTrucksPerH` | 补给、弹药、机动、A 线 |
 | 07 | `ApplyCasualty`、`ApplyVehicleDamage`、`RollVehicleDamage`、`RegisterBattlefieldItems`、`ResolveBattlefieldControl`、`OnDisengage`、车辆可用状态 | 损失与恢复 |
-| 08 | `LaunchLoiteringMunition`（🟡 E-07）、`GroundStrikeEvent` 队列、`AirDefenseRegistration`（雷达开机、射程） | C 线巡飞弹、空袭、防空 |
-| 09 | `GetEntrenchProgress(battalion)`、`GetLightCondition`、`GetTier`、`OnDisengaged`、营地块位置、姿态时长 | 部署、昼夜、精度、脱离 |
+| 08 | `LaunchLoiteringMunition`（🟡 E-07）、`LaunchLoiteringSearch`、`RegisterGroundLaunchedMissile`、`GroundStrikeEvent` 队列、`AirDefenseRegistration`（雷达开机、射程） | C 线巡飞弹、空袭、防空 |
+| 09 | `GetEntrenchProgress(battalion)`、`GetLightConditionAtEdge(EdgeId, SimTime)`、`GetTier`、`OnDisengaged`、`GetBattalionPosition(OrgUnitId)`、姿态时长 | 部署、昼夜、精度、脱离 |
 | 10 | 边端点/长度、地块中心、`TerrainComposition`、离线条带地形文件 | §4.1 |
 | 12 | `EdgeAssignment`、编组 AI 对参战营的分配 | 参战营（经 09） |
 | 14 | 各国 `DoctrineProfile` | 条令参数 |
@@ -1082,6 +1106,12 @@ EstimatedEnemyTubeRangeM(s) = max_{e 方火力单位 u，s 方对 u 所属营 05
 | `Strip` | `SaltLmHit` | 6 | 巡飞弹获取与命中 | `Mix(lmLaunchId) ^ 2` |
 | `Strip` | `SaltNodeHit` | 7 | 节点/桥梁命中数 | `Mix(missionId) ^ roundIndex` |
 | `MapGen` | `SaltTerrainNoise` | 1 | 程序生成条带地形 | `Mix(tileA) ^ tileB` |
+
+### 6.4 存档（15）
+
+| 去向 | 内容 |
+|---|---|
+| 15 | 存档：`SectionId.Strip`（= 31，15 §3.2）；组件：所有未结束的 `EdgeBattle`（含 `BattleSideState`、`SectorState`、`ContactLine`、`missions`、`pendingEvents`、`pendingAirEvents`、`BattleLossLedger`、`LineCounters`）、`StripElement`、`FireUnitState`、`SupportFireBroker` 的队列与缓冲、反炮兵定位 fix、巡飞弹出动小数累积 carry、脱离接触进度；不存档（派生，读档后重建）：`Strip`/`StripTerrain`/`SectorTerrainSummary`（由 10 的条带文件或 §4.1.3 程序生成重建）、`BottleneckHint`、`StripView` |
 
 ---
 
@@ -1209,6 +1239,7 @@ V1（03 §9）中“营属/旅属武器服务多个连”的实验，需要本�
 | E-14 | V2 目标值的来源 | 由 14 依据 Oryx 等公开图像统计核定区间，本文件只给宽区间 | 避免在规格里臆造精确统计数字 | — |
 | E-15 | 条带上不额外随机 | 连续量用期望值；只有命中/定位/拦截抽样 | ✅ 总纲 §21-1 | — |
 | E-16 | 03 的 `SquadAmmoState` 与 06 的 `SquadCarriedState` 重复 | 以 06 的 `SquadCarriedState` 为唯一存储，03 通过 06 API 读写，03 的组件降级为片段内缓存 | 一个数据只由一个系统拥有（00 §0-2） | 保留两套并同步 |
+| E-17 | EngReconRatePerH 初值 | 0.5 | 估算 | 由 R-V1 校准 |
 
 ---
 
