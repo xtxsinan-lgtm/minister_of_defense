@@ -544,7 +544,7 @@ fuelFrac ≤ needToBase + BingoMargin → 进入 Rtb
 #### 4.4.3 无人机高度档（D5）
 - 无人机元素的巡航海拔 = `orbitAltM_byBand[band]`（离地高按所在地块 `Tile.terrain.elevMeanM`（10）换算，至少 `UavMinAglM`）。
 - 缺省 `Medium`。TB2 的 Medium = 5500 m：高于 Osa（5 km）、Strela-10/便携（3.5 km）、ZSU-23-4（1.5 km）的射高 → **这些系统打不到**；低于 Kub/Buk/S-300/Tor 的射高 → 这些能打到（**自然涌现**，A-04、A-05）。
-- 高度对光电观测质量的影响：`sensorQualityEffective = eoQuality × BandEoFactor[band]`（Low 1.1、Medium 1.0、High 0.85）。
+- 高度对光电观测质量的影响：`sensorQualityEffective = eoQuality × BandEoFactor[band] × 11.SoftwareDegradeFactor(owner, model)`（Low 1.1、Medium 1.0、High 0.85；软件保障中断系数见 11 §4.11，无依赖时 = 1）。下文凡写 `eoQuality × BandEoFactor` 处一律用 `sensorQualityEffective`。
 
 #### 4.4.4 CAS（进入条带，E-12）
 ```text
@@ -1203,7 +1203,7 @@ JetFuel：Σ 架数 × PlanningSortiesPerDay × fuelKg / 1000（吨）
 | 07 | `ApplyVehicleDamage`（飞机、无人机、发射车被毁）、`ApplyCasualty`（机组）、飞机修复状态、`ReliabilityProfile` |
 | 09 | `StartMission` 路由、`GetLightCondition`、营位置与速度（外推）、`GetMoveState`、`PostNotification`、`UnitConfig`（拦截策略、电磁管控、转移开关 `UnitConfigField.RelocateAfterFiring`） |
 | 10 | 地块中心、平均高程、`TerrainComposition`（主地形）、机场/简易跑道 |
-| 11 | 单价（成本交换比）；装备与弹药交付入库 |
+| 11 | 单价（成本交换比）；装备与弹药交付入库；`SoftwareDegradeFactor(CountryId, ModelHandle)`（11 §4.11，§4.4.3 观测质量） |
 | 14 | 无人机前出地面站位置（可选）、开局部署 |
 | 15 | `Rng.For`、`DMath`、`BattleEventLog`、ID 分配器 |
 

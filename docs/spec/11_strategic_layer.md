@@ -109,10 +109,17 @@ sealed class Country {
     double deterrence;                   // [0,1]，威慑值
     MobilizationLevel mobilization;      // 3.7；国家级（危机中无战争也可动员）；02/06/07 与 4.8 读取
     long mobilizationOrderedMs;          // 当前等级的动员令下达时刻；-1 = 未动员
+    int mobilizationPoolSnapshot;        // 本次动员首次下令时的 reservePool（4.8.2）
+    SortedDictionary<OrgUnitId, MobilizedBattalion> mobilized;   // 本次动员选中的营（4.8.2）；复员到 None 时清空
     List<CreditLine> creditLines;        // 3.2
     ExternalActorPolicy? externalPolicy; // 仅 role = ExternalActor / SupplierOnly
     ExportPolicy? exportPolicy;          // 作为卖方时的出口政策（3.4）
     List<AiDirective> aiDirectives;      // 3.8；Historical 模式的“历史指令”（12 读取）；玩家国家恒为空
+}
+sealed class MobilizedBattalion {
+    SortedDictionary<SpecialtyHandle, int> final;   // 该营各专业应新增到位的终值（DC-088）
+    long selectedMs;
+    int mobDays;                                     // 0 = 立即到位（原为 Active 档）
 }
 
 sealed class PoliticalState {
@@ -293,6 +300,7 @@ sealed class ProductionLine {
     int idleDaysConsecutive;              // 开工率 < LineIdleUtilization 的连续天数
     bool isAssemblyOnly;                  // 本地组装线：依赖进口零件包（3.5）
     double unitCostMusd;                  // 国内生产单价
+    double expansionCostMusdPerUnitYear;  // 扩产/重启费用：每增加 1 件/年产能的费用（14 数据）
     LineState state;
 }
 
@@ -334,6 +342,7 @@ sealed class UpgradeProject {
     ProjectId id; CountryId owner; string upgradePathId; CountryId provider;
     int quantityOrdered, inShop, completed;
     double intakeAccumulator;             // 4.6 第 2 步的“累加”小数部分
+    ModelHandle refurbishModel;           // 整修（fromModel = 0 的路径）时由玩家指定的型号；其他路径 = 0
     ContractId? contractId;               // 外国提供时伴随一个采购合同（用于批准与付款）
 }
 
@@ -598,38 +607,48 @@ sealed class StrategicSettings { HistoricalMode mode; bool sandboxSupremeLeader;
 
 ## 4. 算法与公式
 
-> 执行时机：全部在 `TickPhase.Calendar`（30），顺序 **年 → 日 → 时**（00 §5.2）。本节标出每步属于哪一子步。所有遍历按 ID 升序（00 §6.4）。
+> 执行时机：全部在 `TickPhase.Calendar`（30），顺序 **年 → 日 → 时**（00 §5.2）；同一子步内各系统顺序 11 → 01 → 02 → 07 → 12（00 §5.2、09 §5），即本文件的 H1–H12 先于 01/02/07 的同刻小时步。本节标出每步属于哪一子步。所有遍历按 ID 升序（00 §6.4）。
+> 玩家与 AI 的 `IStrategicActions` 调用在 `OrderIntake`（20）登记，在同一刻的 Calendar（30）开头按（提交顺序 seq）依次应用，然后才执行下面的年/日/时步。
 
 ### 4.0 战略层每次 Calendar 调用的顺序
 
 ```csharp
 void OnCalendar(long tick) {
-    var t = new SimTime(tick * 60000);
-    if (IsJan1Midnight(t)) YearlyStep(t);           // 4.2.1–4.2.3, 4.5.2(市场年批), 4.13 年报
-    if (tick % 1440 == 0) DailyStep(t);             // 4.5.2(季度批次), 4.11 供应中断检查（每 7 天）
+    var t = SimTime.FromTick(tick);                 // 09 §3
+    ApplyPendingActions(t);                         // 本刻登记的 IStrategicActions（6 节）
+    if (IsJan1Midnight(t)) YearlyStep(t);           // 4.2.1–4.2.3（含 4.2.2 义务）、4.3 第 5 条（合同兵比例）、4.13 年报
+    if (tick % 1440 == 0) DailyStep(t);             // 见下
     if (tick % 60 == 0) HourlyStep(t);              // 下面 H1–H12
+}
+void DailyStep(SimTime t) {
+    D1_MarketLots(t);             // 4.5.2：仅在 1/1、4/1、7/1、10/1 生成新批次（年初那次就是第一季度批次，不另做“年批”）；清除过期批次
+    D2_LineAtrophy(t);            // 4.5.3 萎缩
+    D3_UpgradeIntake(t);          // 4.6 第 2 步送修
+    D4_ScandalCheck(t);           // 4.7.4 曝光
+    D5_Deterrence(t);             // 4.10.3 回落
+    D6_SupplySuspension(t);       // 4.11（day % 7 == 0）+ 软件中断天数计数
 }
 void HourlyStep(SimTime t) {
     // dtH = 1
-    H1_BudgetAccrual(t);          // 4.2.5 人员/O&M/训练/基建按小时计费
+    H1_BudgetAccrual(t);          // 4.2.5 人员/O&M/训练按小时计费，备件资金交 07
     H2_ContractDecisions(t);      // 4.4.3 到期的批准裁决
     H3_Payments(t);               // 4.4.5
-    H4_Deliveries(t);             // 4.4.4 / 4.5 / 4.6.2 升级完工
+    H4_Deliveries(t);             // 4.4.4 / 4.5 / 4.6 第 3 步升级完工 / 工具组到货
     H5_Production(t);             // 4.5.3 国内生产线
-    H6_Projects(t);               // 扩产/基建进度
+    H6_Projects(t);               // 扩产/基建/学校扩建进度
     H7_Mobilization(t);           // 4.8.2
-    H8_Events(t);                 // 4.9 危机事件
-    H9_Tension(t);                // 4.6
+    H8_Events(t);                 // 4.9 危机事件（含玩家超时答复）
+    H9_Tension(t);                // 4.8.1
     H10_Issues_Corruption(t);     // 4.7.3, 4.7.4
-    H11_War(t);                   // 4.8 疲劳、红线、停火
+    H11_War(t);                   // 4.8.3–4.8.6 疲劳、战时预算、停火；4.10.2 红线
     H12_Trust(t);                 // 4.7.1 漂移 + 解职判定
 }
 ```
 
 ### 4.1 国家初始化（读剧本时）
-1. 由 14 读入：`Country` 列表、`gdpMusd` 逐年表、`baseBudgetMusd` 逐年表、`ConscriptionSystem`、`payMusdPerHeadYear`、`Relation`、`TensionState`、`ExternalActorPolicy`、`ExportPolicy`、`CreditLine`、`ProductionLine`、`TileClaimTable`、初始合同（开局时已签、未交付完的合同）。
+1. 由 14 读入：`Country` 列表、`gdpMusd` 逐年表、`baseBudgetMusd` 逐年表、`ConscriptionSystem`（含开局 `reservePool`、`reserveGeneralSkill`）、`payMusdPerHeadYear`、`Relation`、`TensionState`、`ExternalActorPolicy`、`ExportPolicy`、`CreditLine`、`ProductionLine`、`MarketPoolEntry`、`UpgradePath`、`TileClaimTable`（10 `Tile.deJureIso3`）、初始合同（开局时已签、未交付完的合同）。
 2. 若剧本未给某年基础预算：`B_base(y) = B_base(lastGivenYear) × (1 + BudgetDriftPerYear)^(y − lastGivenYear)`（`DMath.Pow`）。
-3. 初始 `trust = InitialTrust`（剧本可覆盖）。
+3. 初始 `trust = InitialTrust`（剧本可覆盖）；`mobilization = None`，`mobilizationOrderedMs = -1`（14 开局脚本可另设，14 §4.9）。
 
 ### 4.2 年度预算（解决 §21-12）
 
@@ -643,7 +662,7 @@ issueBonus(y) = (support[DefenseBudgetIncrease] ≥ IssueBudgetThreshold)
 
 #### 4.2.2 固定义务（年初计算）
 ```
-Personnel(y)  = Σ_c headcount_c × pay_c                 // c ∈ PayCategory；headcount 由 02 的名册统计（年初快照）
+Personnel(y)  = Σ_c headcount_c × pay_c                 // c ∈ PayCategory；headcount = 02 HeadcountByPayCategory(country)（年初快照）
 DebtService(y)= Σ_creditLines annuity(drawn, rate, repaymentYears)  当 y ≥ drawYear + graceYears
                + Σ_wars postWarDebtService(y)           // 4.8.5
 ContractPay(y)= Σ_contracts Σ_payments 落在 y 年的金额
@@ -655,16 +674,19 @@ annuity(P, r, n) = P × r / (1 − (1 + r)^(−n))；r = 0 时 = P / n
 ```
 Discretionary = B_total − Personnel − DebtService − ContractPay
 OM_req   = Σ_items omRate(model) × costMusd(model) × TierOmFactor(tier(item))
-         + Σ_nodes NodeUpkeepMusdPerYear(node)            // 节点维护费由 06 提供
+         + 06.GetAnnualStorageCostMusd(country)             // 仓储费（06 §4.13；替代原“节点维护费”）
+         + Σ_(org, group) ToolsetState.held × toolsetUnitPrice(org, group) × ToolsetUpkeepPerYear   // 01 §4.15.1 工具组年维护费（常数归 01）
 OM_alloc = OM_req × omFundingRatio
-Train    = Σ_formations personnel(f) × TrainCostPerHeadYear[intensity(f)]
+Train    = Σ_formations personnel(f) × TrainCostPerHeadYear[GetTrainingIntensity(country, f)]
 Rest     = Discretionary − OM_alloc − Train
-Procurement_new = Rest × procurementShare      // 新合同首付、二手、升级、国内产品款
+Procurement_new = Rest × procurementShare      // 新合同首付、二手、升级、国内产品款、工具组
 Infrastructure  = Rest × infrastructureShare
 WarReserves     = Rest × warReservesShare
 Lobbying        = min(Rest × lobbyingShare, B_total × LobbyingCapShare)
 ```
-- `tier(item)`：装备所在营的 `ReadinessTier`（01）；未编入营的库存装备按 `Cadre` 档计。
+- `Σ_items`：`owner` = 本国的全部 `EquipmentItem`（01）中 07 `IsLost(item) == false` 者，按 item id 升序累加。`tier(item)`：装备所在营的 `ReadinessTier`（01）；未编入营的库存装备按 `Cadre` 档计。
+- `toolsetUnitPrice(org, group) = ToolsetCostFactor × max_{m ∈ group, m 在 org 内有装备} GetUnitCostMusd(m)`（01 §4.15.1 的定义，两个常数归 01）。
+- `personnel(f)`：编组 f 的在位人数（02 名册）。
 - 默认分配（新游戏或玩家未操作）：`omFundingRatio = 1.0`，训练 `Normal`，`procurementShare = 0.6, infrastructureShare = 0.15, warReservesShare = 0.25, lobbyingShare = 0`。
 
 #### 4.2.4 资金不足（Rest < 0 或 Discretionary < 0）
@@ -678,25 +700,40 @@ Lobbying        = min(Rest × lobbyingShare, B_total × LobbyingCapShare)
 #### 4.2.5 小时计费（H1）
 ```
 dtH = 1
-spend[Personnel]            += Personnel_now_perYear × dtH / 8760      // Personnel_now 用当前名册
+spend[Personnel]            += Personnel_now_perYear × dtH / 8760      // Personnel_now 用 02 HeadcountByPayCategory 当前值
 spend[OperationsMaintenance]+= OM_alloc × dtH / 8760
 spend[Training]             += Train_now × dtH / 8760
-// O&M 中备件部分转成 07 的备件库存（按型号）：
-partsAddedMusd(model) = omRate × costMusd × count × omFundingRatio × partsShareOfOm × dtH / 8760
+// O&M 中备件部分转成 07 的备件库存（按型号 m，句柄升序）：
+partsAddedMusd(m) = Σ_{items of m} omRate(m) × costMusd(m) × TierOmFactor(tier(item)) × omFundingRatio × partsShareOfOm(m) × dtH / 8760
+src = dependencies[(country, m)]?.source[SpareParts] ?? country
+if (src == country || !supplierSuspended[(country, src)]) 07.AddPartsFunding(country, m, partsAddedMusd(m))
 ```
-- `partsAddedMusd` 交给 07/06：按 `PartsUnitCostMusd(model)` 换算成抽象备件数量；对于 `vulnerability[SpareParts] > 0` 的进口型号，只有供应国未中断时才入库（4.11）。
-- O&M 资金率对故障率的影响交给 07：`FaultRateMultiplier = 1 + OmFaultSlope × max(0, 1 − omFundingRatio)`。
+- 07 按 `PartsUnitCostMusd(m)`（07 §3）把资金换算成备件单位并放进 06 储备仓库（07 §4.8.4）；11 不直接调用 06。
+- O&M 资金率对故障率的影响：11 提供 `OmFaultMultiplier(country) = 1 + OmFaultSlope × max(0, 1 − omFundingRatio)`，07 §4.8.1 的 `FaultRateMultiplier` 把它与二手车况项、`TrainWearFactor` 相乘（07 定义乘法）。
 - 年度结束：未花完的可支配资金**不结转**（作废）；已签合同的未付款项按付款表继续（S-02）。
 
 #### 4.2.6 年内调整
 - 玩家可随时修改 `procurementShare/infrastructureShare/warReservesShare/lobbyingShare` 和训练强度；剩余年度按新比例计算（已花的不退）。
-- 危机追加：紧张度达到 `Crisis` 时，每年最多一次，领导层自动拨 `CrisisBonusShare × B_base`（进入 `crisisBonusMusd`，全部计入 `Procurement_new` 与 `WarReserves` 按当前比例分）。
+- 危机追加：紧张度达到 `Crisis` 时，每年最多一次（`crisisBonusGrantedYear`），领导层自动拨 `CrisisBonusShare × B_base`（进入 `crisisBonusMusd`，全部计入 `Procurement_new` 与 `WarReserves` 按当前比例分）。
 - 申请追加：玩家可申请（消耗 `TrustBudgetRequest`），批准条件：`support[DefenseBudgetIncrease] ≥ 0.5` 或紧张度 ≥ `Crisis`；批准额同危机追加。
 
+#### 4.2.7 其他系统的一次性扣款 `TryCharge`
+```
+bool TryCharge(CountryId c, BudgetLine line, double musd, string reasonKey)
+  balance(line) = 当年分给该线的金额（4.2.3）− spentMusd[line]
+  if balance(line) < musd − 1e−6: return false          // 调用方排队/暂停，下一小时再试
+  spentMusd[line] += musd; return true
+```
+| 调用方 | 用途 | `line` |
+|---|---|---|
+| 07 §4.4 | 后方大修开工费 `depotCostFraction × 单价`（不足时排队，07 H-09） | `OperationsMaintenance` |
+| 06 §4.10.2 | 桥梁/隧道修复费 `BridgeRepairCostMusd`（不足时修复暂停，06 L-11） | `Infrastructure` |
+- `OperationsMaintenance` 的余额 = `OM_alloc − spentMusd[OperationsMaintenance]`（H1 小时计费与 `TryCharge` 都计入 `spentMusd`）。H1 每小时实际计费 `x = min(OM_alloc / 8760, 余额)`；`x < OM_alloc / 8760` 时本小时的 `partsAddedMusd` 全部乘以 `x / (OM_alloc / 8760)`（大修挤占了日常维护和备件，🟡 S-21）。
+
 ### 4.3 训练、战备与人员（与 02 衔接）
-1. 训练强度 → 02：02 用 `TrainingIntensity` 计算练度增长（02 定义速率）。11 只负责计费与弹药扣减请求。
-2. 训练弹药：每个编组每年消耗 `TrainAmmoBasisPerYear[intensity]` 个弹药基数（06 的 `AmmoBasis`），**从库存扣除**（06 执行），所以训练与战备储备直接竞争（§4.3、§19.7）。
-3. 训练装备寿命：训练强度对 07 的故障与寿命消耗乘数 `TrainWearFactor[intensity]`。
+1. 训练强度 → 02：02 用 `GetTrainingIntensity(country, f)`（3.2）计算练度增长（02 §4.6 定义速率）。11 只负责人头训练费计费（4.2.3 `Train`）。
+2. 训练弹药与训练燃油：每个编组每年消耗 `TrainAmmoBasisPerYear[intensity]` 个弹药基数（06 的 `AmmoBasis`），由 **02 每小时调用 06 `ConsumeForTraining`** 从库存扣除（02 §4.6.2；11 不发扣减请求），所以训练与战备储备直接竞争（§4.3、§19.7）。常数 `TrainAmmoBasisPerYear` 归本文件。
+3. 训练装备寿命：训练强度对 07 的故障与寿命消耗乘数 `TrainWearFactor[intensity]`（07 §4.8.1 读取）。
 4. 动员时间（00 归 11）：见 4.8.2。
 5. 合同兵比例：`contractShare` 每年向 `contractShareTarget` 移动至多 `ContractShareStepPerYear`；人员费随之变化。`contractShareTarget` 只能在议题 `ConscriptionReform ≥ IssueReformThreshold` 时由玩家提高（S-08）。
 
@@ -716,28 +753,33 @@ isPatron  = (alliance(buyer,seller) ∈ {MutualDefense, StrategicPartner})
 
 #### 4.4.2 批准概率（§18.1 🟡：关系、阵营、敏感度、出口政策、战争/制裁）
 ```
-if (flags(buyer,seller) has ArmsEmbargo) or sensitivity > maxSensitivity[seller→buyer]: p = 0
-logit = ModeLogitBase[mode]
-      + BetaRelation  × relation(buyer, seller)                       // [-1,1]
-      + BetaBloc      × (alliance(buyer,seller) != None ? 1 : 0)
-      + BetaHistory   × (buyer ∈ historicalExportsTo ? 1 : 0)
-      + BetaWillingness × willingness[seller→buyer]                    // [-1,1]
-      − BetaSensitivity × sensitivity                                  // 0..3
-      − BetaWar       × (buyerAtWar ? 1 : 0)
-      − BetaRival     × (alliance(seller, rivalOf(buyer)) != None ? 1 : 0)
+embargoed = relation(buyer,seller).flags has ArmsEmbargo
+         || sensitivity > maxSensitivity[seller→buyer]
+         || (exportFromYear != null && 当前年 < exportFromYear
+             && !(exportUnlockFlag != null && StrategicState.flags.Contains(exportUnlockFlag)))
+if embargoed: p = 0（breakdown 各 term 记 0，embargoed = true）
+logitBase        = ModeLogitBase[mode]
+relationTerm     = BetaRelation  × relation(buyer, seller)                       // [-1,1]
+blocTerm         = BetaBloc      × (alliance(buyer,seller) != None ? 1 : 0)
+historyTerm      = BetaHistory   × (buyer ∈ historicalExportsTo ? 1 : 0)
+willingnessTerm  = BetaWillingness × willingness[seller→buyer]                    // [-1,1]
+sensitivityTerm  = − BetaSensitivity × sensitivity                                // 0..3
+warTerm          = − BetaWar     × (buyerAtWar ? 1 : 0)
+rivalTerm        = − BetaRival   × (alliance(seller, rivalOf(buyer)) != None ? 1 : 0)
+logit = logitBase + relationTerm + blocTerm + historyTerm + willingnessTerm + sensitivityTerm + warTerm + rivalTerm
 p = clamp(1 / (1 + DMath.Exp(−logit)), 0, ApprovalPMax)
 ```
-- `rivalOf(buyer)`：剧本给出的主要对手（纳卡：互为对手）。
+- `rivalOf(buyer)`：剧本给出的主要对手（纳卡：互为对手）。`buyerAtWar`：买方在任一 `phase == Active` 的 `War` 中。
 - 二手批次：`mode` 视为 `DirectPurchase`，`sensitivity` 减 1（下限 0）。
 - 提交时：冻结 `p` 和 `breakdown`；`decisionDueMs = now + DecisionDays[mode] × 86 400 000`；信任度扣 `TrustPerSensitivity × sensitivity`（§18.2-3 “申请敏感的进口项目”消耗信任度）。
 
 #### 4.4.3 裁决（H2）
 ```
-rng = Rng.For(RngDomain.Strategic, contractId, decisionTick, SaltApproval)
+rng = Rng.For(RngDomain.Strategic, (ulong)contractId.value, decisionTick, SaltApproval)   // decisionTick = 本刻
 approved = rng.Bernoulli(p)
 ```
 - 批准：`state = Active`，按 4.4.4 生成交付表和付款表；扣 `upfront` 的 `UpfrontPayShare` 部分（其余随交付付）。
-- 拒绝：`state = Rejected`；信任度 `TrustImportRejected`；同一（买方, 卖方, 型号）`RetryCooldownDays` 内不能再申请。
+- 拒绝：`state = Rejected`；信任度 `TrustImportRejected`；`retryCooldownUntilMs[(买方, 卖方, 型号)] = now + RetryCooldownDays × 86 400 000`，期间不能再申请。
 
 #### 4.4.4 交付表
 ```
@@ -751,7 +793,9 @@ LocalAssembly:
 FullLocalization:
   建设期 LocalizationSetupDays；建成后创建 ProductionLine(isAssemblyOnly = false)，可生产该型号整车、备件、配套弹药（弹药型号见 06）
 ```
-- 到货（H4）：生成 `EquipmentItem`（01）进入买方**国家库存**（06 的 `ImportGateway` 节点，再由 06 运送到仓库）；新品 `condition = 1`。
+- 到货（H4，一批 `DeliveryLot.dueMs ≤ now` 且买方至少有一个 `isOpen` 的 `ImportGateway`；全关时整批顺延到下一小时再判，即“积压在境外”，06 §7 第 7 条）：
+  - **整件装备**（型号无 `MunitionProfile`）：逐件创建 `EquipmentItem`（01：`owner = buyer`、`holder = 0`、`status = Active`、`locationNode` = 买方 `isOpen` 口岸中 NodeId 最小者），挂 `EquipmentConditionState(condition = conditionOfDelivered)`；之后由 06 按库存规则运往仓库。本小时全部合同处理完后调用一次 01 `AllocateEquipment(buyer, 本国全部营)`（01 §6.1）。
+  - **弹药**（型号有 `MunitionProfile`）：调用 06 `OnImportArrival(ImportBatch{ supplier = seller, items = [(ItemKey(Ammunition, model), qty)], availableAt = now })`（06 §4.12，由 06 选口岸）。
 - 交付时间常数按类别组默认值（常数表 `LeadTimeDefault*`）——数据里有 `lead_time_days` 时以数据为准。
 
 #### 4.4.5 付款（H3）
@@ -768,51 +812,59 @@ ageYears  = currentYear − serviceYear(model)
 unitPrice = costMusd × UsedPriceBase × (0.5 + condition) × max(UsedAgeFloor, 1 − UsedAgeSlope × ageYears)
 leadTime  = UsedLeadTimeDays（整修 + 运输）
 ```
-- 二手装备交付时 `EquipmentConditionState.condition = condition`（组件，见 6），07 用它放大故障率：`FaultRateMultiplier *= 1 + UsedFaultSlope × (1 − condition)`。
-- 二手装备整修：可下单“整修”（Upgrade 的特例 `refurbish`，目标型号 = 原型号），把 condition 提到 `RefurbishTargetCondition`，费用 `RefurbishCostShare × costMusd`。
+- 二手装备交付时 `EquipmentConditionState.condition = condition`（组件，见 6）；07 §4.8.1 用它放大故障率：`× (1 + UsedFaultSlope × (1 − condition))`（常数 `UsedFaultSlope` 归本文件）。
+- 二手装备整修：可下单“整修”（`UpgradePath` 的特例 `refurbish_generic`：`fromModel = 0` 表示任意型号，完工后型号不变），把 condition 提到 `RefurbishTargetCondition`，费用 `RefurbishCostShare × costMusd`。
 
-#### 4.5.2 市场批次生成（年初 + 每季度第一天 00:00）
+#### 4.5.2 市场批次生成（DailyStep，仅每季度第一天：1/1、4/1、7/1、10/1）
 ```
-for each (seller, model) in scenario.marketPool (按 seller ISO3, modelId 排序):
-    if !(seller 政策允许卖给任一可玩国) continue
-    rng = Rng.For(Strategic, Mix(sellerId) ^ modelHandle, tick, SaltMarket)
+for each entry in marketPool (按 seller ISO3, 再按 model 句柄升序):
+    if 当前年 ∉ [entry.fromYear, entry.toYear] continue
+    if !(seller 政策允许卖给任一可玩国) continue        // 至少一个可玩国：非 ArmsEmbargo 且 maxSensitivity ≥ max(0, sensitivity − 1)
+    key = Mix((ulong)sellerId.value) ^ (ulong)model.value
+    rng = Rng.For(Strategic, key, tick, SaltMarket)
     if rng.Bernoulli(entry.quarterlyP):
-        qty   = entry.qtyMin + rng.NextInt(entry.qtyMax − entry.qtyMin + 1)
-        grade = 按 entry.gradeWeights 加权抽样（15 提供 WeightedChoice）
-        创建 MarketLot，expiresAt = now + MarketLotLifetimeDays
+        rng2  = Rng.For(Strategic, key, tick, SaltMarketQty)            // 同一流内：先数量后状态
+        qty   = entry.qtyMin + rng2.NextInt(entry.qtyMax − entry.qtyMin + 1)
+        grade = (ConditionGrade)(1 + rng2.WeightedChoice(entry.gradeWeights))   // 15 PcgExt.WeightedChoice
+        创建 MarketLot（availableFromMs = now），expiresAt = now + MarketLotLifetimeDays
 ```
-- 剧本（14）给 `marketPool`：卖方、型号、季度出现概率、数量区间、状态权重（依据历史二手流向）。
+- 剧本（14）给 `marketPool`：卖方、型号、年份区间、季度出现概率、数量区间、状态权重（依据历史二手流向）。过期未售批次在每天 D1 删除。
 - 一个批次只能卖给一个买方；AI 国家同样会买（12 决策）。同一刻多个买方申请同一批次：按（申请时刻，国家 ID）升序先到先得。
 
 #### 4.5.3 国内生产线（H5）
 ```
 if line.state != Active: skip
-fundedRate = min(1, linefundsAvailable / requiredFunds)   // 产品款从 Procurement_new 或 WarReserves（弹药）支付
+payLine      = (activeModel 有 MunitionProfile) ? WarReserves : Procurement
+requiredFunds= line.capacityPerYear × line.utilization / 8760 × line.unitCostMusd
+fundedRate   = requiredFunds == 0 ? 1 : min(1, balance(payLine) / requiredFunds)     // balance 见 4.2.7
 outputH = line.capacityPerYear × line.utilization × fundedRate / 8760
 if line.isAssemblyOnly && !partsKitsAvailable(line): outputH = 0          // 零件包断供（4.11）
+spentMusd[payLine] += outputH × line.unitCostMusd
 line.fractionalOutput += outputH
-while line.fractionalOutput >= 1: 生成 1 件（交给订单或进入国家库存）; fractionalOutput −= 1
+while line.fractionalOutput >= 1: 生成 1 件; fractionalOutput −= 1
 ```
-- 萎缩（每天检查一次，在 DailyStep）：
+- `partsKitsAvailable(line)`：该线的零件包来源国（组装合同的 `seller`）对本国未处于 `supplierSuspended`，且至少一个口岸 `isOpen`。
+- 产出去向：有未交付完的国内/组装合同 → 计入该合同 `deliveredCount`（合同 ID 升序先满足）；否则进入国家库存。弹药 → 06 `AddProduced(line.factoryNodeId, ItemKey(Ammunition, activeModel), n)`（06 §6.1）；整件装备 → 创建 `EquipmentItem`（`holder = 0`、`locationNode = line.factoryNodeId`），本小时结束调用一次 01 `AllocateEquipment`（同 4.4.4）。
+- 萎缩（每天检查一次，在 DailyStep D2）：
 ```
 if utilization < LineIdleUtilization: idleDaysConsecutive++ else idleDaysConsecutive = 0
 if idleDaysConsecutive > LineIdleGraceDays:
     capacityPerYear *= (1 − LineAtrophyPerYear / 365)
 ```
-- 重启：`LineRestart` 项目，费用 = `LineRestartCostShare × (nominal − current) × ExpansionCostPerUnitYear(line)`，工期 `LineRestartDays`。
-- 扩产（D6）：`LineExpansion` 项目：`cost = ΔcapacityPerYear × expansionCostMusdPerUnitYear`，工期 `ExpansionDays`；战时可选“加急”：工期 × `WartimeRushTimeFactor`，费用 × `WartimeRushCostFactor`；新址建线：费用 × `NewSiteCostFactor`，工期 + `NewSiteExtraDays`（§19.6 🟡 扩产选址）。
-- 项目进度（H6）：`progress += (spentThisHour / totalCost)`，`spentThisHour = min(Infrastructure 余额小时额度, totalCost / nominalDays / 24)`。资金不足时按比例变慢。
+- 重启：`LineRestart` 项目，费用 = `LineRestartCostShare × (nominal − current) × line.expansionCostMusdPerUnitYear`，工期 `LineRestartDays`。
+- 扩产（D6）：`LineExpansion` 项目：`cost = ΔcapacityPerYear × line.expansionCostMusdPerUnitYear`（14 数据），工期 `ExpansionDays`；战时可选“加急”：工期 × `WartimeRushTimeFactor`，费用 × `WartimeRushCostFactor`；新址建线：费用 × `NewSiteCostFactor`，工期 + `NewSiteExtraDays`（§19.6 🟡 扩产选址）。
+- 项目进度（H6）：`progress += (spentThisHour / totalCost)`，`spentThisHour = min(balance(Infrastructure), totalCost / nominalDays / 24)`，计入 `spentMusd[Infrastructure]`。资金不足时按比例变慢。完工：`LineExpansion/NewLineNewSite/LineRestart` 改产能；`InfrastructureFrom06` 调用 06 完工接口（6 节，06 待补）；`SchoolExpansion` 把 02 `SchoolState.capacityPerYear += capacityDeltaPerYear`（02 §4.8 “完工时 capacityPerYear += Δ”）。
 
 #### 4.5.4 退役（D5，S-06）
-- 选中装备（按型号 × 数量，从未编入营的库存优先，再按 AllocationPolicy 的逆序从营中抽出）立即移除；该型号 O&M 需求下降。
+- 选中装备（按型号 × 数量，从未编入营的库存优先，再按 AllocationPolicy 的逆序从营中抽出）立即从 01 删除（01 §3.5 注释：11 退役时删除）；该型号 O&M 需求下降。
 - 退役装备阶段 1 **直接处置**（无残值）。出售到二手市场和封存 **[阶段 2+]**。
-- 系统提示：“退役后，该型号全军需求缺口 +N”（读 01 的 `ForceRequirement`）。
+- 系统提示：“退役后，该型号全军需求缺口 +N”（读 01 `GetForceRequirement(country)`）。
 
 ### 4.6 升级改装（S-05）
-1. 下单：选 `UpgradePath`、数量、提供方（外国或国内工厂）。外国提供时生成一个 `ProcurementContract(kind = Upgrade)` 走 4.4.2 批准（`sensitivity` 用目标型号的值）。
-2. 送修：每天从库存/营中抽取 `min(待修, capacityPerYear/365 × 累加)` 件进入工厂（这些装备在 `daysPerUnit` 天内不可用），抽取顺序按 01 的 `AllocationPolicy` 的**逆序**（最后才动一线营）。
-3. 完工：该 `EquipmentItem` 的 `modelId` 改为 `toModelId`，`condition = max(condition, UpgradeConditionAfter)`；通知 02：所在编组对应专业的型号专有练度 × `typeSkillRetention`（02 执行）。
-4. 付款：按完工件数 × `costPerUnitMusd`。
+1. 下单：选 `UpgradePath`、数量、提供方（外国或国内工厂）；`availability` 非空时下单国必须在列表中。外国提供时生成一个 `ProcurementContract(kind = Upgrade)` 走 4.4.2 批准（`sensitivity` 用目标型号的值）。
+2. 送修（DailyStep D3）：`intakeAccumulator += capacityPerYear / 365`；`n = min(待修, floor(intakeAccumulator))`，`intakeAccumulator −= n`；从库存/营中抽取 n 件 `model == fromModel`（整修：任意型号中由玩家指定的型号）且 07 `IsLost == false`、所在营不在活跃 `EdgeBattle`（09 `IsInBattle`）的装备进入工厂：`EquipmentConditionState.inUpgradeShop = true`、`shopUntilMs = now + daysPerUnit × 86 400 000`，01 把它视为不在库存（01 §3.5 注释）。抽取顺序按 01 的 `AllocationPolicy` 的**逆序**（最后才动一线营）。
+3. 完工（H4，`shopUntilMs ≤ now`）：`EquipmentItem.model = toModel`（整修不改），`condition = max(condition, UpgradeConditionAfter)`（整修：`max(condition, RefurbishTargetCondition)`），`inUpgradeShop = false`；调用 02 `OnModelUpgraded(itemId, fromModel, toModel, typeSkillRetention)`（02 §4.4.4，整修不调用）。
+4. 付款：按完工件数 × `costPerUnitMusd`，从 `Procurement` 线扣（外国提供时随伴随合同的付款表）。
 
 ### 4.7 信任度、议题、游说、作战方案
 
@@ -840,20 +892,21 @@ support[i] += (baseline[i] − support[i]) × IssueRevertPerDay / 24
 
 #### 4.7.4 游说与腐败（H10，阶段 1 简化）
 ```
-投入 x Musd（一次性，从 Lobbying 线扣）到议题 i：
+投入 x Musd（一次性，从 Lobbying 线扣；lobbyingFrozen 时拒绝）到议题 i：
 Δsupport = LobbyEffectMax × (1 − DMath.Exp(−x / LobbyScaleMusd(country)))     // 收益递减
-cumulativeLobby[i] += x   // 同一议题的累计投入越多，效果越小：实际 Δ × LobbyFatigue^(cumulativeLobby/LobbyScale)
+         × LobbyFatigue^(cumulativeLobbyMusd[i] / LobbyScaleMusd(country))    // 同一议题累计投入越多，效果越小（用投入前的累计值）
+cumulativeLobbyMusd[i] += x
 corruption += CorruptionPerMusd(country) × x
 每小时：corruption −= corruption × CorruptionDecayPerYear / 8760
-曝光（每天一次，DailyStep）：pExpose = CorruptionExposeK × corruption²
-    rng = Rng.For(Strategic, countryId, tick, SaltScandal)
-    if Bernoulli(pExpose): trust += TrustScandal；冻结 Lobbying 线余额；corruption ×= 0.5
+曝光（每天一次，DailyStep D4）：pExpose = CorruptionExposeK × corruption²
+    rng = Rng.For(Strategic, (ulong)countryId.value, tick, SaltScandal)
+    if Bernoulli(pExpose): trust += TrustScandal；lobbyingFrozen = true（当年 Lobbying 余额不可再用；预算年结束时清除）；corruption ×= 0.5
 ```
 `LobbyScaleMusd(country) = LobbyScaleShare × B_base`（小国花小钱就有效果，避免跨国不一致）。
 
 #### 4.7.5 作战方案审批（§18.2-2；确定性评分）
 ```
-plan.assessment = ProxyModel.Evaluate(plan)      // 12 提供：successP ± halfWidth、伤亡、天数
+plan.assessment = ProxyModel.EvaluatePlan(plan)  // 12 §4.6.7 提供：successP ± halfWidth、伤亡、天数（返回本文件的 PlanAssessment）
 score =  W_success   × assessment.successP
        − W_casualty  × min(1, expectedKilled / (CasualtyNormPerM × populationM))
        + W_trust     × trust
@@ -863,7 +916,7 @@ score =  W_success   × assessment.successP
        + TensionBonus[tensionLevel]
 approved = score ≥ PlanApprovalThreshold  ||  sandboxSupremeLeader
           || (support[HardlineVsRival] ≥ IssueHardlineWarThreshold && tensionLevel ≥ Crisis)
-提交即扣 TrustPlanSubmitted；被拒再扣 TrustPlanRejected；同一目标 PlanCooldownDays 内不可重交。
+提交即扣 TrustPlanSubmitted；被拒再扣 TrustPlanRejected，并 planCooldownUntilMs[target] = now + PlanCooldownDays × 86 400 000（期间不可对同一目标国重交）。
 ```
 - 防御作战（被进攻）自动批准，不需要方案（§18.2-4）。
 - 批准后：创建 `War`（若尚未开战），开战方 `casusBelli` 按方案选择；`relation` 按 `RelationWarPenalty[casusBelli]` 下降（对所有 `ExternalActor` 与 `SupplierOnly` 国家，乘以其 `stance` 的符号权重，见 4.10）。
@@ -876,45 +929,63 @@ approved = score ≥ PlanApprovalThreshold  ||  sandboxSupremeLeader
 score += (baseline − score) × TensionRevertPerDay / 24
 score += Σ 本小时的事件/行动 delta
 score = clamp(score, 0, 1)
-level = war(a,b).Active ? (anyFull(mobilization) ? TotalWar : LimitedConflict)
+level = (a、b 之间存在 phase == Active 的 War)
+        ? (countries[a].mobilization == Full || countries[b].mobilization == Full ? TotalWar : LimitedConflict)
       : score ≥ TensionCrisisAt ? Crisis : score ≥ TensionTensionAt ? Tension : Peace
 ```
-- 玩家行动（D9）：抵近巡逻 `+TensionPatrol`，边境演习 `+TensionExercise`（并消耗训练弹药，等同一次 `High` 训练周）；每次行动按 `BorderIncidentP` 的概率触发事件 `border_skirmish`（14 的事件表）。
+- 玩家行动（D9）：抵近巡逻 `+TensionPatrol`，边境演习 `+TensionExercise`（并消耗训练弹药，等同一次 `High` 训练周：对本国旅部位于与 `target` 接壤地块的每个建制旅 f（FormationId 升序），按 06 `ComputeBasis(f)` 的每种弹药 k 调用 06 `ConsumeForTraining(f, k, q_k × TrainAmmoBasisPerYear[High] × 7 / 365)`，不足就少扣）；每次行动触发事件 `border_skirmish`（14 的事件表）的概率为 `BorderIncidentP`：`rng = Rng.For(Strategic, Mix((ulong)owner.value) ^ (ulong)target.value, tick, SaltBorderIncident)`。
 - 跨级审批：从 `Tension` 推到 `Crisis` 以上的行动（边境演习在 `Tension` 及以上时）需领导层同意：`approved = trust + 0.5 × support[Hardline] ≥ EscalationApprovalThreshold`（确定性，显示差值）。
 
 #### 4.8.2 动员（H7）
-- 申请：玩家申请 `Partial/Full`；`Partial` 在紧张度 ≥ `Crisis` 或战争中自动批准；`Full` 需要战争中，或 `trust ≥ FullMobTrustMin`。被进攻方的 `Full` 自动批准。
-- 效果：
+- 申请：玩家申请 `Partial/Full`；`Partial` 在紧张度 ≥ `Crisis` 或战争中自动批准；`Full` 需要战争中，或 `trust ≥ FullMobTrustMin`。被进攻方的 `Full` 自动批准。批准后 `Country.mobilization = lvl`、`mobilizationOrderedMs = now`。
+- 选营（批准时一次性执行；`Partial → Full` 升级时对尚未选中的营再执行一次）：
 ```
-callUp = (Partial ? MobPartialShare : MobFullShare) × reservePool
-按顺序填充：Reduced 档营 → Cadre 档营 → 新组建（玩家下令）
-每个营的到位时间：Active 0；Reduced MobDaysReduced；Cadre MobDaysCadre
-到位曲线：线性；第 h 小时到位比例 = min(1, h / (days × 24))
-入营人员通用练度 = reserveGeneralSkill（交给 02）
+首次动员时记 mobilizationPoolSnapshot = reservePool
+callUp = (lvl == Partial ? MobPartialShare : MobFullShare) × mobilizationPoolSnapshot − Σ_{已选中营} Σ_s final
+候选营 = 本国未选中的营，排序：tier Reduced → Cadre → Active（🟡 S-22），同档按 OrgUnitId 升序
+for each bn in 候选营 while callUp > 0:
+    for each 专业 s（句柄升序）: final(bn, s) = max(0, 01.PersonnelRequirement(bn)[s] − 在位(bn, s))   // 在位 = 02 名册当时人数
+    need = Σ_s final(bn, s)；need == 0 → 跳过
+    if need > callUp: final(bn, s) 全部 × callUp / need 后向下取整
+    callUp −= Σ_s final(bn, s)；记 mobilized[bn] = { final, selectedMs = now,
+        mobDays = 原 tier == Reduced ? MobDaysReduced : 原 tier == Cadre ? MobDaysCadre : 0 }
+    原 tier ≠ Active → tier 改为 Active（01 §4.9 启封计时开始）
+新组建营（玩家下令）**[阶段 2+]**
 ```
-  人员实际入列由 02/07 执行（11 只给“该营某专业应到位人数随时间的目标”）。
+- 到位目标（11 提供给 02，DC-088 “新增到位人数”）：
+```
+double MobilizationTarget(OrgUnitId bn, SpecialtyHandle s, SimTime t):
+    if !mobilized.ContainsKey(bn): return 0
+    m = mobilized[bn]
+    if m.mobDays == 0: return m.final[s]
+    h = (t.ms − m.selectedMs) / 3 600 000.0
+    return m.final[s] × min(1, h / (m.mobDays × 24))            // 线性到位曲线
+```
+  人员实际入列由 02 §4.11 执行（02 向下取整、按来源顺序补人，入营练度取预备役池值）。11 不改 `reservePool`（02 每天写回，DC-083）。
 - 战时追加（4.8.4）与疲劳乘数随动员等级变化。
+- 复员（玩家把等级调低）：02 §4.11 让动员入列的人员回预备役池；营的 `tier` 不自动改回（玩家可在 01 手动调整）。
 
 #### 4.8.3 战争疲劳（H11；**无状态公式**，每小时重算，F7 分项显示）
 ```
 days      = (now − war.startMs) / 86 400 000.0
-time      = FatigueTimePerDay × MobTimeFactor[mobilization] × days
+time      = FatigueTimePerDay × MobTimeFactor[Country.mobilization] × days
 casualties= FatigueCasPerKiaPerM × killedCumulative / populationM
 territory = FatigueTerritory × coreTilesLost / max(1, coreTilesAtStart)
 cost      = FatigueCost × supplementSpentMusd / max(1, B_base)
-gains     = − FatigueGains × objectiveTilesHeld / max(1, objectiveTilesTotal)
+gains     = − FatigueGains × objectiveTilesHeld / max(1, objectiveTilesTotal)      // ≤ 0，原样存入 FatigueBreakdown.gains
 fatigue   = clamp(time + casualties + territory + cost + gains, 0, 1)
 leadershipDemandsCeasefire = fatigue ≥ FatigueSeekCeasefire
 ```
-- `killedCumulative`：07 汇总本国 `CasualtyState.Killed` 的人数（失踪/被俘不计入，S-11）。
-- `coreTilesAtStart`：开战时本国控制（`TileControl`，09）的地块数，**包括非法理领土**（纳卡：亚方控制的地块）。
+- `killedCumulative`：见 3.7（07 在 `Killed` 转移时累加；失踪/被俘不计入，S-11）。
+- `coreTilesAtStart`：开战时本国控制（`TileControl`，09 `GetTileControl`）的地块数，**包括非法理领土**（纳卡：亚方控制的地块）。`coreTilesLost`、`enemyTilesGained`、`objectiveTilesHeld` 每小时按 09 `GetTileControl` 重算；随后把 `enemyTilesGained − coreTilesLost` 写入 `netTileHistory`。
 
 #### 4.8.4 战时预算（§18.4）
 ```
-capShare = MobCapShareGdp[mobilization]                    // None 0, Partial 0.07, Full 0.25
+capShare = MobCapShareGdp[Country.mobilization]           // None 0, Partial 0.07, Full 0.25
 annualSupplement = max(0, capShare × gdpMusd − B_base) × WarGrantFraction
 每小时：warSupplementMusd += annualSupplement / 8760；supplementSpentMusd 同步累加
 ```
+- 只在本国处于 `phase == Active` 的 `War` 时计；多场战争取最大值（S-09）。
 - 追加资金按玩家当前比例进入 `Procurement_new / WarReserves / Infrastructure`（扩产）。钱多了瓶颈是产能（4.5.3）——这是设计意图（§18.4）。
 
 #### 4.8.5 战后紧缩
@@ -922,9 +993,9 @@ annualSupplement = max(0, capShare × gdpMusd − B_base) × WarGrantFraction
 
 #### 4.8.6 停火（解决 §21-14，S-10）
 **触发来源**
-1. 调停方提议：外部行为体（`maxRung ≥ Mediation`）在战争第 `mediationFirstDay` 天起，每 `mediationIntervalDays` 天提出一次；或任一交战方 `leadershipDemandsCeasefire` 变为 true 时 24 小时内提出。模板选择：按 `mediationTemplates` 顺序取**第一个条件满足的**模板（14 定义条件，例如“阿方已控制舒沙”）。
-2. 红线触发 `ForcedCeasefire`（4.10）：立即生成一个**强制**提议（双方必须接受）。
-3. 直接谈判：交战方达成 `objectiveTilesHeld / objectiveTilesTotal ≥ ObjectiveAchievedShare` 时，可向对方提出“按现控制线停火”。
+1. 调停方提议：外部行为体（`maxRung ≥ Mediation`）在战争第 `mediationFirstDay` 天起，每 `mediationIntervalDays` 天提出一次；或任一交战方 `leadershipDemandsCeasefire` 变为 true 时 24 小时内提出。模板选择：调用 14 `IScenarioService.SelectCeasefireTemplate(warId, mediator)`（14 §4.7.1：按 `mediationTemplateIds` 顺序取第一个条件满足的模板，都不满足取 `freeze_template`）。
+2. 红线触发 `ForcedCeasefire`（4.10.2）：立即生成一个**强制**提议（双方必须接受），模板同第 1 条（调停方 = 红线所属行为体）。
+3. 直接谈判：交战方达成 `objectiveTilesHeld / objectiveTilesTotal ≥ ObjectiveAchievedShare` 时，可向对方提出“按现控制线停火”（无移交、无维和区）。
 
 **接受规则**
 ```
@@ -933,33 +1004,34 @@ accept = forced
       || fatigue ≥ FatigueForceAccept
       || (fatigue ≥ FatigueSeekCeasefire && trend ≤ 0)
       || objectiveShare ≥ ObjectiveAchievedShare
-trend = 最近 72 小时 (enemyTilesGained − coreTilesLost) 的变化（> 0 = 我方在推进）
-玩家方：fatigue ≥ FatigueForceAccept 时领导层强制接受（不可拒绝）；否则玩家选择。
+trend = netTileHistory 最新值 − 72 小时前的值（不足 72 小时用最早值；> 0 = 我方在推进）
+玩家方：fatigue ≥ FatigueForceAccept 时领导层强制接受（不可拒绝）；否则玩家选择（AnswerCeasefire）。
 拒绝调停：relation(拒绝方, mediator) += RelationRefuseMediation
 ```
 **生效**（双方都接受后，下一个整点）
-1. `War.phase = Ceasefire`；所有 `EdgeBattle` 由 04 在 `CeasefireWindDownHours` 内结束（不再生成新片段，双方停止进攻命令；09 拒绝跨线 Move/CrossTileStrike 命令）。
+1. `War.phase = Ceasefire`，`ceasefireMs = now`，`ceasefireTemplateId = 模板 id`；09 在随后的 `BattleEnd`（140）按 09 §4.7.1 第 1 条以 `WarEnded` 结束这两国之间的全部 `EdgeBattle`（地块不变）；此后 09 拒绝跨停火线的 `Move`/`CrossTileStrike`（`CanCrossOrStrike`，6 节）。发 09 通知 `WarStateChanged`。
 2. **停火线 = 当前 `TileControl`**（09）。正在过边的营，按归属地块计。
-3. 模板移交条款：按模板列出的地块，`TileControl` 改为受让方；该地块内出让方的营在 `HandoverDays` 内自动撤出到最近的己方地块（09 执行移动）。
-4. 维和区：创建 `PeacekeepingZone`，区内地块双方都不能进入或打击，`endMs = start + 模板年限`。
+3. 模板移交条款：按 14 §4.7.3 的 `handovers`，区域中出让方控制的地块在 `生效时刻 + days × 24h` 时 `TileControl` 改为受让方；出让方在这些地块内的营由 09 下 `OrderClass.Forced` 撤出到最近的己方地块（09 执行移动，见 6 节请求）。各区移交天数由 14 数据给出（纳卡 10/15/21 天）；数据缺失时用 `HandoverDays`。
+4. 维和区：调用 14 `BuildPeacekeepingZone(template, warId)` 得到 `PeacekeepingZone`（地块已展开），区内地块双方都不能进入或打击（09 校验，`CanCrossOrStrike`），`endMs` 由 14 按模板年限给出。
 5. 战后结算：威慑值（4.10.3）、信任度（`TrustWarWon/Lost` 按“目标完成率”判定）、评估准确度（4.7.2）、紧缩（4.8.5）、紧张度 `baseline += TensionPostWarBaselineDelta`。
 6. 停火后，战争可以“重启”：需要新的作战方案（`casusBelli` 视为 `TerritorialClaim`），且 `relation(mediator)` 惩罚 ×2。
 - 和约、占领区管理 **[阶段 2+]**：`War.phase = Ended` 只在剧本结束或和约系统实现后使用。
 
 ### 4.9 危机事件（H8）
 ```
-for each def in eventDefs (按 id 升序):
-    for each scopeInstance (Country/Dyad 按 ID 升序):
-        if fired-and-oneShot: continue
-        if !AllConditionsTrue(def.triggers, scopeInstance): continue
-        if mode filter: def.historical && mode == Free → skip（Free 模式不触发历史事件）
+for each def in eventDefs (按 id Ordinal 升序):
+    for each scopeInstance (Global 一个；Country 按 CountryId 升序；Dyad 按 (a,b) 升序，a < b):
+        if def.oneShot && firedOneShot.Contains((def.id, scopeKey)): continue
+        if def.historical && mode == Free: continue          // Free 模式不触发历史事件
+        if !AllConditionsTrue(def.triggers, scopeInstance): continue   // 条件以本小时开始时的状态判定
         pHour = def.mtthDays == 0 ? 1 : 1 − DMath.Exp(−1 / (def.mtthDays × 24))
-        rng = Rng.For(Strategic, Mix(defHandle) ^ scopeKey, tick, SaltEvent)
+        rng = Rng.For(Strategic, Mix(defHandle) ^ scopeKey, tick, SaltEvent)   // defHandle = def.id 的加载序号（00 §2.2 排序规则）
         if rng.Bernoulli(pHour): Fire(def, scopeInstance)
 ```
-- 触发后：玩家国家 → 弹出简报（游戏暂停可选），`responseDeadline = now + EventResponseHours`；超时按第一个选项。AI 国家 → 12 按 `aiWeight` 与效用选择（确定性：同权重时取第一个）。
+- 触发后：创建 `EventInstance`，发 09 通知 `CrisisEvent`。玩家国家 → 弹出简报（游戏暂停可选），`responseDeadline = now + EventResponseHours`；超时按第一个选项。AI 国家 → 12 按 `aiWeight` 与效用选择（确定性：同权重时取第一个），经 `AnswerEvent` 提交。
 - 同一小时多个事件触发：按（事件 id, 范围键）升序依次处理，前一个事件的效果对后一个的条件**不回溯**（条件在本小时开始时已判定）。
-- `BorderSkirmish` 效果：请求 04 在指定交界边生成一场**有限交战**（`EdgeBattle`，参战规模限连级、持续上限 `SkirmishMaxHours`，不触发 `War`）；结果（伤亡、是否丢失阵地）回写事件链。
+- `AiDirective` 效果：`arg` 格式见 14 §3.8；写入 `Country.aiDirectives`。目标为玩家国家时丢弃（14 §4.9 第 4 条）。
+- `BorderSkirmish` 效果（**依赖 DC-046，未决**）：交界边由 14 `ResolveSkirmishEdge(arg, tick, eventHandle)` 解析；请求在该边生成一场**有限交战**（`EdgeBattle`，参战规模限连级、持续上限 `SkirmishMaxHours`，不触发 `War`、不改变 `TileControl` 以外的战争状态）；结果（伤亡、是否丢失阵地）回写事件链。按 DC-046 建议①，本功能需要：09 新增 `BattleTriggerKind.Skirmish`（09 负责创建触发）与 04 在创建战斗时接受规模上限（连级）和时长上限；在 04/09 给出这两个接口之前，`BorderSkirmish` 效果**只记日志、不生成战斗**（事件的其他效果照常执行）。若 DC-046 改选②（删除功能），删除 `EffectType.BorderSkirmish` 的执行（枚举值保留，只能追加的规则）。
 
 ### 4.10 外部大国（S-12）
 
@@ -974,40 +1046,48 @@ for each def in eventDefs (按 id 升序):
 
 #### 4.10.2 红线（H11）
 ```
-for each redLine (按 id 升序):
-    violated = trigger 条件成立（例：敌方地面营位于 redLine.tiles 任一地块，归属已切换）
-    if violated: 记 violationStartMs（若未记）
-    else: 清除
-    if violated && now − violationStartMs ≥ graceHours:
-        Warning：事件 + relation(violator, actor) += relationPenalty；升级到下一效果的计时器再开始
-        ForcedCeasefire：生成强制停火提议（4.8.6）
+for each redLine (按 id 升序), for each 可能的违反方 violator (CountryId 升序):
+    st = redLineStates[(redLine.id, violator)]
+    violated = trigger 条件成立（EnemyGroundForcesEnter：violator 的地面营位于 redLine.tiles 任一地块且归属已切换，09 营位置；
+               StrikesOnTiles：本小时有 violator 的跨地块打击或空袭命中这些地块（04/08 对地事件）；CapitalThreatened：同第一种，tiles = 首都地块及其邻格）
+    if violated && st.violationStartMs < 0: st.violationStartMs = now
+    if !violated: st.violationStartMs = −1；st.nextStepIndex = 0（重新计时）
+    while violated && st.nextStepIndex < effects.Count
+          && now − st.violationStartMs ≥ (graceHours + effects[st.nextStepIndex].afterHours) × 3 600 000:
+        Warning：触发警告事件 + relation(violator, actor) += relationPenalty
+        ForcedCeasefire：生成强制停火提议（4.8.6），st.forcedCeasefireIssued = true
+        st.nextStepIndex++
 ```
 - 纳卡剧本红线（数据在 14）：俄罗斯“亚美尼亚本土地面进入”、土耳其“纳希切万地面进入”、伊朗“伊朗领土受打击”（仅 Warning）。
 
 #### 4.10.3 威慑值
 ```
 停火时：deterrence += DeterWin × (objectiveShare − 0.5) × 2 + DeterExchange × clamp(lossRatio − 1, −1, 1)
-lossRatio = enemyKilled / max(1, ownKilled)
-每天：deterrence += (DeterBaseline − deterrence) × DeterRevertPerYear / 365
+lossRatio = enemyKilled / max(1, ownKilled)       // 双方 WarSideState.killedCumulative
+每天（D5）：deterrence += (DeterBaseline − deterrence) × DeterRevertPerYear / 365
 ```
 威慑值供 12（AI 开战意愿）和 4.13 年报使用。
 
 #### 4.10.4 供应国战时行为（与 4.11 合并执行）
-- 每个外部行为体对每个交战国：`supplyContinueP = clamp(0.5 + 0.5 × stance[buyer] − 0.3 × (stance[enemy] > 0.5 ? 1 : 0), 0, 1)`，用于 4.11 的中断判定。
+- 每个外部行为体对每个交战国：`supplyContinueP = supplyInWarP[buyer]`（14 `supply_in_war` 有值时），否则 `clamp(0.5 + 0.5 × stance[buyer] − 0.3 × (stance[enemy] > 0.5 ? 1 : 0), 0, 1)`，用于 4.11 的中断判定。没有 `ExternalActorPolicy` 的纯卖方：`supplyContinueP = 1`（不会中断）。
 - 情报共享（`IntelSharing`）：把外部行为体的卫星加入受援国的共享名单——即在 05 的 `SatelliteAsset.sharesWith` 中加入受援国（05 R-12：MVP 盟国只共享卫星）；阶段 1 只有土耳其对阿塞拜疆（14 `external_actors.TUR.intel_sharing`）。
 
 ### 4.11 供应依赖与战时中断（§18.7）
-每 7 天（DailyStep，`day % 7 == 0`）对每个（买方, 供应国）对，若买方在战争中：
+每 7 天（DailyStep D6，`day % 7 == 0`，day = 自纪元起的天数）对每个（买方, 供应国）对（买方 CountryId 升序、再供应国升序；供应国 = 买方任一 `DependencyList.source` 或 Active 合同的 `seller`，且 ≠ 买方），若买方在 `phase == Active` 的战争中：
 ```
 pSuspend = (1 − supplyContinueP(seller, buyer)) × SuspendScale
-rng = Rng.For(Strategic, Mix(buyerId) ^ sellerId, tick, SaltSuspend)
-if Bernoulli(pSuspend): 该供应国对该买方的所有 Active 合同 → Suspended，交付暂停；
-                       DependencyChannel 中 source = seller 的备件/弹药补给停止（06/07 读取）
-已暂停的：同样概率按 (1 − pSuspend) 恢复
+rng = Rng.For(Strategic, Mix((ulong)buyerId.value) ^ (ulong)sellerId.value, tick, SaltSuspend)
+if !supplierSuspended[(buyer, seller)]:
+    if rng.Bernoulli(pSuspend): supplierSuspended = true；该供应国对该买方的所有 Active 合同 → Suspended（交付与付款暂停）
+else:
+    if rng.Bernoulli(1 − pSuspend): supplierSuspended = false；Suspended 合同 → Active，未到货批次整体顺延暂停的天数
 ```
-- 运输线：进口物资经 06 的 `ImportGateway` 入境；剧本事件可关闭口岸（`CloseImportGateway`，例：2020 年格鲁吉亚禁止军火过境）。口岸全关时，交付积压在“境外”。
-- 软件支持中断：`vulnerability[Software] × 中断天数 / SoftwareDecayDays` 交给 05/08 作为传感器/电子战效能衰减（上限 `SoftwareDecayMax`）。
-- 使用限制：`endUseRestricted` 由 09 在下达 `CrossTileStrike` 时检查。
+- 中断的效果（全部由 11 执行，06/07 不需要读取中断标志）：合同暂停；`source[SpareParts] = seller` 的型号不再调用 07 `AddPartsFunding`（4.2.5）；`isAssemblyOnly` 生产线零件包断供（4.5.3）；`source[Software] = seller` 的型号开始累计软件中断（下条）。
+- 运输线：进口物资经 06 的 `ImportGateway` 入境；剧本事件可关闭口岸（`CloseImportGateway`/`OpenImportGateway` → 11 写 06 `ImportGatewayData.isOpen/closedReason`，例：2020 年格鲁吉亚禁止军火过境）；`transitCountry` 与供应国之间出现 `ArmsEmbargo` 时 11 也关闭该口岸（06 §4.12）。口岸全关时，交付积压在“境外”（4.4.4）。
+- 软件支持中断（🟡 S-20）：每天 D6 对每份 `DependencyList`：`source[Software]` 处于 `supplierSuspended` → `softwareCutDays++`，否则 `softwareCutDays = max(0, softwareCutDays − 1)`。11 提供
+  `SoftwareDegradeFactor(CountryId owner, ModelHandle m) = 1 − min(SoftwareDecayMax, vulnerability[Software] × softwareCutDays / SoftwareDecayDays)`（无依赖清单 = 1），
+  读取方：08 §4.4.3 无人机/侦察吊舱的观测质量 `sensorQualityEffective` 与自主搜索的 `eoQuality` 项；05 §4.2.2 中型无人机 `eoQuality` 项、§4.2.4 地面电子侦察站的覆盖计数。玩家因此在“纯外购 vs 本地化”与“向谁买无人机/雷达”之间多了一个战时可见的代价。
+- 使用限制：`endUseRestricted` 由 09 在下达 `CrossTileStrike` 时经 `CanCrossOrStrike` 检查（6 节）。
 
 ### 4.12 历史事件处理（回应 §21-10，S-14）
 | 模式 | 含义 | 纳卡默认 |

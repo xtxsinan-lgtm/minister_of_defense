@@ -373,7 +373,7 @@ flightHoursPerStep = readyCount × MediumUavDutyCycle × (ExposureStepMinutes / 
 候选地块 = 与营所在地块中心距离 ≤ uavRadiusM 的地块
 分配：若 b 被分配给某个 AreaReconTask → 按该任务的 dwellShare（只取候选地块）
       否则（缺省条令）→ 营所在地块的敌方相邻地块平均分配；没有敌方相邻地块就不飞
-f(t) = flightHoursPerStep × share_t / (ExposureStepMinutes / 60) × eoQuality      // 截断到 ≤ readyCount
+f(t) = flightHoursPerStep × share_t / (ExposureStepMinutes / 60) × eoQuality × 11.SoftwareDegradeFactor(c, model)   // 截断到 ≤ readyCount；软件保障中断系数见 11 §4.11
 coverage(c,t,MediumUav) 按 4.2.1 的方式叠加（每个营作为一个源，sourceId = 营 ID）
 ```
 - 损失：每个地块每小时损失概率由 08 的 `AbstractUavAttritionPerH(c, t, modelId)` 给出（08 §4.9.3）。本步对每个营每个地块抽样一次：`Bernoulli(1 − (1 − pLossPerH)^(f(t) × dtH))` → 命中则对该营一件完好的中型无人机（EquipmentItemId 升序第一件）调用 `07.ApplyVehicleDamage(item, Destroyed, Catastrophic, now, src, default, 0)`。RNG：`For(Exposure, Mix(battalionId) ^ tile, tick, SaltMediumUavLoss)`。
@@ -393,7 +393,7 @@ coverage(c,t,MediumUav) 按 4.2.1 的方式叠加（每个营作为一个源，s
 
 #### 4.2.4 电子侦察（`Elint`）
 - 来源：拥有 `reconMeans = Elint` 的地面装备（覆盖与其所在地块中心距离 ≤ `elintRangeM` 的地块）；带电子侦察吊舱的飞行编组由 08 写入 `ReconDwellSample(means = Elint)`。
-- 地面站：`coverage = min(ElintStackMax, Σ 站数 × 1.0)`（不按距离衰减，简化）。
+- 地面站：`coverage = min(ElintStackMax, Σ_站 11.SoftwareDegradeFactor(c, 站型号))`（每站基础值 1.0，乘软件保障中断系数，11 §4.11；不按距离衰减，简化）。
 - 通道 = 电磁特征值（§4.2.6）。
 
 #### 4.2.5 地面侦察（`GroundRecon`）
@@ -850,6 +850,7 @@ Planned → Inserting → OnStation → Exfiltrating → Completed
 | 08 | `ReconDwellSample` 缓冲；`AirDefenseRegistration.radarOnFraction`；`AbstractUavAttritionPerH`；我方 `AirTrack`（估算用） | 空中步写缓冲；Exposure 步读 |
 | 09 | `Posture`、`MarchMode`、过边进度、`BattalionTileChanged` 事件、`IsNight`、挖壕进度（非战斗） | 每步 |
 | 10 | `TerrainComposition`、相邻关系、地块中心 | 加载时 |
+| 11 | `SoftwareDegradeFactor(CountryId, ModelHandle)`（11 §4.11；§4.2.2、§4.2.4 使用）；`SatelliteAsset.sharesWith` 由 11 §4.10.4 在情报共享生效时追加 | 每个 Exposure 步读；共享变化时写 |
 | 14 | `SatelliteAsset`、战区地块列表 | 加载时 |
 | 06/10 | 全部 `LogisticsNode`、`CrossingNode`（固定设施，开战时按 §4.8 初始化为 4.5） | 开战时 |
 
