@@ -259,17 +259,18 @@ public sealed class SquadCarriedState
 
 ```csharp
 // 03 在 WeaponProfile 中给出：每种武器型号的默认基数
-//   DefaultAmmoLoad { List<(int munitionHandle, int rounds)> }   —— 03 定义，06 只读
+//   WeaponProfile.defaultLoad（03 §3.1）—— 03 定义，06 只读；加载时转为句柄，按 ordinal 顺序迭代
 public sealed class AmmoComposition                  // 旅一级的覆盖（D1）
 {
     public FormationId brigade;
-    // 武器型号句柄 → 该武器每件的弹药配置（覆盖 DefaultAmmoLoad）；不在表里的武器用默认值
+    // 武器型号句柄 → 该武器每件的弹药配置（覆盖 WeaponProfile.defaultLoad）；不在表里的武器用默认值
     public SortedDictionary<int, List<(int munitionHandle, int rounds)>> perWeaponModel;
 }
 
 public sealed class AmmoBasis                         // 计算结果，不存档（可随时重算）
 {
     public FormationId brigade;
+    public OrgUnitId battalion;                             // 仅 ComputeBasis(OrgUnitId) 重载填写；否则 0
     public SortedDictionary<int, double> roundsByMunition;  // 弹药型号 → 发数（一个基数）
     public double massT;                                    // 一个基数的运输吨位（含包装）
     public int trucksToCarry;                               // ceil(massT / StandardTruckPayloadT)，仅显示
@@ -289,6 +290,7 @@ public sealed class MobilityProfile          // YAML 键：mobility（EquipmentM
 {
     public double roadSpeedMps;              // 数据 road_speed_kph
     public double offroadSpeedMps;           // 数据 offroad_speed_kph
+    public bool isTracked;                   // 数据 is_tracked；履带式 = true（03 车辆越野速度按 [地形, 履带/轮式] 查表）；缺省按类别默认
     public FuelType fuelType;
     public double fuelCapacityL;
     public double fuelRoadLPer100Km;         // 数据 fuel_road_l_per_100km
@@ -367,7 +369,7 @@ public sealed class Shipment
     public int destGNode;                 // Logistics 或 Bsa 节点
     public List<int> path;                // Arc index 列表（从源到目的）
     public int nextArc;                   // 下一条要走的弧在 path 中的下标
-    public double hoursLeftOnArc;         // 当前弧剩余小时
+    public double arcLeftH;         // 当前弧剩余小时
     public CarrierId carrier;             // 主承运方（用于损失归属）
     public SupplyPriorityTier tier;
     public SimTime dispatchedAt;
@@ -387,7 +389,7 @@ public sealed class SupplyConvoy                       // 条带上的车队（�
     public ConvoyState state;
     public double xM, yM;                              // 战斗坐标
     public double legLengthM, legProgressM;
-    public double stateHoursLeft;
+    public double stateLeftH;
 }
 ```
 
@@ -431,6 +433,28 @@ public sealed class PrepositionOrder                   // D8
     public StrategicDirectionId direction;             // 二选一
     public NodeId airbase;
     public double days;                                // 按“激增强度”的天数
+}
+
+public enum LogisticsConfigKind : int {                // 只能追加；数值对应第 2 节玩家决策编号
+    None = 0, StockTargets = 2, DirectionWeights = 4, MoveHub = 6, Dispersion = 7,
+    Preposition = 8, StockCap = 9, PriorityFlag = 11, ForwardResupply = 13, Transfer = 14
+}
+
+public sealed class LogisticsConfigChange              // 09 LogisticsConfigPayload.configChange 的运行时类型；由 ApplyConfig 应用
+{
+    public LogisticsConfigKind kind;
+    public CountryId country;
+    public StockTargetSettings stockTargets;           // StockTargets（D2、D3、D10、D12）：整份替换
+    public List<StrategicDirection> directions;        // DirectionWeights（D4）：整份替换，权重归一
+    public NodeId node;                                // Dispersion / StockCap / PriorityFlag（机场）；Transfer 的源节点
+    public FormationId formation;                      // MoveHub（后勤旅）/ PriorityFlag（旅）/ ForwardResupply（旅）
+    public ulong targetTile;                           // MoveHub：新地块（§4.16）
+    public double value;                               // Dispersion：dispersionTarget ∈ [0,1]；StockCap：NodeCaps.maxDaysOfSupply
+    public SortedDictionary<int, double> maxCountByMunition;   // StockCap（机场，D9）
+    public bool flag;                                  // PriorityFlag
+    public ForwardResupplyPolicy policy;               // ForwardResupply（D13）
+    public PrepositionOrder preposition;               // Preposition（D8）
+    public NodeId toNode; public ItemKey item; public double qty;   // Transfer（D14，按 §4.5.1 生成 P2 请求）
 }
 ```
 
@@ -511,24 +535,27 @@ AmmoBasis ComputeBasis(FormationId b) {
 对每个国家 c 分别建图（只含 c 可用的部分；共享地图数据，图对象按国家分开）：
 1. **TileRoad 节点**：c 控制的每个地块（09 的 `TileControl`）。
 2. **TileRail 节点**：上述地块中 `RailLink` 不为 None 的地块（至少一条铁路边）。
-3. **Road 弧**：相邻两地块都为 c 控制且 `Edge.road.cls != None`（10）→ 两个方向各一条。
-4. **Rail 弧**：同理，`Edge.rail.cls ∈ {ConventionalSingle, ConventionalDouble}`。`HighSpeed` **不承运物资**（只运兵员，§19.4），建一条只允许 `CargoKind.ReplacementPersonnel` 的弧（标志 `personnelOnly`）。
+3. **Road 弧**：相邻两地块都为 c 控制且 `Map.ActiveRoad(e).Cls != None`（10）→ 两个方向各一条。
+4. **Rail 弧**：同理，`Map.ActiveRail(e).cls ∈ {ConventionalSingle, ConventionalDouble}`。`HighSpeed` **不承运物资**（只运兵员，§19.4），建一条只允许 `CargoKind.ReplacementPersonnel` 的弧（标志 `personnelOnly`）。
 5. **铁公转运弧**：地块 `hasRailFreightTerminal == true`（10）→ TileRail↔TileRoad 各一条，容量 `RailRoadTransferTPerH × railFreightTerminalCount`，长度 0，成本 `TransferHandlingH`。
 6. **节点接入弧**：每个 `LogisticsNode`（c 所有、`state ∈ {Operational}`）→ 与所在地块 TileRoad 相连（长度 `IntraTileAccessM`）；若 `hasRailAccess` 且地块有 TileRail，再与 TileRail 相连（长度 0）。接入弧容量 = +∞（节点吞吐用节点预算单独限制，§4.5.3）。
 7. **BSA 节点**：每个旅保障区与其地块 TileRoad 相连（长度 `IntraTileAccessM`，容量 +∞）。
 
+**重建时机**：除上述拓扑变化外，读档后无条件重建 `SupplyGraph`（`SupplyGraph` 拓扑不存档）；每小时 L3 开头若 `Map.TopologyVersion != graph.topologyVersion`（10 §3.8，变体生效/失效）也重建，重建后 `graph.topologyVersion = Map.TopologyVersion`。道路/铁路一律读当前生效版本 `Map.ActiveRoad(e)` / `Map.ActiveRail(e)`（10 §3.8），不直接读 `Edge.road/rail`（基础版本）。
+
 #### 4.2.2 基础容量和速度（数据来自 10，常数见第 5 节）
 ```text
 Road 弧（边 e）:
-    routes = e.road.routes（最多 3 条，10 给出，每条有 cls, routeLengthM, mountainFactor）
+    routes = Map.ActiveRoad(e).routes（最多 3 条，10 给出，每条有 cls, routeLengthM, mountainFactor）
     baseCapTPerH = Σ_k RoadCapTPerH[routes[k].cls] × routes[k].mountainFactor
     speedMps     = RoadConvoySpeedKph[routes[0].cls] × routes[0].mountainFactor / 3.6
     lengthM      = routes[0].routeLengthM
 Rail 弧:
-    baseCapTPerH = RailCapTPerH[e.rail.cls]
+    rail         = Map.ActiveRail(e)
+    baseCapTPerH = RailCapTPerH[rail.cls]
     speedMps     = RailSpeedKph / 3.6
-    lengthM      = e.rail.routeLengthM
-    若 e.rail.gaugeBreak：该弧容量再取 min(baseCap, GaugeTransferTPerH)，成本 + GaugeTransferH
+    lengthM      = rail.routeLengthM
+    若 rail.gaugeBreak：该弧容量再取 min(baseCap, GaugeTransferTPerH)，成本 + GaugeTransferH
 ```
 
 #### 4.2.3 每小时刷新 `capFactor`
@@ -538,17 +565,18 @@ controlFactor  = 1（两端都是己方控制，建图已保证）
 battleFactor   = 0  若 arc.edge 上有活跃 EdgeBattle（前线边不能当补给线）；否则 1
 crossingFactor = 见下
 strikeFactor   = 1 − TileLocThreat(c, toTile).capReduction    // §4.10.3
-seasonFactor   = e.road.routes[k].winterFactor（阶段 1 恒为 1；10 预留字段，🟡 M-08 关联）
+seasonFactor   = Map.ActiveRoad(e).routes[k].winterFactor（阶段 1 恒为 1；10 预留字段，🟡 M-08 关联）
 ```
 **桥梁/隧道（`CrossingId`）**：10 为每条弧的每条路线列出所依赖的 crossing，并为“该 crossing 断掉时”预计算了**绕行路线**（`bypass`）。
 ```text
 对 Road 弧逐条路线 k：
     down_k = {x ∈ routes[k].crossings | crossingState[x].capFactor < 1}
     若 down_k 为空：路线容量 = 原值
-    若 down_k 只有一个 x，且 bypass(x, e, k) 存在、且绕行路线自身依赖的 crossing 都完好：
-         路线容量 = RoadCapTPerH[bypass.cls] × bypass.mountainFactor
+    bypass = Map.GetCrossing(x).bypasses.FirstOrDefault(b => b.edge == e && b.mode == CrossingMode.Road && b.routeIndex == k)   // 10 BypassRoute
+    若 down_k 只有一个 x，且 bypass 存在、且绕行路线自身依赖的 crossing（bypass.crossings）都完好：
+         路线容量 = RoadCapTPerH[bypass.roadCls] × bypass.mountainFactor
                + crossingState[x].capFactor × 原路线容量          // 临时便桥恢复的部分
-         若 k == 0，速度、长度改用 bypass 的值（取能力更大的那条）
+         若 k == 0，速度、长度改用 bypass 的值（roadCls、routeLengthM；取能力更大的那条）
     否则：路线容量 = crossingState 各 capFactor 的最小值 × 原路线容量
 arc.baseCapTPerH 每小时按上式重算（不改拓扑）
 ```
@@ -563,7 +591,8 @@ cost(arc) = TravelH(arc) + RiskPenaltyH × arc.lossFraction + (arc 是转运弧 
 
 **每小时消耗（地块层，`TickPhase 120`，只对未放进条带的营）**
 ```text
-燃油（每辆车 v，按 09 给出的上一小时行驶距离 kmMoved(v) 与道路/越野比例 offroadShare）：
+燃油（每辆车 v；kmMoved(v) = 09 BattalionMoveState.distanceMovedLastHourM / 1000，同营所有车辆相同；
+      offroadShare = (Map.RoadClass(该营上一小时行军所在边) == LinkCapacityClass.None ? 1 : 0)）：
     L = kmMoved × fuelRoadLPer100Km/100 × (1 − offroadShare + offroadShare × offroadFuelMult)
       + (kmMoved == 0 ? idleFuelLPerH × IdleDutyCycle : 0)
     吨 = L × density(fuelType) / 1000
@@ -599,14 +628,14 @@ StdDay[b][Parts p]  = 07 提供的 StandardWarDayPartsRate(b, p)
       arc = path[nextArc]
       if arc.capFactor == 0 or 到达端地块已不由 owner 控制:
           → Stranded(shipment); break
-      step = min(budgetH, hoursLeftOnArc)
-      hoursLeftOnArc −= step; budgetH −= step
-      if hoursLeftOnArc <= 1e-9:
+      step = min(budgetH, arcLeftH)
+      arcLeftH −= step; budgetH −= step
+      if arcLeftH <= 1e-9:
           ApplyTransitLoss(shipment, arc)              // §4.10.3：按 arc.lossFraction 期望货损
-          nextArc++; if nextArc < path.Count: hoursLeftOnArc = TravelH(path[nextArc])
+          nextArc++; if nextArc < path.Count: arcLeftH = TravelH(path[nextArc])
   if nextArc == path.Count: Deliver(shipment)          // 加进目的地库存；超库容部分转 FieldCache（同地块）
 ```
-- 发货时 `hoursLeftOnArc` 初始化为 `NodeHandlingH × (1 + DispersionHandlingPenalty × src.dispersion) + TravelH(path[0])`（装车时间并进第一段）。
+- 发货时 `arcLeftH` 初始化为 `NodeHandlingH × (1 + DispersionHandlingPenalty × src.dispersion) + TravelH(path[0])`（装车时间并进第一段）。
 - **Stranded**：在当前弧起点所在地块生成（或合并进已有的）`FieldCache` 节点（owner 不变，`storageCapacityT = +∞`，`hardeningLevel = 0`，`dispersion = 0.5`，`cacheExpiresAt = now + FieldCacheLifetimeH`）。下一小时它就是普通源节点，可被就近取用。地块被敌方占领时，地块内的 FieldCache 全部归占领方（缴获，记入 AAR）。
 - `ApplyTransitLoss` 用**期望值**（连续量，00 §6.2 方差规则：货物是连续量）：`每个物资数量 ×= (1 − lossFraction)`；损失的卡车按 §4.10.3 另算（离散）。
 
@@ -750,7 +779,7 @@ public interface IStripQuery {
     double EstimatedEnemyTubeRangeM(int side);                     // 按 05 暴露度 ≥ L3 的敌炮兵型号最大射程；不明时返回 DefaultEnemyTubeRangeM
     // 卡车沿直线从 (x1,y1) 到 (x2,y2) 行驶时，每辆车的“预期被毁次数”积分（无量纲，≥0）
     double TruckKillIntegral(int side, double x1, double y1, double x2, double y2, bool isNight);
-    LinkCapacityClass BestRoadClassOnEdge { get; }                 // 10 的 Edge.road.routes[0].cls
+    LinkCapacityClass BestRoadClassOnEdge { get; }                 // 10 的 Map.ActiveRoad(e).Cls
 }
 ```
 
@@ -767,7 +796,7 @@ public interface IStripQuery {
       loadT = min(BT 缺口吨, BSA 可供吨)
       n = clamp(ceil(loadT / 单车载重), ConvoyMinTrucks, ConvoyMaxTrucks)，且 ≤ 闲置车数；n == 0 → 停止
       装货：按 BT 的物资缺口比例注水（同 §4.5.3）
-      新建 SupplyConvoy(state = Loading, stateHoursLeft = ConvoyLoadH)
+      新建 SupplyConvoy(state = Loading, stateLeftH = ConvoyLoadH)
 营级（BT → 连），承运 = BattalionOrganic(u) 中在 BT 闲置的卡车：
   对 u 的每个**未被 Engagement 锁定**的连 k，needRatio = Σ_{k 的班}(fullQty − qty) 吨 / Σ fullQty 吨
   同上规则派车，目标连补给点
@@ -775,7 +804,7 @@ public interface IStripQuery {
 
 #### 4.8.3 车队推进（每个条带步，dtH = dtS/3600）
 ```text
-Loading/Unloading：stateHoursLeft −= dtH；到 0 转下一状态（Unloading 结束时把货转入 BT 库存或连的班，§4.8.4）
+Loading/Unloading：stateLeftH −= dtH；到 0 转下一状态（Unloading 结束时把货转入 BT 库存或连的班，§4.8.4）
 Outbound/Returning：
   若 policy 生效为 NightOnly 且 目标点己方纵深 < NightOnlyDepthM 且 09.IsNight(tile, now) == false 且 当前在起点：
       state = WaitingForNight（每步重查）
@@ -813,7 +842,7 @@ Outbound/Returning：
   open 图 = §4.2 的图中 capFactor > 0 的弧
   源集合 S0 = c 的所有 Operational 节点中 role ∈ {Depot, Factory, ImportGateway(isOpen)} 的
   从 S0 做 BFS（无容量限制）→ 可达集合 R
-  对每个 BSA s：isCutOff = (s 的 GNode ∉ R)
+  对每个 BSA s：isCutOff = (s 的 GNode ∉ R)；isCutOff 由 false → true 时：09.PostNotification(Notification{kind = NotificationKind.SupplyCut, audience = c})
   包围圈：对所有 ∉ R 的 TileRoad 节点做连通分量；pocketId = 分量内最小 tileId 的稳定编号（按出现顺序 1,2,…，每小时重新编号，界面用 tileId 显示）
   被切断的 BSA 仍可以从**同一分量内**的节点（ForwardHub/FieldCache/Depot）取货——§4.5 自然只会找到可达的源
   营的切断：营所在地块 ∉ R 且与其 BSA 不在同一分量 → 该营 isCutOff（只能靠随身库存）
@@ -824,7 +853,7 @@ Outbound/Returning：
 | 物资 | 效果 | 实现方 |
 |---|---|---|
 | 弹药某型号 = 0 | 该型号武器不能开火（`IdleReason.NoAmmo`） | 03 读 `SquadCarriedState` |
-| 燃油 = 0 | 该班车辆不能机动：`GetMobilityFactor(squad) = 0`；营的机动系数 = 有油车辆比例（按车辆数），< `ImmobileThreshold` 时营整体不能移动 | 09（地块层）/ 04（条带） |
+| 燃油 = 0 | 该班车辆不能机动：`GetMobilityFactor(squad) = 0`；营的机动系数 = 有油车辆比例（按车辆数），< `ImmobileThreshold` 时营整体不能移动（`GetMobilityFactor(battalion)` 返回 0） | 09（地块层）/ 04（条带） |
 | 给养 = 0 持续 | `daysWithoutGeneral` 每小时 + 1/24；超过 `GeneralGraceDays` 后，每天：疲劳下限 + `StarvationFatiguePerDay`（03 读 `GetFatigueFloor`）；非战斗减员 `StarvationCasualtyPerDay` 比例（转 07，`CasualtyState.LightWounded`，原因 `NonBattle`） | 03 / 07 |
 | 备件 = 0 | 07 的故障不能修复 | 07 |
 
@@ -839,7 +868,7 @@ EnduranceDays(pocket, cls) = (Σ 包围圈内所有 BSA/BT/班/节点 的该类�
 #### 4.10.1 打击节点
 04（地面跨地块火力）/08（空袭）结算出命中后调用 `OnNodeStrike(NodeStrikeEvent e)`：
 ```csharp
-public readonly record struct NodeStrikeEvent(NodeId node, CountryId attacker, WarheadClass warhead, int hits, long timeMs, int sourceEntityId);
+public readonly record struct NodeStrikeEvent(NodeId node, CountryId attacker, WarheadClass warhead, int hits, long timeMs, ulong sourceEntityId);
 ```
 ```text
 hardMult  = HardeningStockMult[hardeningLevel]
@@ -858,7 +887,7 @@ lastStruckAt = now
 
 #### 4.10.2 打击桥梁/隧道
 ```csharp
-public readonly record struct CrossingStrikeEvent(CrossingId crossing, WarheadClass warhead, int hits, long timeMs, int sourceEntityId);
+public readonly record struct CrossingStrikeEvent(CrossingId crossing, WarheadClass warhead, int hits, long timeMs, ulong sourceEntityId);
 public sealed class CrossingState { public double capFactor; /*[0,1]*/ public SimTime tempRepairAt; public SimTime fullRepairAt; public bool isTunnel; }
 ```
 ```text
@@ -914,7 +943,7 @@ arc.lossFraction（每小时 L3）= 到达端地块的 lossEma
 **缺口报告**（F2，每日）：
 ```text
 DaysCovered[item] = 全国库存[item] / NatRate[item]    （NatRate = 0 → 不报告）
-若 DaysCovered < landDays × GapWarnFraction → 通知“按当前编制，<型号> 储备只够 N 天”（N 向下取整）
+若 DaysCovered < landDays × GapWarnFraction → 09.PostNotification(Notification{kind = NotificationKind.ReserveGap, audience = c})：“按当前编制，<型号> 储备只够 N 天”（N 向下取整）
 采购缺口给 11：Shortfall[item] = max(0, NatTarget − 全国库存 − 在途 − 已下订单（11 提供）)
 ```
 
@@ -1164,43 +1193,50 @@ AAR 计数器（按旅）：noAmmoIdleHours、immobileHours、trucksLost、cargo
 | 函数 | 调用者 | 时机 | 说明 |
 |---|---|---|---|
 | `AmmoBasis ComputeBasis(FormationId)` / `AmmoBasisView BasisForTemplate(templateId, bindings, composition)` | 01 编辑器、13、11 | 按需 | §4.1 |
+| `AmmoBasis ComputeBasis(OrgUnitId battalion)` | 02（独立营训练） | 按需 | §4.1 同一算法，统计范围 = 该营各班的装备（01 `SquadsOf` → `ItemsOf`）；`brigade = 0`，`battalion` 填该营 |
 | `void InitCarriedLoad(SquadId, double fillFraction)` | 14 开局、07 新建班 | 创建时 | 按 `fullQty × fill` 填充 |
 | `bool TryConsume(SquadId, ItemKey, double qty, out double got)` | 03（开火）、04、08（地面防空拦截弹） | 每次消耗 | 不足时 got < qty；自动尝试 CaliberGroup 替代由调用方决定（03 传入可接受列表） |
 | `void ReportConsumption(OrgUnitId battalion, ItemKey, double qty)` | 03/04/07 | 消耗后 | 供消耗率 EMA |
 | `double GetAvailable(SquadId, ItemKey)` | 03 | 每步 | 只读 |
-| `double GetMobilityFactor(OrgUnitId battalion)` / `(SquadId)` | 09、04 | 每移动步 | §4.9 |
+| `double GetMobilityFactor(OrgUnitId battalion)` / `(SquadId)` | 09、04 | 每移动步 | §4.9；营：有油车辆比例，< `ImmobileThreshold`（营不能机动）时返回 0 |
 | `double GetFatigueFloor(SquadId)` | 03 | 每步 | 给养断绝 |
 | `bool TryDrawFromNode(NodeId, ItemKey, double qty, out double got)` | 08（机场挂弹）、02（训练，FEFO） | 按需 | 机场挂载从机场节点扣 |
 | `bool TryDrawParts(OrgUnitId battalion, int modelHandle, double qty, out double got)` / `bool TryDrawParts(FormationId brigade, int modelHandle, double qty, out double got)` | 07（修理，07 H-07） | 每小时 `DamageRepair` | 从营辎重队（`BattalionTrains.stock`）或旅保障区（`BrigadeSupportArea.stock`）扣 `ItemKey(SupplyClass.SpareParts, modelHandle)`；单位 = 07 §3 定义的“备件单位”；不足时 got < qty，返回 `got ≥ qty` |
 | `void ReturnToNode(NodeId, ItemKey, double qty)` | 08（降落时退回未消耗的挂载弹药，08 A-14） | 降落时（`AirStep`） | 加回该节点 `Stockpile`；弹药批次年份记为当年（简化）；超出 `storageCapacityT` 也照常入库（与 FieldCache 溢出规则无关） |
 | `double ConsumeForTraining(FormationId, ItemKey, double qty)` | 02 | 每小时 | 从该编组所在方向的仓库（Depot，NodeId 升序）按 FEFO 扣；不足就少扣。**返回值 = 实际扣到的数量**（0 ≤ 返回值 ≤ qty），02 据此折算训练效果（02 P-18） |
+| `double ConsumeForTraining(OrgUnitId battalion, ItemKey, double qty)` | 02（独立营） | 每小时 | 同上；“所在方向”按该营所在地块的 Region 判定 |
 | `void AddProduced(NodeId factory, ItemKey or EquipmentModel, double qty)` | 11 | `Calendar` 时 | 产出入库（批次年份 = 当年） |
 | `void OnImportArrival(ImportBatch)` | 11 | 每小时 | §4.12 |
 | `Shortfall GetProcurementShortfall(CountryId)` | 11、12 | 每日 | §4.11 |
 | `double GetAnnualStorageCostMusd(CountryId)` | 11 | 年度 | §4.13 |
-| `void RequestTransport(ReplacementRequest)` | 07 | 按需 | 补充装备/兵员运输，返回预计到达时刻；到达时回调 07 `OnReplacementDelivered` |
+| `SimTime RequestTransport(ReplacementRequest)` | 07 | 按需 | 补充装备/兵员运输（目的地 = 07 `ReplacementRequest.toNode`），返回预计到达时刻；到达时回调 07 `OnReplacementDelivered` |
 | `void OnNodeStrike(NodeStrikeEvent)` / `OnCrossingStrike(CrossingStrikeEvent)` / `OnLocStrike(...)` | 04、08 | `GroundEventApply` | §4.10 |
 | `double GetTrafficTrucksPerH(CountryId, ulong tile)` | 04、08 | 结算 LOC 打击前 | §4.10.3 |
 | `void StripLogistics.Step(...)` | 04 | `StripStep` | §4.8 |
 | `UnitSupplyView`、`NodePanelView`、`FlowMapView`、`KeyNodeReport`、`ConvoyView`、`ReserveGapReport`、`ShelfLifeReport`、`ImportView`、`CarrierView` | 13 | 界面刷新 | 只读视图 |
 | `KeyNodeReport AnalyzeKeyNodes(CountryId owner, NetworkView view)` | 12 | 每日 | 对敌方：view 只含其暴露度 ≥ L3 的节点和已知的路网 |
-| `IEnumerable<LogisticsNode> NodesInTile(ulong tile)` | 05（特征值）、08/04（目标选择） | 按需 | 节点作为目标；特征值由 05 按 `storage/dispersion/hardening` 计算 |
+| `IEnumerable<LogisticsNode> NodesInTile(ulong tile)` | 05（暴露度）、08/04（目标选择） | 按需 | 节点作为目标；暴露度按 05 §4.8 固定设施规则（不算特征值） |
+| `NodeId NearestDepot(CountryId, ulong tile)` | 01（发放/退回库存）、07（撤编营装备） | 按需 | 该国 Operational 的 Depot 中，从 tile 的 TileRoad 节点出发按 §4.2.4 路径成本最小者；平局 NodeId 升序；不可达 → 0 |
+| `double RoadDistanceM(NodeId a, NodeId b)` | 01 | 按需 | 节点 a 所有国的 `SupplyGraph` 上 a → b 最短路径（按 §4.2.4 成本选路）的 Σ `lengthM`；不可达 → `double.PositiveInfinity` |
+| `double FuelDensityKgPerL(FuelType f)` / `double FuelDensityTPerL(FuelType f)` | 02 | 按需 | `f == JetFuel ? JetFuelDensityKgPerL : DieselDensityKgPerL`；`TPerL` = `KgPerL / 1000` |
+| `void ApplyConfig(LogisticsConfigPayload p)` | 09（`LogisticsConfig` 命令生效时） | 命令执行时 | `p.configChange` 的运行时类型 = `LogisticsConfigChange`（§3.10），按 `kind` 写入对应字段；`Dispersion` 只改 `dispersionTarget`（§3.4），`MoveHub` 走 §4.16 |
 
 ### 6.2 06 需要的输入
 
 | 来源 | 数据 | 用途 |
 |---|---|---|
-| 00/10 | `Tile`、`Edge`（`RoadLink.routes`、`RailLink`、`crossings`、`bypass`）、`hasRailFreightTerminal`、`Region` | §4.2 |
+| 00/10 | `Tile`、`Edge`、`IMapQuery.ActiveRoad/ActiveRail`（`RoadLink.routes`、`RailLink`、`crossings`）、`GetCrossing(x).bypasses`（`BypassRoute`）、`TopologyVersion`、`RoadClass`、`hasRailFreightTerminal`、`Region` | §4.2、§4.3 |
 | 01 | 编制树、`EquipmentItem`、`EquipmentModel.massKg`、`TemplateRole`、`Formation.echelon` | 卡车统计、基数 |
 | 03 | `WeaponProfile.defaultLoad`、`munitions`；`MunitionProfile.roundWeightKg`、`caliberGroup`、`shelfClass`、`warheadKg`（03 §3.1；`shelfClass = None` 时用 06 的 `munition_storage.yaml`） | §4.1 |
 | 04 | `IStripQuery`、地面跨地块火力命中事件 | §4.8、§4.10 |
 | 05 | 敌炮兵型号的暴露度（`EstimatedEnemyTubeRangeM` 内部用） | BSA 位置 |
 | 07 | `IsLost(item)`、`ApplyVehicleHit`、`StandardWarDayPartsRate`、补充请求 | |
 | 08 | `ExpectedDailyUse(airbase, item)`、空袭命中事件、LOC 打击 | §4.5.1、§4.10 |
-| 09 | `TileControl`、`IsNight(tile, time)`、上一小时行驶距离、EdgeBattle 活跃集合 | |
+| 09 | `TileControl`、`IsNight(tile, time)`、上一小时行驶距离（`BattalionMoveState.distanceMovedLastHourM`）、EdgeBattle 活跃集合、`PostNotification`（`SupplyCut`、`ReserveGap`） | |
 | 11 | 产出、进口批次、口岸开闭、动员等级、预算可用性、已下订单 | |
 | 12 | BSA 所在地块、独立营的保障旅指定、后勤中心 AI 布局（AI 国家） | |
 | 14 | 节点种子、开局库存与年龄分布、`RailFleetPayloadT`、`NationalTruckPayloadT`、战略方向预设 | |
+| 15 | 存档：`SectionId.Logistics`（= 41，值见 15 §3.2）；组件：`LogisticsNode`（含 `Stockpile` 批次、`NodeCaps`、`ImportGatewayData` 与待入境队列）、`BrigadeSupportArea`（含 `rateEmaPerH`）、`BattalionTrains`、`SquadCarriedState`、`AmmoComposition`、`CrossingState`、`Shipment`、`SupplyConvoy`、`CarrierPool`、`TileLocThreat`、`StockTargetSettings`、`StrategicDirection`、`PrepositionOrder`、`StorageBase`、`SupplyGraph` 各弧的可变量 `capFactor`/`lossFraction`/`arcFlowEmaPerDay`（按 `Arc.index`）、AAR 计数器；不存档（派生，读档后重建）：`AmmoBasis`、`SupplyGraph` 拓扑（§4.2.1）、`SupplyRequest`、`KeyNodeReport` 与各界面视图 | 存档/读档 |
 
 ### 6.3 数据文件（本文件定义 schema）
 
