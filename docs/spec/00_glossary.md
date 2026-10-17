@@ -312,7 +312,7 @@
 | 编制风格 / 连类型 | `OrgStyle` / `archetype` | 自动生成排班的规则表（`data/styles/`）。 | 01 §11 | 01 |
 | 生成参数 | `GenerateParams` | 自动生成的输入（风格、连类型、车型、排数、下车人数）。 | 01 §11 | 01 |
 | 维护组 | `maintenanceGroup` | 共用维护工具组的型号集合，缺省 = `family`。 | 01 §11 | 01 |
-| 维护组织 | `MaintenanceOrgKey` | 维护和练度的承载单位：建制旅，或自成一体的独立营。 | 01 §11 | 01 |
+| 维护组织 | `SkillHolderKey`（02） | 维护和练度的承载单位：建制旅，或自成一体的独立营。 | 01 §11 | 01 |
 | 工具组 | `ToolsetState` | 某维护组织对某维护组持有的维护/检测工具组套数。 | 01 §11 | 01 |
 | 装填模板（通用） | `LoadoutTemplate` / `host_classes` | 宿主装填单元的装填方案；阶段 3 的 `VlsLoadoutTemplate` 是其特例（O-15）。 | 01 §11 | 01 |
 
