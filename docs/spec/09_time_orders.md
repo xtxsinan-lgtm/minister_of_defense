@@ -332,7 +332,7 @@ public sealed class BattleSummaryStats {
 | 90 `AirStep` | `n % AirStepMinutes == 0`（缺省 1 = 每刻） | 08 |
 | 100 `EngagementStep` | 每刻 | 03 |
 | 110 `GroundEventApply` | 每刻 | 04/06/07 |
-| 120 `Consumption` | 每刻（片段）、`n % StripStepMinutes == 0`（条带）、`n % 60 == 0`（驻止部队） | 03/04/06 |
+| 120 `Consumption` | `n % 60 == 0`（地块层驻止部队）；片段内消耗已在 100 由 03 完成，条带消耗已在 80 第 10 步由 04 完成，本阶段不再重复 | 06 |
 | 130 `DamageRepair` | `n % 60 == 0` | 07 |
 | 140 `BattleEnd` | `n % StripStepMinutes == 0` | 本文件 §4.7（判定）、04（写回） |
 | 150 `Reporting` | 每刻 | 15/13；本文件 §4.9 |
@@ -364,7 +364,7 @@ void RunTick(World w) {
     if (n % C.AirStepMinutes == 0) Air.Step(w, n);      // 90
     Engagements.StepAll(w, n);                          // 100
     GroundEvents.Apply(w, n);                           // 110
-    Consumption.Step(w, n, strip, hour);                // 120
+    if (hour) Consumption.Step(w, n);                   // 120（只做地块层驻止部队；03 在 100、04 在 80 已扣）
     if (hour) DamageRepair.Step(w, n);                  // 130
     if (strip) Battles.End(w, n);                       // 140 §4.7
     Battles.CheckPeriodicReports(w, n);                 // 150 §4.7.4（每刻检查各战斗自身的 24h 锚点）
@@ -946,7 +946,7 @@ B1（id 1，星标，20 连，est 6e6）；B2（id 2，40 连，est 8e6）；B3�
 期望：B1 Full（Starred，预留 6e6）；B2 Full（14e6 ≤ 15e6）；B3 Cached（19e6 > 15e6，OverBudget）。
 
 **T6 每刻阶段表**
-期望：第 60 刻执行 10（战略+编组）、20、30（时）、40、50、60、70、80、90、100、110、120（片段+条带+驻止）、130、140、150、160（若开启）。第 5 刻：10（编组）、20、80、90、100、110、120（片段+条带）、140、150。第 7 刻：20、90、100、110、120（片段）、150。第 1440 刻：30 内顺序为 日 → 时；若第 1440×k 刻恰为 1 月 1 日 00:00，则 年 → 日 → 时。
+期望：第 60 刻执行 10（战略+编组）、20、30（时）、40、50、60、70、80、90、100、110、120（驻止部队）、130、140、150、160（若开启）。第 5 刻：10（编组）、20、80、90、100、110、120（片段+条带）、140、150。第 7 刻：20、90、100、110、120（片段）、150。第 1440 刻：30 内顺序为 日 → 时；若第 1440×k 刻恰为 1 月 1 日 00:00，则 年 → 日 → 时。
 
 **T7 战斗结束优先顺序**
 某战斗本条带步同时满足：`PenetrationProgress = 1.02` 且攻方营全部失去战斗力。
