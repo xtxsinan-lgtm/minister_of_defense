@@ -84,7 +84,7 @@ templates:
   - {id: us_mshorad_bn, name: M-SHORAD 营, level: battalion, children: [{template: us_mshorad_battery, count: 4}], default_bindings: {spaag: m_shorad}, notes: 美军目前共 18 个 M-SHORAD 连。}
   - {id: us_avenger_battery, name: 复仇者连, level: company, children: [{template: us_vsq_avenger, count: 12}], notes: 每连 12 车，每车 2 个旋转发射装置。}
   - {id: us_avenger_bn, name: 复仇者营, level: battalion, children: [{template: us_avenger_battery, count: 4}], default_bindings: {sam_vehicle_manpads: avenger}}
-  - {id: us_thaad_battery, name: 萨德连（独立）, level: company, children: [{template: us_vsq_sam_long, count: 1}], default_bindings: {sam_long: thaad}, notes: 美陆军 7 个独立萨德连；发射车数原文未给。}
+  - {id: us_thaad_battery, name: 萨德连（独立）, level: company, children: [{template: us_vsq_sam_long, count: 1}], notes: 美陆军 7 个独立萨德连；发射车数原文未给。（建议型号 sam_long → thaad；01 §3.4.1 只允许营以上写 default_bindings，故移入说明；实例化时由上级营/编组或国家缺省绑定。）}
   - {id: us_c_ram_battery, name: C-RAM 连, level: company, children: [{template: us_vsq_c_ram, count: 1}], notes: 数量原文未给。}
 
   # ##################################################################
@@ -96,6 +96,7 @@ templates:
     level: brigade
     children: [{template: us_sq_generic, count: 1}]
     notes: 指挥、管理、训练部分固定化；大规模作战时集中管理各 BCT 炮兵营和加强来的野战炮兵旅的营（整旅加强时野战炮兵旅直接受师部领导）。加强的防空部队有时也由师炮兵旅管辖。
+  - {id: us_divarty_hq_bn, name: 师炮兵旅旅部, level: battalion, role: hq, children: [{template: us_sq_generic, count: 1}], notes: 师炮兵旅（us_divarty_2028_*）的旅部营；01 §3.4.1 旅部为 role=hq 的营（审查：原直接引用旅级 us_divarty_hq，违反 O-02）。}
   - {id: us_sustainment_brigade, name: 保障旅, level: brigade, role: support, children: [{template: us_sq_generic, count: 1}]}
   - id: us_armored_division
     name: 装甲师（第 1 装甲师 / 第 1 骑兵师）
@@ -295,16 +296,16 @@ templates:
   - id: us_divarty_2028_enhanced
     name: 师炮兵（加强装甲师）
     level: brigade
-    children: [{template: us_divarty_hq, count: 1}, {template: us_sp155_bn, count: 3}]
+    children: [{template: us_divarty_hq_bn, count: 1}, {template: us_sp155_bn, count: 3}]
     notes: 原计划再加一个 58 倍径 M1299 自行炮营，已取消。每营 3 连 18 门为推测。
   - id: us_divarty_2028_armored
     name: 师炮兵（装甲师）
     level: brigade
-    children: [{template: us_divarty_hq, count: 1}, {template: us_sp155_bn, count: 2}, {template: us_towed155_bn, count: 1}]
+    children: [{template: us_divarty_hq_bn, count: 1}, {template: us_sp155_bn, count: 2}, {template: us_towed155_bn, count: 1}]
   - id: us_divarty_2028_light
     name: 师炮兵（其他师）
     level: brigade
-    children: [{template: us_divarty_hq, count: 1}, {template: us_towed155_bn, count: 1}, {template: us_towed105_bn, count: 2}]
+    children: [{template: us_divarty_hq_bn, count: 1}, {template: us_towed155_bn, count: 1}, {template: us_towed105_bn, count: 2}]
   - {id: us_eng_coy_2028, name: 工兵连, level: company, children: [{template: us_sapper_plt, count: 2}, {template: us_eng_spt_plt_a, count: 1}], confidence: estimated, notes: 内部沿用原 BEB 战斗工兵连结构。}
   - {id: us_bridge_coy, name: 架桥连, level: company, children: [{template: us_bridge_team, count: 1}]}
   - {id: us_construction_coy, name: 工事连, level: company, children: [{template: us_construction_team, count: 1}]}

@@ -19,12 +19,20 @@ data/
     uav.yaml              各级无人机
     helicopters.yaml      直升机、倾转旋翼机
     air_munitions.yaml    空空弹、空地弹、反辐射弹、反舰弹、制导炸弹、布撒器
+    ground_munitions.yaml 地面弹药（枪弹、炮弹、迫弹、火箭弹、反坦克导弹弹体、战术弹道导弹弹体；DC-206）
+    nk_models.yaml        纳卡战区专有型号（亚、阿及供应国的平台、发射单元、巡飞弹、TB2 弹药；来源键见文件头）
   templates/              编制模板（班 → 排 → 连 → 营 → 旅）
     us_army_*.yaml / usmc.yaml / us_sof.yaml
     pla_army_*.yaml / pla_other.yaml
-  orbat/                  全军数量级数据（多少个旅、营、舰载直升机等）
+    arm_sov_legacy.yaml / aze_sov_legacy.yaml   亚美尼亚 / 阿塞拜疆苏式编制（含战术导弹营、巡飞弹连/营）
+  orbat/                  全军数量级数据（多少个旅、营、舰载直升机等）；arm/aze 只有数字，不引用模板
+  scenarios/              剧本（14 负责；校验脚本只检查其中的型号/模板/类别引用）
 tools/validate_data.py    引用完整性 + 人数汇总校验
 ```
+
+> 原 `data/equipment_pending/`、`data/templates_pending/`（等待 01 M2 新类别的型号与模板）已在 M2 落地后并入
+> `nk_models.yaml` 与 `arm_sov_legacy.yaml` / `aze_sov_legacy.yaml`，两个目录已删除。纳卡专有型号统一放在 `nk_models.yaml`
+> （不按类别拆进 uav.yaml / fire_support.yaml，因为这些文件的 `confidence: stated` 指知乎原文，来源约定不同）。
 
 ## 约定
 
@@ -51,8 +59,17 @@ tools/validate_data.py    引用完整性 + 人数汇总校验
     protection: mbt_99a
     firepower: fp_99a
     fire_control: fc_auto_track
-  munitions: [...]         # 可用弹种（引用 air_munitions 等里的 id）
+  munitions: [...]         # 可用弹种（引用 air_munitions / ground_munitions / nk_models 里的弹药 id）
 ```
+
+### 弹药与发射单元（DC-205 ①、DC-206 ①）
+- 弹药也是 `EquipmentModel`，类别属于 `group: air_munition` 或 `group: ground_munition`（见 categories.yaml），按**发/枚**计库存（06 Ammunition）。
+  弹药型号带 `munition:` 键（03 `MunitionProfile`；空中扩展写在 `munition.air`，08 §3.2.2）。
+- **弹药类别不得出现在班模板 `slots` / `slots_unassigned` 里**（校验脚本报 ERROR）。槽位写的是发射/射击它的装备。
+- 巡飞弹：型号（`harop` 等，类别 `loitering_munition`）就是弹药，一枚 = 一件；发射车/发射箱/弹射架是 `loitering_launcher` 类别的独立型号
+  （`harop_launcher` 等），班模板槽位写 `loitering_launcher`。
+- 战术弹道导弹同理：发射车 `tbm_launcher`（`scud_b` 等，按“部”），弹体 `tbm_missile`（`r17_scud_b` 等，按“枚”）。
+- 发射单元/武器用顶层 `munitions: [弹药 id, ...]` 列出可用弹药（03 `WeaponProfile` 数据就绪后迁到 `weapon.munitions`）；校验脚本检查这些 id 存在。
 
 ### 班模板 SquadTemplate
 只有班模板直接带人员和装备槽位；槽位**只写类别**，不写型号（设计文档 3.1）。
@@ -81,6 +98,10 @@ tools/validate_data.py    引用完整性 + 人数汇总校验
 - `us_*bct_residual_pool`：原文旅级车辆总数减去各营已建模的车辆，保证全旅采购需求与原文一致。
 - `attached`：战时加强（医护兵、前观员、前线支援连），不计入本级总数，避免和提供方重复计算。
 - `unit_ratings`：原文 1.5.2 的单位级档位（机械化、信息化、后勤、准备度）。
+- **层级规则（01 §3.4.1，O-02 / DC-070）**：`children` 里的子模板 level 必须**严格低于**本模板（可以跨级，如旅直接引用连）。
+  同级嵌套（如“加强营”里含一个完整营）时把外层上调一级，并用 `echelon_label` 写显示名（`battalion_landing_team`、`meb` 等）。
+  `default_bindings` 只写在营及以上；`echelon_label` 只写在旅及以上。
+- `subordinate_formations`（仅 `pla_theater_army` 使用）：记录高于 corps 的隶属关系，不计入合计；01 只有七级，见审查报告 D 的请求。
 
 ## 校验
 
@@ -89,6 +110,10 @@ pip3 install pyyaml
 python3 tools/validate_data.py            # 引用完整性 + 与原文总数比对
 python3 tools/validate_data.py --summary  # 额外列出各营/旅/师的人数和主要装备
 ```
+
+检查项：id 格式与全局唯一（跨类别/专业/型号/模板，01 §4.1）；类别、专业、评级、型号、`upgrade_of`、`munitions` 引用存在；
+子模板层级严格更低；`equipment_pool` 不带人员；绑定只在营以上；弹药类别不进槽位；`confidence` 取值；COVERAGE 清单（前缀 us_/pla_/usmc_/arm_/aze_）；
+剧本 `data/scenarios/**` 的型号、模板、类别引用与 oob 层级（只报告，标 `ERROR[剧本]`）。
 
 当前结果：0 个错误；剩余警告全部来自原文自身的数字出入（如 IBCT 营 581 人与各连人数加不拢、陆战队反坦克排分项 50 ≠ 总数 41），已在对应模板的 `notes` 中注明。
 

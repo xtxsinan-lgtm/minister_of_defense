@@ -45,7 +45,7 @@ models:
     family: avenger
     origin: USA
     specs: {missile: stinger, launch_pods: 2, missile_range_km: 8, missile_ceiling_km: 3.8, speed_mach: 2.2}
-  - {id: c_ram, name: C-RAM, category: c_ram, family: phalanx, origin: USA}
+  - {id: centurion_c_ram, name: C-RAM（Centurion）, category: c_ram, family: phalanx, origin: USA, notes: 审查：原 id c_ram 与同名类别冲突（01 §4.1 全局 id 唯一），改名。}
   - {id: thaad, name: 萨德, category: sam_long, family: thaad, origin: USA, notes: 美陆军有 7 个独立萨德连。}
   - {id: gmd, name: 陆基中段反导系统, category: sam_long, family: gmd, origin: USA, notes: 国民警卫队 1 个营。}
 

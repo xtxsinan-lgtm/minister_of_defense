@@ -171,6 +171,10 @@ for tid, t in templates.items():
                 (errors if key == "children" else warns).append(msg)
     if t.get("variant_of") and t["variant_of"] not in templates:
         errors.append(f"模板 {tid} variant_of 不存在：{t['variant_of']}")
+    # subordinate_formations：只记录隶属、不计入合计（pla_theater_army：01 没有高于 corps 的层级，见报告 D / 01 🟡）
+    for c in t.get("subordinate_formations") or []:
+        if c.get("template") not in templates:
+            errors.append(f"模板 {tid} subordinate_formations 引用的模板不存在：{c.get('template')}")
     if t.get("default_bindings") and RANK.get(t.get("level"), 99) < RANK["battalion"]:
         errors.append(f"模板 {tid}（{t.get('level')}）不应写 default_bindings（只允许营及以上，01 §3.4.1）")
     for cat, mid in (t.get("default_bindings") or {}).items():
@@ -253,6 +257,7 @@ if cov.exists():
 # 没有被任何模板引用、也不是顶层编组的模板（可能是遗漏挂接）
 referenced = {c["template"] for t in templates.values() for k in ("children", "attached") for c in t.get(k) or []}
 referenced |= {t["variant_of"] for t in templates.values() if t.get("variant_of")}
+referenced |= {c.get("template") for t in templates.values() for c in t.get("subordinate_formations") or []}
 
 # ---------------- 剧本引用（data/scenarios/**；只报告，不修改）----------------
 scen_template_refs = set()

@@ -283,8 +283,10 @@ templates:
   - id: pla_theater_army
     name: 战区陆军
     level: corps
+    echelon_label: theater_army
+    subordinate_formations:           # 审查：集团军本身是 corps，01 只有七级、没有高于 corps 的层级（O-02 不许同级 children）。
+      - {template: pla_group_army, count: 3}   # 这里只记录隶属关系，不计入本模板合计；见 01 🟡（请求新增层级或正式化本字段）
     children:
-      - {template: pla_group_army, count: 3}
       - {template: pla_theater_recon_intel_brigade, count: 1}
       - {template: pla_theater_info_brigade, count: 1}
       - {template: pla_theater_ew_brigade, count: 1}
@@ -588,8 +590,7 @@ templates:
       - {template: pla_mountain_bn_at_plt, count: 1}
       - {template: pla_mountain_bn_sniper_plt, count: 1}
       - {template: pla_fire_coy_hq, count: 1}
-    default_bindings: {mortar_vehicle: pcp001, atv: lynx_8x8, hmg: qjz89, agl: qlz04}
-    notes: 全部实现机械化、车载武器，类似美军 IBCT 步兵营武器连。迫击炮排数沿用其他营。
+    notes: 全部实现机械化、车载武器，类似美军 IBCT 步兵营武器连。迫击炮排数沿用其他营。（原连级 default_bindings 〔mortar_vehicle→pcp001、atv→lynx_8x8、hmg→qjz89、agl→qlz04〕 已上移到营模板（01 §3.4.1 只允许营以上绑定）；山地合成营已有 hmg→qjz171、agl→qlz201，按 01 §4.6“每营每类别一个型号”以营为准。）
   - id: pla_mountain_spt_coy
     variant_of: pla_light_spt_coy
     name: 山地合成营支援保障连
@@ -611,7 +612,7 @@ templates:
       - {template: pla_mountain_fire_coy, count: 1}
       - {template: pla_mountain_spt_coy, count: 1}
       - {template: pla_bn_hq_coy, count: 1}
-    default_bindings: {mortar_light: pbp201, hmg: qjz171, agl: qlz201, sniper_rifle: qbu202}
+    default_bindings: {mortar_light: pbp201, hmg: qjz171, agl: qlz201, sniper_rifle: qbu202, mortar_vehicle: pcp001, atv: lynx_8x8}
   - id: pla_arty_bn_mountain
     name: 山地旅炮兵营
     level: battalion
@@ -664,8 +665,7 @@ templates:
       - {template: pla_aa_at_plt, count: 1}
       - {template: pla_aa_agl_plt, count: 1}
       - {template: pla_fire_coy_hq, count: 1}
-    default_bindings: {mortar_heavy: pbp172, atv: lynx_4x4, atgm_portable: hj12, agl: qlz04}
-    notes: 不确定是否还有 1 个便携式导弹排（可加 pla_manpads_plt）。
+    notes: 不确定是否还有 1 个便携式导弹排（可加 pla_manpads_plt）。（原连级 default_bindings 已上移到 pla_air_assault_bn（01 §3.4.1 只允许营以上绑定）。）
   - id: pla_air_assault_spt_coy
     name: 空突营作战支援连
     level: company
@@ -684,7 +684,7 @@ templates:
       - {template: pla_air_assault_fire_coy, count: 1}
       - {template: pla_air_assault_spt_coy, count: 1}
       - {template: pla_bn_hq_coy, count: 1}
-    default_bindings: {thermobaric_launcher: pf97, mortar_light: pbp201}
+    default_bindings: {thermobaric_launcher: pf97, mortar_light: pbp201, mortar_heavy: pbp172, atv: lynx_4x4, atgm_portable: hj12, agl: qlz04}
     notes: 营以下机动载具只有山猫 8x8 和 4x4，无猛士。
   - id: pla_aa_fire_bn
     name: 空突旅火力营
@@ -790,7 +790,7 @@ templates:
       - {template: pla_abn_hmg_plt, count: 1}
       - {template: pla_abn_at_plt, count: 1}
       - {template: pla_fire_coy_hq, count: 1}
-    default_bindings: {mortar_vehicle: pcp001, hmg: qjz89, atgm_portable: hj12}
+    notes: （原连级 default_bindings 已上移到 pla_abn_tracked_cab / pla_abn_wheeled_cab（01 §3.4.1）。）
   - id: pla_abn_spt_coy
     name: 空降合成营作战支援连
     level: company
@@ -809,7 +809,7 @@ templates:
       - {template: pla_abn_fire_coy, count: 1}
       - {template: pla_abn_spt_coy, count: 1}
       - {template: pla_bn_hq_coy, count: 1}
-    default_bindings: {ifv: zbd03, sp_mortar_howitzer: zbd03_mortar}
+    default_bindings: {ifv: zbd03, sp_mortar_howitzer: zbd03_mortar, mortar_vehicle: pcp001, hmg: qjz89, atgm_portable: hj12}
     notes: 无坦克或突击炮连。
   - id: pla_abn_wheeled_cab
     name: 轮式空降合成营
@@ -819,7 +819,7 @@ templates:
       - {template: pla_abn_fire_coy, count: 1}
       - {template: pla_abn_spt_coy, count: 1}
       - {template: pla_bn_hq_coy, count: 1}
-    default_bindings: {ifv: airborne_wheeled_ifv}
+    default_bindings: {ifv: airborne_wheeled_ifv, mortar_vehicle: pcp001, hmg: qjz89, atgm_portable: hj12}
   - {id: pla_pl96_coy, name: PL-96 榴弹炮连, level: company, children: [{template: pla_vsq_howitzer_light_towed, count: 6}], confidence: estimated}
   - {id: pla_type63_coy, name: 63 式 107 火箭炮连, level: company, children: [{template: pla_vsq_mrl_light, count: 6}], confidence: estimated}
   - id: pla_abn_arty_bn
@@ -1004,7 +1004,7 @@ templates:
       - {template: pla_mountain_fire_coy, count: 1}
       - {template: pla_marine_spt_coy, count: 1}
       - {template: pla_bn_hq_coy, count: 1}
-    default_bindings: {atv: lynx_8x8}
+    default_bindings: {atv: lynx_8x8, mortar_vehicle: pcp001, hmg: qjz89, agl: qlz04}
     notes: 机动车辆池主要为山猫 8x8（可 4kph 浮渡，可被米-171、直-8L 装载或吊运）；也可不带载具，以摩步形式由 726 气垫艇或直升机登陆。
   - {id: pla_marine_how_sp_coy, name: PLZ-07B 连, level: company, children: [{template: pla_vsq_howitzer_light_sp, count: 9}], confidence: estimated}
   - {id: pla_marine_how181_coy, name: PCL-181 连, level: company, children: [{template: pla_vsq_howitzer_heavy_truck, count: 9}], confidence: estimated, notes: 不能两栖。}
@@ -1101,7 +1101,7 @@ templates:
       - {template: pla_svc_spt_bn, count: 1}
     unit_ratings: {informatization: info_pla_hk, readiness: ready_high}
     notes: 5 个合成营：1 个 08 车族中型营（有突击炮连）、1 个 92B/92 营、3 个轻高机营；另有侦察、炮兵、防空、作战支援、勤务保障营各 1（类型原文未给，此处取轻型）。驻港空军有直-20、直-10 各一个中队。
-  - {id: pla_macau_armored_inf_coy, name: 92B 装步连, level: company, children: [{template: pla_mech_plt, count: 3}, {template: pla_mech_coy_hq, count: 1}], default_bindings: {ifv: zsl92b}}
+  - {id: pla_macau_armored_inf_coy, name: 92B 装步连, level: company, children: [{template: pla_mech_plt, count: 3}, {template: pla_mech_coy_hq, count: 1}], notes: 原连级 default_bindings 〔ifv→zsl92b〕 已上移到 pla_macau_garrison（01 §3.4.1）。}
   - {id: pla_macau_engchem_coy, name: 工化连, level: company, children: [{template: pla_generic_sq, count: 1}]}
   - {id: pla_macau_special_coy, name: 特种连, level: company, children: [{template: pla_generic_sq, count: 1}]}
   - id: pla_macau_garrison
@@ -1113,6 +1113,7 @@ templates:
       - {template: pla_macau_engchem_coy, count: 1}
       - {template: pla_xj_recon_coy, count: 1}
       - {template: pla_macau_special_coy, count: 1}
+    default_bindings: {ifv: zsl92b}
     notes: 无后勤单位。
   - id: pla_guard3_regiment
     name: 警卫 3 师警卫团
@@ -1218,8 +1219,8 @@ templates:
       - {template: pla_border_bn_ad_coy, count: 1}
     default_bindings: {aa_mg: qjg02, gpmg: type67_gpmg, mortar_light: pp89_60, reusable_launcher: pf98_bn, hmg: qjz89, agl: qlz04, anti_materiel_rifle: qbu10, sniper_gl: qlu11, rifle: qbz95, smg: qcw171}
     notes: 需要时可快速增援全团任一方向。载具常见 92 式装输、二/三代猛士、山猫 8x8（山地配山猫，压力较小的边境配猛士）。连数原文未给（按 3 个）。
-  - {id: pla_border_regt_arty_coy, name: 边防团直属炮兵连, level: company, children: [{template: pla_border_bn_mortar_sq, count: 9}], default_bindings: {mortar_medium: pp89_100}, notes: 9 门 PP-89 100 迫，必要时平射充当直瞄火力。}
-  - {id: pla_border_regt_ad_coy, name: 边防团直属防空连, level: company, children: [{template: pla_vsq_aa_gun_towed, count: 6}], default_bindings: {aa_gun_towed: pg87}}
+  - {id: pla_border_regt_arty_coy, name: 边防团直属炮兵连, level: company, children: [{template: pla_border_bn_mortar_sq, count: 9}], notes: 9 门 PP-89 100 迫，必要时平射充当直瞄火力。（原连级 default_bindings 〔mortar_medium→pp89_100〕 已上移到 pla_border_regiment / pla_border_arty_bn（01 §3.4.1）。）}
+  - {id: pla_border_regt_ad_coy, name: 边防团直属防空连, level: company, children: [{template: pla_vsq_aa_gun_towed, count: 6}], notes: 原连级 default_bindings 〔aa_gun_towed→pg87〕 已上移到 pla_border_regiment / pla_border_ad_bn（01 §3.4.1）。}
   - {id: pla_border_recon_coy, name: 直属武装侦察连, level: company, children: [{template: pla_armed_recon_plt, count: 3}], confidence: estimated}
   - {id: pla_border_spt_coy, name: 支援保障连, level: company, role: support, children: [{template: pla_generic_sq, count: 1}]}
   - {id: pla_border_outposts, name: 哨所和雷达站, level: company, children: [{template: pla_generic_sq, count: 1}], notes: 若干。}
@@ -1235,13 +1236,15 @@ templates:
       - {template: pla_border_spt_coy, count: 1}
       - {template: pla_border_outposts, count: 1}
     unit_ratings: {informatization: info_pla_border, logistics: log_pla_light, readiness: ready_border}
+    default_bindings: {mortar_medium: pp89_100, aa_gun_towed: pg87}
     notes: 火力配备水平较低，装备老旧，持续作战能力较弱，但机械化程度高于摩步旅。似乎 17 年军改中没有重要调整。
   - id: pla_border_arty_bn
     name: 边防旅炮兵营
     level: battalion
     children: [{template: pla_border_regt_arty_coy, count: 2}]
+    default_bindings: {mortar_medium: pp89_100}
     notes: 火炮数量翻倍；有时有 59 式 130 加农炮。
-  - {id: pla_border_ad_bn, name: 边防旅防空营, level: battalion, children: [{template: pla_border_regt_ad_coy, count: 2}]}
+  - {id: pla_border_ad_bn, name: 边防旅防空营, level: battalion, children: [{template: pla_border_regt_ad_coy, count: 2}], default_bindings: {aa_gun_towed: pg87}}
   - {id: pla_border_spt_bn, name: 边防旅支援保障营, level: battalion, role: support, granularity: aggregate, children: []}
   - id: pla_border_brigade
     name: 边防旅
@@ -1269,7 +1272,7 @@ templates:
     notes: PF-98 两人小组、2 名班用机枪手、87 式自动榴弹 3 人小组、4 名步枪手（03 式）。
   - {id: pla_coastal_inf_plt, level: platoon, children: [{template: pla_coastal_squad, count: 3}], confidence: estimated}
   - {id: pla_coastal_gun_sq, level: squad, granularity: aggregate, slots: {howitzer_heavy_towed: 1}}
-  - {id: pla_coastal_arty_plt, level: platoon, children: [{template: pla_coastal_gun_sq, count: 3}], default_bindings: {howitzer_heavy_towed: type59_130}, notes: 每排 3 门 59 式 130 加农炮。}
+  - {id: pla_coastal_arty_plt, level: platoon, children: [{template: pla_coastal_gun_sq, count: 3}], notes: 每排 3 门 59 式 130 加农炮。（原排级 default_bindings 〔howitzer_heavy_towed→type59_130〕 已上移到 pla_coastal_garrison_bn（01 §3.4.1）。）}
   - {id: pla_coastal_ad_plt, level: platoon, children: [{template: pla_border_aamg_sq, count: 3}], notes: 2-3 个班，每班 1 门 02 式高射机枪。}
   - id: pla_coastal_garrison_coy
     name: 守备海防连
@@ -1279,7 +1282,7 @@ templates:
       - {template: pla_coastal_arty_plt, count: 2}
       - {template: pla_coastal_ad_plt, count: 1}
     notes: 1-2 个步兵排、1-2 个炮兵排、有时 1 个防空排；可能配若干对海侦察校射雷达；无巡逻机动载具。
-  - {id: pla_coastal_garrison_bn, name: 守备海防营, level: battalion, children: [{template: pla_coastal_garrison_coy, count: 3}], confidence: estimated}
+  - {id: pla_coastal_garrison_bn, name: 守备海防营, level: battalion, children: [{template: pla_coastal_garrison_coy, count: 3}], default_bindings: {howitzer_heavy_towed: type59_130}, confidence: estimated}
   - id: pla_coastal_mobile_bn
     name: 海防旅机动步兵营
     level: battalion
@@ -1297,7 +1300,7 @@ templates:
     children: [{template: pla_coastal_gun_coy, count: 2}, {template: pla_mrl122_coy, count: 1}]
     default_bindings: {howitzer_heavy_towed: type59_130, mrl_light: type81_mrl}
     notes: 一般 2 个连 59 式 130 牵引加农炮（部分为 66 式 152 甚至 PLZ-05），1 个连 81 式 122 火箭炮（部分为 11 式甚至 PHL-03）。
-  - {id: pla_coastal_ad_coy, name: 海防旅防空连, level: company, children: [{template: pla_vsq_aa_gun_towed, count: 6}], default_bindings: {aa_gun_towed: pg99}, notes: PG-99 或 PG-87。}
+  - {id: pla_coastal_ad_coy, name: 海防旅防空连, level: company, children: [{template: pla_vsq_aa_gun_towed, count: 6}], notes: PG-99 或 PG-87。（原连级 default_bindings 〔aa_gun_towed→pg99〕 已上移到 pla_coastal_brigade（01 §3.4.1）。）}
   - id: pla_coastal_boat_group
     name: 船艇大队
     level: battalion
@@ -1314,6 +1317,7 @@ templates:
       - {template: pla_coastal_boat_group, count: 1}
       - {template: pla_border_spt_bn, count: 1}
     unit_ratings: {informatization: info_pla_border, logistics: log_pla_light, readiness: ready_border}
+    default_bindings: {aa_gun_towed: pg99}
     notes: 可看作岸炮部队和在近岸岛屿、内水活动的小型黄水海军。守备营可能为 4 个。2026 年更新：大量海防部队已裁撤，身管火炮分配给各集团军炮兵旅。
 
   # ##################################################################

@@ -107,6 +107,17 @@
 | 1.4.2.12 | 海军岸舰导弹团 | `pla_navy_coastal_missile_regiment` | ✅ |
 | 1.4.2.13 | 特战分级 | `pla_other.yaml` → `special_forces_tiers` | — |
 
+## 纳卡（亚美尼亚 / 阿塞拜疆，苏式遗产；来源不是知乎原文，见 arm/aze_sov_legacy.yaml 文件头，confidence 多为 estimated）
+
+| 结构（01 §4.17） | 单位 | 模板 | 深度 |
+|---|---|---|---|
+| 摩步营 / 步兵营 / 坦克营 | BMP、BTR 摩步营，固守步兵营，坦克营 | `arm_mr_bn_bmp`、`arm_mr_bn_btr`、`arm_rifle_bn`、`arm_tank_bn`；`aze_mr_bn_bmp`、`aze_mr_bn_btr`、`aze_rifle_bn`、`aze_tank_bn` | ✅ |
+| 炮兵 / 火箭炮 / 防空营 | 自行、牵引、轮式炮兵营，火箭炮营，防空营 | `arm_arty_sp122_bn`、`arm_arty_sp152_bn`、`arm_arty_towed122_bn`、`arm_arty_towed152_bn`、`arm_mrl_bn`、`arm_mrl_lr_bn`、`arm_ad_bn`；`aze_arty_sp152_bn`、`aze_arty_wheeled152_bn`、`aze_mrl_lr_bn`、`aze_ad_bn` | ✅ |
+| 团 / 旅 | 亚方摩步团、步兵团、纳卡防卫团；阿方摩步旅、轻型摩步旅、炮兵旅、火箭炮旅 | `arm_mr_regt`、`arm_rifle_regt`、`arm_nk_defence_regt`；`aze_mr_bde`、`aze_mr_bde_light`、`aze_arty_bde`、`aze_mrl_bde` | ✅（保障营 🟡） |
+| 旅/团部 | 编组指挥部营 | `arm_bde_hq`、`aze_bde_hq` | ✅ |
+| 战术导弹营（01 M2） | Scud-B / Iskander-E；Tochka-U / LORA | `arm_tbm_bn` ← `arm_tbm_sq`；`aze_tbm_bn` ← `aze_tbm_sq` | ✅ |
+| 巡飞弹分队（01 M2，DC-205 ①） | 亚方无人机/巡飞弹连；阿方巡飞弹连、巡飞弹营 | `arm_loitering_btry` ← `arm_loitering_sq`；`aze_loitering_bn` ← `aze_loitering_btry` ← `aze_loitering_sq` | ✅ |
+
 ## 原文没有给出、因此未建或只建了名称的
 
 - 美军：旅部连、骑兵营营部连内部；工兵营、后勤营各排内部人员装备；第 1/2/3/4 军具体挂靠哪些师旅。

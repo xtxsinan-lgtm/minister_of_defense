@@ -370,7 +370,7 @@ templates:
   # ==================================================================
   # 濒海战斗团（FD2030）
   # ==================================================================
-  - {id: usmc_nmesis_battery, name: 濒海战斗团营属导弹连, level: company, children: [{template: usmc_nmesis_agg, count: 1}], default_bindings: {coastal_ashm_launcher: nmesis}}
+  - {id: usmc_nmesis_battery, name: 濒海战斗团营属导弹连, level: company, children: [{template: usmc_nmesis_agg, count: 1}], notes: 原连级 default_bindings 〔coastal_ashm_launcher→nmesis〕 已上移到 usmc_littoral_inf_bn（01 §3.4.1）。}
   - {id: usmc_nmesis_agg, level: squad, granularity: aggregate, slots: {coastal_ashm_launcher: 8}}
   - id: usmc_littoral_regiment
     name: 陆战濒海战斗团（MLR）
@@ -410,6 +410,7 @@ templates:
       - {template: usmc_rifle_coy_fd2030, count: 3}
       - {template: usmc_nmesis_battery, count: 1}
       - {template: usmc_hs_coy_fd2030, count: 1}
+    default_bindings: {coastal_ashm_launcher: nmesis}
     notes: 营内新增昂贵的 NMESIS 导弹连（每连 8 车）。
   - {id: usmc_littoral_aa_bn, name: 濒海战斗团防空营, level: battalion, children: [{template: usmc_sq_generic, count: 1}], notes: 组成原文未给。}
 
@@ -513,7 +514,8 @@ templates:
   - {id: usmc_tank_coy_att, variant_of: usmc_tank_coy, level: company, children: [{template: us_tank_plt, count: 3}, {template: usmc_tank_coy_hq, count: 1}]}
   - id: usmc_meb_gce
     name: MEB 地面作战部队（加强团）
-    level: brigade
+    level: division
+    echelon_label: regimental_landing_team
     children:
       - {template: usmc_inf_regiment, count: 1}
       - {template: usmc_arty_bn, count: 1}
@@ -522,7 +524,7 @@ templates:
       - {template: usmc_lar_coy, count: 1}
       - {template: usmc_recon_coy, count: 1}
       - {template: usmc_combat_eng_coy, count: 1}
-    notes: 由师属辅助单位拆分：1 个炮兵营，坦克、两栖突击、轻装甲侦察、侦察、工兵各 1 个连；大抵相当于 1 个陆军 BCT。
+    notes: 由师属辅助单位拆分：1 个炮兵营，坦克、两栖突击、轻装甲侦察、侦察、工兵各 1 个连；大抵相当于 1 个陆军 BCT。（审查：内含旅级的步兵团，按 01 O-02“子模板层级严格更低”上调为 division，显示名用 echelon_label。）
   - id: usmc_meb_ace
     name: MEB 航空作战部队
     level: brigade
@@ -536,21 +538,23 @@ templates:
   - {id: usmc_meb_lce, name: MEB 后勤团, level: brigade, role: support, children: [{template: usmc_sq_generic, count: 1}], notes: 由各单位连级单位组成。}
   - id: usmc_meb
     name: 陆战远征旅（MEB）
-    level: division
+    level: corps
+    echelon_label: meb
     children: [{template: usmc_meb_gce, count: 1}, {template: usmc_meb_ace, count: 1}, {template: usmc_meb_lce, count: 1}]
-    notes: 运送需要 3 个两栖戒备舰队。
+    notes: 运送需要 3 个两栖戒备舰队。（审查：GCE 上调为 division 后，MEB 按 01 O-02 上调为 corps，显示名用 echelon_label=meb。）
 
   # ==================================================================
   # MEU（远征单元）
   # ==================================================================
-  - {id: usmc_tank_plt_att, name: 坦克排（加强）, level: platoon, children: [{template: us_tank_plt, count: 1}]}
-  - {id: usmc_aav_plt_att, name: 两栖突击排（加强）, level: platoon, children: [{template: usmc_aav_plt, count: 1}]}
-  - {id: usmc_lar_plt_att, name: 轻装甲侦察排（加强）, level: platoon, children: [{template: usmc_lar_plt, count: 1}]}
+  - {id: usmc_tank_plt_att, name: 坦克排（加强）, level: company, children: [{template: us_tank_plt, count: 1}], notes: 加强排的外壳，内含一个排模板；按 01 O-02 层级须高于子模板，故为 company。}
+  - {id: usmc_aav_plt_att, name: 两栖突击排（加强）, level: company, children: [{template: usmc_aav_plt, count: 1}], notes: 加强排的外壳，内含一个排模板；按 01 O-02 层级须高于子模板，故为 company。}
+  - {id: usmc_lar_plt_att, name: 轻装甲侦察排（加强）, level: company, children: [{template: usmc_lar_plt, count: 1}], notes: 加强排的外壳，内含一个排模板；按 01 O-02 层级须高于子模板，故为 company。}
   - {id: usmc_recon_plt_att, name: 侦察排（加强）, level: platoon, children: [{template: usmc_sq_generic, count: 1}]}
-  - {id: usmc_eng_plt_att, name: 工兵排（加强）, level: platoon, children: [{template: usmc_combat_eng_plt, count: 1}]}
+  - {id: usmc_eng_plt_att, name: 工兵排（加强）, level: company, children: [{template: usmc_combat_eng_plt, count: 1}], notes: 加强排的外壳，内含一个排模板；按 01 O-02 层级须高于子模板，故为 company。}
   - id: usmc_meu_gce
     name: MEU 地面作战部队（营登陆队）
-    level: battalion
+    level: brigade
+    echelon_label: battalion_landing_team
     children:
       - {template: usmc_inf_bn, count: 1}
       - {template: usmc_m777_battery, count: 1}
@@ -560,7 +564,7 @@ templates:
       - {template: usmc_recon_plt_att, count: 1}
       - {template: usmc_eng_plt_att, count: 1}
     expected_personnel: 1284
-    notes: 加强了一个营，加强单位降级到炮兵连和各种排。
+    notes: 加强了一个营，加强单位降级到炮兵连和各种排。（审查：内含一个完整步兵营，按 01 O-02 上调为 brigade，显示名用 echelon_label。）
   - id: usmc_meu_ace
     name: MEU 航空作战部队（混编中队）
     level: battalion
@@ -577,7 +581,8 @@ templates:
   - {id: usmc_meu_ce, name: MEU 指挥部, level: company, role: hq, children: [{template: usmc_sq_generic, count: 1}], expected_personnel: 307}
   - id: usmc_meu
     name: 陆战远征单元（MEU）
-    level: brigade
+    level: division
+    echelon_label: meu
     children: [{template: usmc_meu_gce, count: 1}, {template: usmc_meu_ace, count: 1}, {template: usmc_meu_lce, count: 1}, {template: usmc_meu_ce, count: 1}]
     expected_personnel: 2446
     notes: 实战中最常组成的作战单位；一个两栖戒备舰队（1 艘美国级或黄蜂级 + 1 艘圣安东尼奥级 + 1 艘惠德贝岛级或第二艘圣安东尼奥级，最多 2890 人）正好装下。适合针对一个小岛的抢滩登陆。高配版的俄罗斯营战术群。
