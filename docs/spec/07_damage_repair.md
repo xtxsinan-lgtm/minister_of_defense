@@ -338,7 +338,7 @@ capacityWhPerH(队列) = Σ_{持有者内 mechanic 专业、可战斗、不在�
 队列排序（全序）：PriorityClass（MBT/IFV/火炮/防空 = 1，其他装甲 = 2，其他 = 3）升序 → workRemainingH 升序 → itemId 升序
 依次分配：对每件 i，可分到 w = min(剩余容量, MaxWhPerItemPerH, workRemainingH_i)
    备件需求 q = w × partsPerWorkHour(model)
-   got = 06.TryDrawParts(holderStock, model, q)       // 营：营辎重队库存；旅：BSA 库存（H-07 接口）
+   06.TryDrawParts(holder, model, q, out got)       // holder：营队列传 OrgUnitId（营辎重队库存），旅队列传 FormationId（BSA 库存）；06 §6.1
    若 got < q 且 allowCannibalization → §4.8.3 拆东补西补足
    实际工时 w' = w × got' / q（got' = 最终得到的备件）；workRemainingH −= w'；剩余容量 −= w'
    若 w' == 0 → recovery = AwaitingParts（反馈“等备件”）
@@ -700,7 +700,7 @@ mechanic、medic、uav_operator、radar_operator、jtac、forward_observer 作�
 | 02 | `RosterState` 读写、`GetSkill`、`TrainedPoolAvailable`、`TakeFromTrainedPool`（H-10，需 02 提供）、`OnPersonJoined`、`OnPersonReturned`、新兵练度 | 补充、归队、维修效率 |
 | 03 | `MunitionKind`、`ArmorProfile.catastrophicGivenKill`、`TargetValue`、`CombatStrength`、`BattalionSummary.fillRate`、`LossSource` | 损伤、排序、满编率 |
 | 04 | `BattlefieldControllerAt`、`TruckKillIntegral`、`RecordLoss`、营辎重队/BSA 在条带上的位置 | 回收、后送、账本 |
-| 06 | `TryDrawParts(holder, model, qty)`（H-07，需 06 提供；或用 `TryConsume` 的持有者版本）、`RequestTransport`、备件入库、营辎重队/BSA 库存 | 备件、运输 |
+| 06 | `TryDrawParts(holder, model, qty, out got)`（06 §6.1）、`RequestTransport`、备件入库、营辎重队/BSA 库存 | 备件、运输 |
 | 09 | `IsFrontline`、营位置、命令（轮换由 12 发出） | 轮换 |
 | 11 | `FaultRateMultiplier` 组成项、`partsAddedMusd`、单价、大修预算扣款 | 故障、备件、费用 |
 | 12 | 轮换请求的执行（替换与后撤） | 整建制轮换 |

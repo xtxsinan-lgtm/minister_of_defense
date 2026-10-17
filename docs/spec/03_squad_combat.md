@@ -129,6 +129,10 @@ public sealed class MunitionProfile {          // YAML 键：munition
     public double aaPk;              // 对空单发毁伤概率（基准，canAntiAir 武器才用）
     public double allocValue;        // 火力分配用的“弹药价值”，≥ 1（步枪弹 1，ATGM 40）
     public double smokeDurationS;    // Smoke 弹：烟幕持续时间
+    // —— 后勤/打击用字段（06 L-24 请求；枚举由 06 定义）——
+    public string caliberGroup;      // 通用弹药组 id（06 `CaliberGroupDef.id`，如 "cal_155mm_nato"）；null = 不与其他型号共用
+    public MunitionShelfClass shelfClass;  // 保质期分类（06 §3.1）；None 时 06 按 data/logistics/munition_storage.yaml 回退
+    public double warheadKg;         // 战斗部（装药+壳体）质量，06 据此定 WarheadClass（<50 Small / 50–250 Medium / >250 Large）；0 = 无战斗部
 }
 
 public sealed class ArmorProfile {             // YAML 键：armor
@@ -255,11 +259,19 @@ public sealed class SquadCombatState {           // 03 定义；04、07 读
     public bool isCombatEffective;               // §4.10
 }
 
-public sealed class SquadAmmoState {             // 03 定义；06 补给时写入
+// 班弹药的唯一持久存储是 06 的 `SquadCarriedState`（06 §3.5）。03 只在片段内持有下面的缓存（随片段存档，片段结束即丢弃）。
+public sealed class EngagementAmmoCache {        // 03 定义；片段内缓存，键 = (EngagementId, SquadId)
     public SquadId squadId;
     public SortedDictionary<int,int> onPersonnel;    // 弹药型号句柄 → 发数（人员随身）
     public SortedDictionary<int,int> onVehicle;      // 弹药型号句柄 → 发数（车载）
+    public SortedDictionary<int,int> initialTotal;   // 片段创建时从 06 读到的总数（写回时求差）
 }
+// 创建（片段创建时，每个参战班）：对每个弹药型号 m：total = (int)Math.Floor(06.GetAvailable(squadId, new ItemKey(SupplyClass.Ammunition, m)))；
+//   班无车辆 → onPersonnel[m] = total；
+//   否则 onPersonnel[m] = min(total, Σ 非车载武器（人员携行武器）的 defaultLoad[m])，onVehicle[m] = total − onPersonnel[m]。
+// 写回（片段结束，§6.2）：used = initialTotal[m] − (onPersonnel[m] + onVehicle[m])；
+//   调 06.TryConsume(squadId, new ItemKey(SupplyClass.Ammunition, m), used, out _) 和 06.ReportConsumption(营, new ItemKey(SupplyClass.Ammunition, m), used)。
+//   丢弃在原地的弹药同样计入 used（随 droppedItems 交给 07 回收）。
 
 public sealed class PersonLoadState {            // 03 定义（负重，单兵）
     public PersonnelId personId;
@@ -859,6 +871,15 @@ isBroken ⟸ (casualtyFrac ≥ BreakCasualtyFrac 且 s ≥ BreakSupp) 或 (可�
 
 `CombatStrength` 定义见 §4.13。`Reconnaissance` 类型：A 方在获得 ≥ 50% 守方元素航迹后自动 `Withdraw`，结局记 `Stalemate`，其价值在于把暴露度贡献交给 05（§6.3）。
 
+**强制结束 `EngagementResult ForceEnd(EngagementId id)`**（04 E-11；04 在战斗被判定结束时调用，如停火、地块因别处原因易手）：
+```text
+1. 若片段已结束（outcome ≠ None）→ 直接返回已有结果（幂等）。
+2. 不再执行任何步；本刻尚未结算的步内事件全部丢弃；仍在飞的落点按 §6.2 第 3 行交回 04。
+3. outcome = Stalemate；seizedDepthM 保持当前值；durationMin = stepIndex。
+4. 与自然结束完全相同地生成 EngagementResult（伤亡、droppedItems、弹药写回 06、统计、威胁记录），并释放 FireSupportRequest（状态 Queued 的置 Cancelled）。
+5. 调用时机：任何阶段均可调用，结果在调用处立即返回；04 随后按自己的写回流程处理。
+```
+
 ### 4.11 威胁窗口（总纲 §9.10(3)）
 
 ```text
@@ -1123,12 +1144,13 @@ ProvingGroundReport Run(ProvingGroundSpec spec) {
 | 来源 | 数据 | 时机 |
 |---|---|---|
 | 04 | `CreateEngagement(SectorContext ctx, List<SquadId> sideA, List<SquadId> sideB)`；`ctx` 包含：`battleId, type, x0M, frontageM, contactYAt(x), attackDir, light, visibilityFactor, obstacleDensity, breach, fortificationLevel, knowledgeOfEnemy[2], supportAssets[2], fireSupportSuppression[2], doctrine[2], fidelity` | 阶段 80 |
+| 04 | `ForceEnd(EngagementId)`（§4.10，04 E-11）：战斗被判定结束时强制收尾，返回 `EngagementResult` | 任意阶段（通常 140 `BattleEnd`） |
 | 04 | `SupportFireBroker` 回填的 `FireSupportRequest.fireAt/impactAt` 与 `ExternalImpactEvent` 列表 | 阶段 100 开始时取本刻落入本片段的事件 |
 | 08 | 空袭/CAS/巡飞弹的 `GroundStrikeEvent { timeMs, munitionId, aimElement 或 aimPoint, pHitDirect, cepM, sourceTag }`（04 转交属于本片段的事件） | 阶段 90 产生，阶段 100 插入 |
 | 01 | `Squad`、`EquipmentItem`、`EquipmentModel`（含本文件的三个 Profile）、`GetRequestChain()`、`CommandLoad/CommandCapacity`、`SquadTemplate` 中车组专业标记 | 片段创建时 |
 | 02 | `Roster`/`PersonnelRecord`（专业、携带物）、`GetSkill(formationId, specialtyId, modelId)` | 片段创建时缓存，片段内不变 |
 | 05 | `ExposureLevel`（双方对敌方连）、`ExposureAccuracyFactor(level, ageMs)`、`SensorProfile`（需要字段：`opticsClassDay`, `opticsClassNight`，枚举 `OpticsClass` 见 §4.2.2——C-08）、`SignatureProfile.engagementSigMult` | 片段创建时 |
-| 06 | `SquadAmmoState` 的当前值（06 补给写入） | 片段创建时 |
+| 06 | `SquadCarriedState` 的当前值，经 `GetAvailable(SquadId, ItemKey)` 读取，用于初始化 `EngagementAmmoCache`（§3.3）；`GetFatigueFloor(SquadId)` | 片段创建时 |
 | 07 | `RollVehicleDamage()`、`ApplyCasualty()`、`ApplyVehicleDamage()`、`CrossTrainFactor()`、`PlatoonReorgInCombat()` | 片段内调用 |
 | 09 | 本刻号、`FidelityTier`、`LightLevel`（按太阳高度：> 0° Day，−6°…0° Twilight，< −6° Night） | 每刻 |
 | 15 | `Pcg32`、`For()`、`NextGaussian()`、`DMath` | — |
@@ -1143,7 +1165,7 @@ ProvingGroundReport Run(ProvingGroundSpec spec) {
 | 07 | `ApplyCasualty(personId, CasualtyState, time, LossSource)`、`ApplyVehicleDamage(itemId, DamageLevel, flags, time, LossSource, stripPos)` | 事件发生即时 |
 | 02 | 实战经验（参战人员按专业的“交战分钟数”），02 定义练度增长 | 片段结束 |
 | 05 | `ReconContribution`：片段内对敌方元素航迹覆盖率 → 05 的 `GroundRecon` 贡献；开火/电台使用 → 特征值事件 | 片段结束（以及每 10 分钟汇总一次） |
-| 06 | `SquadAmmoState` 消耗后的值；燃油消耗（车辆移动距离 × 06 的油耗） | 片段结束 |
+| 06 | 弹药消耗：按 §3.3 `EngagementAmmoCache` 求差后调 `TryConsume(SquadId, ItemKey, qty, out got)` + `ReportConsumption(battalion, ItemKey, qty)`；燃油消耗（车辆移动距离 × 06 的油耗）同样走 `TryConsume` | 片段结束 |
 | 13/15 | `BattleEventLog` 事件（`Full` 精度）：发现、开火、命中、伤亡、下车、请求时间戳 | 每刻阶段 150 |
 | 12 | `OutcomeCache` 读取接口 `Query(key, so, se) → (mean, var)` | 任意时刻（只读） |
 
@@ -1301,7 +1323,7 @@ ProvingGroundReport Run(ProvingGroundSpec spec) {
 | 观瞄等级 | `OpticsClass` | `NakedEye, Binocular, NightVision, VehicleDayOptics, ThermalGen1, ThermalGen2, UavCamera` | 03（05 的 SensorProfile 引用） |
 | 光照 | `LightLevel` | `Day, Twilight, Night` | 03 |
 | 班战斗状态 | `SquadCombatState` | 跨片段持久的压制、疲劳、战斗力标志（组件） | 03 |
-| 班弹药状态 | `SquadAmmoState` | 班的随身/车载弹药（组件） | 03（06 写入补给） |
+| 片段弹药缓存 | `EngagementAmmoCache` | 片段内班的随身/车载弹药缓存；持久存储是 06 的 `SquadCarriedState` | 03 |
 | 单兵负重状态 | `PersonLoadState` | 单兵负重（组件） | 03 |
 | 武器运行态 | `WeaponRuntime` | 片段内每件武器的操作者、目标、下次可射时刻 | 03 |
 | 威胁记录 | `ThreatRecord` | 威胁从发现到被处理的时间与等待期间损失 | 03 |

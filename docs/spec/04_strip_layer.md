@@ -835,7 +835,7 @@ IsCombatEffective = CS_bn ≥ BattalionEffectiveThreshold（0.30，09 建议值�
 #### 4.13.3 `EndEdgeBattle(battleId, BattleEndReason reason, SimTime at)`（09 判定后调用）
 
 ```text
-1. 对每个活跃片段调用 03.ForceEnd(engagementId)（以当前状态生成 EngagementResult，outcome = Stalemate；E-11 需 03 提供），然后 §4.9.6 写回
+1. 对每个活跃片段调用 03.ForceEnd(engagementId)（以当前状态生成 EngagementResult，outcome = Stalemate；03 §4.10），然后 §4.9.6 写回
 2. 未执行的火力任务全部取消；已出膛（fireAt ≤ now）的仍按时落地（阶段 110）
 3. 战场控制（§4.13.4）→ 07.ResolveBattlefieldControl(battleId, controllerOf(pos) 函数)
 4. 元素解散：连回到营的地块层状态；SquadCombatState（压制、疲劳）保留；fortLevel 写回 09 的挖壕进度（守方，原地留守时）
@@ -1057,7 +1057,7 @@ EstimatedEnemyTubeRangeM(s) = max_{e 方火力单位 u，s 方对 u 所属营 05
 
 | 来源 | 需要 | 用途 |
 |---|---|---|
-| 03 | `CreateEngagement`、`EngagementResult`、`ForceEnd(EngagementId)`（🟡 E-11，需 03 补充）、`AreaFire.ResolveRound`、直射 Top 方位结算函数、`CombatStrength`/`CapabilityVector`、`ClassOf`、`OutcomeCache` | E 线、条带上的火力结算、指标 |
+| 03 | `CreateEngagement`、`EngagementResult`、`ForceEnd(EngagementId)`（03 §4.10）、`AreaFire.ResolveRound`、直射 Top 方位结算函数、`CombatStrength`/`CapabilityVector`、`ClassOf`、`OutcomeCache` | E 线、条带上的火力结算、指标 |
 | 01 | 编制树、`GetRequestChain`、`EquipmentModel` 与 03 的 Profile、营的建制编组 | 元素构成、请求链 |
 | 02 | `GetSkill` | 工兵当量、侦察技能 |
 | 05 | `GetLevel`、`GetAgeMs`、`ExposureAccuracyFactor`、`TargetLocationErrorM`、`PrecisionStrikeAllowed`、`AreaStrikeAmmoMultiplier`、`S_phys`、`EmconState`、`groundReconValue` 缺省表 | B/C/A 线 |

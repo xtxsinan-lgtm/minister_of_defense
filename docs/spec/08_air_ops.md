@@ -164,7 +164,7 @@ class AirMunitionFields {
     double speedMps;                      // 最大速度；平均速度 = AvgSpeedFrac × speedMps
     double[] pkVs;                        // 下标 = (int)AirTargetClass；单发拦截/命中概率（防空弹、空空弹）
     double cepM;                          // 空对地：圆概率误差
-    double warheadKg;
+    // warheadKg：使用 03 `MunitionProfile.warheadKg`（通用字段），本扩展不再重复定义
     double costMusd;                      // 单发价格（拦截成本、F7）
     bool isInterceptable;                 // 飞行中能否被拦截（巡航、弹道、反辐射、巡飞弹、制导炸弹）
     AirTargetClass inFlightClass;         // 被拦截时的类别
@@ -466,7 +466,7 @@ LoadoutOption ChooseLoadout(Flight f, AirMissionType t, int nAircraft, out bool 
 }
 ```
 - `NodeStock` 读 06 的机场节点库存（只读）；起飞时用 06 `TryDrawFromNode(node, ItemKey, qty)` 实际扣除（按 munitionId 升序扣）。同一刻多个编组从同一机场扣弹：按 FlightId 升序串行执行（空中步单线程，确定）。
-- **燃油**：起飞时 `TryDrawFromNode(node, JetFuel, fuelKg × nAircraft / 1000)`（吨）；不足 → 失败 `NoFuel`。降落时**未用完的燃油不退回**（简化），未消耗的弹药退回降落机场（06 `ReturnToNode`，🟡 A-14）。
+- **燃油**：起飞时 `TryDrawFromNode(node, JetFuel, fuelKg × nAircraft / 1000)`（吨）；不足 → 失败 `NoFuel`。降落时**未用完的燃油不退回**（简化），未消耗的弹药退回降落机场（06 `ReturnToNode`，A-14）。
 - 有人机被击落：机上弹药随之损失。
 
 #### 4.2.3 任务包（§12.3）
@@ -1187,10 +1187,10 @@ JetFuel：Σ 架数 × PlanningSortiesPerDay × fuelKg / 1000（吨）
 |---|---|
 | 01 | `Formation`（中队）、`EquipmentItem`（飞机、发射车、雷达车）、型号与 Profile；“中队营”结构（A-25） |
 | 02 | `GetSkill`（`pilot`、`aircrew`、`uav_operator`、防空操作员专业）；名册里飞行员/操作员人数与状态；`AirborneQualified` |
-| 03 | `MunitionProfile` 通用字段（`massKg`、`isTopAttack`）；`ExternalImpactEvent` 由 04 转交 |
+| 03 | `MunitionProfile` 通用字段（`roundWeightKg`、`isTopAttack`、`warheadKg`）；`ExternalImpactEvent` 由 04 转交 |
 | 04 | `SelectCasTarget(battleId, side, platformClass, orbitPosM)`；条带坐标 ↔ 经纬度（04 §4.1.1）；`tileLocalPosM` 读/写（防空转移）；`CancelScheduledEvent(missionId, roundIndex)`；`NodeRadiusM` 常数；防空/营属防空元素的位置 |
 | 05 | `GetLevel`、`GetAgeMs`、`PrecisionStrikeAllowed`、`TargetLocationErrorM`、`SearchAcquireProbabilityPerMin`、`RegisterSelfFix`、`GetSignature`、`AreaReconTask.dwellShare`、`SensorProfile`、`EmconState`、`IntelEstimate`（目标选择只读情报，不读真值） |
-| 06 | 机场节点库存（只读）、`TryDrawFromNode`、`ReturnToNode`（🟡 A-14，需 06 补充）、`TryConsume`/`GetAvailable`（防空弹）、`throughputDamage`、`OnNodeStrike`/`OnCrossingStrike`/`OnLocStrike`、`GetTrafficTrucksPerH`、`MobilityProfile.isAirdroppable/isSlingLoadable`、`WarheadClass` |
+| 06 | 机场节点库存（只读）、`TryDrawFromNode`、`ReturnToNode(NodeId, ItemKey, qty)`（06 §6.1）、`TryConsume`/`GetAvailable`（防空弹）、`throughputDamage`、`OnNodeStrike`/`OnCrossingStrike`/`OnLocStrike`、`GetTrafficTrucksPerH`、`MobilityProfile.isAirdroppable/isSlingLoadable`、`WarheadClass` |
 | 07 | `ApplyVehicleDamage`（飞机、无人机、发射车被毁）、`ApplyCasualty`（机组）、飞机修复状态、`ReliabilityProfile` |
 | 09 | `StartMission` 路由、`GetLightCondition`、营位置与速度（外推）、`GetMoveState`、`PostNotification`、`UnitConfig`（拦截策略、电磁管控、转移开关） |
 | 10 | 地块中心、平均高程、`TerrainComposition`（主地形）、机场/简易跑道 |

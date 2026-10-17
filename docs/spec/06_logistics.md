@@ -143,7 +143,7 @@ public readonly record struct ItemKey(SupplyClass cls, int handle) : IComparable
 
 | 物资 | 库存数量单位 | 换算成吨（运输只看吨位，§19.6） |
 |---|---|---|
-| Ammunition | 发/枚（`double`，界面向下取整） | `qty × munition.massKg × PackagingFactor / 1000`；`massKg` 来自 03/08 的 `MunitionProfile`（整发全重） |
+| Ammunition | 发/枚（`double`，界面向下取整） | `qty × munition.roundWeightKg × PackagingFactor / 1000`；`roundWeightKg` = 03 `MunitionProfile.roundWeightKg`（整发全重） |
 | SpareParts | 备件单位（含义由 07 定义） | `qty × PartsUnitMassKg(model) / 1000`（本文件数据，默认 `DefaultPartsUnitMassKg`） |
 | Fuel | 吨 `T` | 原样；升 ↔ 吨用 `DieselDensityKgPerL` / `JetFuelDensityKgPerL` |
 | General | 吨 `T` | 原样 |
@@ -480,16 +480,16 @@ L11 统计（EMA、流量图）
 ```text
 对旅 b 中每件装备 w（EquipmentItem，其型号有 WeaponProfile），按武器型号 M(w)：
     load(M) = AmmoComposition.perWeaponModel[M]  若有覆盖
-            = WeaponProfile(M).defaultAmmoLoad   否则
+            = WeaponProfile(M).defaultLoad   否则
 BasisRounds[b][m] = Σ_w Σ_{(m, r) ∈ load(M(w))} r
-BasisMassT[b]     = Σ_m BasisRounds[b][m] × massKg(m) × PackagingFactor / 1000
+BasisMassT[b]     = Σ_m BasisRounds[b][m] × roundWeightKg(m) × PackagingFactor / 1000
 ```
 - 统计范围：旅内所有营（含旅直属营）里**状态不是 Destroyed/Abandoned** 的装备实例（07 的 `VehicleDamageState`）。模板视图（编辑器）用模板槽位 × 绑定型号代替实例。
 - `CarriedLoad`（随行携带量）满载定义：每件武器带 `load(M)` 一份（即 1 个基数，`CarriedAmmoBases = 1.0`）；车辆油箱满；班的给养 `CarriedGeneralDays` 天。
   - `fullQty[ammo m]`（班级）= Σ_{班内武器 w} rounds(m in load(M(w)))
   - `fullQty[Fuel f]` = Σ_{班内车辆, fuelType=f} fuelCapacityL × density / 1000
   - `fullQty[General]` = 班人数 × `GeneralKgPerPersonDay` × `CarriedGeneralDays` / 1000
-- 通用口径组：一件武器可用的弹药 = 03 在 `WeaponProfile.acceptedMunitions` 给出的列表。补给时如果首选弹药型号缺货，同 `CaliberGroup` 且在 `acceptedMunitions` 内的其他型号可以替代（按 `ItemKey` 升序选第一个有货的），并记 `substitutedRounds` 计数供 AAR。
+- 通用口径组：一件武器可用的弹药 = 03 在 `WeaponProfile.munitions` 给出的列表。补给时如果首选弹药型号缺货，同 `CaliberGroup` 且在 `munitions` 内的其他型号可以替代（按 `ItemKey` 升序选第一个有货的），并记 `substitutedRounds` 计数供 AAR。
 
 ```csharp
 AmmoBasis ComputeBasis(FormationId b) {
@@ -497,7 +497,7 @@ AmmoBasis ComputeBasis(FormationId b) {
     foreach (var w in Org.ItemsInFormation(b).OrderBy(i => i.id))           // 01 提供
         if (w.model.weapon != null && !Damage.IsLost(w.id))
             foreach (var (m, r) in LoadFor(b, w.model)) rounds[m] = rounds.GetValueOrDefault(m) + r;
-    double massKg = 0; foreach (var (m, r) in rounds) massKg += r * Munition(m).massKg * PackagingFactor;
+    double massKg = 0; foreach (var (m, r) in rounds) massKg += r * Munition(m).roundWeightKg * PackagingFactor;
     return new AmmoBasis { brigade = b, roundsByMunition = rounds, massT = massKg / 1000,
                            trucksToCarry = (int)Math.Ceiling(massKg / 1000 / StandardTruckPayloadT) };
 }
@@ -1171,6 +1171,8 @@ AAR 计数器（按旅）：noAmmoIdleHours、immobileHours、trucksLost、cargo
 | `double GetMobilityFactor(OrgUnitId battalion)` / `(SquadId)` | 09、04 | 每移动步 | §4.9 |
 | `double GetFatigueFloor(SquadId)` | 03 | 每步 | 给养断绝 |
 | `bool TryDrawFromNode(NodeId, ItemKey, double qty, out double got)` | 08（机场挂弹）、02（训练，FEFO） | 按需 | 机场挂载从机场节点扣 |
+| `bool TryDrawParts(OrgUnitId battalion, int modelHandle, double qty, out double got)` / `bool TryDrawParts(FormationId brigade, int modelHandle, double qty, out double got)` | 07（修理，07 H-07） | 每小时 `DamageRepair` | 从营辎重队（`BattalionTrains.stock`）或旅保障区（`BrigadeSupportArea.stock`）扣 `ItemKey(SupplyClass.SpareParts, modelHandle)`；单位 = 07 §3 定义的“备件单位”；不足时 got < qty，返回 `got ≥ qty` |
+| `void ReturnToNode(NodeId, ItemKey, double qty)` | 08（降落时退回未消耗的挂载弹药，08 A-14） | 降落时（`AirStep`） | 加回该节点 `Stockpile`；弹药批次年份记为当年（简化）；超出 `storageCapacityT` 也照常入库（与 FieldCache 溢出规则无关） |
 | `double ConsumeForTraining(FormationId, ItemKey, double qty)` | 02 | 每小时 | 从该编组所在方向的仓库（Depot，NodeId 升序）按 FEFO 扣；不足就少扣。**返回值 = 实际扣到的数量**（0 ≤ 返回值 ≤ qty），02 据此折算训练效果（02 P-18） |
 | `void AddProduced(NodeId factory, ItemKey or EquipmentModel, double qty)` | 11 | `Calendar` 时 | 产出入库（批次年份 = 当年） |
 | `void OnImportArrival(ImportBatch)` | 11 | 每小时 | §4.12 |
@@ -1190,7 +1192,7 @@ AAR 计数器（按旅）：noAmmoIdleHours、immobileHours、trucksLost、cargo
 |---|---|---|
 | 00/10 | `Tile`、`Edge`（`RoadLink.routes`、`RailLink`、`crossings`、`bypass`）、`hasRailFreightTerminal`、`Region` | §4.2 |
 | 01 | 编制树、`EquipmentItem`、`EquipmentModel.massKg`、`TemplateRole`、`Formation.echelon` | 卡车统计、基数 |
-| 03 | `WeaponProfile.defaultAmmoLoad`、`acceptedMunitions`；`MunitionProfile.massKg`、`caliberGroup`、`shelfClass`（🟡 请 03 加；没有时用 06 的 `munition_storage.yaml`） | §4.1 |
+| 03 | `WeaponProfile.defaultLoad`、`munitions`；`MunitionProfile.roundWeightKg`、`caliberGroup`、`shelfClass`、`warheadKg`（03 §3.1；`shelfClass = None` 时用 06 的 `munition_storage.yaml`） | §4.1 |
 | 04 | `IStripQuery`、地面跨地块火力命中事件 | §4.8、§4.10 |
 | 05 | 敌炮兵型号的暴露度（`EstimatedEnemyTubeRangeM` 内部用） | BSA 位置 |
 | 07 | `IsLost(item)`、`ApplyVehicleHit`、`StandardWarDayPartsRate`、补充请求 | |
