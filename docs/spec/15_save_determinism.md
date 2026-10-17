@@ -182,7 +182,7 @@ public enum InputKind : int {                  // 只能追加
     DoctrineChange = 8,                        // 12 旅条令预设
     SettingWithSimEffect = 9,                  // 其他影响模拟的设置（白名单，§4.8）
     OrgEdit = 10,                              // 13 IUiCommands 的编制编辑（01 模板提交、绑定等）
-    UnitAdmin = 11,                            // 13 IUiCommands 的单位管理（01/02/06：战备、弹药构成、学校设置等）
+    UnitAdmin = 11,                            // 13 IUiCommands 的单位管理（01/02/06/07/12：战备、分配策略、弹药构成、学校设置、合并/撤编、独立营保障旅等）
     CancelOrder = 12                           // 09 CancelOrder（Player 来源）；payload = orderId
 }
 

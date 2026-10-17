@@ -468,10 +468,10 @@ public sealed class ThreatSummary {     // SummarizeThreats 的输出：按目�
 
 // —— 编制试验场（§4.15）——
 public sealed class PgSideSpec {
-    public CountryId country;            // 型号缺省绑定与默认练度的来源国家
+    public CountryId country;            // 型号缺省绑定（01 ResolveModel 国家默认）的来源国家
     public TemplateHandle template;      // 排/连/营模板（可以是 13 草稿沙盒里的模板，13 §3.6）
     public SortedDictionary<int, ModelHandle> bindings;   // 键 = CategoryHandle.value；未列出的类别按 01 ResolveModel 国家默认
-    public double generalSkill01, typeSkill01;            // 试验场直接给值：全体人员的通用 / 专有练度 [0,1]
+    public SkillPreset skillPreset;      // 02 SkillPreset（Green/Regular/Veteran/Elite）；经 01 InstantiateFull → 02 FillRosterFull 填名册（02 §4.9.3）
 }
 public sealed class ProvingGroundSpec {
     public PgSideSpec own, enemy;

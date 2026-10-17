@@ -187,11 +187,13 @@ public readonly record struct IntelSnapshot(ExposureLevel level, SimTime intelTi
 public sealed class AirMissionOrderPayload : IOrderPayload { public object missionSpec; } // 内容由 08 定义（AirMission）
 public sealed class LogisticsConfigPayload : IOrderPayload { public object configChange; } // 内容由 06 定义
 public sealed class UnitConfigPayload : IOrderPayload {
-    public UnitConfigField field;          // MarchMode / Emcon / InterceptPolicy / ReplacementMode / ReorgPolicy / AllocationPolicy / DeployDecoys / RelocateAfterFiring
+    public UnitConfigField field;          // MarchMode / Emcon / InterceptPolicy / ReplacementMode / ReorgPolicy / AllocationPolicy / DeployDecoys / RelocateAfterFiring / FireSupportPriority / AllowCannibalization / AttachTo
     public int newValue;                   // 对应枚举的整数值
 }
 public enum UnitConfigField : int { None = 0, MarchMode = 1, Emcon = 2, InterceptPolicy = 3, ReplacementMode = 4, ReorgPolicy = 5, AllocationPolicy = 6,
-                                    DeployDecoys = 7, RelocateAfterFiring = 8, FireSupportPriority = 9 }   // 7：05 ReconConfig.deployDecoys（0/1）；8：发射后转移开关（0/1，08/13）；9：旅的 04 `FireSupportPriority`（值 = 枚举整数，生效时调 04 `SetFireSupportPriority`）
+                                    DeployDecoys = 7, RelocateAfterFiring = 8, FireSupportPriority = 9,   // 7：05 ReconConfig.deployDecoys（0/1）；8：发射后转移开关（0/1，08/13）；9：旅的 04 `FireSupportPriority`（值 = 枚举整数，生效时调 04 `SetFireSupportPriority`）
+                                    AllowCannibalization = 10,   // 旅的 07 `BrigadeSustainSettings.allowCannibalization`（0/1，07 H-08）；orderClass = Administrative
+                                    AttachTo = 11 }              // 营配属：newValue = 目标 FormationId.value（0 = 解除配属）；生效时调 01 `Attach` / `Detach`（01 §4.12）；orderClass = Planned（有命令延迟，01 §4.12“走 09 命令延迟”）
 
 public sealed class OrderDelayBreakdown {
     public OrgLevel echelon;               // 计算用的层级
@@ -868,7 +870,7 @@ LightCondition GetLightConditionAtEdge(EdgeId e, SimTime t) {
 | `bool IsNight(ulong tile, SimTime)` = `SolarAltitudeDeg < 0`；`IsFrontline(battalion)` = 营所在地块与敌方控制地块相邻或营在活跃 `EdgeBattle` 中 | 01、05、06 | 任意 |
 | `void OnDisengaged(OrgUnitId, SimTime)` | 04 | 04 完成脱离接触时 |
 | `void PostNotification(Notification)` | 04、05、06、08、11 | 本刻任意阶段；在 150 统一排序发布 |
-| `UnitConfigField`（含 `DeployDecoys = 7`、`RelocateAfterFiring = 8`） | 05、08、13 | 命令时 |
+| `UnitConfigField`（含 `DeployDecoys = 7`、`RelocateAfterFiring = 8`、`FireSupportPriority = 9`、`AllowCannibalization = 10`、`AttachTo = 11`） | 01、04、05、07、08、13 | 命令时 |
 
 ### 6.2 本文件需要（接口需求；签名由对应规格最终确定）
 | 来源 | 需要什么 | 用途 |
