@@ -1,0 +1,21 @@
+# nk_2020 引导步骤（格式 = 13 §4.8.2；14 §3.9）。最小示例：选部队、下移动命令、看第一场战斗。
+# 字段：id、trigger（{hook} 或 {after}）、highlight（{control: 13 §4.8.3 控件 id, filter?}）、text_key（tut.*）、complete_on、pause。
+# 钩子 id 只用 13 §4.8.2 的最小集；控件 id 为示例，以 13 §4.8.3 的最终清单为准。
+steps:
+  - id: tut_nk2020_select_brigade
+    trigger: {hook: ui.event.campaign_started}
+    highlight: {control: map.unit, filter: "own_formation_first"}
+    text_key: tut.nk2020.select_brigade
+    complete_on: {hook: ui.event.unit_selected}
+    pause: true
+  - id: tut_nk2020_move_order
+    trigger: {after: tut_nk2020_select_brigade}
+    highlight: {control: map.viewport}
+    text_key: tut.nk2020.right_click_move
+    complete_on: {hook: ui.event.order_submitted, where: {landType: move}}
+  - id: tut_nk2020_first_battle
+    trigger: {hook: ui.event.first_battle_started}
+    highlight: {control: map.viewport}
+    text_key: tut.nk2020.first_battle
+    complete_on: {hook: ui.event.strip_view_opened}
+    pause: true

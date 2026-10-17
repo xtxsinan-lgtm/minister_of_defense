@@ -740,8 +740,8 @@ share_i = x × d_i / Σd；若 share_i > avail_i 则 share_i = avail_i，把差�
 ### 4.6 承运方运力（L5）
 
 ```text
-NationalRail(c)：generalPayloadT = 14 剧本给出的 RailFleetPayloadT(c) × RailFleetAvailability；liquid 同（油罐车皮）
-NationalRoad(c)：generalPayloadT = NationalTruckPayloadT(c, MobilizationLevel)（14/11 给出：动员越高越大）
+NationalRail(c)：generalPayloadT = 14 剧本给出的 RailFleetPayloadT(c)（countries.yaml `rail_fleet_payload_t`，14 §3.10）× RailFleetAvailability；liquid 同（油罐车皮）
+NationalRoad(c)：generalPayloadT = NationalTruckPayloadT(c, MobilizationLevel)（14 §3.10 `national_truck_payload_t.{none, partial, full}`，按 11 当前 `MobilizationLevel` 取值）
 LogisticsBrigade(f)：Σ_{f 内状态完好、不在条带车队中的卡车} cargoPayloadT × CarrierAvailability
                      liquid = Σ 油罐车 liquidPayloadL × DieselDensityKgPerL / 1000 × CarrierAvailability
                      只有 boundHub 处于 Operational 时可用
@@ -1242,7 +1242,7 @@ AAR 计数器（按旅）：noAmmoIdleHours、immobileHours、trucksLost、cargo
 ### 6.3 数据文件（本文件定义 schema）
 
 ```yaml
-# data/scenarios/<剧本>/logistics_nodes.yaml（14 填数，06 定义 schema）
+# data/scenarios/nk_common/logistics_nodes.yaml（14 填数，06 定义 schema；国家级运力参数在 countries.yaml，14 §3.10）
 nodes:
   - id: arm_depot_goris           # 示例，位置/容量需 14 按公开资料核实
     owner: ARM

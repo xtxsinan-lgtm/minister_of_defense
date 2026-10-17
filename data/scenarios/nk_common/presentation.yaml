@@ -1,0 +1,73 @@
+# 纳卡战区剧本呈现数据（14 §3.9 ScenarioPresentation；供 13 使用，替换 13 中的 TODO(14)）
+# 两个剧本共用；剧本文件用 presentation_overrides 按字段覆盖（tutorial_file 由各剧本指定）。
+# 只用于显示，不影响模拟（模拟内部一律 UTC，00 §3.3；距离一律大圆距离，00 §3.4）。
+
+# ------------------------------------------------------------------ S01 剧本列表（文本键由 13 本地化表提供）
+scenario_list:
+  - {id: nk_2010, title_key: data.scenario.nk_2010.title, blurb_key: data.scenario.nk_2010.blurb,
+     start_utc: 2010-01-01T00:00:00Z, playable: [ARM, AZE], difficulty_note_key: data.scenario.nk_2010.difficulty}
+  - {id: nk_2020, title_key: data.scenario.nk_2020.title, blurb_key: data.scenario.nk_2020.blurb,
+     start_utc: 2020-09-27T00:00:00Z, playable: [ARM, AZE], difficulty_note_key: data.scenario.nk_2020.difficulty}
+
+# ------------------------------------------------------------------ 地图控制色（Okabe–Ito 色盲安全色板：Okabe & Ito 2008, "Color Universal Design"）
+# 两方以“橙 vs 蓝”区分（色相与明度均不同），不依赖红/绿。13 的“黑白 + 斜线”模式另行处理。
+country_colors:
+  ARM: {primary_hex: "#E69F00", secondary_hex: "#D55E00"}   # 橙 / 朱红
+  AZE: {primary_hex: "#0072B2", secondary_hex: "#56B4E9"}   # 蓝 / 天蓝
+  neutral: "#999999"                                         # 中立 / 无人控制（灰）
+
+# ------------------------------------------------------------------ 战区显示投影（兰伯特等角圆锥）
+# 战区范围 = 10 §4.13 包围盒（38.30–41.95°N，43.4–50.7°E）；标准纬线取纬度跨度 1/6 与 5/6 处（常用经验规则）。
+projection:
+  kind: lambert_conformal_conic
+  std_parallel_1_deg: 38.9
+  std_parallel_2_deg: 41.35
+  central_meridian_deg: 47.05
+  origin_lat_deg: 40.1
+
+# ------------------------------------------------------------------ 战区当地时间（显示用）
+# 亚美尼亚 AMT、阿塞拜疆 AZT 均为 UTC+4。历史夏令时（亚 2011 年前、阿 2015 年前夏季 UTC+5）不显示（14 N-21）。
+display_utc_offset_min: 240
+
+# ------------------------------------------------------------------ 地名（叙事中立；14 §3.9、N-22）
+# disputed: true = 冲突区内（法理属 AZE、1994–2020 由亚方控制或有亚方官方名）的地名：两国官方名并列显示。
+# name_hy = 亚美尼亚官方名的拉丁转写；name_az = 阿塞拜疆官方拉丁字母名；name_en = 英语常用名。
+# 坐标与 theater.yaml 的 key_tiles / control_anchors 相同（维基信息框）；界面语言译名走本地化键 place.<id>。
+place_name_policy:
+  disputed_order: player_first        # 14 N-22（🟡）
+  separator: " / "
+  observer_name_field: name_en        # 无玩家（观战/V2）时
+place_names:
+  # ---- 争议地名（冲突区）----
+  - {id: stepanakert, lat: 39.8153, lon: 46.7519, name_hy: Stepanakert, name_az: Xankəndi,  name_en: Stepanakert, disputed: true}
+  - {id: shusha,      lat: 39.7583, lon: 46.7489, name_hy: Shushi,      name_az: Şuşa,      name_en: Shusha,      disputed: true}
+  - {id: martakert,   lat: 40.2153, lon: 46.8106, name_hy: Martakert,   name_az: Ağdərə,    name_en: Martakert,   disputed: true}
+  - {id: hadrut,      lat: 39.5200, lon: 47.0300, name_hy: Hadrut,      name_az: Hadrut,    name_en: Hadrut,      disputed: true}
+  - {id: martuni,     lat: 39.7950, lon: 47.1150, name_hy: Martuni,     name_az: Xocavənd,  name_en: Martuni,     disputed: true}
+  - {id: aghdam,      lat: 39.9911, lon: 46.9297, name_hy: Akna,        name_az: Ağdam,     name_en: Aghdam,      disputed: true}
+  - {id: fuzuli,      lat: 39.6003, lon: 47.1431, name_hy: Varanda,     name_az: Füzuli,    name_en: Fuzuli,      disputed: true}
+  - {id: jabrayil,    lat: 39.3992, lon: 47.0264, name_hy: Jrakan,      name_az: Cəbrayıl,  name_en: Jabrayil,    disputed: true}
+  - {id: zangilan,    lat: 39.0856, lon: 46.6525, name_hy: Kovsakan,    name_az: Zəngilan,  name_en: Zangilan,    disputed: true}
+  - {id: qubadli,     lat: 39.3444, lon: 46.5797, name_hy: Kashunik,    name_az: Qubadlı,   name_en: Qubadli,     disputed: true}
+  - {id: lachin,      lat: 39.6425, lon: 46.5469, name_hy: Berdzor,     name_az: Laçın,     name_en: Lachin,      disputed: true}
+  - {id: kalbajar,    lat: 40.1053, lon: 46.0386, name_hy: Karvachar,   name_az: Kəlbəcər,  name_en: Kalbajar,    disputed: true}
+  # ---- 非争议地名（只显示法理国家的官方名；另一种写法仅供信息卡）----
+  - {id: goris,       lat: 39.5111, lon: 46.3383, name_hy: Goris,       name_az: Gorus,     name_en: Goris,       disputed: false}
+  - {id: yerevan,     lat: 40.1792, lon: 44.4991, name_hy: Yerevan,     name_az: İrəvan,    name_en: Yerevan,     disputed: false}
+  - {id: berd,        lat: 40.8808, lon: 45.3917, name_hy: Berd,        name_az: Berd,      name_en: Berd,        disputed: false}
+  - {id: tartar,      lat: 40.3417, lon: 46.9311, name_hy: Tartar,      name_az: Tərtər,    name_en: Tartar,      disputed: false}
+  - {id: barda,       lat: 40.3744, lon: 47.1267, name_hy: Partav,      name_az: Bərdə,     name_en: Barda,       disputed: false}
+  - {id: horadiz,     lat: 39.4481, lon: 47.3361, name_hy: Horadiz,     name_az: Horadiz,   name_en: Horadiz,     disputed: false}
+  - {id: beylagan,    lat: 39.7756, lon: 47.6186, name_hy: Beylagan,    name_az: Beyləqan,  name_en: Beylagan,    disputed: false}
+  - {id: ganja,       lat: 40.6828, lon: 46.3606, name_hy: Gandzak,     name_az: Gəncə,     name_en: Ganja,       disputed: false}
+  - {id: baku,        lat: 40.4093, lon: 49.8671, name_hy: Baku,        name_az: Bakı,      name_en: Baku,        disputed: false}
+  - {id: nakhchivan,  lat: 39.2089, lon: 45.4122, name_hy: Nakhijevan,  name_az: Naxçıvan,  name_en: Nakhchivan,  disputed: false}
+  - {id: tovuz,       lat: 40.9922, lon: 45.6289, name_hy: Tovuz,       name_az: Tovuz,     name_en: Tovuz,       disputed: false}
+# 注：control_anchors 中的 aghdam_city / fuzuli_city / nakhchivan_city 分别对应上表 aghdam / fuzuli / nakhchivan。
+
+# ------------------------------------------------------------------ 主要对手（13 顶栏 tensionWithMainRival；必须与 countries.yaml rival 一致）
+main_rival: {ARM: AZE, AZE: ARM}
+
+# ------------------------------------------------------------------ 引导与默认展示密度
+tutorial_file: null                   # 各剧本用 presentation_overrides 指定 data/tutorial/<scenarioId>.yaml
+default_disclosure: standard          # 13 DisclosureLevel（13 §3.1；U-18）

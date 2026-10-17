@@ -385,6 +385,8 @@ Formations[f].defaultTier = spec.tier; Formations[f].allocationPriority = spec.p
 
 **O3 战备等级**：编组的 `tier` 作为下属营的缺省 `ReadinessTier`；`ChildSpec.tier` 覆盖。人员在编比例由 02 按等级决定。
 
+**O4 开局工事**（仅 `nk_2020` 的 `fortification_start`）：映射待 DC-165 决定。若采用 DC-165 ①（09 `EntrenchState`），则对开局时位于“与敌控地块相邻的本国控制地块”上的营调用 09 `SetEntrenchProgress(bn, p)`，`p` 按等级取 `high = 1.0`、`medium = 0.6`、`low = 0.3`（bal）；若采用 ②，由 04 定义等级刻度后再补。
+
 #### 4.3.3 装备生成与分配
 ```text
 1. 对每个型号 m ∈ counts：生成 counts[m] 件 EquipmentItem（01 §3.5），owner = 国家，status = Active，holder = 0，
@@ -472,6 +474,7 @@ bool Eval(ConditionExpr e, WarContext w) => e.kind switch {
 4. 与玩家冲突的 AI 指令（`ai_directive` 指向玩家国家）一律忽略（11 §4.12）。
 
 #### 4.9.3 `border_skirmish` 的交界边解析
+- 锚点名 = theater.yaml `control_anchors[].name`。
 - `edge_near:<anchor>`：锚点所在地块的边中，对侧地块由另一交战国控制者，取边中点距锚点最近的一条（平局按 `EdgeId` 升序）。
 - `edge_between:<a>,<b>`：两锚点所在地块相邻 → 该边；不相邻 → 取 a 所在地块中朝向 b（边中点到 b 的距离最小）且对侧为敌控的边。
 - `edge_random:contact_line`：所有“两侧分属 ARM、AZE 控制”的边按 `EdgeId` 升序排列，`rng.NextInt(n)` 选一条；`rng = Rng.For(Scenario, Mix(eventHandle), tick, SaltSkirmishEdge)`。

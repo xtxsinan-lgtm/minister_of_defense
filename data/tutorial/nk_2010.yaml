@@ -1,0 +1,20 @@
+# nk_2010 引导步骤（格式 = 13 §4.8.2；14 §3.9）。最小示例：预算与采购入门。
+# 字段：id、trigger（{hook} 或 {after}）、highlight（{control: 13 §4.8.3 控件 id, filter?}）、text_key（tut.*）、complete_on、pause。
+# 钩子 id 只用 13 §4.8.2 的最小集；控件 id 为示例，以 13 §4.8.3 的最终清单为准。
+steps:
+  - id: tut_nk2010_open_budget
+    trigger: {hook: ui.event.campaign_started}
+    highlight: {control: hud.top.budget}
+    text_key: tut.nk2010.open_budget
+    complete_on: {hook: ui.event.budget_opened}
+    pause: true
+  - id: tut_nk2010_view_quote
+    trigger: {after: tut_nk2010_open_budget}
+    highlight: {control: s07.left.catalog}
+    text_key: tut.nk2010.view_quote
+    complete_on: {hook: ui.event.procurement_quote_viewed}
+  - id: tut_nk2010_logistics_layer
+    trigger: {after: tut_nk2010_view_quote}
+    highlight: {control: s02.layers.logistics}
+    text_key: tut.nk2010.logistics_layer
+    complete_on: {hook: ui.event.logistics_layer_on}
