@@ -1398,7 +1398,7 @@ sealed class EquipmentConditionState { EquipmentItemId itemId; double condition;
 | 升级送修时装备正在战斗中（所在营在 `EdgeBattle`） | 跳过该件，取下一件；全部在战斗中则当天不送修 |
 | 动员时预备役池为 0 | 动员仍可宣布（效果只有追加预算和疲劳乘数），并提示“无可动员人员” |
 | 战争中某方全部地块丢失 | `coreTilesLost/coreTilesAtStart = 1`；疲劳 ≥ 0.8 → 几乎必然接受停火；若无调停方，自动生成“直接谈判”提议 |
-| 两场战争同时进行 | 疲劳、追加预算按战争分别计算；预算追加取各战争 `annualSupplement` 的**最大值**（不叠加，S-09）；动员等级取最高 |
+| 两场战争同时进行 | 疲劳、追加预算按战争分别计算；预算追加取各战争 `annualSupplement` 的**最大值**（不叠加，S-09）；动员等级是国家级（`Country.mobilization`），两场战争共用 |
 | 停火提议过期而有一方未答复 | 视为拒绝 |
 | 同一小时红线与疲劳都触发停火 | 红线的强制提议优先（同一小时只保留一个提议，优先级：ForcedCeasefire > 调停 > 直接谈判） |
 | 维和区内仍有营 | 停火生效时由 09 自动撤到最近的己方地块；无可撤之处则该营留在原地并冻结（不可移动、不参战） |
@@ -1532,6 +1532,9 @@ sealed class EquipmentConditionState { EquipmentItemId itemId; double condition;
 | S-17 | 疲劳用无状态公式 | 🟡 是（每小时由累计量重算） | 透明、可测、可校准；战果可以“抵消”疲劳 | 积分式（有记忆） |
 | S-18 | 信贷 | 🟡 剧本提供 `CreditLine`（如俄对亚 2015/2017 军贷），不允许玩家任意借款 | 史实存在且是重要选择；任意借款会变成经济模拟 | 不做信贷 |
 | S-19 | 红线效果 | 🟡 阶段 1 只做 Warning 与 ForcedCeasefire，不做外国直接参战 | 见 S-12 | — |
+| S-20 | 软件保障中断的效果（审查新增，交接 #8） | 🟡 建议：11 提供 `SoftwareDegradeFactor`，由 08 乘到无人机/吊舱观测质量、05 乘到中型无人机与地面电子侦察站；中断时每天累计、恢复后每天回落 1 天；上限 `SoftwareDecayMax` | 理由：让依赖清单的“软件”通道真正起作用，玩家在“纯外购 vs 本地化”“向谁买无人机/雷达”上多一个战时可见的代价（换来决策）；只乘一个系数，对 05/08 改动最小 | 备选：① 删除软件通道效果（`DepVuln` 第 4 列只作显示）；② 同时作用于 08 地面防空雷达的探测/拦截 pk（影响更大，需重新校准 A-V4）；③ 恢复后立即清零 |
+| S-21 | 其他系统的一次性扣款（审查新增） | 🟡 建议：07 大修费从 `OperationsMaintenance`、06 桥梁修复费从 `Infrastructure` 经 `TryCharge` 扣；O&M 余额不足时小时计费与备件资金按比例截断 | 理由：07/06 都写了“由 11 扣”，但 11 原先没有扣款接口；放进已有预算线，玩家能在预算面板看到大修挤占日常维护 | 备选：单列“维修”预算线；大修与桥修不花钱 |
+| S-22 | 动员选营顺序与 Active 营（审查新增） | 🟡 建议：按 Reduced → Cadre → Active 选营，Active 营缺员立即到位（`mobDays = 0`）；召集总数 = 份额 × 首次下令时的预备役池 | 理由：原文“按顺序填充 Reduced → Cadre”与“Active 0 天”并存但未说 Active 营是否参与；先补简编营符合苏式动员体制 | 备选：Active 营优先（先补满一线营）；Active 营不参与动员（缺员只靠 07 补充） |
 
 ---
 
@@ -1572,3 +1575,16 @@ sealed class EquipmentConditionState { EquipmentItemId itemId; double condition;
 | 边境行动 | `BorderActionType` | `Patrol/Exercise` |
 | 战略行动接口 | `IStrategicActions` | 玩家与 AI 共用的战略层命令接口 |
 | 情报共享（外部行为体） | 复用 05 `SatelliteAsset.sharesWith` | 外部行为体向受援国共享卫星情报（不新增类型） |
+| 战略层状态 | `StrategicState` | 战略层全部运行时状态的容器（存档 `Countries`/`Strategic` 段） |
+| 地块集合引用 | `TileSetRef` / `TileSetKind` | 指向 de jure 领土、14 区域或运行时集合的引用，由 14 展开为 H3 列表 |
+| 红线步骤 / 红线状态 | `RedLineStep` / `RedLineState` | 红线按小时递进的效果序列；每条红线 × 违反方的计时与进度 |
+| 市场池条目 | `MarketPoolEntry` | 剧本给出的二手批次生成规则（卖方、型号、年份、概率、数量、状态权重） |
+| 历史指令 | `AiDirective` | Historical 模式下事件写给 AI 国家的到期指令（12 读取） |
+| 动员选中营 | `MobilizedBattalion` | 本次动员选中营的各专业到位终值、选中时刻、到位天数 |
+| 战略查询接口 | `IStrategicQuery` | 供其他系统同步调用的查询与扣款接口（单价、训练强度、动员目标、软件衰减、战争状态、命令封锁） |
+| 命令封锁原因 | `OrderBlockReason` | 09 命令校验时 11 返回的封锁原因：和平跨境、停火、维和区、使用限制 |
+| 采购报价 | `ProcurementQuote` | `Quote` 的结果：单价、前期投入、批准概率与分项、交付与付款表 |
+| 基建项目类型 | `InfraProjectKind` | 新建仓库、节点加固、机场掩体（效果由 06 定义） |
+| 软件衰减系数 | `SoftwareDegradeFactor` | 软件保障被切断后进口传感器效能的乘数（05/08 读取） |
+| 预算扣款 | `TryCharge` | 其他系统从指定预算线一次性扣款；余额不足返回 false |
+| 事件范围 | `EventScope` | `Global/Dyad/Country` |
