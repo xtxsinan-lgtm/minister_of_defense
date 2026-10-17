@@ -152,7 +152,7 @@ external_actors:
   RUS:
     stance: {ARM: 0.5, AZE: 0.2}
     max_rung: peacekeeping
-    mediation_templates: [nov10_template, freeze_template]
+    mediation_template_ids: [nov10_template, freeze_template]
     mediation_first_day: 7
     mediation_interval_days: 7
     supply_in_war: {ARM: 0.7, AZE: 0.5}     # 11 §4.10.4 supplyContinueP 的剧本覆盖值（bal）
@@ -168,7 +168,7 @@ external_actors:
   TUR:
     stance: {AZE: 0.9, ARM: -0.6}
     max_rung: intel_sharing
-    mediation_templates: []
+    mediation_template_ids: []
     supply_in_war: {AZE: 0.95}
     intel_sharing: {to: AZE, satellites: true, from_year: 2012, note: 05 SatelliteAsset.sharesWith（R-12）；土耳其 Göktürk-2（2012）/Göktürk-1（2016）}
     red_lines:

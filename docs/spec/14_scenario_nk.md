@@ -179,14 +179,14 @@ public sealed class ScenarioInitOptions { public string scenarioId; public strin
 ```
 
 ### 3.4 采购数据（映射到 11 的 `ProcurementProfile` 等）
-- `procurement_profiles.<modelId>` → 11 `ProcurementProfile`（键 snake_case → camelCase）。合并规则：型号文件自身的 `procurement` 键（00 §4.3）为底，本剧本条目**按字段覆盖**；`service_year` 两处都没给 → 取 `EquipmentModel.serviceYear`（01 M3 可选字段）；仍没有 → 加载报错。额外字段：`export_from_year`（卖方开始出口该型号的年份）与 `export_open_flag`（11 旗标名）：`y < export_from_year` 且该旗标未设置 → 批准概率 = 0（如 TB2：`export_from_year: 2018`，事件 `tur_2020_tb2_offer` 设置 `tb2_export_aze_open`；11 须在 §4.4.2 读取，见 §6.2）；`confidence`、`basis`（文字，只供审计）。
+- `procurement_profiles.<modelId>` → 11 `ProcurementProfile`（键 snake_case → camelCase）。合并规则：型号文件自身的 `procurement` 键（00 §4.3）为底，本剧本条目**按字段覆盖**；`service_year` 两处都没给 → 取 `EquipmentModel.serviceYear`（01 M3 可选字段）；仍没有 → 加载报错。额外字段：`export_from_year`（卖方开始出口该型号的年份）与 `export_unlock_flag`（= 11 `exportUnlockFlag`，全局旗标名）：`y < export_from_year` 且该旗标未设置 → 批准概率 = 0（如 TB2：`export_from_year: 2018`，事件 `tur_2020_tb2_offer` 设置 `tb2_export_aze_open`；11 须在 §4.4.2 读取，见 §6.2）；`confidence`、`basis`（文字，只供审计）。
 - `production_lines[]` → 11 `ProductionLine`（`factory` = 06 节点 id）。`from_year ≤ y0` 的线开局即 `Active`；`from_year > y0` 的线开局创建为 `UnderConstruction`，并附一个 11 `Project`（`kind = NewLineNewSite`、`totalCostMusd = 0`、`nominalDays` = 开局到 `from_year` 年 1 月 1 日 00:00Z 的天数），即“外生建成”，不占玩家预算（接口需求，§6.2）。
 - `upgrades[]` → 11 `UpgradePath`；`availability`（可选，ISO3 列表）限制可下单国家；`from_year`（可选）之前不可下单；`from: "*"` 的 `refurbish_generic` 是 11 §4.5.1 整修的通用路径（`cost_share_of_unit_cost` × 型号单价 = `costPerUnitMusd`）。
 - `market_pool[]` → 11 §4.5.2 的市场池条目（`years` = 允许出现的年份区间，含端点；缺省 = 不限）。
 - `historical_procurement` → 12 的扩展字段（N-11）：AI 在 Historical/Plausible 模式下以此为“参考采购计划”。
 
 ### 3.5 外部大国与口岸
-- `external_actors` → 11 `ExternalActorPolicy`；`supply_in_war.<ISO3>` 直接给出 11 §4.10.4 的 `supplyContinueP(actor, buyer)`（替代该处公式；未给的买方仍用公式；11 须读取，见 §6.2）；`intel_sharing` 决定 05 `SatelliteAsset.sharesWith`（§3.12）。
+- `external_actors` → 11 `ExternalActorPolicy`（`mediation_template_ids` → `mediationTemplateIds`）；`supply_in_war.<ISO3>` 直接给出 11 §4.10.4 的 `supplyContinueP(actor, buyer)`（替代该处公式；未给的买方仍用公式；11 须读取，见 §6.2）；`intel_sharing` 决定 05 `SatelliteAsset.sharesWith`（§3.12）。
 - 红线 `tiles`：`{de_jure: ISO3}` 或 `{region: id}`，加载时展开成 11 `TileSetRef`（H3 升序列表）；`effects` 是按 `after_hours` 递进的效果序列（11 `RedLineEffect`）。
 - 口岸（06 `ImportGatewayData`）在 `logistics_nodes.yaml`；事件 `close_import_gateway` 关闭（如 2020 年格鲁吉亚禁运过境）。
 
@@ -444,7 +444,7 @@ bool Eval(ConditionExpr e, WarContext w) => e.kind switch {
     WarScope => w.scope == e.scope,          // limited / total
 };
 ```
-- 选择：按调停方 `mediation_templates` 列表顺序，取第一个 `Eval == true` 且 `warDay ≥ appliesWhenWarDayAtLeast` 的模板；都不满足 → `freeze_template`。
+- 选择：按调停方 `mediation_template_ids` 列表顺序，取第一个 `Eval == true` 且 `warDay ≥ appliesWhenWarDayAtLeast` 的模板；都不满足 → `freeze_template`。
 
 #### 4.7.2 维和区计算
 - `lachin_corridor`：区域展开结果中**当时由 ARM 控制**的地块。
@@ -594,7 +594,7 @@ public sealed class ScenarioRuntimeState {      // 14 唯一的运行时状态
 | 规格 | 需求 | 备注 |
 |---|---|---|
 | 05 | `SatelliteAsset` 增加启用时刻（如 `long activeFromMs`），过顶早于它时跳过 | 未加前：`from > start` 的卫星在开局即生效（偏差：nk_2010 中 Göktürk/Azersky 提前可用） |
-| 11 | §4.4.2 读取 `export_from_year` + `export_open_flag`；§4.10.4 读取 `supply_in_war` 覆盖值；§4.10.4 按 `intel_sharing.from_year` 在当年 1 月 1 日把受援国加入 `sharesWith`；§4.9 每小时事件步开始时调用 `RunScriptedStart`；§4.8.6 调用 `SelectCeasefireTemplate`/`BuildPeacekeepingZone`；§4.13 调用 `GoalProgress`；`BorderSkirmish` 调用 `ResolveSkirmishEdge`；定义 `EventScope`、`TileSetRef`；确认 `Dyad` 事件对两国各实例化一次（§3.8 的 `self`）；定义系统旗标 `big_contract_signed_last_90d`；确认 `totalCostMusd = 0` 的“外生建成”项目按 `nominalDays` 完工 | 见报告 |
+| 11 | §4.4.2 读取 `exportFromYear` + `exportUnlockFlag`（11 已有）；§4.10.4 读取 `supply_in_war` 覆盖值；§4.10.4 按 `intel_sharing.from_year` 在当年 1 月 1 日把受援国加入 `sharesWith`；§4.9 每小时事件步开始时调用 `RunScriptedStart`；§4.8.6 调用 `SelectCeasefireTemplate`/`BuildPeacekeepingZone`；§4.13 调用 `GoalProgress`；`BorderSkirmish` 调用 `ResolveSkirmishEdge`；定义 `EventScope`、`TileSetRef`；确认 `Dyad` 事件对两国各实例化一次（§3.8 的 `self`）；定义系统旗标 `big_contract_signed_last_90d`；确认 `totalCostMusd = 0` 的“外生建成”项目按 `nominalDays` 完工 | 见报告 |
 | 12 | `AiCountryProfile` 增加 `historicalProcurement`（N-11）；I-02 映射与本剧本一致（ARM `soviet`、AZE 2010 `soviet` / 2020 `western`） | |
 | 02 | 学校产能未列出时的缺省值 | 本剧本已给出主要学校 |
 | 09 | （可选）提供开局放置营的接口，替代 14 直接写 `BattalionMoveState` | |

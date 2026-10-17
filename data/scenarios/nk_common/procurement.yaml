@@ -59,7 +59,7 @@ procurement_profiles:
   mig29:         {cost_musd: 10.0, end_production_year: 1991, producers: [RUS, UKR, BLR], sensitivity: 2, historical_exports_to: [AZE], confidence: uncertain, basis: 二手（阿 2006 年自乌购入）}
   mi35m:         {cost_musd: 15.0, producers: [RUS], sensitivity: 2, historical_exports_to: [AZE], confidence: uncertain}
   mi8mt:         {cost_musd: 6.0, producers: [RUS], sensitivity: 1, historical_exports_to: [ARM, AZE], confidence: uncertain}
-  bayraktar_tb2: {cost_musd: 5.0, producers: [TUR], sensitivity: 3, historical_exports_to: [AZE], service_year: 2014, export_from_year: 2018, export_open_flag: tb2_export_aze_open, lead_time_days: 120, lot_size: 6, confidence: uncertain, basis: 单机 + 地面站分摊（各国合同报道差异大）}
+  bayraktar_tb2: {cost_musd: 5.0, producers: [TUR], sensitivity: 3, historical_exports_to: [AZE], service_year: 2014, export_from_year: 2018, export_unlock_flag: tb2_export_aze_open, lead_time_days: 120, lot_size: 6, confidence: uncertain, basis: 单机 + 地面站分摊（各国合同报道差异大）}
   hermes_450:    {cost_musd: 4.0, producers: [ISR], sensitivity: 2, historical_exports_to: [AZE], confidence: uncertain}
   hermes_900:    {cost_musd: 10.0, producers: [ISR], sensitivity: 2, historical_exports_to: [AZE], confidence: uncertain}
   heron1:        {cost_musd: 10.0, producers: [ISR], sensitivity: 2, historical_exports_to: [AZE], confidence: uncertain}
