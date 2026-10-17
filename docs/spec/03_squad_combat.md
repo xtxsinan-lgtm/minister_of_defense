@@ -258,7 +258,7 @@ public sealed class SpatialElement {             // 归属 03
     public double lastAtgmFiredAtS;
 }
 
-public readonly record struct TrackInfo(double detectedAtS, double lastSeenS, bool cued);
+public readonly record struct TrackInfo(double detectedAtS, double lastSeenS, bool cued, bool revealedByFire);   // revealedByFire：建航迹时目标处于 FireReveal（§3.7 统计用，不影响结算）
 
 public sealed class WeaponRuntime {              // 每件武器一个（随元素）
     public EquipmentItemId itemId;
@@ -399,6 +399,119 @@ public sealed class ThreatRecord {      // 一个敌方元素作为威胁
     public double lossesWhileWaiting;   // 该威胁在等待期间造成的我方损失（人+车）
 }
 ```
+
+### 3.7 片段统计容器、扩展统计与试验场（AAR 与 13 S06/S13 用；审查 B.I-31）
+
+> 本节只汇总 §4 各算法**已经算出**的量，不引入新的模拟规则。13 §3.4.6、§3.4.8、§4.9.14 按这里的字段渲染。
+
+```csharp
+public enum IdleReason : int {          // 00 §1 术语表的六类；数组下标 = (int)reason − 1（同 TargetClass 约定）
+    NoSuitableTarget = 1, OutOfRange = 2, NoLineOfSight = 3, NoAmmo = 4, Suppressed = 5, AwaitingOrders = 6
+}   // 计数常量 IdleReasonCount = 6；“无人操作”暂并入 Suppressed（§4.12 第 2 条，🟡 C-06）
+
+public sealed class EngagementStats {   // = Engagement.stats；片段结束时原样放进 EngagementResult.stats（§6.2）
+    public SortedDictionary<int, WeaponStats> weapons;       // 键 = EquipmentItemId.value；双方武器都记
+    public SortedDictionary<int, EngagementSide> itemSide;   // 键同上：该武器属于哪一方（片段创建时写入）
+    public List<ThreatRecord> threats;                       // 按创建顺序；受威胁方 = ThreatRecord.threat 所在方的对方
+    public DetectionStats[] detection;                       // 长度 2，下标 = (int)观察者方 EngagementSide
+    public List<ExposureCausedStrike> exposureStrikes;       // 按 request 升序
+    public List<FireSupportResponse> responses;              // 每个首发已落地的请求一条，按 request 升序
+    public List<SquadTemplateStats> squadTemplates;          // 片段结束时由 weapons 汇总（见下），之前为空
+}
+
+public sealed class DetectionStats {    // 每片段每个观察者方一条（§4.2.2“统计”）
+    public EngagementSide observerSide;
+    public LightCondition light;        // = Engagement.light（片段内不切换昼夜，09 §4.10）
+    public int detections;              // §4.2.2 新建航迹的次数（o 对 t 首次发现；航迹丢失后再发现再计一次）
+    public double sumRangeM;            // Σ 发现时的距离 r（m）
+    // 平均发现距离 = sumRangeM / detections（detections = 0 → 无数据）。跨片段汇总：按 light 分组，分子分母各自求和后再除。
+}
+
+public enum StrikeExposureCause : int { FireReveal = 1 }
+// 片段内唯一能判定的“暴露招来打击”的原因：目标被发现时处于 §4.2.2 FireReveal > 1（过去 60 s 内开过火）。
+// “电台被测向定位”属于 05/04 条带层（05 电磁特征），本文件算不出，不在此记录（见 13 §4.9.14 C4）。
+
+public readonly record struct ExposureCausedStrike(
+    FireSupportRequestId request,       // 敌方发出的请求（§3.4）
+    EngagementSide victimSide,          // 被打的一方
+    OrgUnitId victimCompany,            // = sides[victimSide].companyId
+    SquadId victimSquad,                // 目标元素的 squadId
+    StrikeExposureCause cause);
+// 记录时机：该请求首发落地（impactAt 回填，§4.5.4）时，若请求者对目标元素的航迹 TrackInfo.revealedByFire == true，追加一条。
+
+public enum ResponseSegment : int { Reaction = 0, Comms = 1, QueueAndLay = 2, Flight = 3 }   // 下标即值
+public sealed class FireSupportResponse { // 由 FireSupportRequest 的时间戳求差（§3.4），单位 s
+    public FireSupportRequestId request; public EngagementSide side;   // 请求方
+    public double[] segmentS;           // 长度 4：Reaction = sentAt − detectedAt；Comms = arrivedAtFdcAt − sentAt；
+                                        //         QueueAndLay = fireAt − arrivedAtFdcAt；Flight = impactAt − fireAt
+    public double totalS;               // = impactAt − detectedAt（= 04 LineCounters.supportResponseS 的同一口径）
+}
+
+public sealed class SquadTemplateStats { // 片段结束时按（方, 班模板）汇总 WeaponStats
+    public EngagementSide side;
+    public TemplateHandle squadTemplate; // 01 Squad.template（武器所属元素的 squadId → 01 Squad）
+    public int squads;                   // 参战班数（片段创建时）
+    public double suppressionDelivered;  // Σ 该模板各班武器的 WeaponStats.suppressionDelivered
+    public double kills;                 // Σ WeaponStats.kills
+    public SortedDictionary<int, double> suppressionByCategory;   // 键 = CategoryHandle.value（01 EquipmentModel.category）
+    // 份额由读者计算：share = 本模板值 / Σ 同方全部模板值；分母 0 → 无数据。跨片段汇总 = 各字段求和后再算份额。
+}
+
+public sealed class ThreatSummary {     // SummarizeThreats 的输出：按目标类别汇总 ThreatRecord
+    public TargetClass cls;
+    public int count;                    // 威胁数
+    public int engagedByOrganicCount;    // engagedByOrganic == true 的条数
+    public int unengagedCount;           // 片段结束仍未被合适武器射击（firstEngagedS 未设置）的条数
+    public double meanWaitS;             // 已被射击者的 (firstEngagedS − firstDetectedS) 均值
+    public double lossesWhileWaiting;    // Σ lossesWhileWaiting（人+车）
+}
+
+// —— 编制试验场（§4.15）——
+public sealed class PgSideSpec {
+    public CountryId country;            // 型号缺省绑定与默认练度的来源国家
+    public TemplateHandle template;      // 排/连/营模板（可以是 13 草稿沙盒里的模板，13 §3.6）
+    public SortedDictionary<int, ModelHandle> bindings;   // 键 = CategoryHandle.value；未列出的类别按 01 ResolveModel 国家默认
+    public double generalSkill01, typeSkill01;            // 试验场直接给值：全体人员的通用 / 专有练度 [0,1]
+}
+public sealed class ProvingGroundSpec {
+    public PgSideSpec own, enemy;
+    public List<TerrainClassPg> terrains;   // ≥ 1；第 i 场的地形：按列表顺序连续分块，第 k 块 = runs / K + (k < runs % K ? 1 : 0) 场
+    public EngagementType type;
+    public int supportLevel;                // 0–3（§4.14.1）
+    public LightCondition light;            // 09
+    public bool ownIsAttacker;              // = OutcomeKey.ownIsAttacker
+    public int runs;                        // N
+    public ulong hash;                      // 以上字段按声明顺序做 SplitMix64 链式哈希（字典按键升序）；第 i 场种子 = Mix(hash) ^ i
+}
+public readonly record struct DistributionSummary(double mean, double p10, double p50, double p90, double min, double max);
+// 分位数用最近秩法：p_q = sorted[ceil(q × n) − 1]（n = 有效场数）；n = 0 时全部为 NaN。
+public sealed class ProvingGroundRun {
+    public int index; public ulong seed; public TerrainClassPg terrain;
+    public bool failed;                      // 本场抛异常：其余字段无效，不计入汇总
+    public EngagementOutcome outcome;
+    public double ownCasualtyFrac, enemyCasualtyFrac;   // 同 OutcomeSample.casualtyFracBySide
+    public double ownVehicleLossFrac;        // 我方失去战斗力的车辆数 / 开始时车辆数（不分类；0 辆车 → 0）
+    public double seizedDepthM, durationMin; // 同 Engagement.seizedDepthM、OutcomeSample.durationMin
+}
+public sealed class ProvingGroundReport {
+    public ulong specHash; public int runsRequested, runsCompleted, runsFailed;   // runsCompleted < runsRequested = “部分（n/N）”
+    public List<ProvingGroundRun> runs;                       // 按 index 升序（与完成顺序无关）
+    public SortedDictionary<EngagementOutcome, int> outcomeCounts;
+    public DistributionSummary ownCasualtyFrac, enemyCasualtyFrac, ownVehicleLossFrac, seizedDepthM, durationMin;
+    public DistributionSummary supportResponseS;              // 全部场我方 FireSupportResponse.totalS
+    public double[] responseSegmentMeanS;                     // 长度 4，按 ResponseSegment
+    public SortedDictionary<int, WeaponStats> ownWeaponsByModel;   // 键 = ModelHandle.value；各场我方 WeaponStats 逐字段求和
+    public SortedDictionary<int, int> ownItemsByModel;             // 每场开始时我方该型号件数（各场相同）
+    public List<ThreatSummary> threats;                       // 我方受到的威胁（SummarizeThreats，各场合并）
+    public DetectionStats[] detection;                        // 长度 2（[0] 我方观察、[1] 敌方观察），各场求和
+    public List<SquadTemplateStats> squadTemplates;           // 我方，各场求和
+    public List<ExposureCausedStrike> exposureStrikes;        // 我方被打的，各场合并
+}
+```
+
+- `TrackInfo.revealedByFire`：§4.2.2 新建航迹时写入 `FireReveal(t) > 1`；之后不再改。
+- `SquadTemplateStats` 汇总：片段结束（自然结束或 `ForceEnd`）生成 `EngagementResult` 之前，对 `weapons` 中每件武器按 `itemSide` 与其所属班的 `Squad.template` 分组求和，按 `(side, squadTemplate.value)` 升序写入 `squadTemplates`。
+- `ProvingGroundRun` 中“我方” = `ProvingGroundSpec.own`；`ownIsAttacker` 决定我方在片段里是 A 还是 B。
 
 ---
 
@@ -1187,7 +1300,7 @@ ProvingGroundReport Run(ProvingGroundSpec spec) {
 
 | 去向 | 数据 | 时机 |
 |---|---|---|
-| 04 | `EngagementResult { engagementId, outcome, seizedDepthM, durationMin, perSquad 状态摘要, droppedItems[], lossLedger[], requestStats, threatRecords, reconCoverage[2] }`（`reconCoverage[s]` = s 方在片段内对敌方元素的航迹覆盖率 [0,1]，按步平均） | 片段结束那一刻（阶段 100 末）；04 在下一条带步阶段 80（04 §4.9.6）处理；EndEdgeBattle 时经 ForceEnd 立即处理 |
+| 04 | `EngagementResult { engagementId, outcome, seizedDepthM, durationMin, perSquad 状态摘要, droppedItems[], lossLedger[], requestStats, threatRecords, reconCoverage[2], stats }`（`reconCoverage[s]` = s 方在片段内对敌方元素的航迹覆盖率 [0,1]，按步平均；`stats` = `EngagementStats`（§3.7），04 按战斗累积供 13 AAR 读取） | 片段结束那一刻（阶段 100 末）；04 在下一条带步阶段 80（04 §4.9.6）处理；EndEdgeBattle 时经 ForceEnd 立即处理 |
 | 04 | 新的 `FireSupportRequest`（缓冲） | 阶段 100 末统一提交 |
 | 04 | 片段已结束时仍在飞的落点：交回 04 在条带上结算 | 落点所在刻 |
 | 07 | `ApplyCasualty(PersonnelId, CasualtyState, SimTime, LossSource, Vec2D, EdgeBattleId)`、`ApplyVehicleDamage(EquipmentItemId, DamageLevel, DamageFlags, SimTime, LossSource, Vec2D, EdgeBattleId)`（Vec2D = 战斗坐标位置）；`(DamageLevel, DamageFlags) RollVehicleDamage(EquipmentItemId, MunitionKind, Aspect, ref Pcg32)` | 事件发生即时 |
@@ -1223,6 +1336,11 @@ ProvingGroundReport Run(ProvingGroundSpec spec) {
 | `double ComputeDismountLoadKg(TemplateHandle squadTemplate, SortedDictionary<CategoryHandle, ModelHandle> bindings)` | 对该班模板满编实例按 §4.8.1 分配规则计算下车人员平均负重（期望值，不抽样） | 01 |
 | `double Effectiveness(ModelHandle m, TargetClass tc, DepthBand band)` | = `CapIndex(m, tc)`（§4.13 型号级重载）在该纵深带中点距离处的值：Close 150 m / Medium 650 m / Far 2500 m；`Beyond` = 0 | 01 |
 | `double CapIndex(ModelHandle m, TargetClass c)` | §4.13 型号级重载 | 12、01 |
+| `ProvingGroundRun ProvingGround.RunSingle(ProvingGroundSpec spec, int i, out EngagementStats stats)` | §4.15 的第 i 场（种子 `Mix(spec.hash) ^ i`，`Full` 精度，在调用者提供的独立 `World` 中运行）；`failed = true` 时 `stats` 为空 | 13（S06 工作线程，每场一个任务） |
+| `ProvingGroundReport ProvingGround.Aggregate(ProvingGroundSpec spec, IReadOnlyList<(ProvingGroundRun run, EngagementStats stats)> results)` | 按 `run.index` 升序汇总成 §3.7 `ProvingGroundReport`（与完成顺序无关）；`failed` 的场只计入 `runsFailed` | 13 |
+| `ProvingGroundReport ProvingGround.Run(ProvingGroundSpec spec)` | = 对 i = 0…runs−1 依次 `RunSingle` 后 `Aggregate`（单线程参考实现；§4.15） | 13、V1/V5 脚本 |
+| `List<ThreatSummary> SummarizeThreats(IEnumerable<ThreatRecord> records)` | §3.7 `ThreatSummary`，按 `TargetClass` 升序 | 13（AAR、试验场） |
+| `EngagementStats` 字段（§3.7）：`DetectionStats`、`ExposureCausedStrike`、`FireSupportResponse`、`SquadTemplateStats` | 随 `EngagementResult.stats` 交给 04；纯数据，读者自行求和 | 04（累积）、13（AAR） |
 
 ### 6.5 存档（15）
 
@@ -1380,3 +1498,11 @@ ProvingGroundReport Run(ProvingGroundSpec spec) {
 | 本级负责纵深（取值） | `EchelonDepth` 表 | 班 300 m、排 600 m、连 1500 m、营 4000 m、旅 20 km（V1-c 与编辑器提示用）🟡 | 03 |
 | 请求优先级 | `RequestPriority` | `Emergency, Immediate, Normal` | 03 |
 | 扇区上下文 | `SectorContext` | 04 生成片段时传入的全部初始条件 | 03（类型）/ 04（填写） |
+| 闲置原因 | `IdleReason` | `NoSuitableTarget = 1 … AwaitingOrders = 6`；`WeaponStats.idleS` 下标 = 值 − 1 | 03 |
+| 片段统计 | `EngagementStats` | 片段内全部 AAR 原始统计的容器（武器、威胁、发现、暴露招致打击、支援响应、班模板） | 03 |
+| 发现统计 | `DetectionStats` | 每方发现次数与发现距离之和（按片段光照） | 03 |
+| 暴露招致的打击 | `ExposureCausedStrike` / `StrikeExposureCause` | 因开火暴露被发现后招来的敌方间瞄打击记录 | 03 |
+| 支援响应记录 | `FireSupportResponse` / `ResponseSegment` | 一次火力请求的反应/通信/排队与调炮/飞行四段耗时 | 03 |
+| 班模板统计 | `SquadTemplateStats` | 按班模板汇总的压制、杀伤（含按类别压制） | 03 |
+| 威胁汇总 | `ThreatSummary` | 按目标类别汇总的威胁窗口数据 | 03 |
+| 试验场规格 / 报告 | `ProvingGroundSpec` / `PgSideSpec` / `ProvingGroundRun` / `ProvingGroundReport` / `DistributionSummary` | 编制试验场批量模拟的输入、单场结果与汇总 | 03 |
