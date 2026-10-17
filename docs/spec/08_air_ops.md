@@ -212,17 +212,18 @@ class AirDefenseProfile {
   confidence: estimated
 - id: mam_l
   category: asm_antitank
-  munition: {air: {role: air_to_ground, guidance: laser_semi_active, range_km: 8, cep_m: 1,
-                   warhead_kg: 10, seeker_footprint_m: 300}}   # 03 另给 is_top_attack: true
+  munition: {kind: guided_he, warhead_kg: 10, is_top_attack: true,     # 03 MunitionProfile 通用字段
+             air: {role: air_to_ground, guidance: laser_semi_active, range_km: 8, cep_m: 1, seeker_footprint_m: 300}}
   procurement: {cost_musd: 0.1}      # 单价归 11 ProcurementProfile
   confidence: estimated
 - id: harop
-  category: loitering_munition
+  category: loitering_munition       # 巡飞弹弹药，一枚 = 一件（DC-205 ①）；发射单元是 loitering_launcher 类别的 harop_launcher
   origin: ISR
-  munition: {air: {role: loitering, guidance: loiter_eo_rf, speed_kph: 417, cruise_alt_agl_m: 3000,
+  munition: {kind: loitering_warhead, warhead_kg: 23, is_top_attack: true,   # 03 通用字段
+             air: {role: loitering, guidance: loiter_eo_rf, speed_kph: 417, cruise_alt_agl_m: 3000,
                    loiter_endurance_h: 6, range_km: 1000, rcs_m2: 0.05, in_flight_class: small_uav,
                    rf_seeker_range_km: 25, seeker_quality: 0.9, seeker_footprint_m: 1000,
-                   warhead_kg: 23, is_interceptable: true}}
+                   is_interceptable: true}}
   procurement: {cost_musd: 1.0}
   confidence: estimated
 - id: osa_akm
@@ -1395,4 +1396,4 @@ TB2（fallback SelfAcquire）：目标 `S_phys = 0.305044`（05 T1），`eoQuali
 | 拦截机会数 | m（`opportunities`） | 目标在包线内还能“打一发、看一发”的次数 |
 | 国家级拦截去重账本 | `TargetEngagementLedger` | 每步记录各目标已有在途拦截弹的合成概率 |
 | 中队营 | “squadron unit”（`OrgUnit`） | 承载中队飞机与人员的营级编制单元（A-25） |
-| 新装备类别（建议） | `sam_missile`、`aam`（若需区分） | 防空导弹/空空弹弹药类别（待加入 `data/schema/categories.yaml`）；`loitering_munition` 已由 01 O-12 新增 |
+| 新装备类别（建议） | `sam_missile`、`aam`（若需区分） | `sam_missile` 已加入 `data/schema/categories.yaml`（`aam_short`/`aam_medium` 已有）；`loitering_munition`（巡飞弹弹药）与 `loitering_launcher`（发射单元）已由 01 O-12 / DC-205 ① 新增 |

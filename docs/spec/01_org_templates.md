@@ -238,6 +238,8 @@ templates:
 | `role: hq` 且 `level ≥ battalion` | 视为“编组指挥部营”候选（§4.4.2）。 |
 | `default_bindings` | 只允许 `level ≥ battalion`；类别和型号必须存在；型号类别 ≠ 键时 Warning（已有）。 |
 | `echelon_label` | 只允许 `level ≥ brigade`；自由 snake_case，界面按本地化表显示。 |
+| `subordinate_formations` | 可选，只允许 `level: corps`；格式同 `children`（`[{template, count}]`），引用的模板必须存在。只记录隶属关系（如战区陆军下辖的集团军），**不实例化、不计入 §4.2 合计、不参与层级检查**（🟡 O-21）。 |
+| `slots` / `slots_unassigned` 的类别 | 不得是弹药类别（`group` 为 `air_munition` / `ground_munition`，§3.9 M9）：弹药按发/枚计入 06 库存，不占槽位（DC-205/206）。 |
 | `generator` | 只由系统写入；玩家手动编辑后清空（§4.13.4）。 |
 
 #### 3.4.2 运行时类型
@@ -451,13 +453,14 @@ public sealed class CheckResult {
 | # | 文件 | 改动 | 是否破坏兼容 |
 |---|---|---|---|
 | M1 | `data/schema/categories.yaml` | 每个类别可加 `portable`、`carrier`、`provides`、`roles`、`support_weapon`、`items_per_toolset`；不加时用 §4.14 / §4.15 的默认表 | 否 |
-| M2 | `data/schema/categories.yaml` | 新增类别（O-12）：`loitering_munition`（巡飞弹发射单元）、`fpv_drone`（FPV 无人机）、`body_armor`（防弹衣；后三者同 03 C-18）、`tbm_launcher`（战术弹道导弹发射车：飞毛腿、圆点、伊斯坎德尔，纳卡双方都有） | 否 |
+| M2 | `data/schema/categories.yaml` | 新增类别（O-12；DC-205 ① 已落实）：`loitering_munition`（巡飞弹**弹药**，一枚 = 一件，按枚计入 06 库存，不进槽位）、`loitering_launcher`（巡飞弹发射车/发射箱/弹射架，班模板槽位写它）、`fpv_drone`（FPV 无人机）、`body_armor`（防弹衣；后三者同 03 C-18）、`tbm_launcher`（战术弹道导弹发射车：飞毛腿、圆点、伊斯坎德尔，纳卡双方都有） | 否 |
 | M3 | `data/equipment/*.yaml` | 可加 `upgrade_of`、`maintenance_group`、`service_year` | 否 |
 | M4 | `data/templates/*.yaml` | 可加 `branch`、`weapon_echelon`、`echelon_label`、`style`、`deprecated` | 否 |
 | M5 | `tools/validate_data.py` | 新增：全局 id 唯一（跨类型）、子模板层级严格更低、`role: equipment_pool` 不许有人员、`default_bindings` 只在营以上、COVERAGE 前缀加 `arm_`/`aze_`、调用 §9 的编辑器检查并输出报告 | 否（只加检查） |
 | M6 | 新目录 `data/styles/` | 自动生成风格表（§4.13.1） | 新增 |
 | M7 | 新文件 `data/tuning/01_org.yaml` | 本文件第 5 节常数（G-15） | 新增 |
 | M8 | 新目录 `data/loadouts/` | 装填模板（阶段 3） | 新增 |
+| M9 | `data/schema/categories.yaml` | 新增弹药类别组 `group: ground_munition`（DC-206 ①）：`small_arms_ammo`、`autocannon_round`、`tank_gun_round`、`grenade_round`、`rocket_grenade`、`atgm_missile`、`mortar_bomb`、`artillery_shell`、`mrl_rocket`、`tbm_missile`；弹药型号放 `data/equipment/ground_munitions.yaml`。`group` 为 `air_munition` / `ground_munition` 的类别统称“弹药类别” | 否 |
 
 ---
 
@@ -1084,7 +1087,7 @@ GeneratedSet Generate(CountryId country, GenerateParams p) {
 | `atgm_heavy` | ha_m, ha_f, la_m, la_f, fo_m, fo_f | `mortar_heavy` / `mortar_vehicle` / `sp_mortar_howitzer` | pe_m, pe_f, pc_m, pc_f, pr_m, pr_f, fo_f |
 | `agl` | pe_c, pe_m, pc_c, pc_m | `manpads` | he_m, he_f, ua_m, ua_f |
 | `underbarrel_gl` | pe_c, pc_c | `aa_mg` | he_c, he_m, ua_c |
-| `sniper_gl` | pe_m, pc_m | `loitering_munition` / `fpv_drone` | la_f, ha_f, pc_f, fo_f |
+| `sniper_gl` | pe_m, pc_m | `loitering_launcher` / `fpv_drone` | la_f, ha_f, pc_f, fo_f |
 
 （`rifle, smg, shotgun, dmr, lmg, gpmg, sniper_rifle` 的 `support_weapon = false`，不参与。）
 
@@ -1098,7 +1101,7 @@ GeneratedSet Generate(CountryId country, GenerateParams p) {
 
 | 能力 | 由这些类别提供 | 或由这些专业提供 |
 |---|---|---|
-| `AntiHeavyArmor` | mbt, assault_gun, atgm_portable, atgm_heavy, atgm_vehicle, loitering_munition | — |
+| `AntiHeavyArmor` | mbt, assault_gun, atgm_portable, atgm_heavy, atgm_vehicle, loitering_launcher | — |
 | `AntiLightArmor` | 上一行全部 + ifv, recon_ifv, reusable_launcher, disposable_launcher, hmg, anti_materiel_rifle, fpv_drone | — |
 | `AntiFortification` | mbt, assault_gun, thermobaric_launcher, reusable_launcher, mortar_*, sp_mortar_howitzer, howitzer_*, atgm_heavy | — |
 | `IndirectHighAngle` | mortar_*, sp_mortar_howitzer, howitzer_*, mrl_* | — |
@@ -1220,7 +1223,7 @@ public sealed class LoadoutTemplate {
 | **纳卡“防卫军”**（防区 → 团/营，大量固守阵地的营） | 归属见 G-13（14 决定）。结构上：防区 = `level: division` 或 `corps` + `echelon_label: defence_region`；团 = `level: brigade` + `echelon_label: regiment`；固守营就是普通营模板（车辆少 → 09 的机动慢，工事由 04/09 处理） |
 | **简编 / 骨干（кадрированные）部队**、预备役团 | 同样的模板；营的 `tier = Reduced / Cadre`（§4.9，人员在编比例见 02） |
 | 独立营（直属军或国家：特种营、侦察营、巡飞弹/无人机分队、战术导弹营） | 营模板，`organicFormationId` 指向军编组或为 0（直属国家）；练度归属按 G-07 自成一体 |
-| 2020 年前后新增的无人机/巡飞弹单位 | 用新增类别 `loitering_munition`、`uav_*` 的班模板（M2）；大型无人机（TB2 等）是空军 `Flight`（08），不进陆军模板 |
+| 2020 年前后新增的无人机/巡飞弹单位 | 用新增类别 `loitering_launcher`（发射单元）、`uav_*` 的班模板（M2）；巡飞弹本身（`loitering_munition`）是弹药，按枚计入 06 库存（DC-205 ①）；大型无人机（TB2 等）是空军 `Flight`（08），不进陆军模板 |
 | 自动生成默认风格 | 亚、阿均用 `sov_legacy`；阿塞拜疆 2020 的土耳其式突击部队可用 `aze` 微调风格（阶段 1 可选） |
 
 ---
@@ -1440,7 +1443,7 @@ public sealed class LoadoutTemplate {
 | O-09 | 库存中的整件装备是否建实例 | 建 `EquipmentItem`（holder = 0），与 11 的交付/升级/退役设计一致 | 保留单件状态（二手品相、升级中）；阶段 1 数量级只有几万件 | 按（节点, 型号）计数，发放时才建实例（省内存，但丢掉单件状态） |
 | O-10 | 简编/骨干营装备满编目标 | 三档都 1.0（缺的是人）；维护费按倍率降低 | 符合苏式简编/骨干部队的做法，亚、阿都继承 | 骨干营只配 50%，其余在中央仓库 |
 | O-11 | 检查用的类别属性放在哪 | categories.yaml 可选字段 + 本文件默认表 | 模组可改；不写也能跑 | 全部写死在代码 |
-| O-12 | 新增类别 | `loitering_munition`、`fpv_drone`、`body_armor`、`tbm_launcher` | 纳卡必需（与 03 C-18 一致） | 巡飞弹并入 `uav_*` |
+| O-12 | 新增类别 | `loitering_munition`、`fpv_drone`、`body_armor`、`tbm_launcher`（已由审查解决：DC-205 ① 另加 `loitering_launcher`，`loitering_munition` 改为弹药；DC-206 ① 加地面弹药类别，见 §3.9 M2/M9） | 纳卡必需（与 03 C-18 一致） | 巡飞弹并入 `uav_*` |
 | O-13 | 09 同时用指挥质量 q 和负荷比 r | 采用（q 管基础延迟，r 只在过载时起作用） | 好部班“下令快 + 管得多”两种收益都可见 | capacity 只由人数决定，通信/练度只进 q |
 | O-14 | “预设接近最优”如何保证 | 每个风格 archetype 过 V-04（胜率差 ≤ 5%） | 把总纲原则变成可测试的门槛 | 只靠人工审 |
 | O-15 | 装填模板归属 | 通用结构由 01 定义（与编制模板同一编辑器体系）；阶段 3 海军规格定义行为（回港、补弹） | 总纲 §5.2 说“和旅编制一样”；00 目前把 `VlsLoadoutTemplate` 暂挂 11 | 维持 11 占位，阶段 3 再定 |
@@ -1449,6 +1452,7 @@ public sealed class LoadoutTemplate {
 | O-18 | 维护工具组 | 维护组织 = 建制旅（与 G-07 同）；按维护组（默认 = family）计；默认自动采购 | 让“统一系列”自然省钱；预设接近最优 | 按营计；不自动采购 |
 | O-19 | 检查阈值 | 15 kg / 30 kg（总纲）；人均负重 33 kg；射程越格 60 km | 来自总纲与常见条令量级 | 由试验场校准后修改 |
 | O-20 | 建制编组必须有指挥部营；指挥部营不能单独配属 | 是 | 总纲“建制编组有指挥部单位” | 允许无指挥部的建制编组（指挥能力取最小值） |
+| O-21 | 高于 corps 的单位（战区陆军 `pla_theater_army`）怎么表示 | 🟡 建议：`OrgLevel` 不新增层级；用可选字段 `subordinate_formations` 只记录隶属关系，不实例化、不计入合计（§3.4.1） | 阶段 1–2 不需要战区级实例化；新增层级会牵动指挥负荷（§4.10）、13 显示、15 存档枚举；O-02 禁止 corps 引用 corps | `OrgLevel` 追加第 8 级 `ArmyGroup`，战区陆军按普通编组实例化 |
 
 ---
 

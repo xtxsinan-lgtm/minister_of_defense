@@ -107,7 +107,7 @@ specialties:
 | `manpads_gunner` | manpads |
 | `ad_crew` | spaag, aa_gun_towed, aa_mg, sam_short, sam_medium, sam_long, c_ram |
 | `radar_operator` | radar_counter_battery, radar_battlefield |
-| `uav_operator` | uav_micro, uav_hand_launched, uav_small_vtol, uav_tactical, loitering_munition, fpv_drone |
+| `uav_operator` | uav_micro, uav_hand_launched, uav_small_vtol, uav_tactical, loitering_launcher, fpv_drone |
 | `ew_operator` | ew_vehicle |
 | `driver` | truck_medium, truck_heavy, semi_tractor, utility_vehicle |
 | `engineer` | engineer_vehicle, mine_clearing_vehicle, bridge_layer |
