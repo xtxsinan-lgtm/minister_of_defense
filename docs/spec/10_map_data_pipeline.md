@@ -302,7 +302,7 @@ public sealed class StripTerrainInput                  // 文件 data/map/strips
     public byte[] cellFlags;             // bit0 有铁路；bit1 有大河；bit2 有桥；bit3 DEM 缺测补值
 }
 ```
-04 自己从 `terrain`、`slopeDeg`、`roadClass` 推出 `vehiclePassability`、`footPassability`、`losScaleM`（04 §4.1.3 第 5、7 步同一公式）。
+04 自己从 `terrain`、`slopeDeg`（= `slopeHalfDeg / 2.0`）、`roadClass` 推出 `vehiclePassability`、`footPassability`、`losScaleM`（04 §4.1.3 第 5、7 步同一公式）。
 
 ### 3.8 运行时查询接口（模拟核心只通过它读地图）
 
@@ -329,7 +329,13 @@ public interface IMapQuery
     int TopologyVersion { get; }                       // 任何 ActiveRoad/ActiveRail 变化时 +1（06 据此重建图）
     double GreatCircleM(LatLon a, LatLon b);           // 半正矢公式，R = 6 371 008.8 m，用 DMath（15）
 }
+
+public sealed class MapState                           // 运行时地图状态（IMapQuery 的实现持有）
+{
+    public int topologyVersion;          // = IMapQuery.TopologyVersion；ActiveRoad/ActiveRail 任一变化时 +1
+}
 ```
+当前生效的变体（`ActiveRoad/ActiveRail`）是 (SimTime 日, 09 `TileControl`) 的纯函数：读档时按 §4.10 重算，不存档；`topologyVersion` 不存档（读档后从 0 重新计数），06 读档后无条件重建 `SupplyGraph`（06 §4.2.1）。
 
 ### 3.9 输出文件清单
 
@@ -413,9 +419,9 @@ public interface IMapQuery
 `RoadRouteRec`（20 B）：`u8 cls; u8 flags(bit0 synthetic); u16 crossingCount; u32 crossingOffset(→crossing_refs.bin); f32 routeLengthM; f32 mountainFactor; f32 maxElevM`（`winterFactor` 阶段 1 不存，恒 1）。
 `RailLinkRec`（20 B）：`u8 cls; u8 flags(bit0 gaugeBreak, bit1 electrified); u16 crossingCount; u32 crossingOffset; f32 routeLengthM; u16 gaugeAMm; u16 gaugeBMm; u32 保留`。
 
-**`CrossingRecord`（64 B），按 CrossingId 升序**：`u32 id; u8 kind; u8 mode; u16 保留; f64 lat; f64 lon; u64 tile; f32 lengthM; u32 bypassOffset; u16 bypassCount; u16 保留; i64 osmWayId; u32 nameIndex(→names.yaml 序号); u32 保留; u64 保留`。
+**`CrossingRecord`（64 B），按 CrossingId 升序**：`u32 id; u8 kind; u8 mode; u16 保留; f64 lat; f64 lon; u64 tile; f32 lengthM; u32 bypassOffset; u16 bypassCount; u16 保留; i64 osmWayId; u32 nameIndex(→names.yaml 序号); u32 保留; u32 保留`。
 **`BypassRecord`（48 B）**：`u64 tileA; u64 tileB; u8 mode; u8 routeIndex; u8 roadCls; u8 railCls; f32 routeLengthM; f32 mountainFactor; u32 crossingOffset; u16 crossingCount; u16 保留; u64 保留; u32 保留`（凑足 48）。
-**`VariantRecord`（120 B）**：`u64 tileA; u64 tileB; i32 validFromDay; i32 validToDay; char[4] requiresControlIso3; u8 mode; u8 roadRouteCount; u16 保留; RoadRouteRec ×3 (60); RailLinkRec (20); u32 overrideIndex(→names.yaml); u32 保留; u32 保留`。
+**`VariantRecord`（120 B）**：`u64 tileA; u64 tileB; i32 validFromDay; i32 validToDay; char[4] requiresControlIso3; u8 mode; u8 roadRouteCount; u16 保留; RoadRouteRec ×3 (60); RailLinkRec (20); u32 overrideIndex(→names.yaml); u32 保留`。
 
 **条带文件** `strips/<edgeId>.bin`：通用头（recordKind = 7，recordSize = 0，recordCount = nx × ny）之后：
 ```text
@@ -952,7 +958,7 @@ strip_edges: theater_internal
 | 12 | 邻接、`TerrainComposition`、`UrbanFraction`、边中点、地块中心、`Region` | 影响力图、寻路 |
 | 13 | 全部（信息卡、显示等级、折线、桥梁图标、边界、控制快照） | 界面 |
 | 14 | 战区地块集合、控制快照、`airfieldCount` 与铁路货运站（核对节点种子位置）、区域（战略方向预设） | 剧本制作与开局 |
-| 15 | 所有地图文件计入 `dataHash`；地图本身不存档 | 存档/读档 |
+| 15 | 所有地图文件计入 `dataHash`；地图本身不存档。存档：无 `SectionId`（值见 15 §3.2）；组件：无；不存档（派生，读档后重建）：`MapState`（当前生效变体、`topologyVersion`，由 SimTime 与 09 `TileControl` 重算，§3.8） | 存档/读档 |
 
 **运行时阶段**：10 的 `MapState.UpdateInfrastructure` 在 `TickPhase 30 Calendar`（日）执行，位于 11/02/07/12 的日任务之前（🟡 M-08，需在 00 §5.2 的 `Calendar` 行登记 10）。产生的 `InfraChanged` 事件交给 13 通知、06 重建图（06 在同刻 40 阶段检查 `TopologyVersion`）。
 
