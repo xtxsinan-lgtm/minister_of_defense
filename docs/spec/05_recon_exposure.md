@@ -80,7 +80,7 @@ enum EmconState { Active = 0, Partial = 1, Silent = 2 }
 enum SofInsertion { GroundInfiltration = 1, Parachute = 2, HeliInsertion = 3 }
 
 // 本文件新增
-enum ExposureTargetKind { None = 0, Battalion = 1, SofTeam = 2, Decoy = 3, LogisticsNode = 4 }
+enum ExposureTargetKind { None = 0, Battalion = 1, SofTeam = 2, Decoy = 3, LogisticsNode = 4, Crossing = 5 }
 enum SignatureChannel { Physical = 0, Emitter = 1 }
 enum ReconRiskTolerance { Low = 1, Medium = 2, High = 3 }
 enum TilePriority { Low = 1, Normal = 2, High = 3 }
@@ -95,6 +95,7 @@ enum IntelTypeGuess { Unknown = 0, Armor = 1, MechInfantry = 2, Infantry = 3, Ar
 ```csharp
 readonly record struct ExposureTargetId(ExposureTargetKind kind, ulong id);
 // Battalion: id = OrgUnitId.value；SofTeam: id = OrgUnitId（连）；Decoy: id = DecoyGroupId；LogisticsNode: NodeId
+// Crossing: id = CrossingId (10)（桥梁/渡口；机场、工厂按 06 NodeRole 归入 LogisticsNode）
 // 排序：先 kind 升序，再 id 升序（全序，用于遍历）
 ```
 
@@ -109,6 +110,7 @@ class SignatureProfile {                 // YAML 键: signature
     double decoyEmit;                    // 仅假辐射源：模拟的电磁发射强度
     double decoyQuality;                 // [0,1]，多光谱假目标高；充气假目标约 0.3–0.5
     IntelTypeGuess decoyMimics;          // 假目标模拟成哪类部队
+    double engagementSigMult = 1.0;      // 片段内的被发现系数（03 使用，03 C-08）
 }
 
 class SensorProfile {                    // YAML 键: sensor
@@ -121,6 +123,7 @@ class SensorProfile {                    // YAML 键: sensor
     double enduranceH;                   // 中型无人机续航
     double elintRangeM;                  // 地面电子侦察站作用距离
     double thermalFill;                  // 该装备是否带热像（0/1），用于营的夜间能力汇总
+    OpticsClass opticsClassDay, opticsClassNight;   // 观瞄器材等级（枚举归 03 §4.2.2，05 只承载数据；03 C-08）
     // —— 以下字段供 08 使用（空中探测），05 只负责定义 ——
     double airRadarRangeMAt1m2;          // 对 1 m² 目标的探测距离（数据键 air_radar_range_km_at_1m2）
     double airRadarMaxAltM;              // 雷达能看到的最高目标高度
@@ -159,6 +162,7 @@ class SignatureState {
     double postureMult, terrainMult, camoMult, fortMult, densityMult;   // 各乘子，便于 F3 显示
     double physical;               // S_phys ≥ 0
     double emitter;                // S_emit ≥ 0
+    double emitterRadar;           // S_emit 中的雷达部分 = sqrt(radarScore / EmitRef)（§4.1.3）
     double counterRecon;           // [0, CounterReconMax]，本营所在地块本方的反侦察系数（vsGround）
 }
 
@@ -168,6 +172,7 @@ class ExposureRecord {
     ExposureTargetId target;
     double exposure;               // [0, 5]
     SimTime lastObservedTime;      // 最近一次“被观测”（定义见 §4.3 第 5 步）的时刻
+    double lastObservedLatDeg, lastObservedLonDeg;   // lastObservedTime 时目标的真实位置（来自 09/04），与 lastObservedTime 同时写入
     SimTime lastLevelChangeTime;
     H3Index lastKnownTile;         // 观察方认为目标所在的地块（L1 起有效）
     bool isKnownDecoy;             // 已识破的假目标（只对 Decoy 目标有意义；对真实目标恒 false）
@@ -186,7 +191,15 @@ class IntelEstimate {
     double estStrengthFraction;    // L5：剩余兵力比例估计 [0,1]（真值来自 07 满编率）
     double estAmmoFraction;        // L5
     double estFatigue;             // L5
+    Posture observedPosture;       // lastObservedTime 时目标的姿态（§4.4.2 用，不读真值）
     long refreshEpoch;             // 误差抽样的轮次号（§4.6）
+}
+
+// 每个营一份侦察相关设置（05 归属；09 UnitConfig 写入；08 AirDefenseRegistration.emcon 每步复制本字段）
+class ReconConfig {
+    OrgUnitId battalionId;
+    EmconState emcon = EmconState.Active;
+    bool deployDecoys;
 }
 
 // 地块 × 国家的反侦察系数（每步重算，不存档）
@@ -201,8 +214,10 @@ readonly record struct ReconDwellSample(
     CountryId observer, H3Index tile, ReconMeans means,
     double dwellS,                 // 本空中步内在该地块上空的有效观测秒数，(0, 60]
     double sensorQuality,          // = SensorProfile.eoQuality（巡飞弹用其导引头质量）
-    double standoffFactor,         // [0,1]，见 08 §4.9
-    ulong sourceId);               // FlightId 或 MissileInFlightId，排序与叠加用
+    double standoffFactor,         // [0,1]，见 08 §4.4.7
+    ulong sourceId,                // FlightElementId / MissileInFlightId / 营 OrgUnitId，排序与叠加用
+    byte sourceKind,               // 1 = FlightElement，2 = Missile，3 = Battalion
+    double nightFactor);           // 该源的夜间系数（08 按 SensorProfile.nightFactor 填写），§4.2.6
 
 // 04 每个条带步写入的地面侦察样本（缓冲）
 readonly record struct StripReconSample(
@@ -316,6 +331,8 @@ emitScore = Σ_items emitRadio(model)  × count × RadioEmconFactor[emcon] × ac
           + Σ_items emitRadar(model)  × count × RadarEmconFactor[emcon]
           + (该营每个 role = Hq 的班) × HqRadioDefault × RadioEmconFactor[emcon] × activityMult   // 数据缺失时的缺省
 S_emit = sqrt(emitScore / EmitRef)
+radarScore   = Σ_items emitRadar(model) × count × RadarEmconFactor[emcon]      // emitScore 的雷达项
+S_emitRadar  = sqrt(radarScore / EmitRef)                                     // 写入 SignatureState.emitterRadar
 activityMult = (posture == Attacking || 该营处于活跃 EdgeBattle) ? 1.5 : 1.0
 ```
 - 防空营的雷达开关**由 08 的防空登记决定实际状态**（Partial 时按 08 报告的“本步开机时间比例”替换 `RadarEmconFactor`）：`RadarEmconFactorEffective = radarOnFraction`（08 §4.7.2 写入 `AirDefenseRegistration.radarOnFraction`）。
@@ -341,9 +358,9 @@ vsGround = min(CounterReconMax, CounterGroundReconWeight × min(1, reconPowerOwn
 
 #### 4.2.1 空中样本（LargeUav、GmtiAircraft、ReconPod，以及巡飞弹顺带的 MediumUav）
 ```
-对每个 (c, t, m)，取本 Exposure 步缓冲里的所有 ReconDwellSample，按 sourceId 合并（同一源的样本 dwellS 相加，quality/standoff 取 dwell 加权平均）
+对每个 (c, t, m)，取本 Exposure 步缓冲里的所有 ReconDwellSample，按 (sourceKind, sourceId) 合并（同一源的样本 dwellS 相加，quality/standoff/nightFactor 取 dwell 加权平均）
 f_i = (Σ dwellS_i / (ExposureStepMinutes × 60)) × sensorQuality_i × standoffFactor_i          // 每个源一个 f_i ∈ [0,1]
-把 f_i 按 (f_i 降序, sourceId 升序) 排序
+把 f_i 按 (f_i 降序, sourceKind 升序, sourceId 升序) 排序
 coverage(c,t,m) = Σ_k f_(k) × SameMeansStackDecay^k         // k = 0,1,2…
 ```
 - `SameMeansStackDecay = 0.6`：第 2 架、第 3 架的边际价值递减。
@@ -359,7 +376,7 @@ flightHoursPerStep = readyCount × MediumUavDutyCycle × (ExposureStepMinutes / 
 f(t) = flightHoursPerStep × share_t / (ExposureStepMinutes / 60) × eoQuality      // 截断到 ≤ readyCount
 coverage(c,t,MediumUav) 按 4.2.1 的方式叠加（每个营作为一个源，sourceId = 营 ID）
 ```
-- 损失：每个地块每小时损失概率由 08 的 `AbstractUavAttritionPerH(c, t, modelId)` 给出（08 §4.9.3）。本步对每个营每个地块抽样一次：`Bernoulli(1 − (1 − pLossPerH)^(f(t) × dtH))` → 命中则该营的一件中型无人机标记为摧毁（交 07）。RNG：`For(Exposure, Mix(battalionId) ^ tile, tick, SaltMediumUavLoss)`。
+- 损失：每个地块每小时损失概率由 08 的 `AbstractUavAttritionPerH(c, t, modelId)` 给出（08 §4.9.3）。本步对每个营每个地块抽样一次：`Bernoulli(1 − (1 − pLossPerH)^(f(t) × dtH))` → 命中则对该营一件完好的中型无人机（EquipmentItemId 升序第一件）调用 `07.ApplyVehicleDamage(item, Destroyed, Catastrophic, now, src, default, 0)`。RNG：`For(Exposure, Mix(battalionId) ^ tile, tick, SaltMediumUavLoss)`。
 
 #### 4.2.3 卫星过顶（`OpticalSatellite`, `RadarSatellite`）
 ```
@@ -393,7 +410,7 @@ channelSig(m, target) = PhysWeight[m] × S_phys(target) + EmitWeight[m] × S_emi
 envFactor(m, tile)    = 夜间 ? NightFactor(m, 资产) : 1            // × WeatherFactor = 1（🟡 R-21）
 ```
 - 夜间判定：地块中心本地太阳高度 < 0（09 提供 `IsNight(tile, time)`）。
-- `NightFactor`：空中资产取其 `SensorProfile.nightFactor`（4.2.1 里 dwell 加权平均）；地面侦察取 `GroundNightBase + (1 − GroundNightBase) × thermalFillOfBattalion`；SOF 取 `SofNightFactor`。
+- `NightFactor`：空中资产取样本的 `nightFactor`（4.2.1 里 dwell 加权平均）；地面侦察取 `GroundNightBase + (1 − GroundNightBase) × thermalFillOfBattalion`；SOF 取 `SofNightFactor`。
 
 ### 4.3 暴露度更新（每个 (c, target) 对）
 
@@ -421,7 +438,11 @@ void UpdateExposure(ExposureRecord r, Contributions contrib, double dtH) {
     e = e - e * decayPerH * dtH * decayMult;
     // 4. 夹紧、时间戳
     e = Math.Clamp(e, 0.0, 5.0);
-    if (observed) r.lastObservedTime = stepStart;
+    if (observed) {
+        r.lastObservedTime = stepStart;
+        (r.lastObservedLatDeg, r.lastObservedLonDeg) = position(target);   // 真实位置：营 = 09 GetBattalionPosition（条带上取 04 位置）；其他目标 = 其所在位置
+        r.estimate.observedPosture = posture(target);
+    }
     if (Math.Floor(e) != Math.Floor(r.exposure)) r.lastLevelChangeTime = stepStart;
     r.exposure = e;
 }
@@ -437,7 +458,7 @@ CapValue(m, target) = (MaxLevel(m, target) == 5) ? 5.0 : MaxLevel(m, target) + C
 |---|---|---|
 | OpticalSatellite | 3 | — |
 | RadarSatellite | 3 | — |
-| Elint | 3 | 目标当前 `S_emit` 中雷达部分 > 0（雷达开机），或目标是指挥部营（`role = Hq` 的营）且 `emcon == Active` → **4** |
+| Elint | 3 | 目标当前 `emitterRadar` > 0（雷达开机），或目标是指挥部营（`role = Hq` 的营）且 `emcon == Active` → **4** |
 | LargeUav | 4 | — |
 | GmtiAircraft | 3 | — |
 | ReconPod | 3 | — |
@@ -467,6 +488,9 @@ ExposureLevel GetLevel(CountryId observer, ExposureTargetId target)
     => record 不存在 ? None : (ExposureLevel)(int)Math.Floor(record.exposure);
 long GetAgeMs(CountryId observer, ExposureTargetId target, SimTime now)
     => record 不存在 ? long.MaxValue : now.ms - record.lastObservedTime.ms;
+IntelSnapshot GetExposure(CountryId observer, ExposureTargetId target, SimTime now)     // IntelSnapshot 归 09 §3.2
+    => new(GetLevel(observer, target), record.lastObservedTime,
+           TargetLocationErrorM(level, ageMs, record.estimate.observedPosture), record.estimate.observedPosture);
 ```
 
 #### 4.4.2 精度系数（00 §3.7 要求的函数；🟡 R-08 增加 posture 参数）
@@ -474,7 +498,7 @@ long GetAgeMs(CountryId observer, ExposureTargetId target, SimTime now)
 ExposureAccuracyFactor(level, ageMs, posture) = LevelAccuracy[level] × AgeFactor(ageMs, posture)
 AgeFactor = DMath.Pow(0.5, ageMs / FixHalfLifeMs[posture])
 ```
-- `posture` 取**观察方最后看到时**的姿态（存在 `IntelEstimate` 里，不读真值）。为与 00 的两参签名兼容，提供重载 `ExposureAccuracyFactor(level, ageMs)`，posture 取 `Defending`。
+- `posture` 取**观察方最后看到时**的姿态（`IntelEstimate.observedPosture`，不读真值）。为与 00 的两参签名兼容，提供重载 `ExposureAccuracyFactor(level, ageMs)`，posture 取 `Defending`。
 - 用途：03/04 的间瞄首轮精度、08 的打击精度、面积打击弹药倍数。
 
 #### 4.4.3 精确打击许可（10.5 / 11.1.1）
@@ -496,7 +520,7 @@ TargetLocationErrorM(level, ageMs, posture) =
 SearchAcquireProbabilityPerMin(targetChannelSig, seekerQuality, priorLevel, isNight, nightFactor)
   = 1 − exp( −SearchK × targetChannelSig × seekerQuality × PriorLevelBonus[priorLevel] × (isNight ? nightFactor : 1) )
 ```
-- `targetChannelSig`：光电搜索用 `S_phys`；被动雷达导引头用 `S_emit` 的雷达部分（且仅当雷达开机）。
+- `targetChannelSig`：光电搜索用 `S_phys`；被动雷达导引头用 `emitterRadar`（且仅当雷达开机）。
 - 获取成功时，08 调用 `RegisterSelfFix(observer, target, means)`：把 exposure 提到 `max(exposure, 4.0)`、`lastObservedTime = now`（打击方“自己看见了”，同时也就把这个情报带回了本国 → 察打一体）。仅当该平台的 `MaxLevel(means) ≥ 4`（LargeUav/MediumUav/巡飞弹）时允许。
 
 #### 4.4.6 地面侦察力量
@@ -506,7 +530,13 @@ groundReconPower(b) = min(GroundReconPowerCap,
 ```
 - `reconSkill`：营里侦察专业（侦察兵、无人机操作员）的平均型号专有练度（02）；无此专业取通用练度。
 - 缺省 `groundReconValue` 按类别（§5.2）：`uav_micro` 0.05、`uav_hand_launched` 0.15、`uav_small_vtol` 0.3、侦察车 0.12、`radar_battlefield` 0.3、`radar_counter_battery` 0.2（只对炮兵目标有效，见注）。
-- 注：反炮兵雷达对 `IntelTypeGuess.Artillery` 类营且该营本步开过火（04 提供）时，额外给 `GroundRecon` 覆盖 `+0.5`（同地块和相邻地块）。
+- 注：反炮兵雷达对 `IntelTypeGuess.Artillery` 类营且该营本步开过火（04 提供）时，额外给 `GroundRecon` 覆盖 `+0.5`（同地块和相邻地块）（仅对不与观察方在同一 EdgeBattle 的炮兵营；同一战斗内由 04 CbReconPulse 计入）。
+
+#### 4.4.7 特征值查询（供 04 / 08）
+```csharp
+(double physical, double emitter, double emitterRadar) GetSignature(ExposureTargetId target)
+    // Battalion：SignatureState 的 physical / emitter / emitterRadar；SofTeam、Decoy：§4.1.4；LogisticsNode、Crossing：(0, 0, 0)（不算特征值，§4.8）
+```
 
 ### 4.5 L5 状态与 L2 规模的“真值”来源
 - 规模真值：目标的 `VE` 和人数（01/02）。
@@ -516,7 +546,7 @@ groundReconPower(b) = min(GroundReconPowerCap,
 1. **何时刷新**：`refreshEpoch` 在以下情况 +1 并重新抽误差：等级变化；或距上次刷新 ≥ `IntelRefreshH`（6 小时）且本期间被观测过。不刷新时误差保持不变（避免数字每 10 分钟跳）。
 2. **规模误差**（L2+）：
    ```
-   rng = For(Exposure, Mix(observer.value) ^ target.id, refreshEpoch, SaltIntelNoise)
+   rng = For(Exposure, Mix(observer.value) ^ Mix(((ulong)target.kind << 56) ^ target.id), refreshEpoch, SaltIntelNoise)
    z = rng.Normal(0, 1)            // 15 提供
    estVE = trueVE × DMath.Exp(SizeErrorSigma[level] × z)
    estPersonnel = (int)Math.Round(truePersonnel × DMath.Exp(SizeErrorSigma[level] × z), MidpointRounding.AwayFromZero)
@@ -530,13 +560,26 @@ groundReconPower(b) = min(GroundReconPowerCap,
    typeConfidence = 1 − pConfuse
    ```
    `ConfusableWith`：Armor↔MechInfantry，Artillery↔AirDefense，Infantry↔Recon，Headquarters↔Logistics，SpecialForces↔Infantry。
-   真类型：01 提供 `GetBattalionKind(battalionId)`（映射到 `IntelTypeGuess`；🟡 R-20）。
+   真类型：01 提供 `GetBattalionKind(battalionId)`（返回 01 `Branch`，按下表映射到 `IntelTypeGuess`；🟡 R-20）。
+
+   | 01 `Branch` | `IntelTypeGuess` |
+   |---|---|
+   | Armor | Armor |
+   | MechInfantry、CombinedArms | MechInfantry |
+   | MotorInfantry、LightInfantry、AntiTank、Engineer、Cbrn | Infantry |
+   | Artillery、FireSupport | Artillery |
+   | AirDefense | AirDefense |
+   | Headquarters、Signal | Headquarters |
+   | Logistics、Maintenance、Medical | Logistics |
+   | Recon | Recon |
+   | SpecialForces | SpecialForces |
+   | Aviation、Other、None | Unknown |
 4. **L5 误差**：`estStrengthFraction = clamp(true × exp(StatusErrorSigma × z2), 0, 1)`，`z2` 为同流下一次正态抽样；弹药、疲劳同理（`z3`、`z4`）。
 
 ### 4.7 欺骗：假目标（10.3）
 
 #### 4.7.1 布设
-- 条件：营的 `deployDecoys == true`，营姿态 ∈ {Entrenched, Defending, Resting}，营持有 `decoy_vehicle` 或 `decoy_emitter` 器材。
+- 条件：营的 `ReconConfig.deployDecoys == true`，营姿态 ∈ {Entrenched, Defending, Resting}，营持有 `decoy_vehicle` 或 `decoy_emitter` 器材。
 - 营进入上述姿态满 `DecoyDeployH`（2 小时）后，在同一地块创建一个 `DecoyGroup`（每个营最多 1 个），收纳全部假目标器材。营离开地块或姿态变为移动类 → 收回（`DecoyRecoverH` = 1 小时后器材随营走；期间假目标组仍在原地，可以被打）。
 - 敌方对 `DecoyGroup` 的暴露度按普通目标的全部规则增长（4.2、4.3）。在敌方界面上它显示为一个 `mimics` 类型、规模按 `VE_decoy` 的营（L2 误差同样适用）。
 
@@ -558,7 +601,7 @@ groundReconPower(b) = min(GroundReconPowerCap,
 ### 4.8 固定设施（🟡 R-10）
 - 后勤节点、机场、桥梁、工厂：**战争开始时**，各国对敌方全部固定设施的暴露度初始化为 `FixedSiteInitialExposure = 4.5`（L4，位置已知）；对其的衰减率 = 0（位置不会变）。
 - 设施的 L5（库存多少、跑道是否可用）需要成像手段覆盖：任何 `MaxLevel ≥ 3` 的成像手段在过去 `FixedSiteStatusWindowH = 24` 小时内覆盖过该地块 → exposure 置 5.0，否则回落到 4.5。
-- 06 的分散度设置：分散的节点视为多个子堆点，打击精度不受影响，但每次打击只能影响 `1/分散度` 的库存（06 定义）。
+- 06 的分散度设置：分散度对打击效果的影响见 06 §4.10（dispMult）。
 
 ### 4.9 我方暴露度估算（10.6；每 60 分钟）
 对每个我方营 b 和每个敌国 e，维护两条**影子暴露度**，用与 4.3 **完全相同**的公式，只是输入换成“我方能知道的敌方侦察”：
@@ -592,7 +635,7 @@ groundReconPower(b) = min(GroundReconPowerCap,
    else w_t = PriorityWeight[priority_t] × need_t
 dwellShare_t = w_t / Σ w        （Σ w = 0 → 全部为 0，任务挂起并通知）
 ```
-- 空中资产（Flight）：08 按 `dwellShare` 安排轨道：每个资产按 `dwellShare` 比例在各地块上空盘旋（08 §4.4.9）。
+- 空中资产（Flight）：08 按 `dwellShare` 安排轨道：每个资产按 `dwellShare` 比例在各地块上空盘旋（08 §4.4.7）。
 - 中型无人机营：按 4.2.2 使用。
 - 资产冲突：一个资产只能属于一个任务（新任务分配时从旧任务移除）。
 
@@ -606,7 +649,7 @@ Planned → Inserting → OnStation → Exfiltrating → Completed
 
 | 阶段 | 持续 | 进入条件 / 规则 |
 |---|---|---|
-| Inserting | GroundInfiltration：`InfilH = 12`（只能从相邻己方控制地块，夜间开始；白天下令则等到天黑）；Parachute / HeliInsertion：由 08 的运输飞行决定（飞到目标地块 + `ParaAssemblyH = 3` / `HeliUnloadH = 0.25`） | 地面渗透：开始时对该边上敌方营做一次发现判定 `pDetect = InfilDetectBase × min(2, 敌方该边相邻营的 groundReconPower 总和)`；空中：飞机被击落 → 机上 SOF 按 08 的结果损失 |
+| Inserting | GroundInfiltration：`InfilH = 12`（只能从相邻己方控制地块，夜间开始；白天下令则等到天黑）；Parachute / HeliInsertion：由 08 §4.14 的运输飞行决定（Parachute → `Paradrop`：飞到目标地块 + 08 `LoadUnloadH[Paradrop]` + 08 `ParaAssemblyH`；HeliInsertion → `FastRope`：飞到目标地块 + 08 `LoadUnloadH[FastRope]`） | 地面渗透：开始时对该边上敌方营做一次发现判定 `pDetect = InfilDetectBase × min(2, 敌方该边相邻营的 groundReconPower 总和)`；空中：飞机被击落 → 机上 SOF 按 08 的结果损失 |
 | OnStation | `durationDays` 或补给耗尽 | 每步按 4.11.2 产生情报（进缓冲）；每步消耗补给 `dtH / 24` 天 |
 | Exfiltrating | 与 Inserting 同规则（撤出方式可以不同） | 完成后连回到出发地块，补给重置 |
 | Compromised | 直到撤出完成或被消灭 | 每小时被消灭概率 `SofHuntPerH`；玩家/AI 应立即下令撤出（自动撤出：缺省开启） |
@@ -628,7 +671,7 @@ Planned → Inserting → OnStation → Exfiltrating → Completed
 - 敌方对 SOF 小队的暴露度按普通目标规则增长（敌方在该地块的营提供 `SameTileReconFactor` 的地面侦察；Elint 看回报尖峰）。
 - 每步：若敌方对 SOF 的等级 ≥ `SofCompromiseLevel (3)`：
   `pCompromiseStep = 1 − (1 − SofCompromisePerH × (exposure − 2))^dtH` → 抽样（`For(Exposure, sofCompanyId, tick, SaltSofCompromise)`），命中 → `Compromised`。
-- Compromised 期间每步：`pDestroyedStep = 1 − (1 − SofHuntPerH)^dtH`（`SaltSofDestroyed`）。命中 → 连被消灭（07：人员 `MissingOrCaptured` 50% / `Killed` 50%，由 07 抽样）。
+- Compromised 期间每步：`pDestroyedStep = 1 − (1 − SofHuntPerH)^dtH`（`SaltSofDestroyed`）。命中 → 连被消灭：调用 `07.OnSofDestroyed(sofCompany)`（人员 `MissingOrCaptured` 50% / `Killed` 50%，由 07 抽样）。
 
 #### 4.11.4 扩展（阶段 2+，🟡 R-15）
 - 目标指示：对已达 L3 的单个目标，直接 `RegisterSelfFix`（L4，持续刷新），代价是特征值 × 2。MVP 缺省**关闭**。
@@ -787,7 +830,6 @@ Planned → Inserting → OnStation → Exfiltrating → Completed
 | `AssumedUavCoverage` | 0.5 | — | 0.2–1 | 影子 High 的假设 |
 | `InfilH` | 12 | h | 6–24 | 一夜徒步渗透 |
 | `InfilDetectBase` | 0.05 | — | 0.01–0.2 | |
-| `ParaAssemblyH` / `HeliUnloadH` | 3 / 0.25 | h | — | §15.4 |
 | `SofSupplyDays` | 5 | d | 3–10 | §16“补给只能维持几天” |
 | `SofCompromiseLevel` | 3 | 级 | 2–4 | |
 | `SofCompromisePerH` | 0.03 | /h/级 | 0.01–0.1 | L3 时约 3%/h，L4 时约 6%/h |
@@ -808,21 +850,23 @@ Planned → Inserting → OnStation → Exfiltrating → Completed
 | 08 | `ReconDwellSample` 缓冲；`AirDefenseRegistration.radarOnFraction`；`AbstractUavAttritionPerH`；我方 `AirTrack`（估算用） | 空中步写缓冲；Exposure 步读 |
 | 09 | `Posture`、`MarchMode`、过边进度、`BattalionTileChanged` 事件、`IsNight`、挖壕进度（非战斗） | 每步 |
 | 10 | `TerrainComposition`、相邻关系、地块中心 | 加载时 |
-| 14 | `SatelliteAsset`、战区地块列表、初始固定设施列表 | 加载时 |
+| 14 | `SatelliteAsset`、战区地块列表 | 加载时 |
+| 06/10 | 全部 `LogisticsNode`、`CrossingNode`（固定设施，开战时按 §4.8 初始化为 4.5） | 开战时 |
 
 ### 6.2 05 提供
 | 使用者 | 接口 | 说明 |
 |---|---|---|
 | 03 / 04 | `GetLevel`、`GetAgeMs`、`ExposureAccuracyFactor` | 首轮精度、伏击条件（建议见 §6.3） |
 | 04 | `PrecisionStrikeAllowed`、`AreaStrikeAmmoMultiplier`、`TargetLocationErrorM` | 地面跨地块火力 |
-| 08 | 同上 + `SearchAcquireProbabilityPerMin`、`RegisterSelfFix`、`GetSignature(target)`（`S_phys`、`S_emit` 雷达部分）、`AreaReconTask.dwellShare` | 空袭门槛、巡飞弹、侦察轨道 |
+| 08 | 同上 + `SearchAcquireProbabilityPerMin`、`RegisterSelfFix`、`GetSignature(target)`（§4.4.7：`physical`、`emitter`、`emitterRadar`）、`AreaReconTask.dwellShare` | 空袭门槛、巡飞弹、侦察轨道 |
+| 04 | `GetSignature(battalion).physical`（条带元素的 S_phys 取所属营的值） | 条带步 |
 | 09 | `EmconState` → 命令延迟乘子：Partial ×1.15、Silent ×1.5（🟡 建议值，09 已采纳） | |
 | 09 | `GetCommsJamming(tile, victimCountry)` = `min(1, max_{敌国 e}(ewCoverage(e, tile), 0.5 × max_{相邻地块 t'} ewCoverage(e, t')))`（`ewCoverage` 见 §4.1.5；阶段 0 恒 0；09 T-18） | 命令延迟的干扰项；03 的 `JamIntensity` 也可读它 |
-| 09 | `StartAreaReconTask(owner, tiles, assets, desiredLevel, risk)`、`StartSofMission(sofCompany, tile, insertion, extraction, durationDays, reportIntervalH)`、`GetExposure(observer, target)`（返回 `IntelSnapshot` 所需的等级、时间戳、`TargetLocationErrorM`） | 侦察命令生效时；打击命令的情报快照 |
+| 09 | `StartAreaReconTask(owner, tiles, assets, desiredLevel, risk)`、`StartSofMission(sofCompany, tile, insertion, extraction, durationDays, reportIntervalH)`、`GetExposure(observer, target, now)`（§4.4.1；返回 `IntelSnapshot`：等级、时间戳、`TargetLocationErrorM`、`observedPosture`） | 侦察命令生效时；打击命令的情报快照 |
 | 03 | `SensorProfile` 追加字段（03 C-08）：`OpticsClass opticsClassDay, opticsClassNight`（枚举由 03 §4.2.2 定义，05 只承载数据）；`SignatureProfile` 追加 `double engagementSigMult`（片段内的被发现系数，缺省 1.0，03 使用） | 片段创建时 |
-| 12 | 只读 `IntelEstimate`（AI 和玩家一样只看情报画面） | 公平性 |
+| 12 | `ExposureRecord`（`lastKnownTile`、`lastObservedTime`、`isKnownDecoy`、`estimate`）只读（AI 和玩家一样只看情报画面） | 公平性 |
 | 13 | `IntelEstimate`、`SignatureState` 分解、`lastGainByMeans`、`OwnExposureEstimate`、`AreaReconTask` 状态、`SofMission` 状态 | 显示 |
-| 15 | 存档：全部 `ExposureRecord`、`DecoyGroup`、`AreaReconTask`、`SofMission`、`OwnExposureEstimate`；缓冲区（`ReconDwellSample`、`StripReconSample`）也要存，因为它们跨刻 | |
+| 15 | 存档：`SectionId.Exposure = 40`（值见 15 §3.2）；组件：全部 `ExposureRecord`、`DecoyGroup`、`AreaReconTask`、`SofMission`、`OwnExposureEstimate`、`ReconConfig`；缓冲区（`ReconDwellSample`、`StripReconSample`）也要存，因为它们跨刻；不存档（派生，读档后按 §4.1 重建）：`SignatureState`、`TileCounterReconState` | |
 
 ### 6.3 给 04 的建议（04 决定是否采纳）
 - 战斗开始时，B 线的初始局部暴露度 = 05 的营级 `exposure`。
@@ -975,7 +1019,7 @@ Planned → Inserting → OnStation → Exfiltrating → Completed
 | 物理特征值 / 电磁特征值 | `S_phys` / `S_emit`（`SignatureState.physical / emitter`） | 特征值的两个通道 |
 | 车辆当量 | `vehicleEquivalent`（VE） | 计算规模项用的“相当于几辆车” |
 | 特征值状态 | `SignatureState` | 营的特征值组件（含各乘子） |
-| 暴露目标引用 | `ExposureTargetId` / `ExposureTargetKind` | 营、SOF 小队、假目标组、后勤节点 |
+| 暴露目标引用 | `ExposureTargetId` / `ExposureTargetKind` | 营、SOF 小队、假目标组、后勤节点、桥梁/渡口 |
 | 情报估计 | `IntelEstimate` | 带误差的情报快照，玩家和 AI 只读它 |
 | 观测样本 | `ReconDwellSample` | 08 写给 05 的空中观测时长 |
 | 条带侦察样本 | `StripReconSample` | 04 写给 05 的地面侦察速率 |
