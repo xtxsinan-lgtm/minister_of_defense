@@ -126,7 +126,7 @@ public enum CapabilityKind : byte {   // 能力缺口检查用（§4.14.4）
 }
 
 public enum CheckSeverity : byte { None = 0, Info = 1, Warning = 2, Error = 3 }
-public enum NodeKind : byte { None = 0, Unit = 1, Squad = 2 }
+public enum NodeKind : byte { None = 0, Unit = 1, Squad = 2, Formation = 3 }
 ```
 
 ### 3.2 强类型 ID 与句柄
@@ -146,7 +146,7 @@ public readonly record struct SpecialtyHandle(int value); // 定义见 02，这�
 public readonly record struct StyleHandle(int value);
 public readonly record struct LoadoutTemplateHandle(int value);
 
-public readonly record struct NodeRef(NodeKind kind, int id);  // 编制树里的子节点引用（OrgUnit 或 Squad）
+public readonly record struct NodeRef(NodeKind kind, int id);  // 编制树里的子节点引用（OrgUnit 或 Squad）；Formation 用于优先顺序表与 §4.11 火力单位归属
 ```
 
 ### 3.3 静态数据：装备类别与型号（核心字段）
@@ -349,7 +349,7 @@ public sealed class Squad {
     public TemplateRole role;               // 从模板复制，便于快速过滤
     public string pathKey;
     public List<EquipmentItemId> items;     // 本班持有的装备实例，按 id 升序
-    // 名册 Roster 是 02 的组件：RosterState { SquadId squadId; List<PersonnelId> members; }
+    // 名册 Roster 是 02 的组件：RosterState { SquadId squad; List<PersonnelId> members; }（02）
 }
 
 public sealed class EquipmentItem {
@@ -366,6 +366,16 @@ public sealed class EquipmentItem {
 // 库存 = 本国所有 holder == 0、status ∈ {Active, Stored}、不在 07 待编池、不在 11 改装厂的 EquipmentItem（O-09）。
 // 11 交付时创建（11 H4），11 退役时删除（11 §4.5.4）；本文件只负责发放（holder ← 班）与退回（holder ← 0）。
 // 查询加速：维护索引 DepotIndex[(country, model)] → SortedSet<EquipmentItemId>，增删 item 时同步更新。
+
+public readonly record struct RearDetachmentId(int value);
+public sealed class RearDetachment {          // 留守分队（00 §1.1）：空运/海运运不走而留在原地的人和装备；08 §4.14 创建
+    public RearDetachmentId id;
+    public OrgUnitId battalion;               // 所属营
+    public ulong tile;                        // 留守地块（H3Index）
+    public List<PersonnelId> persons;         // 按 id 升序
+    public List<EquipmentItemId> items;       // 按 id 升序
+}
+// 建制关系不变（人仍在原班名册、装备 holder 不变），只记录与营本体的位置分离；后续运抵或与营同地块时解散。
 
 ```
 
@@ -833,9 +843,9 @@ int[] EvenSplit(int A, int[] held, int[] t, OrgUnitId[] ids) {
 
 | 等级 | 装备目标 `TierEquipmentTarget` | 平时状态 | 装备维护费倍率（给 11） | 启封时间 |
 |---|---|---|---|---|
-| `Active` | 1.0 | 全部 `Active` | 1.0 | — |
-| `Reduced` | 1.0 | 有人操作的部分 `Active`，其余 `Stored`（比例 = 1 − 02 给出的人员在编比例，按班 DFS 逆序封存） | `0.5 + 0.5 × 人员在编比例` | `ActivationReducedMs` |
-| `Cadre` | 1.0 | 全部 `Stored`（骨干人员只做保管） | `CadreUpkeepMult` | `ActivationCadreMs` |
+| `Active` | 1.0 | 全部 `Active` | 见 11 `TierOmFactor` | — |
+| `Reduced` | 1.0 | 有人操作的部分 `Active`，其余 `Stored`（比例 = 1 − 02 给出的人员在编比例，按班 DFS 逆序封存） | 见 11 `TierOmFactor` | `ActivationReducedMs` |
+| `Cadre` | 1.0 | 全部 `Stored`（骨干人员只做保管） | 见 11 `TierOmFactor` | `ActivationCadreMs` |
 
 - 🟡 O-10：装备目标三档都按 1.0（苏式简编/骨干部队的典型做法：装备齐全封存在驻地，缺的是人）。备选：骨干营装备也只配 50%，其余存在中央仓库（降低平时采购需求）。
 - `Stored` 装备：不计使用小时；不参与战斗；启封时由 07 消耗备件（启封备件量由 07 定义）。
@@ -873,10 +883,10 @@ loadEq = N_eq × D                                    // N_eq = 0 时 loadEq = 0
 - 建制编组 F：`F.hqBattalionId` 子树中的所有班。
 
 ```text
-hqHeadcount = HQ(X) 中“在位”人员数（02 PresentCount：CasualtyState == Healthy，且不在后送/待编池）
+hqHeadcount = HQ(X) 中“在位”人员数（02 `PresentCount`，定义见 02 §4.2）
 hqTemplateHeadcount = HQ(X) 各班模板人数之和（模板目标）
 StaffFactor  = clamp( sqrt(hqHeadcount / RefHqStaff[level]), StaffFactorMin, StaffFactorMax )
-SkillFactor  = 0.75 + 0.5 × G_hq                      // G_hq = HQ(X) 人员通用练度按人数加权均值（02 GetSkill 的 general），∈[0,1]
+SkillFactor  = 0.75 + 0.5 × G_hq                      // G_hq = HQ(X) 在位人员 Σ 02.GetSkillForBattalion(bn, p.specialty, 0).general / 人数（bn = 该人所在营），∈[0,1]
 CommsFactor  = CommsFactorTable[CommsTier(X)]
 capacity     = BaseCapacity[level] × CommsFactor × SkillFactor × StaffFactor
 ```
@@ -907,14 +917,14 @@ quality q             = clamp( (CommsFactor × SkillFactor − QMin) / (QMax −
 
 03 用它计算请求经过的层级（03 §4.x）。
 ```csharp
-OrgLevel[] GetRequestChain(SquadId requester, NodeOwner fireOwner) {
-    // fireOwner：拥有火力单位的节点（OrgUnitId 或 FormationId）
+OrgLevel[] GetRequestChain(SquadId requester, NodeRef fireOwner) {
+    // fireOwner：拥有火力单位的节点（NodeKind.Unit 或 NodeKind.Formation）
     var up = AncestorsByCurrentChain(requester);  // 班 → 排 → 连 → 营 → currentFormation → currentParent → …
     int k = up.IndexOf(LowestCommonAncestor(up, AncestorsByCurrentChain(fireOwner)));
     if (k < 0) return Array.Empty<OrgLevel>();   // 不在同一指挥链：03 视为不可申请
     return up.Take(k + 1).Select(n => n.level).ToArray();   // 包含两端；班自身为 Squad
 }
-bool IsAttachedHop(SquadId requester, NodeOwner fireOwner)
+bool IsAttachedHop(SquadId requester, NodeRef fireOwner)
     // 请求者所在营 currentFormation ≠ organicFormation，且火力单位属于 currentFormation 一侧 → true（03 加 AttachedExtraHopS）
 ```
 - 临时编组不在链上（无指挥部，O-06）。
@@ -930,7 +940,7 @@ bool IsAttachedHop(SquadId requester, NodeOwner fireOwner)
 | 配属 `Attach(unit, target)` | `target` 为 Organic 且 `target.echelon > unit 的层级`；同国 | `current* = target`；型号继承、练度归属、分配优先级仍按建制（O-07）；请求链 +1 跳（03）；目标编组负荷当量 × `AttachedLoadWeight` | 走 09 命令延迟（`F_attach`） |
 | 解除配属 `Detach(unit)` | 已配属 | `current* = organic*` | 走 09 命令延迟 |
 | 永久调动 `Reassign(unit, newOrganic)` | 不在战斗中 | `organic* = current* = newOrganic`；调用 02 `OnSkillHolderChanged(bn, oldHolder, newHolder)` | 和平时期立即；战时按 09 命令延迟 |
-| 撤编营 `Disband(bn)` | 不在战斗中 | 装备全部退回库存；人员交 02 `ReleaseToPool`（职业兵进训练池，义务兵/动员兵退为预备役）；营删除 | 立即 |
+| 撤编营 | 见 07 §4.6.3 | 见 07 §4.6.3 `DisbandBattalion`（13 调用 07；人员交 02 `ReleaseToPool`，装备退回库存） | 见 07 §4.6.3 |
 | 合并营 | 见 07（重组） | — | — |
 
 ### 4.13 按国家风格自动生成排和班（总纲 §9.11(1)）
@@ -1146,7 +1156,7 @@ toolsetsNeeded     = ceil( items / ItemsPerToolset[category] )        （items =
 toolsetsHeld       = ToolsetState[(org, g)]（组件，见下）
 coverage(org, g)   = toolsetsNeeded == 0 ? 1 : min(1, toolsetsHeld / toolsetsNeeded)
 ```
-- `ToolsetState { MaintenanceOrgKey org; string group; int held; }`：缺省**自动采购**（预设接近最优）：每当 `toolsetsNeeded > held`，向 11 发 `RequestToolsetPurchase(org, g, Δ)`，单价 `ToolsetCostFactor × max(该组在 org 内各型号单价)`（11 单价）；到货时间按 11 的国内交付规则。玩家可关闭自动采购（省钱，代价见下）。
+- `ToolsetState { SkillHolderKey org; string group; int held; }`：缺省**自动采购**（预设接近最优）：每当 `toolsetsNeeded > held`，向 11 发 `RequestToolsetPurchase(org, g, Δ)`，单价 `ToolsetCostFactor × max(该组在 org 内各型号单价)`（11 单价）；到货时间按 11 的国内交付规则。玩家可关闭自动采购（省钱，代价见下）。
 - 效果（给 07）：`RepairThroughputMult(org, g) = NoToolsetRepairFactor + (1 − NoToolsetRepairFactor) × coverage`。
 - 年维护费（给 11）：`held × 工具组单价 × ToolsetUpkeepPerYear`。
 
@@ -1234,7 +1244,6 @@ public sealed class LoadoutTemplate {
 | `ReorganizingDelayMult` | 1.5 | — | 1.0–2.0 | 平衡 |
 | `ReorganizingCoordinationMult` | 0.8 | — | 0.6–1.0 | 平衡 |
 | `TierEquipmentTarget[Active/Reduced/Cadre]` | 1.0 / 1.0 / 1.0 | — | Cadre 0.5–1.0 | O-10 |
-| `CadreUpkeepMult` | 0.35 | — | 0.2–0.6 | 估算：封存装备维护费约为在用的 1/3 |
 | `ActivationReducedMs` | 86 400 000（24 h） | ms | 12–72 h | 估算：短期封存启封 |
 | `ActivationCadreMs` | 345 600 000（96 h） | ms | 48–240 h | 估算：长期封存启封（除油、充电、检测） |
 | `OverweightSquadKg` | 15 | kg | 12–20 | 总纲 §9.1、§9.11(3)（“班用武器加一个基数不超过 15kg”） |
@@ -1267,17 +1276,18 @@ public sealed class LoadoutTemplate {
 | 编制树遍历：`SquadsOf(OrgUnitId)`、`BattalionsOf(FormationId, bool current)`、`ItemsInFormation(FormationId)`、`ItemsOf(SquadId)` | 03、04、05、06、07、09 | 按需 |
 | `Branch GetBattalionKind(OrgUnitId)`（= 营模板 branch / 推导值） | 05（R-20 类型情报）、12、13 | 按需 |
 | `CommandState Get(OrgUnitId)`、`FormationCommandState Get(FormationId)`：`loadEq`（= CommandLoad）、`capacity`（= CommandCapacity）、`quality`（= `GetCommandQuality`）、`isHeadless`、`coordinationFactor` | 03（commandFactor）、09（F_hq、F_load、F_headless） | 每 60 分钟更新；读取随时 |
-| `OrgLevel[] GetRequestChain(SquadId, NodeOwner)`、`bool IsAttachedHop(...)` | 03 | 片段创建时 |
+| `OrgLevel[] GetRequestChain(SquadId, NodeRef)`、`bool IsAttachedHop(SquadId, NodeRef)` | 03 | 片段创建时 |
 | 营的 `organicFormationId / currentFormationId`、编组 `kind / hqBattalionId / echelon` | 03、06、09 | 按需 |
 | `ForceRequirementRow[] GetForceRequirement(CountryId)` | 11（采购面板、年初）、13 | 脏时每 60 分钟 |
 | `PersonnelRequirement(OrgUnitId bn) → SortedDictionary<SpecialtyHandle,int>`（满编） | 02 | 结构变化时 |
 | `AllocationResult AllocateEquipment(CountryId, IEnumerable<OrgUnitId> scope)` | 07（战时补充）、11（交付后）、玩家 | `Calendar` 每 60 分钟（由调用方触发）；玩家命令在 `OrderIntake` |
-| `MaintenanceOrgKey GetMaintenanceOrg(OrgUnitId bn)`（= 02 的练度归属规则） | 02、07 | 按需 |
-| `double RepairThroughputMult(MaintenanceOrgKey, string group)` | 07 | 每 60 分钟 |
+| `SkillHolderKey GetMaintenanceOrg(OrgUnitId bn)`（`SkillHolderKey` 由 02 定义；= 02 的练度归属规则） | 02、07 | 按需 |
+| `double RepairThroughputMult(SkillHolderKey, string group)` | 07 | 每 60 分钟 |
 | `int PartsTarget(ModelHandle)` | 06、11 | 每天 |
 | `CheckResult[] RunChecks(TemplateHandle, scope)`、`ImpactReport BuildImpact(edit)` | 13（编辑器） | 编辑时 |
 | `EquipmentModel.massKg`、核心字段 | 06、03 | 加载后只读 |
 | `LoadoutTemplate` 及按枚需求汇总 | 06（阶段 3） | 每天 |
+| `RearDetachmentId CreateRearDetachment(OrgUnitId bn, ulong tile, IEnumerable<PersonnelId> persons, IEnumerable<EquipmentItemId> items)`、`void DissolveRearDetachment(RearDetachmentId)` | 08（空运，§4.14） | 空运判定时 / 后续运抵时 |
 | 事件 `OnCrewModelChange(SquadId, CategoryHandle, ModelHandle from, ModelHandle to)` | → 02 | 装备替换/改型发生时立即 |
 | 事件 `OnEquipmentAssigned(SquadId, EquipmentItemId)`、`OnBattalionCreated/Removed(OrgUnitId)`、`OnStructureChanged(OrgUnitId)` | → 02、03（缓存失效）、05、06、09 | 立即 |
 
@@ -1285,18 +1295,18 @@ public sealed class LoadoutTemplate {
 
 | 来源 | 数据 / 函数 | 用途 |
 |---|---|---|
-| 02 | `PresentCount(SquadId)`、`GetSkill(...)` 的 general、`TierPersonnelFill(tier, specialty)`、`TrainedPoolAvailable(country, specialty)`、`Similarity(m1, m2)`、`OnSkillHolderChanged` | 指挥能力、传导提示、替代顺序、调动 |
+| 02 | `PresentCount(SquadId)`、`GetSkillForBattalion(...)` 的 general、`TierPersonnelFill(tier, specialty)`、`TrainedPoolAvailable(country, specialty)`、`Similarity(m1, m2)`、`OnSkillHolderChanged` | 指挥能力、传导提示、替代顺序、调动 |
 | 03 | `GetSystemMassKg(model)`、`ComputeDismountLoadKg(...)`、`Effectiveness(model, targetClass, depthBand)`、`GetMaxRangeM(model)`、`FireMode` | 编辑器检查（03 未就绪时用回退表） |
 | 06 | `NodeId`、`NearestDepot(tile)`、节点间路程 | 发放/退回库存 |
 | 07 | `UnassignedPool`、`ReorganizeWithinBattalion(bn)`、`PartsPerItemPerYear(model)`、`ReorgPolicy` | 对齐、备件目标、填充方式 |
 | 09 | `IsFrontline(bn)`、`OnBattalionLeftBattle(bn)`、配属/调动命令的延迟与生效 | 分配策略、延后对齐 |
 | 11 | `GetUnitCostMusd(model)`、`EquipmentConditionState`、交付/退役/升级对 `EquipmentItem` 的增删改、`RequestToolsetPurchase` 的执行 | 成本显示、选件顺序、工具组 |
 | 14 | 国家默认绑定、开局编制树（用 §4.4 实例化）、玩家国家默认风格 | 开局 |
-| 15 | 存档：所有运行时实体、玩家模板、ID 分配器 | — |
+| 15 | 存档：`SectionId.Org`（= 20，15 §3.2；ID 分配器在 `IdAllocators` = 4）；组件：`Formation`、`OrgUnit`、`Squad`、`EquipmentItem`、玩家模板（含写时复制版本）、`CountryOrgSettings`、`CommandState` / `FormationCommandState`、`ToolsetState`、`RearDetachment`；不存档（派生，读档后重建）：`DepotIndex`、`ForceRequirementRow`（读档后标记脏）、静态模板与 `TemplateTotals` 缓存 | 存档 |
 
 ### 6.3 调用时机小结（与 00 §5.2 一致）
 - `OrderIntake`（20）：玩家的编辑确认、分配、编组操作（配属/调动经 09 延迟后在 20 生效）。
-- `Calendar` 时（30）：指挥状态全量重算 → 需求表（若脏）→ 被 11、07 调用的分配。同一刻顺序：11 交付 → 02 训练/学校 → 07 补充（调用 01 分配）。
+- `Calendar` 时（30）：指挥状态全量重算 → 需求表（若脏）→ 被 11、07 调用的分配。同一刻顺序：11 交付 → 01 指挥状态/需求表 → 02 训练/学校 → 07 补充（调用 01 分配）（00 §5.2）。
 - 其余函数为同步查询，无固定阶段。
 
 ---
@@ -1466,6 +1476,6 @@ public sealed class LoadoutTemplate {
 | 编制风格 / 连类型 | `OrgStyle` / `archetype` | 自动生成排班的规则表（`data/styles/`）。 |
 | 生成参数 | `GenerateParams` | 自动生成的输入（风格、连类型、车型、排数、下车人数）。 |
 | 维护组 | `maintenanceGroup` | 共用维护工具组的型号集合，缺省 = `family`。 |
-| 维护组织 | `MaintenanceOrgKey` | 维护和练度的承载单位：建制旅，或自成一体的独立营。 |
+| 维护组织 | `SkillHolderKey`（02） | 维护和练度的承载单位：建制旅，或自成一体的独立营。 |
 | 工具组 | `ToolsetState` | 某维护组织对某维护组持有的维护/检测工具组套数。 |
 | 装填模板（通用） | `LoadoutTemplate` / `host_classes` | 宿主装填单元的装填方案；阶段 3 的 `VlsLoadoutTemplate` 是其特例（O-15）。 |
