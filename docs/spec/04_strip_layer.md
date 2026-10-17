@@ -460,8 +460,8 @@ void StripStep(EdgeBattle b, long tick) {
    地块内营（未参战，A 线跨地块）：营的班按“地块内布局”展开：中心 = 09.GetBattalionPosition(bn)（换到地块局部平面），散布半径 TileFootprintM[posture]，
        班按 SquadId 升序放在半径内的确定性螺旋点上（黄金角螺旋，r_j = R√((j+0.5)/n)，θ_j = j × 2.39996 rad）
    Node / Crossing：hits = Σ_rounds Bernoulli(1 − exp(−NodeRadiusM² / (2σ_round²)))，
-        调用 06.OnNodeStrike(new NodeStrikeEvent(node, attacker, WarheadClassOf(munition.warheadKg) /*06 §3.1 阈值*/, hits, timeMs, (int)missionId))
-        或 06.OnCrossingStrike(new CrossingStrikeEvent(crossing, WarheadClassOf(munition.warheadKg), hits, timeMs, (int)missionId))
+        调用 06.OnNodeStrike(new NodeStrikeEvent(node, attacker, WarheadClassOf(munition.warheadKg) /*06 §3.1 阈值*/, hits, timeMs, (ulong)missionId.value))
+        或 06.OnCrossingStrike(new CrossingStrikeEvent(crossing, WarheadClassOf(munition.warheadKg), hits, timeMs, (ulong)missionId.value))
    Loc（打道路上的卡车）：trucksKilledExpected = rounds × LocKillPerRound × min(1, 06.GetTrafficTrucksPerH(victim, tile) / LocTrafficNorm)，调用 06.OnLocStrike
 RNG：Rng.For(RngDomain.Strip, Mix(missionId) ^ (ulong)roundIndex, tick, SaltStrikeRound)
 损失标签：LossSource { line = mission.lineTag, sourceModelId = 火力单位型号, kind = 弹种 }
