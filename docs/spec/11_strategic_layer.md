@@ -348,7 +348,7 @@ sealed class UpgradeProject {
 
 // 基建与扩产项目
 enum ProjectKind : int { LineExpansion = 1, NewLineNewSite = 2, LineRestart = 3, InfrastructureFrom06 = 4, Upgrade = 5, SchoolExpansion = 6 }
-enum InfraProjectKind : int { None = 0, NewDepot = 1, HardenNode = 2, AirbaseShelter = 3 }   // D7；参数与效果见 06（06 D5）
+enum InfraProjectKind : int { None = 0, NewDepot = 1, HardenNode = 2, AirbaseShelter = 3 }   // D7；价格、工期、完工效果见 06 §4.17
 sealed class Project {
     ProjectId id; CountryId owner; ProjectKind kind;
     double totalCostMusd, spentMusd;
@@ -359,6 +359,7 @@ sealed class Project {
     InfraProjectKind infraKind;           // kind = InfrastructureFrom06 时有效
     NodeId infraNode;                     // 加固/掩体的目标节点；NewDepot = 0（完工时由 06 创建）
     ulong infraTile;                      // NewDepot 的地块（H3Index）
+    double infraCapacityT;                // NewDepot 的库容（吨）
     SchoolHandle school;                  // kind = SchoolExpansion 时有效（02）
 }
 ```
@@ -853,7 +854,7 @@ if idleDaysConsecutive > LineIdleGraceDays:
 ```
 - 重启：`LineRestart` 项目，费用 = `LineRestartCostShare × (nominal − current) × line.expansionCostMusdPerUnitYear`，工期 `LineRestartDays`。
 - 扩产（D6）：`LineExpansion` 项目：`cost = ΔcapacityPerYear × line.expansionCostMusdPerUnitYear`（14 数据），工期 `ExpansionDays`；战时可选“加急”：工期 × `WartimeRushTimeFactor`，费用 × `WartimeRushCostFactor`；新址建线：费用 × `NewSiteCostFactor`，工期 + `NewSiteExtraDays`（§19.6 🟡 扩产选址）。
-- 项目进度（H6）：`progress += (spentThisHour / totalCost)`，`spentThisHour = min(balance(Infrastructure), totalCost / nominalDays / 24)`，计入 `spentMusd[Infrastructure]`。资金不足时按比例变慢。完工：`LineExpansion/NewLineNewSite/LineRestart` 改产能；`InfrastructureFrom06` 调用 06 完工接口（6 节，06 待补）；`SchoolExpansion` 把 02 `SchoolState.capacityPerYear += capacityDeltaPerYear`（02 §4.8 “完工时 capacityPerYear += Δ”）。
+- 项目进度（H6）：`progress += (spentThisHour / totalCost)`，`spentThisHour = min(balance(Infrastructure), totalCost / nominalDays / 24)`，计入 `spentMusd[Infrastructure]`。资金不足时按比例变慢。完工：`LineExpansion/NewLineNewSite/LineRestart` 改产能；`InfrastructureFrom06` 调用 06 `OnInfrastructureCompleted(owner, infraKind, infraNode, infraTile, infraCapacityT)`（06 §4.17）；`SchoolExpansion` 把 02 `SchoolState.capacityPerYear += capacityDeltaPerYear`（02 §4.8 “完工时 capacityPerYear += Δ”）。
 
 #### 4.5.4 退役（D5，S-06）
 - 选中装备（按型号 × 数量，从未编入营的库存优先，再按 AllocationPolicy 的逆序从营中抽出）立即从 01 删除（01 §3.5 注释：11 退役时删除）；该型号 O&M 需求下降。
@@ -1297,7 +1298,7 @@ challengeProgress[g] = IScenarioService.GoalProgress(country, g)  // 14 §4.8
 | 05 侦察 | 写 | `SatelliteAsset.sharesWith`（外部行为体情报共享，05 R-12） | 4.10.4 |
 | 05、08 | 被读 | `SoftwareDegradeFactor(CountryId, ModelHandle)`（05 §4.2.2/§4.2.4、08 §4.4.3） | 每个 Exposure/空中步 |
 | 06 后勤 | 读 | `GetAnnualStorageCostMusd(CountryId)`、`ComputeBasis(FormationId)`、`GetProcurementShortfall(CountryId)`（采购面板/12）、`ImportGatewayData.isOpen` | 年初、边境演习、采购面板 |
-| 06 | 写 | `OnImportArrival(ImportBatch)`（进口弹药）、`AddProduced(NodeId, ItemKey, qty)`（国产弹药）、`ImportGatewayData.isOpen/closedReason`（事件、过境国禁运）、`ConsumeForTraining(FormationId, ItemKey, qty)`（仅边境演习，4.8.1；常规训练由 02 调用） | H4、H5、事件、D9 |
+| 06 | 写 | `OnImportArrival(ImportBatch)`（进口弹药）、`AddProduced(NodeId, ItemKey, qty)`（国产弹药）、`ImportGatewayData.isOpen/closedReason`（事件、过境国禁运）、`ConsumeForTraining(FormationId, ItemKey, qty)`（仅边境演习，4.8.1；常规训练由 02 调用）、`QuoteInfrastructure`/`OnInfrastructureCompleted`（06 §4.17） | H4、H5、H6、事件、D9 |
 | 06 | 被读 | `Country.mobilization`（`NationalTruckPayloadT`）、`OnOrderQty(CountryId, ItemKey)`（已下订单，06 §4.11）、`TryCharge(…, Infrastructure, …)`（桥梁修复） | 06 每日/修复时 |
 | 07 损伤 | 写 | `AddPartsFunding(CountryId, ModelHandle, double musd)` | H1 |
 | 07 | 读 | `PartsUnitCostMusd(ModelHandle)`（只用于界面换算）、`IsLost(EquipmentItemId)`、`GetFillRate(OrgUnitId)` | H1、年报 |
@@ -1352,7 +1353,7 @@ interface IStrategicActions {   // 玩家 UI 与 AI 共用。除 Quote（纯查�
     void SetAllocation(CountryId owner, BudgetAllocation a);
     void SetLineUtilization(ProductionLineId line, double u);
     ProjectId ExpandLine(ProductionLineId line, double deltaPerYear, bool newSite, bool rush);
-    ProjectId OrderInfrastructure(CountryId owner, InfraProjectKind kind, NodeId node, ulong tile);   // D7；费用/工期/完工效果由 06 给出（第 3 节请求）
+    ProjectId OrderInfrastructure(CountryId owner, InfraProjectKind kind, NodeId node, ulong tile, double capacityT);   // D7；费用与工期 = 06 QuoteInfrastructure(kind, node, capacityT)（06 §4.17），走 Infrastructure 线；capacityT 只对 NewDepot 有效（≤ 0 用 06 缺省）
     ProjectId ExpandSchool(CountryId owner, SchoolHandle school, double deltaPerYear);               // 02 §4.8：费用 SchoolExpansionCostMusdPerSeat × Δ、工期 SchoolExpansionDays（常数归 02），走 Infrastructure 线
     void BorderAction(CountryId owner, CountryId target, BorderActionType t);
     void Lobby(CountryId owner, IssueId issue, double musd);

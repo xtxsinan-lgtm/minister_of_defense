@@ -364,7 +364,7 @@ workRemainingH ≤ 0 → level = Operational，flags = None，recovery = None；
 每小时按队列顺序分配容量（每件 ≤ MaxDepotWhPerItemPerH），备件从该节点库存扣（同 §4.3.2）
 完成：level = Operational；物品从部队移出，进入 01 库存：EquipmentItem.holder = 0、locationNode = 该节点（同步 01 DepotIndex；实例保留其 usageHours），
       之后按 01 的分配策略重新发放（不一定回原营）
-费用：开始大修时 11 扣 costMusd = depotCostFraction × 单价（11 预算不足时排队等待，H-09）
+费用：开始大修时调用 11.TryCharge(owner, BudgetLine.OperationsMaintenance, depotCostFraction × 单价, "depot_repair")（11 §4.2.7；单价 = 11 ProcurementProfile.costMusd）；返回 false → 留在队列等待，下一小时再试（H-09）
 ```
 
 ### 4.5 医疗链（总纲 §9.12(4)）
@@ -529,7 +529,7 @@ Retraining：02 对该营人员按“集中训练”倍率提高练度增长（0
 对每件 Active 且 level == Operational 的车辆/重装备（按 itemId 升序）：
   u = 本小时运行小时数（01 usageHours 本小时增量；由 03/04/06/09/02 累加）
   若 u > 0：λ = u × FaultRateMultiplier(item) / mtbfH
-     FaultRateMultiplier = 11 给的 O&M 倍率 × (1 + UsedFaultSlope × (1 − condition))（11 §4）× TrainWearFactor（训练时）
+     FaultRateMultiplier = 11.OmFaultMultiplier(owner) × (1 + UsedFaultSlope × (1 − condition))（11 §4.2.5、§4.5.1；condition = 11 EquipmentConditionState，无组件 = 1）× TrainWearFactor[11.GetTrainingIntensity(owner, 编组)]（训练时）
      Bernoulli(1 − exp(−λ))（Rng.For(Damage, itemId, tick, SaltBreakdown)）→
         ApplyVehicleDamage(item, FieldRepairable, Breakdown | (Bernoulli(BreakdownImmobileP) ? Mobility : None), cause = Breakdown)
         工时 median = BreakdownWorkMedianH
@@ -721,7 +721,7 @@ mechanic、medic、uav_operator、radar_operator、jtac、forward_observer 作�
 | 04 | `BattlefieldControllerAt`、`TruckKillIntegral`、`RecordLoss`、营辎重队/BSA 在条带上的位置 | 回收、后送、账本 |
 | 06 | `TryDrawParts(holder, model, qty, out got)`（06 §6.1）、`RequestTransport`、`NearestDepot(CountryId, ulong tile)`、备件入库、营辎重队/BSA 库存 | 备件、运输 |
 | 09 | `IsFrontline`、营位置、命令（轮换由 12 发出） | 轮换 |
-| 11 | `FaultRateMultiplier` 组成项、`partsAddedMusd`、单价、大修预算扣款、`WarSideState.killedCumulative` | 故障、备件、费用 |
+| 11 | `OmFaultMultiplier(CountryId)`、`EquipmentConditionState.condition`、`UsedFaultSlope`、`TrainWearFactor`、`GetTrainingIntensity`；11 调用本文件 `AddPartsFunding`；单价 `ProcurementProfile.costMusd`；大修扣款 `TryCharge`；写 `WarSideState.killedCumulative` | 故障、备件、费用 |
 | 12 | `RequestBattalionRotation(OrgUnitId)`（替换与后撤）、`KilledShareOfLosses` | 整建制轮换、代理损失 |
 | 14 | 各国大修节点能力 | 后方大修 |
 | 15 | `Rng.For`、`NextGaussian`、`DMath` | 确定性 |
