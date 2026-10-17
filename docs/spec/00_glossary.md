@@ -286,7 +286,7 @@
 
 ### 1.12 各规格新增术语（审查合并）
 
-> 以下由各规格第 11 节合并而来（01–10、15；11–14 的新增术语由第二轮审查合并）。“归属”= 定义该类型/字段的规格；与上面 1.1–1.11 冲突时以本节和对应规格为准。新增装备类别 `loitering_munition`、`fpv_drone`、`body_armor`、`tbm_launcher`、`camo_kit`、`decoy_vehicle`、`decoy_emitter`、`sam_missile` 已加入 `data/schema/categories.yaml`（01 归属）。
+> 以下由各规格第 11 节合并而来（01–10、15；11–14 的新增术语由第二轮审查合并）。“归属”= 定义该类型/字段的规格；与上面 1.1–1.11 冲突时以本节和对应规格为准。新增装备类别 `loitering_munition`（巡飞弹弹药，一枚 = 一件，group `air_munition`）、`loitering_launcher`（巡飞弹发射单元）、`fpv_drone`、`body_armor`、`tbm_launcher`、`camo_kit`、`decoy_vehicle`、`decoy_emitter`、`sam_missile`，以及地面弹药组（group `ground_munition`）`small_arms_ammo`、`autocannon_round`、`tank_gun_round`、`grenade_round`、`rocket_grenade`、`atgm_missile`、`mortar_bomb`、`artillery_shell`、`mrl_rocket`、`tbm_missile` 已加入 `data/schema/categories.yaml`（01 归属；DC-205、DC-206 按建议 ① 落实）。弹药类别不得出现在模板槽位中。
 
 #### 1.12.1 来自 01（编制与模板）
 
