@@ -82,16 +82,18 @@ public enum ReorgPolicy : int { KeepStructure = 1, Consolidate = 2 }   // 01 的
 public enum ReplacementMode : int { Individual = 1, UnitRotation = 2 }
 public enum ReorgScope : int { Platoon = 1, CompanyBattalion = 2, InterBattalion = 3 }
 public enum RotationPhase : int { None = 0, Requested = 1, Withdrawing = 2, Refitting = 3, Retraining = 4 }
+public enum RecoveryClass : int { None = 0, HeavyTracked = 1, MediumTracked = 2, Wheeled = 3, Towed = 4, ManPortable = 5 }
+// Aspect（03 §3.1）：命中方向，RollVehicleDamage 使用，本文件不重复定义
 ```
 
-`MunitionGroup` 由 03 的 `MunitionKind` 映射：`Apfsds/CannonAp/Bullet → Kinetic`；`Heat/TandemHeat/AtgmSaclos/AtgmFireForget/RocketHe(HEAT 型) → ShapedCharge`；`isTopAttack == true`（巡飞弹、MAM-L、攻顶导弹）→ `TopAttack`；`MortarHe/ArtilleryHe/RocketHe(杀爆)/CannonHe/Grenade/Thermobaric/GuidedHe → HeBlast`；`Mine → Mine`；06 的车队拦截 → `Interdiction`。
+`MunitionGroup` 由 03 的 `MunitionKind` 映射，函数 `MunitionGroup MunitionGroupOf(MunitionKind kind, MunitionProfile prof)`（按以下顺序取第一个匹配）：`Smoke` → 不造成损伤（不调用 `RollVehicleDamage`）；`isTopAttack == true`（巡飞弹、MAM-L、攻顶导弹）或 `LoiteringWarhead` → `TopAttack`；`Apfsds/CannonAp/Bullet → Kinetic`；`Heat/TandemHeat/AtgmSaclos/AtgmFireForget → ShapedCharge`；`RocketHe` → `prof.penetrationMm > 0 ? ShapedCharge : HeBlast`；`MortarHe/ArtilleryHe/CannonHe/Grenade/Thermobaric/GuidedHe/Manpads → HeBlast`；`Mine → Mine`。06 的车队拦截没有对应的 `MunitionKind`，直接传 `MunitionGroup.Interdiction`（见 §4.1.2 的重载）。
 
 ### 3.2 组件
 
 ```csharp
 public sealed class PersonCasualtyState {        // 键 PersonnelId（02 的人员）；Healthy 且从未受伤的人不建
     public PersonnelId personId;
-    public CasualtyState state;
+    public CasualtyState state;                  // 镜像；唯一真值是 02 PersonnelRecord.casualty，ApplyCasualty 同时写两处
     public MedicalStage stage;
     public SimTime woundedAt;
     public LossSource source;                    // 03 定义的归因标签
@@ -157,6 +159,8 @@ public sealed class ReplacementRequest {         // 06 的 RequestTransport 使�
     public List<PersonnelId> persons;
     public List<EquipmentItemId> items;
     public NodeId fromNode;
+    public NodeId toNode;                        // 目的节点（补充：营辎重队所在节点；大修：Depot/Factory 节点）
+    public bool toFront;                         // true = 后方→前线（补充、修好归还）；false = 前线→后方（送大修）
     public SimTime requestedAt, etaAt;
 }
 
@@ -176,6 +180,7 @@ public sealed class ReliabilityProfile {
     public double depotCostFraction;        // 大修费用 / 单价
     public RecoveryClass recoveryClass;     // HeavyTracked | MediumTracked | Wheeled | Towed | ManPortable
     public double activationPartsUnits;     // 启封所需备件（01 §4.9 要求 07 定义）
+    public double failurePerFlightH;        // 飞机：每飞行小时非战斗故障率（缺省 有人机 0.03 / 无人机 0.01；08 §4.3.2 读取）
 }
 ```
 
@@ -209,17 +214,19 @@ rec.state = s；rec.woundedAt = t；rec.source = src；rec.originalSquad = 当�
 rec.medicCoverageAtWound = MedicCoverage(所在连)（§4.5.2）；rec.posM = pos；rec.battleId = battle
 stage：Killed → Dead；LightWounded → (在片段中 ? WithUnit : Role1 待入院，见 §4.5.1)；SeverelyWounded → AwaitingEvac（加入该营 MedicalQueue.awaitingEvac）
 若 battle ≠ 0 → 04.RecordLoss(battle, entry)
-11：Killed 时 killedCumulative[国家]++（11 §4.8 要求）
+11：Killed 时，对该国参与的每个进行中 War：WarSideState.killedCumulative++（11 §4.8 要求）；07 另计全时段总数 KilledCumulative(CountryId)
 ```
 
-人员**不离开名册**（02 的 `RosterState`）直到：`Killed`/`Discharged` → 从名册移除（人员记录保留，供统计）；`SeverelyWounded` 后送开始 → 从班名册移到“医疗中”（不计入班的可战斗人数，也不计入满编率分子）；`LightWounded` 在片段结束后进入 Role1 → 同样暂离班名册，归队时回原班（§4.5.3）。
+人员**不离开名册**（02 的 `RosterState`；离开班名册时一律调用 `02.LeaveSquad(p, DetachReason.Casualty)`，不直接改名册）直到：`Killed`/`Discharged` → 从名册移除（人员记录保留，供统计）；`SeverelyWounded` 后送开始 → 从班名册移到“医疗中”（不计入班的可战斗人数，也不计入满编率分子）；`LightWounded` 在片段结束后进入 Role1 → 同样暂离班名册，归队时回原班（§4.5.3）。
 
 #### 4.1.2 `RollVehicleDamage(EquipmentItemId item, MunitionKind kind, Aspect aspect, ref Pcg32 rng) → (DamageLevel, DamageFlags)`
+
+重载 `RollVehicleDamage(EquipmentItemId item, MunitionGroup g, Aspect aspect, ref Pcg32 rng) → (DamageLevel, DamageFlags)`：同一算法，直接给弹药毁伤组。上面的 `MunitionKind` 版本保留，内部调用 `RollVehicleDamage(item, MunitionGroupOf(kind, 该弹的 MunitionProfile), aspect, ref rng)`。`Aspect` 见 03 §3.1。
 
 调用方（03 §4.6.3、04 §4.4.3/§4.6.5）已经抽中“失去战斗力”。本函数在**调用方的 RNG 流**里继续按固定顺序抽 3 次：① 殉爆 ② 等级 ③ 标志（另加 ④ 工时由 `ApplyVehicleDamage` 用 Damage 域的流抽）。
 
 ```text
-g = MunitionGroup(kind)
+g = 参数 g（MunitionKind 版本：g = MunitionGroupOf(kind, profile)）
 ① 殉爆：u1 < armor.catastrophicGivenKill × CatastrophicGroupMult[g] → (Destroyed, Catastrophic)，返回
 ② 非殉爆的等级（u2 落在累积区间）：
    g            Destroyed  DepotRepair  FieldRepairable
@@ -254,8 +261,9 @@ st.level = lvl；st.flags |= f；st.cause = 由 src 推出；st.damagedAt = t；
 04.RecordLoss(battle, entry)（battle ≠ 0）
 ```
 
-- `ApplyVehicleHit(EquipmentItemId item, DamageCause cause)`（06 车队拦截、05 无人机损失用）：内部用 `Rng.For(Damage, itemId, tick, SaltVehicleHit)` 先抽“失去战斗力”概率 `InterdictionDisableP`（卡车 0.8，装甲车 0.4），再调用 `RollVehicleDamage(item, Interdiction 映射, Side, rng)` 与 `ApplyVehicleDamage`。
+- `ApplyVehicleHit(EquipmentItemId item, DamageCause cause)`（06 车队拦截、05 无人机损失用）：内部用 `Rng.For(Damage, itemId, tick, SaltVehicleHit)` 先抽“失去战斗力”概率 `InterdictionDisableP`（卡车 0.8，装甲车 0.4），再调用 `RollVehicleDamage(item, MunitionGroup.Interdiction, Aspect.Side, ref rng)` 与 `ApplyVehicleDamage`。
 - `IsLost(item)`（06 用）= `level ∈ {Destroyed, Abandoned, Captured}`。`IsMobile(item)`（09 用）= `level == Operational` 或（`FieldRepairable` 且 `Mobility ∉ flags`）。
+- `ApplyAggregateLosses(OrgUnitId bn, double personnelLossFrac, double vehicleLossFrac, long tick)`（12 代理战斗的日损失用）：RNG `Rng.For(Damage, personId/itemId, tick, SaltAggregate)`。该营可战斗人员按 personId 升序，各 Bernoulli(personnelLossFrac) → 抽中者再 Bernoulli(12 `KilledShareOfLosses`) → `ApplyCasualty(p, Killed, …)`，否则 `ApplyCasualty(p, SeverelyWounded, …)`（battle = 0）；Operational 装备按 itemId 升序，各 Bernoulli(vehicleLossFrac) → `RollVehicleDamage(item, MunitionGroup.HeBlast, Aspect.Side, ref rng)` + `ApplyVehicleDamage`（battle = 0）。
 
 ### 4.2 战场控制与回收（总纲 §9.12(1)(3)）
 
@@ -333,10 +341,11 @@ FieldRepairable 且 ≤ BdeMaxWorkH           → 旅维修 RepairQueue（无旅
 
 ```text
 capacityWhPerH(队列) = Σ_{持有者内 mechanic 专业、可战斗、不在片段中的人} MechEff(skill) + RepairVehWh × 可用 armored_recovery_vehicle 与修理车数
-   MechEff(skill) = 0.5 + 0.5 × skill（02.GetSkill(formation, mechanic, 0)）
+   MechEff(skill) = 0.5 + 0.5 × skill（02.GetSkillForBattalion(该人所在营, mechanic, 0)）
    跨专业：专业不对口的人不计入（维修是技术工作，H-06）
 队列排序（全序）：PriorityClass（MBT/IFV/火炮/防空 = 1，其他装甲 = 2，其他 = 3）升序 → workRemainingH 升序 → itemId 升序
-依次分配：对每件 i，可分到 w = min(剩余容量, MaxWhPerItemPerH, workRemainingH_i)
+依次分配：对每件 i，可分到 w = min(剩余容量, MaxWhPerItemPerH × 01.RepairThroughputMult(01.GetMaintenanceOrg(bn), g(model)), workRemainingH_i)
+   （bn = 物品原属营 ownerBattalion；g(model) = 01 §4.15.1 的维护组；工具组不足时单件修理变慢）
    备件需求 q = w × partsPerWorkHour(model)
    06.TryDrawParts(holder, model, q, out got)       // holder：营队列传 OrgUnitId（营辎重队库存），旅队列传 FormationId（BSA 库存）；06 §6.1
    若 got < q 且 allowCannibalization → §4.8.3 拆东补西补足
@@ -349,11 +358,11 @@ workRemainingH ≤ 0 → level = Operational，flags = None，recovery = None；
 ### 4.4 后方大修
 
 ```text
-物品转后方：recovery = InTransitToDepot；调用 06.RequestTransport(ReplacementRequest{items=[i], 方向 = 前线→最近的有大修能力的 Depot/Factory 节点})
+物品转后方：recovery = InTransitToDepot；调用 06.RequestTransport(ReplacementRequest{items=[i], toNode = 最近的有大修能力的 Depot/Factory 节点, toFront = false})
 到达：recovery = AtDepot，进入国家大修队列（按到达时刻、itemId）
 国家大修容量：DepotCapacityWhPerH[country] = Σ_{该国 Depot/Factory 节点} repairWhPerH（14 数据；缺省 NationalDepotWhPerH）
 每小时按队列顺序分配容量（每件 ≤ MaxDepotWhPerItemPerH），备件从该节点库存扣（同 §4.3.2）
-完成：level = Operational；物品从部队移出，加入 01 EquipmentDepotStock[(节点, 型号)] += 1（实例保留其 usageHours），
+完成：level = Operational；物品从部队移出，进入 01 库存：EquipmentItem.holder = 0、locationNode = 该节点（同步 01 DepotIndex；实例保留其 usageHours），
       之后按 01 的分配策略重新发放（不一定回原营）
 费用：开始大修时 11 扣 costMusd = depotCostFraction × 单价（11 预算不足时排队等待，H-09）
 ```
@@ -363,7 +372,7 @@ workRemainingH ≤ 0 → level = Operational，flags = None，recovery = None；
 #### 4.5.1 轻伤
 
 ```text
-片段结束（或不在片段中受伤）时：stage = Role1，暂离班名册
+片段结束（或不在片段中受伤）时：stage = Role1，暂离班名册（02.LeaveSquad(p, Casualty)）
 有营救护所（营内有 medic 专业 ≥ 1 人可战斗）：RTD 时长 = LightRtdMedianD × exp(0.4 z)（天），不归队概率 LightNoReturnP
 无：RTD 时长 × NoMedicalRtdMult，不归队概率 LightNoReturnPNoMed
 抽样：Rng.For(Damage, personId, tick, SaltMedical)，顺序：z、Bernoulli(不归队)
@@ -380,7 +389,7 @@ MedicCoverage(连) = min(1, 可战斗 medic 人数 / max(1, 连人数 / MedicPer
      threat = 04.TruckKillIntegral(s, 伤员平均位置 → BSA, isNight) / EvacThreatNorm（不在战斗中 = 0）
   不在战斗中的营：EvacRoundTripH 用 TileEvacDistM
   本小时可后送 n = floor(evacCapacityPerH + carry)；carry 小数累积（确定性，不抽样）
-  按 awaitingEvac 顺序取 n 人：stage = Evacuating，stageUntil = now + EvacRoundTripH / 2
+  按 awaitingEvac 顺序取 n 人：stage = Evacuating，stageUntil = now + EvacRoundTripH / 2；02.LeaveSquad(p, Casualty)
 到达 Role2（stageUntil 到期）：
   delayH = (到达时刻 − woundedAt) / 3.6e6
   pDow = clamp(DowBase + DowPerHour × max(0, delayH − GoldenHourH), DowBase, DowMax) × (1 − MedicCareCut × medicCoverageAtWound)
@@ -395,10 +404,10 @@ MedicCoverage(连) = min(1, 可战斗 medic 人数 / max(1, 连人数 / MedicPer
 ```text
 stageUntil 到期且 willReturn（或轻伤到期未抽中不归队）：
   state = Healthy，stage = ReturnedToDuty
-  目标营 = originalBattalion（仍存在）；若已撤编 → 国家补充池（02）
+  目标营 = originalBattalion（仍存在）；若已撤编 → 02.ReleaseToPool(p)（国家补充池）
   originalSquad 存在且该专业在班里有空缺 → 回原班；否则 → 目标营 UnassignedPool（等下一次休整重组）
-  02.OnPersonReturned(personId, formation)（练度按人员原属编组记录不变：练度是“编组 × 专业”的平均值，归队者按原值并入）
-Discharged：从名册移除；02 记录退役；11 计入伤残
+  回原班时调用 02.JoinSquad(p, 目标班)（CarriedSkillState 保留原练度）；进待编池时不调用，等重组入班时调用
+Discharged：02.LeaveSquad(p, MedicalDischarge)（从名册移除，不进预备役池）；11 计入伤残
 ```
 
 ### 4.6 满编率与重组
@@ -411,10 +420,11 @@ Discharged：从名册移除；02 记录退役；11 计入伤残
 规则 A（步兵合并）：同一班模板的徒步元素中，可战斗人数 / 模板人数 < MergeThreshold 的元素集合 M
    若 |M| ≥ 2：取 M 中按 (槽位相同或相邻，|Δy| ≤ MergeDistM，双方压制 < 0.5) 可配对者，
    每对：人少者（平局 id 大者）并入人多者——人员与随身装备、随身弹药全部转入；空元素移除；
-   02 RosterState：人员班归属改为接收班（被并班的 Squad 实体保留为空班，休整时重建）
+   人员换班：02.LeaveSquad(p, Transfer) + 02.JoinSquad(p, 接收班)（被并班的 Squad 实体保留为空班，休整时重建）
 规则 B（车组转移）：同排内，车辆完好（Operational 或仅 Sensor）但车组 < 主武器 crewMin 的车辆元素 V，
    和车辆已 Destroyed/不能机动、仍有可战斗车组（同 school：armor 或 mech）的元素 W，且 dist(V, W) ≤ CrewTransferDistM：
-   W 中按专业匹配（炮长→炮长，车长→车长，其次同 school）转移到 V，直到 V 满足 crewMin；耗时 CrewTransferS（期间 V 不能射击）
+   W 中按专业匹配（炮长→炮长，车长→车长，其次同 school）转移到 V，直到 V 满足 crewMin；耗时 CrewTransferS（期间 V 不能射击）；
+   跨班转移同样经 02.LeaveSquad(p, Transfer) + 02.JoinSquad(p, V 的班)
 规则 C（武器接手）：已由 03 §4.8.3 在元素内部完成，本函数不重复
 ```
 
@@ -435,7 +445,7 @@ policy = BrigadeSustainSettings(营的建制旅).reorgPolicy
         Fill(q)：对模板人员表的每个岗位 (专业 sp, 数量 k)（按 01 模板顺序）：
             依次取 P 中 专业 == sp 的人，优先级：原属 q > 原属 q 的排 > 原属 q 的连 > 其他（平局 personId 升序）
             不足：取替代专业 sp'，按 SubstituteOrder(sp)（同 school 优先，然后 CrossTrainFactor 降序），仅当 CrossTrainFactor(sp', sp) ≥ MinSubstituteFactor
-        对模板槽位 (类别 c, 数量 k)：先取绑定型号的装备，再取同类别替代型号（01 §3.3 替代规则）；原属 q 的装备优先
+        对模板槽位 (类别 c, 数量 k)：先取绑定型号的装备，再取同类别替代型号（01 §4.8.3 替代规则）；原属 q 的装备优先
         Viable(q) ⟺ 人员 ≥ ceil(MinViableFill × 模板人数) 且 每件班组武器有 crewMin 人 且 （有车模板）车组齐全
         若 !Viable(q)：撤销 q 的填充，把 q 及其后的班都置空，剩余 P、I → 待编池；结束本模板
   policy == KeepStructure（保持建制）：
@@ -444,7 +454,8 @@ policy = BrigadeSustainSettings(营的建制旅).reorgPolicy
      第 2 轮（平均人数）：剩余 P 轮转分给人数最少的班（平局 DFS 序）
      装备：各班先拿回自己的；某班缺“班组武器或车辆”而同连另一班多出同类别时才搬动
      剩余 → 待编池
-写回：02 RosterState、01 Squad.items / EquipmentItem.holder；01 bn.reorganizingUntil = now + RestReorgDurationH（期间 09 命令延迟 ×、03 协同 ×，01 定义）
+写回：人员换班一律调用 02.LeaveSquad(p, Transfer) + 02.JoinSquad(p, newSquad)（不直接改 02 RosterState）；01 Squad.items / EquipmentItem.holder；
+      01 bn.reorganizingUntil = max(bn.reorganizingUntil, now + RestReorgDurationH × 3 600 000 ms)（期间 09 命令延迟 ×、03 协同 ×，01 定义）
 ```
 
 - **不四舍五入**：班可以缺编；凑不成“可用班”的人和装备留在待编池，**仍然属于这个营**、仍计入营的满编率分子中的“待编”一栏（界面单列），只是不参加战斗。
@@ -456,7 +467,7 @@ policy = BrigadeSustainSettings(营的建制旅).reorgPolicy
 |---|---|
 | `MergeBattalions(keep a, absorb b)` | 前提：a、b 同国、同地块、都不在战斗中。b 的全部人员与装备 → a 的待编池；`ReorganizeWithinBattalion(a)`；a 的待编池中**骨干专业**（`officer`、`political_officer`、`nco_senior`、`squad_leader`、`team_leader`）超出 a 模板需求的部分 → 回到 b；b 的其他剩余 → a 的待编池保留；b 的战备等级改为 `Cadre`（01，“腾出来的骨干转为预备役”）。耗时：两营 `reorganizingUntil = now + InterBnMergeH` |
 | `MergeCompanies(bn, keep c1, absorb c2)` | 同上，范围为营内两个连；c2 变成空壳（保留编制节点，等待补充） |
-| `DisbandBattalion(b)` | 人员 → 国家补充池（02，保留练度记录的归属编组改为“国家池”）；装备 → 最近 Depot 的 `EquipmentDepotStock`（经 06 运输）；营实体标记撤编 |
+| `DisbandBattalion(b)` | 人员 → 逐人 `02.ReleaseToPool(p)`；装备 → `EquipmentItem.holder = 0`、`locationNode = 06.NearestDepot(国家, 营所在地块)`（01 库存，同步 01 `DepotIndex`；06 负责运输）；营实体标记撤编 |
 
 #### 4.6.4 满编率 `FillRate`（每小时，及每次重组/补充后）
 
@@ -489,20 +500,20 @@ CombatStrength（03 §4.13）与 04.IsCombatEffective 使用同一组数据
      可用 = 02.TrainedPoolAvailable(country, sp)
      按该国各营在 01 AllocationPolicy 下的顺序（Even / PriorityFill / FrontlineFirst，算法复用 01 §4.8，以“人员需求”为 d_i）分配整数人数
         （Even 的整数化：按需求比例 floor，余数按“小数部分降序、再营 id 升序”逐个补——这是分配，不是凭空增减）
-     persons = 02.TakeFromTrainedPool(country, sp, n) → 列入该营的 ReplacementRequest
-  装备：01 §4.8 的发放流程（01 负责从 EquipmentDepotStock 选件）；07 只为每营生成需求并接收结果
-  每营一个 ReplacementRequest → 06.RequestTransport；在途期间计入“在途”
+     persons = 02.DrawFromTrainedPool(country, sp, n) → 列入该营的 ReplacementRequest
+  装备：01 §4.8 的发放流程（01 负责从库存选件：holder = 0 的 EquipmentItem，01 DepotIndex）；07 只为每营生成需求并接收结果
+  每营一个 ReplacementRequest（toNode = 营辎重队所在节点，toFront = true）→ 06.RequestTransport；在途期间计入“在途”
 到达：06 回调 OnReplacementDelivered(requestId)：
   人员与装备进入该营待编池；
   营不在片段中且满足休整条件 → 立即 ReorganizeWithinBattalion；否则等休整（补充兵在营辎重队等待，H-04）
-新兵练度：02.OnPersonJoined(formation, sp, traineeSkill) 拉低该编组该专业平均练度（✅ 总纲：单兵补充的代价）
+新兵练度：人员进入班时调用 02.JoinSquad(p, squad)（练度来自 DrawFromTrainedPool 写的 CarriedSkillState），由此拉低该编组该专业平均练度（✅ 总纲：单兵补充的代价）
 ```
 
 #### 4.7.3 整建制轮换 `UnitRotation`
 
 ```text
 触发（每小时）：营 CombatStrength < RotationTrigger 且 不在片段中 且 RotationState.phase == None
-  → phase = Requested；通知 12（编组 AI）为该营安排替换与后撤（移动命令由 12/09 发出，照常有命令延迟）
+  → phase = Requested；调用 12.RequestBattalionRotation(bn)（12 编组 AI 为该营安排替换与后撤；移动命令由 12/09 发出，照常有命令延迟）
 营到达非一线地块（09.IsFrontline == false）→ phase = Refitting：
   本营在 §4.7.2 的分配中优先级最高（排在所有营之前，不论 AllocationPolicy），补充到达后立即重组
   当 FillRate.personnel ≥ RotationRefitTarget 且主要装备类别 ≥ RotationRefitTarget，或等待超过 RotationMaxRefitD → phase = Retraining，phaseUntil = now + RotationRetrainD
@@ -530,6 +541,9 @@ Retraining：02 对该营人员按“集中训练”倍率提高练度增长（0
 StandardWarDayPartsRate(brigade b, model m) = n_m × partsPerWorkHour(m) ×
      ( 24 × WarOpHoursFrac / mtbfH(m) × BreakdownWorkMedianH  +  CombatDamageRatePerDay × FieldWorkMeanH(m) )
 n_m = 旅内该型号非 IsLost 的件数
+
+PartsPerItemPerYear(model m) = 365 × 24 × PeaceOpHoursFrac / mtbfH(m) × BreakdownWorkMedianH × partsPerWorkHour(m)
+   （01 用：平时每件装备每年的备件消耗）
 ```
 
 #### 4.8.3 拆东补西 `Cannibalization`
@@ -553,7 +567,7 @@ n_m = 旅内该型号非 IsLost 的件数
 ### 4.9 缴获（可选，H-12，默认关闭）
 
 - `level == Captured` 的物品：归入俘获方国家的 `CapturedPool`（国家级，按型号计数，保留实例）。
-- 开关打开时：俘获方可以把它们作为同类别的**替代装备**发放（01 §3.3），型号专有练度从 `CapturedTypeSkill` 开始（02），备件只能来自本国同型号库存或拆东补西。2020 纳卡里双方都用 T-72 → 缴获的 T-72 对阿方几乎立即可用；这正是该机制的意义。
+- 开关打开时：俘获方可以把它们作为同类别的**替代装备**发放（01 §4.8.3），型号专有练度从 `CapturedTypeSkill` 开始（02），备件只能来自本国同型号库存或拆东补西。2020 纳卡里双方都用 T-72 → 缴获的 T-72 对阿方几乎立即可用；这正是该机制的意义。
 - 关闭时：缴获只计入战报与对方的损失统计。
 
 ### 4.10 损失状态汇总与报告
@@ -599,7 +613,7 @@ mechanic、medic、uav_operator、radar_operator、jtac、forward_observer 作�
 | `RepairWorkSigma` | 0.5 | — | 0.3–0.8 | 修理工时的对数正态离散 |
 | `fieldWorkMedianH`（Mobility / Firepower / Sensor） | 6 / 8 / 4 | h | ×0.5–2 | 换负重轮/履带、火控与火炮部件 |
 | `FieldWorkMine` | 10 | h | 6–20 | 触雷损坏行走机构 |
-| `depotWorkH`（HeavyTracked / MediumTracked / Wheeled / Towed） | 600 / 400 / 200 / 150 | 工时 | — | 大修数周量级 |
+| `depotWorkH`（HeavyTracked / MediumTracked / Wheeled / Towed / ManPortable） | 600 / 400 / 200 / 150 / 20 | 工时 | — | 大修数周量级；ManPortable 估算（H-19） |
 | `depotCostFraction` | 0.15 | — | 0.05–0.3 | |
 | `InterdictionDisableP`（卡车 / 装甲车） | 0.8 / 0.4 | — | — | |
 | `BnMaxWorkH` / `BdeMaxWorkH` | 12 / 48 | h | — | 营修理分队做小修、旅维修营做中修 |
@@ -632,6 +646,8 @@ mechanic、medic、uav_operator、radar_operator、jtac、forward_observer 作�
 | `mtbfH`（苏式老型号 MBT / 现代 MBT / IFV / 轮式装甲 / 卡车 / 自行火炮） | 120 / 250 / 150 / 300 / 400 / 200 | h | ×0.5–2 | 量级估计；11 的 O&M 与车况再放大 |
 | `BreakdownWorkMedianH` / `BreakdownImmobileP` | 3 / 0.5 | h / — | — | |
 | `WarOpHoursFrac` / `CombatDamageRatePerDay` | 0.4 / 0.01 | — / 1/天 | — | 06 规划用 |
+| 🟡 `PeaceOpHoursFrac` | 0.02 | — | — | 平时运行小时占比，`PartsPerItemPerYear` 用（H-18） |
+| `failurePerFlightH` 缺省（有人机 / 无人机） | 0.03 / 0.01 | 1/飞行小时 | — | 08 §4.3.2 读取（原 08 `AircraftProfile` 缺省值） |
 | `StoredYearsFactor` | 0.1 | 1/年 | — | |
 
 ### 5.4 医疗
@@ -675,8 +691,10 @@ mechanic、medic、uav_operator、radar_operator、jtac、forward_observer 作�
 |---|---|---|
 | `ApplyCasualty(PersonnelId, CasualtyState, SimTime, LossSource, Vec2D, EdgeBattleId)` | 03、04、05、06（给养断绝的非战斗减员）、08 | 事件时 |
 | `(DamageLevel, DamageFlags) RollVehicleDamage(EquipmentItemId, MunitionKind, Aspect, ref Pcg32)` | 03、04 | 失去战斗力时 |
+| `(DamageLevel, DamageFlags) RollVehicleDamage(EquipmentItemId, MunitionGroup, Aspect, ref Pcg32)`、`MunitionGroup MunitionGroupOf(MunitionKind, MunitionProfile)` | 03、04、本文件 | 失去战斗力时 |
 | `ApplyVehicleDamage(EquipmentItemId, DamageLevel, DamageFlags, SimTime, LossSource, Vec2D, EdgeBattleId)` | 03、04、05（无人机损失）、08 | 事件时 |
 | `ApplyVehicleHit(EquipmentItemId, DamageCause)` | 06（车队、LOC）、05 | 事件时 |
+| `void ApplyAggregateLosses(OrgUnitId bn, double personnelLossFrac, double vehicleLossFrac, long tick)` | 12（代理战斗日损失） | 每日 |
 | `bool IsLost(EquipmentItemId)`、`bool IsMobile(EquipmentItemId)` | 06、09、05、03 | 任意 |
 | `double CrossTrainFactor(SpecialtyHandle from, SpecialtyHandle to)` | 03 | 片段创建/重分配 |
 | `void PlatoonReorgInCombat(EngagementId)` | 03 | 每步末 |
@@ -684,6 +702,7 @@ mechanic、medic、uav_operator、radar_operator、jtac、forward_observer 作�
 | `RegisterBattlefieldItems(EdgeBattleId, items, positions)`、`ResolveBattlefieldControl(EdgeBattleId, controllerOf)`、`OnDisengage(OrgUnitId, EdgeBattleId)` | 04 | 写回、战斗结束、脱离 |
 | `OnUnitEncircledDestroyed(OrgUnitId)`、`OnSofDestroyed(OrgUnitId)` | 09、05 | 事件时 |
 | `double StandardWarDayPartsRate(FormationId, ModelHandle)` | 06 | 每日 |
+| `double PartsPerItemPerYear(ModelHandle)` | 01 | 按需 |
 | `void OnReplacementDelivered(int requestId)` | 06 | 到达时 |
 | `FillRateReport GetFillRate(OrgUnitId)`、`ReplacementNeeds GetNeeds(OrgUnitId)`、`LossStatusSummary GetLossSummary(scope)`、修理/医疗队列视图 | 13、05（L5 真值：人员满编率）、12 | 任意（只读） |
 | `int KilledCumulative(CountryId)` | 11 | 每小时 |
@@ -696,14 +715,14 @@ mechanic、medic、uav_operator、radar_operator、jtac、forward_observer 作�
 
 | 来源 | 需要 | 用途 |
 |---|---|---|
-| 01 | 编制树、DFS 顺序、`SquadTemplate` 人员表与槽位、`ResolveModel`、替代规则、`AllocationPolicy` 与 §4.8 的分配算法、`EquipmentDepotStock`、`reorganizingUntil`、`CountryOrgSettings.fillMode`、`usageHours`、战备等级 | 重组、补充、故障 |
-| 02 | `RosterState` 读写、`GetSkill`、`TrainedPoolAvailable`、`TakeFromTrainedPool`（H-10，需 02 提供）、`OnPersonJoined`、`OnPersonReturned`、新兵练度 | 补充、归队、维修效率 |
+| 01 | 编制树、DFS 顺序、`SquadTemplate` 人员表与槽位、`ResolveModel`、替代规则、`AllocationPolicy` 与 §4.8 的分配算法、库存（`EquipmentItem.holder = 0` + `locationNode`、`DepotIndex`）、`RepairThroughputMult`、`GetMaintenanceOrg`、`reorganizingUntil`、`CountryOrgSettings.fillMode`、`usageHours`、战备等级 | 重组、补充、故障 |
+| 02 | `RosterState` 读、`GetSkillForBattalion`、`TrainedPoolAvailable`、`DrawFromTrainedPool`、`JoinSquad`、`LeaveSquad`（含 `DetachReason.MedicalDischarge`）、`ReleaseToPool`、`PersonnelRecord.casualty`（唯一真值） | 补充、归队、维修效率 |
 | 03 | `MunitionKind`、`ArmorProfile.catastrophicGivenKill`、`TargetValue`、`CombatStrength`、`BattalionSummary.fillRate`、`LossSource` | 损伤、排序、满编率 |
 | 04 | `BattlefieldControllerAt`、`TruckKillIntegral`、`RecordLoss`、营辎重队/BSA 在条带上的位置 | 回收、后送、账本 |
-| 06 | `TryDrawParts(holder, model, qty, out got)`（06 §6.1）、`RequestTransport`、备件入库、营辎重队/BSA 库存 | 备件、运输 |
+| 06 | `TryDrawParts(holder, model, qty, out got)`（06 §6.1）、`RequestTransport`、`NearestDepot(CountryId, ulong tile)`、备件入库、营辎重队/BSA 库存 | 备件、运输 |
 | 09 | `IsFrontline`、营位置、命令（轮换由 12 发出） | 轮换 |
-| 11 | `FaultRateMultiplier` 组成项、`partsAddedMusd`、单价、大修预算扣款 | 故障、备件、费用 |
-| 12 | 轮换请求的执行（替换与后撤） | 整建制轮换 |
+| 11 | `FaultRateMultiplier` 组成项、`partsAddedMusd`、单价、大修预算扣款、`WarSideState.killedCumulative` | 故障、备件、费用 |
+| 12 | `RequestBattalionRotation(OrgUnitId)`（替换与后撤）、`KilledShareOfLosses` | 整建制轮换、代理损失 |
 | 14 | 各国大修节点能力 | 后方大修 |
 | 15 | `Rng.For`、`NextGaussian`、`DMath` | 确定性 |
 
@@ -720,8 +739,15 @@ mechanic、medic、uav_operator、radar_operator、jtac、forward_observer 作�
 | `SaltSof` | 7 | 特种分队被歼 | personId |
 | `SaltMedical` | 8 | 归队时长、不归队、死于伤、远期归队 | personId |
 | `SaltBreakdown` | 9 | 故障 | itemId |
+| `SaltAggregate` | 10 | 代理战斗日损失（`ApplyAggregateLosses`） | personId / itemId |
 
 （`RollVehicleDamage` 不用本表，它在调用方的流里继续抽，保证一次射击的全部抽样顺序固定。）
+
+### 6.4 存档
+
+| 规格 | 内容 |
+|---|---|
+| 15 | 存档：`SectionId.Damage`（= 42，值见 15 §3.2）；组件：`PersonCasualtyState`、`VehicleDamageState`、`UnassignedPool`、`RepairQueue`（items 及顺序）、`MedicalQueue`（含后送 carry 小数）、国家大修队列与 `DepotRepairOrder`、`BrigadeSustainSettings`、`RotationState`、在途 `ReplacementRequest` 及 id 计数器、`CapturedPool`、`KilledCumulative` 计数；不存档（派生，读档后重建）：`RepairQueue.capacityWhPerH`、`MedicalQueue.evacCapacityPerH`、`FillRateReport`、`ReplacementNeeds`、`LossStatusSummary` |
 
 ---
 
@@ -732,7 +758,7 @@ mechanic、medic、uav_operator、radar_operator、jtac、forward_observer 作�
 | 同一人一刻内被两次命中 | `ApplyCasualty` 只升级不降级 |
 | 已 `Killed` 的人员再被命中（面杀伤） | 调用方应只对可战斗者抽样；即使调用也忽略 |
 | 车辆已 `Destroyed` 再被命中 | 忽略（只合并 `Catastrophic` 标志用于统计） |
-| 营被撤编时，有人在医院、有车在大修 | 医院中的人归队时进入国家补充池；大修完成的车进仓库库存 |
+| 营被撤编时，有人在医院、有车在大修 | 医院中的人归队时 `02.ReleaseToPool(p)`；大修完成的车进 01 库存（holder = 0） |
 | 原班已因模板变更被删除（01） | 归队者/修好的装备进营待编池 |
 | 营没有任何维修兵 | 营队列容量 0；工时 ≤ `BdeMaxWorkH` 的物品转旅队列；旅也没有 → 全部转后方大修 |
 | 备件库存为 0 且无供体 | `AwaitingParts`，每小时重试；反馈标红 |
@@ -821,7 +847,7 @@ mechanic、medic、uav_operator、radar_operator、jtac、forward_observer 作�
 | H-07 | 备件单位定义与取用接口 | 1 单位 = 1 标准修理工时的零件；需要 06 提供 `TryDrawParts(holder, model, qty)` | 与工时直接挂钩，玩家能读懂“缺 40 小时的零件” | 按价值（美元）计 |
 | H-08 | 拆东补西默认允许 | 是，旅可关 | 现实普遍；关掉是保住大修价值的选择 | 默认关 |
 | H-09 | 大修预算不足时 | 排队等待（不修） | 预算是国防部长的决策 | 欠款继续修 |
-| H-10 | 02 需提供 `TakeFromTrainedPool` 与 `OnPersonJoined/Returned` | 采纳 | 补充与归队需要 | 07 直接改 02 的数据（违反归属） |
+| H-10 | 补充与归队使用 02 的 `DrawFromTrainedPool`、`JoinSquad`/`LeaveSquad`、`ReleaseToPool` | 采纳 | 补充与归队需要 | 07 直接改 02 的数据（违反归属） |
 | H-11 | 合并/撤编命令的通道 | 作为“行政命令”走 09 的命令通道（有命令延迟，营不在战斗中才可执行） | 09 只定义了 3 种陆战命令；这是编制操作，不是机动 | 编辑器里即时生效 |
 | H-12 | 缴获装备使用 | 做成可选开关，默认关；开时作为替代装备 | 总纲 §9.12(6) 标为可选；纳卡双方同型号使其有真实意义 | 不做 |
 | H-13 | V2 中伤亡比例的目标区间 | 由 14 用公开统计核定，本文件给宽区间 | 避免臆造精确数字 | — |
@@ -829,6 +855,8 @@ mechanic、medic、uav_operator、radar_operator、jtac、forward_observer 作�
 | H-15 | 轻伤员在片段内继续战斗 | 与 03 C-13 一致：片段内 `WithUnit`，片段后进 Role1 | 两份规格统一 | — |
 | H-16 | 整建制轮换的执行者 | 07 只发请求，12（编组 AI）安排替换与后撤 | 移动属于 09/12 | 07 直接下移动命令 |
 | H-17 | 死于伤的判定时刻 | 到达 Role2 时一次判定（超时 24 h 强制判定一次） | 一次抽样、可手算 | 每小时风险累积 |
+| H-18 | PeaceOpHoursFrac 初值 | 0.02 | 估算 | 由验证脚本定 |
+| H-19 | ManPortable 大修工时 | 20 h | 估算 | — |
 
 ---
 
