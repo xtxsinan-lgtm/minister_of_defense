@@ -219,6 +219,14 @@ public sealed class ImportGatewayData
     public bool isOpen;                      // 由 11 的外交状态与事件决定（§4.12）
     public string closedReason;              // 界面显示用的本地化键
 }
+
+public sealed class ImportBatch                // 11 每小时交给 06 的进口物资批次（§4.12；11 §4.4.4）
+{
+    public CountryId owner;                    // 买方
+    public CountryId supplier;                 // 供应国（选口岸用 externalLeadTimeH[supplier]）
+    public List<(ItemKey key, double qty)> items;   // 只含物资（弹药、备件、燃油、一般物资）；整件装备不走本结构
+    public SimTime availableAt;                // 外部到货时刻（11 合同交付表给出，通常 = 调用时刻）
+}
 ```
 
 ### 3.5 旅保障区、营辎重队、班随身库存
@@ -899,7 +907,7 @@ public sealed class CrossingState { public double capFactor; /*[0,1]*/ public Si
                         fullRepairAt = now + BridgeFullRepairD × 1440 分钟（此后 capFactor = 1）
 修复只在 crossing 所在地块为己方控制时计时；被敌方控制期间暂停
 ```
-费用：11 从年度预算扣 `BridgeRepairCostMusd`（按路线等级），扣不出来时修复暂停（🟡 L-11）。
+费用：开始修复时调用 `11.TryCharge(owner, BudgetLine.Infrastructure, BridgeRepairCostMusd[路线等级], "bridge_repair")`（11 §4.2.7）；返回 false 时修复计时暂停，下一小时再试（🟡 L-11）。
 
 #### 4.10.3 交通线（LOC）打击：对行驶中卡车
 08（无人机/飞机按“打击 → 地块 → 交通线”子目标）、04（远程火力打地块内道路）调用：
@@ -945,13 +953,14 @@ arc.lossFraction（每小时 L3）= 到达端地块的 lossEma
 ```text
 DaysCovered[item] = 全国库存[item] / NatRate[item]    （NatRate = 0 → 不报告）
 若 DaysCovered < landDays × GapWarnFraction → 09.PostNotification(Notification{kind = NotificationKind.ReserveGap, audience = c})：“按当前编制，<型号> 储备只够 N 天”（N 向下取整）
-采购缺口给 11：Shortfall[item] = max(0, NatTarget − 全国库存 − 在途 − 已下订单（11 提供）)
+采购缺口给 11：Shortfall[item] = max(0, NatTarget − 全国库存 − 在途 − 11.OnOrderQty(c, item))   // 已下订单，11 §6.2
 ```
 
 ### 4.12 进口
 
 ```text
-11 每小时调用 OnImportArrival(ImportBatch batch)：{supplier, items, availableAt（外部到货时刻由 11 的合同/排队计算）}
+11 每小时调用 OnImportArrival(ImportBatch batch)（类型见 §3.4）：{owner, supplier, items, availableAt（外部到货时刻由 11 的合同/排队计算）}
+整件装备不走 ImportBatch：11 直接创建 01 EquipmentItem（holder = 0，locationNode = 买方 isOpen 口岸中 NodeId 最小者，11 §4.4.4）；06 把它当作口岸库存中的整件装备，按 01 发放/§4.4 运输规则送往仓库或部队
 06 选口岸：候选 G = owner 的 ImportGateway 中 isOpen 且 externalLeadTimeH 含 supplier 的
   策略（按物资查 importPolicyByMunition，再查 importPolicyByClass，默认 Distributed）：
   Distributed：按 capacityTPerDay 比例拆分
@@ -1012,6 +1021,18 @@ AAR 计数器（按旅）：noAmmoIdleHours、immobileHours、trucksLost、cargo
 12 可对敌方用同一函数（输入它“看到的”敌方网络：只含暴露度 ≥ L3 的节点，§6）。
 
 ---
+
+### 4.17 基建项目（D5；由 11 `OrderInfrastructure` 下单并付款，11 §6.3）
+```text
+QuoteInfrastructure(kind, node, capacityT):
+  NewDepot       : cost = DepotBuildCostMusdPerKt × capacityT / 1000（capacityT 缺省 DefaultNewDepotCapacityT），days = DepotBuildYears × 365
+  HardenNode     : 要求 node.role ∈ {Depot, Factory} 且 hardeningLevel < 3；cost = HardenCostMusdPerKtPerLevel × node.storageCapacityT / 1000（Factory 按 10 000 t 计），days = HardenDays
+  AirbaseShelter : 要求 node.role == Airbase 且 hardeningLevel < 3；cost = AirbaseShelterCostMusd，days = AirbaseShelterDays
+OnInfrastructureCompleted：
+  NewDepot       : 在 tile 创建 LogisticsNode(role = Depot, owner, storageCapacityT = capacityT, hardeningLevel = 0, state = Operational)（建设期间不存在该节点；界面显示 11 的项目进度）
+  HardenNode / AirbaseShelter : node.hardeningLevel += 1（打击效果见 §4.10 HardeningStockMult；仓储费按 HardeningCostMult）
+```
+资金进度、工期随拨款变慢等规则由 11 §4.5.3（H6）负责；06 只给价格、工期与完工效果。
 
 ## 5. 常数表
 
@@ -1163,6 +1184,12 @@ AAR 计数器（按旅）：noAmmoIdleHours、immobileHours、trucksLost、cargo
 | `HubDeployH` / `HubPackH` | 24 / 12 | h | 6–72 | §4.16 |
 | `HubStorageT` / `HubThroughputTPerH` | 3000 / 250 | t、t/h | ×0.3–×3 | 每个后勤旅（基准规模），按其卡车载重线性缩放：× (旅载重 / 1000t) |
 | `DepotBuildYears` | 3 | 年 | 1–6 | §19.5“新建要好几年” |
+| `DepotBuildCostMusdPerKt` | 0.5 | Musd / 千吨库容 | 0.2–1.5 | `confidence: estimated`：露天/简易库房的土建量级（1 万吨库约 5 Musd）；只为让“新建仓库”有可比较的价格 |
+| `DefaultNewDepotCapacityT` | 10000 | t | 3000–30000 | estimated：与开局仓库的典型规模同量级 |
+| `HardenCostMusdPerKtPerLevel` | 0.3 | Musd / 千吨库容 / 级 | 0.1–1.0 | estimated：加固按库容计价，与 `HardeningCostMult` 的递增方向一致 |
+| `HardenDays` | 365 | d | 180–730 | estimated |
+| `AirbaseShelterCostMusd` | 20 | Musd / 级 | 5–60 | estimated：一批加固机库/掩体的量级 |
+| `AirbaseShelterDays` | 540 | d | 365–1095 | estimated |
 
 ### 5.10 RNG salt（`RngDomain.Logistics = 6`）
 
@@ -1204,12 +1231,14 @@ AAR 计数器（按旅）：noAmmoIdleHours、immobileHours、trucksLost、cargo
 | `bool TryDrawFromNode(NodeId, ItemKey, double qty, out double got)` | 08（机场挂弹）、02（训练，FEFO） | 按需 | 机场挂载从机场节点扣 |
 | `bool TryDrawParts(OrgUnitId battalion, int modelHandle, double qty, out double got)` / `bool TryDrawParts(FormationId brigade, int modelHandle, double qty, out double got)` | 07（修理，07 H-07） | 每小时 `DamageRepair` | 从营辎重队（`BattalionTrains.stock`）或旅保障区（`BrigadeSupportArea.stock`）扣 `ItemKey(SupplyClass.SpareParts, modelHandle)`；单位 = 07 §3 定义的“备件单位”；不足时 got < qty，返回 `got ≥ qty` |
 | `void ReturnToNode(NodeId, ItemKey, double qty)` | 08（降落时退回未消耗的挂载弹药，08 A-14） | 降落时（`AirStep`） | 加回该节点 `Stockpile`；弹药批次年份记为当年（简化）；超出 `storageCapacityT` 也照常入库（与 FieldCache 溢出规则无关） |
-| `double ConsumeForTraining(FormationId, ItemKey, double qty)` | 02 | 每小时 | 从该编组所在方向的仓库（Depot，NodeId 升序）按 FEFO 扣；不足就少扣。**返回值 = 实际扣到的数量**（0 ≤ 返回值 ≤ qty），02 据此折算训练效果（02 P-18） |
+| `double ConsumeForTraining(FormationId, ItemKey, double qty)` | 02；11（边境演习，11 §4.8.1） | 每小时（11：行动时） | 从该编组所在方向的仓库（Depot，NodeId 升序）按 FEFO 扣；不足就少扣。**返回值 = 实际扣到的数量**（0 ≤ 返回值 ≤ qty），02 据此折算训练效果（02 P-18） |
 | `double ConsumeForTraining(OrgUnitId battalion, ItemKey, double qty)` | 02（独立营） | 每小时 | 同上；“所在方向”按该营所在地块的 Region 判定 |
 | `void AddProduced(NodeId factory, ItemKey or EquipmentModel, double qty)` | 11 | `Calendar` 时 | 产出入库（批次年份 = 当年） |
 | `void OnImportArrival(ImportBatch)` | 11 | 每小时 | §4.12 |
 | `Shortfall GetProcurementShortfall(CountryId)` | 11、12 | 每日 | §4.11 |
 | `double GetAnnualStorageCostMusd(CountryId)` | 11 | 年度 | §4.13 |
+| `(double costMusd, int days) QuoteInfrastructure(InfraProjectKind kind, NodeId node, double capacityT)` | 11（`OrderInfrastructure` 下单时） | 下单时 | §4.17 |
+| `void OnInfrastructureCompleted(CountryId owner, InfraProjectKind kind, NodeId node, ulong tile, double capacityT)` | 11（H6 项目完工） | `Calendar` | §4.17 |
 | `SimTime RequestTransport(ReplacementRequest)` | 07 | 按需 | 补充装备/兵员运输（目的地 = 07 `ReplacementRequest.toNode`），返回预计到达时刻；到达时回调 07 `OnReplacementDelivered` |
 | `void OnNodeStrike(NodeStrikeEvent)` / `OnCrossingStrike(CrossingStrikeEvent)` / `OnLocStrike(...)` | 04、08 | `GroundEventApply` | §4.10 |
 | `double GetTrafficTrucksPerH(CountryId, ulong tile)` | 04、08 | 结算 LOC 打击前 | §4.10.3 |
