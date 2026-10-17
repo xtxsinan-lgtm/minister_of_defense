@@ -180,14 +180,14 @@ public sealed class ScenarioInitOptions { public string scenarioId; public strin
 
 ### 3.4 采购数据（映射到 11 的 `ProcurementProfile` 等）
 - `procurement_profiles.<modelId>` → 11 `ProcurementProfile`（键 snake_case → camelCase）。合并规则：型号文件自身的 `procurement` 键（00 §4.3）为底，本剧本条目**按字段覆盖**；`service_year` 两处都没给 → 取 `EquipmentModel.serviceYear`（01 M3 可选字段）；仍没有 → 加载报错。额外字段：`export_from_year`（卖方开始出口该型号的年份）与 `export_unlock_flag`（= 11 `exportUnlockFlag`，全局旗标名）：`y < export_from_year` 且该旗标未设置 → 批准概率 = 0（如 TB2：`export_from_year: 2018`，事件 `tur_2020_tb2_offer` 设置 `tb2_export_aze_open`；11 须在 §4.4.2 读取，见 §6.2）；`confidence`、`basis`（文字，只供审计）。
-- `production_lines[]` → 11 `ProductionLine`（`factory` = 06 节点 id）。`from_year ≤ y0` 的线开局即 `Active`；`from_year > y0` 的线开局创建为 `UnderConstruction`，并附一个 11 `Project`（`kind = NewLineNewSite`、`totalCostMusd = 0`、`nominalDays` = 开局到 `from_year` 年 1 月 1 日 00:00Z 的天数），即“外生建成”，不占玩家预算（接口需求，§6.2）。
+- `production_lines[]` → 11 `ProductionLine`（`factory` = 06 节点 id；`expansion_cost_musd_per_unit_year` → `expansionCostMusdPerUnitYear`，每增加 1 件/年产能的费用，2020 不变价百万美元）。`from_year ≤ y0` 的线开局即 `Active`；`from_year > y0` 的线开局创建为 `UnderConstruction`，并附一个 11 `Project`（`kind = NewLineNewSite`、`totalCostMusd = 0`、`nominalDays` = 开局到 `from_year` 年 1 月 1 日 00:00Z 的天数），即“外生建成”，不占玩家预算（接口需求，§6.2）。
 - `upgrades[]` → 11 `UpgradePath`；`availability`（可选，ISO3 列表）限制可下单国家；`from_year`（可选）之前不可下单；`from: "*"` 的 `refurbish_generic` 是 11 §4.5.1 整修的通用路径（`cost_share_of_unit_cost` × 型号单价 = `costPerUnitMusd`）。
 - `market_pool[]` → 11 §4.5.2 的市场池条目（`years` = 允许出现的年份区间，含端点；缺省 = 不限）。
 - `historical_procurement` → 12 的扩展字段（N-11）：AI 在 Historical/Plausible 模式下以此为“参考采购计划”。
 
 ### 3.5 外部大国与口岸
 - `external_actors` → 11 `ExternalActorPolicy`（`mediation_template_ids` → `mediationTemplateIds`）；`supply_in_war.<ISO3>` 直接给出 11 §4.10.4 的 `supplyContinueP(actor, buyer)`（替代该处公式；未给的买方仍用公式；11 须读取，见 §6.2）；`intel_sharing` 决定 05 `SatelliteAsset.sharesWith`（§3.12）。
-- 红线 `tiles`：`{de_jure: ISO3}` 或 `{region: id}`，加载时展开成 11 `TileSetRef`（H3 升序列表）；`effects` 是按 `after_hours` 递进的效果序列（11 `RedLineEffect`）。
+- 红线 `tiles`：`{de_jure: ISO3}` → 11 `TileSetRef(DeJure, ISO3)`，`{region: id}` → `TileSetRef(Region, id)`，展开由 `ExpandTileSet`（§6）完成；`effects: [{effect, after_hours}]` → 11 `List<RedLineStep(afterHours, effect)>`（按 `after_hours` 升序；`effect` → `RedLineEffect`；阶段 1 不允许 `direct_intervention`）。
 - 口岸（06 `ImportGatewayData`）在 `logistics_nodes.yaml`；事件 `close_import_gateway` 关闭（如 2020 年格鲁吉亚禁运过境）。
 
 ### 3.6 编制模板的生成方式
@@ -218,8 +218,8 @@ public sealed class ScenarioInitOptions { public string scenarioId; public strin
 | `text_key`、`options[].text_key` | `textKey` | 缺省：事件 = `strat.event.<id>`，选项 = `strat.event.<id>.<optionId>`（与 13 S21 的 `strat.event.<id>.body` 同前缀）；`summary` 只给实现者看，不进游戏 |
 | `triggers[].type` | `ConditionType`（snake_case → PascalCase） | `tension_level_at_least` 的 `arg` 为 `TensionLevel` 名；`triggers: []` = 无条件 |
 | `options[].effects[].type` | `EffectType` | `target: self` = 响应该事件的国家（`Dyad` 事件对两国各实例化一次，`self` 分别为两国；11 须确认，见 §6.2）；`arg` 中的关系对写 `"A-B"`，其中 `self` 同样替换 |
-| `start_war` 的 `arg` | `key=value;…` 字符串 | 键：`scope`（`limited`/`total`）、`casus_belli`（11 `CasusBelli` 的 snake_case）、`aims`（逗号分隔的 `ai_profiles.yaml` 中发起国 `war_aims[].id`）、`max_days`、`template`（停火模板 id） |
-| `ai_directive` 的 `arg` | `<kind>:<warAimId>[,<warAimId>…]` | `kind ∈ {offensive, limited_offensive}`；warAim 必须存在于该国 profile（§3.11）；12 §4.5.5 按指令 `SubmitPlan`，目标 = 这些 warAim 的地块并集 |
+| `start_war` 的 `arg` | `key=value;…` 字符串 | 11 使用的键：`casus_belli`（11 `CasusBelli` 的 snake_case）、`aims`（逗号分隔的发起国 `war_aims[].id`，→ 作战目标地块）。14 使用、须 11 保存到 `War` 的键（接口需求 §6.2）：`scope`（`limited`/`total`，缺省 `total`；§4.7.1 `WarScope` 条件读取）、`max_days`（有限战争的天数上限：战争第 `max_days` 天由 `template` 指定的停火模板生成强制停火提议）、`template`（停火模板 id）。11 未支持前：`scope` 一律按 `total`，`max_days`/`template` 忽略（V2b 不可用） |
+| `ai_directive` 的 `arg` | `kind=<kind>;aim=<warAimId>;due=<时刻>` | 一条效果 = 11 的一个 `AiDirective{kind, warAimId, dueMs}`；`kind ∈ {offensive, mobilize}`（11 §3.8）；`aim` 只在 `offensive` 时必填，必须是该国 profile 的 `war_aims[].id`（§3.11）；`due` 为 ISO 时刻（UTC），省略 = 事件触发时刻。多个目标写多条效果；12 §4.5.5 到期执行 |
 | `border_skirmish` 的 `arg` | `edge_near:<anchor>`、`edge_between:<a>,<b>`、`edge_random:contact_line` | §4.9.3 解析成具体交界边 |
 | 旗标 | `FlagSet`/`FlagNotSet` 的 `arg` | 只用事件 `set_flag` 设置的旗标，或 11 定义的系统旗标；本剧本用到的系统旗标 `big_contract_signed_last_90d` 须由 11 定义（接口需求，§6.2） |
 
@@ -575,7 +575,8 @@ public interface IScenarioService {
     void RunScriptedStart(long tick);                                         // §4.9：11 在每小时事件步（11 §4.9）开始时调用
     CeasefireTemplate SelectCeasefireTemplate(WarId war, CountryId mediator); // §4.7.1：11 §4.8.6 调用
     PeacekeepingZone BuildPeacekeepingZone(CeasefireTemplate t, WarId war);   // §4.7.2：11 §4.8.6 生效时调用
-    IReadOnlyList<ulong> ExpandRegion(string regionId);                       // §4.1.3（加载后缓存；11 红线/停火、12 warAims、13 预览使用）
+    IReadOnlyList<ulong> ExpandTileSet(TileSetRef s);                         // 11 §3.4 TileSetRef：DeJure → TileClaimTable 中归该国的地块；Region → §4.1.3 规则（加载后缓存）；
+                                                                              // Explicit → 11 StrategicState.explicitTileSets[key]；结果 H3 升序。11 红线/停火、12 warAims、13 预览使用
     double GoalProgress(CountryId c, string goalId);                         // §4.8：11 §4.13 调用
     EdgeId ResolveSkirmishEdge(string arg, long tick, ulong eventHandle);    // §4.9.3：11 执行 BorderSkirmish 效果时调用
 }
@@ -594,7 +595,7 @@ public sealed class ScenarioRuntimeState {      // 14 唯一的运行时状态
 | 规格 | 需求 | 备注 |
 |---|---|---|
 | 05 | `SatelliteAsset` 增加启用时刻（如 `long activeFromMs`），过顶早于它时跳过 | 未加前：`from > start` 的卫星在开局即生效（偏差：nk_2010 中 Göktürk/Azersky 提前可用） |
-| 11 | §4.4.2 读取 `exportFromYear` + `exportUnlockFlag`（11 已有）；§4.10.4 读取 `supply_in_war` 覆盖值；§4.10.4 按 `intel_sharing.from_year` 在当年 1 月 1 日把受援国加入 `sharesWith`；§4.9 每小时事件步开始时调用 `RunScriptedStart`；§4.8.6 调用 `SelectCeasefireTemplate`/`BuildPeacekeepingZone`；§4.13 调用 `GoalProgress`；`BorderSkirmish` 调用 `ResolveSkirmishEdge`；定义 `EventScope`、`TileSetRef`；确认 `Dyad` 事件对两国各实例化一次（§3.8 的 `self`）；定义系统旗标 `big_contract_signed_last_90d`；确认 `totalCostMusd = 0` 的“外生建成”项目按 `nominalDays` 完工 | 见报告 |
+| 11 | `War` 保存 `start_war` 的 `scope`/`maxDays`/`template` 并在第 `maxDays` 天生成该模板的强制停火提议（§3.8）；§4.4.2 读取 `exportFromYear` + `exportUnlockFlag`（11 已有）；§4.10.4 读取 `supply_in_war` 覆盖值；§4.10.4 按 `intel_sharing.from_year` 在当年 1 月 1 日把受援国加入 `sharesWith`；§4.9 每小时事件步开始时调用 `RunScriptedStart`；§4.8.6 调用 `SelectCeasefireTemplate`/`BuildPeacekeepingZone`；§4.13 调用 `GoalProgress`；`BorderSkirmish` 调用 `ResolveSkirmishEdge`；定义 `EventScope`、`TileSetRef`；确认 `Dyad` 事件对两国各实例化一次（§3.8 的 `self`）；定义系统旗标 `big_contract_signed_last_90d`；确认 `totalCostMusd = 0` 的“外生建成”项目按 `nominalDays` 完工 | 见报告 |
 | 12 | `AiCountryProfile` 增加 `historicalProcurement`（N-11）；I-02 映射与本剧本一致（ARM `soviet`、AZE 2010 `soviet` / 2020 `western`） | |
 | 02 | 学校产能未列出时的缺省值 | 本剧本已给出主要学校 |
 | 09 | （可选）提供开局放置营的接口，替代 14 直接写 `BattalionMoveState` | |

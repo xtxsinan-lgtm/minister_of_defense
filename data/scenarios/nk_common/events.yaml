@@ -3,7 +3,7 @@
 #   Plausible = 保留条件、按 mtth_days 抽样；Free = 不触发。
 # 文案 text_key 指向本地化表（开发期预生成、人工审核，总纲 §20.4）；缺省 = strat.event.<id> / strat.event.<id>.<optionId>（14 §3.8）。
 #   这里的 summary 只给实现者看。
-# start_war 的 aims、ai_directive 的 warAim 列表引用 ai_profiles.yaml 中发起国的 war_aims[].id（14 §3.8）。
+# start_war 的 aims、ai_directive 的 aim 引用 ai_profiles.yaml 中发起国的 war_aims[].id；ai_directive 一条 = 一个 11 AiDirective（14 §3.8）。
 # border_skirmish 的锚点名 = theater.yaml control_anchors[].name。
 # 效果数值均为 bal（平衡参数），依据是事件的定性影响。
 
@@ -42,7 +42,8 @@ events:
       - id: limited_offensive
         effects:
           - {type: start_war, target: AZE, arg: "scope=limited;aims=talish_heights,lelatap_heights;max_days=7;template=local_skirmish_template"}
-          - {type: ai_directive, target: AZE, arg: "limited_offensive:talish_heights,lelatap_heights"}
+          - {type: ai_directive, target: AZE, arg: "kind=offensive;aim=talish_heights"}
+          - {type: ai_directive, target: AZE, arg: "kind=offensive;aim=lelatap_heights"}
         ai_weight: 1.0
     note: 剧本可选（14 N-12）。玩家扮演阿方时以“机会事件”形式出现（可选择不打）。
   - id: rus_2015_arm_loan
@@ -115,7 +116,9 @@ events:
       - id: general_offensive
         effects:
           - {type: start_war, target: AZE, arg: "scope=total;casus_belli=territorial_claim;aims=south_districts,shusha_axis,north_axis,kalbajar_lachin"}
-          - {type: ai_directive, target: AZE, arg: "offensive:south_districts,shusha_axis,north_axis"}   # 史实主攻：南线、舒沙方向、北线（塔利什）
+          - {type: ai_directive, target: AZE, arg: "kind=offensive;aim=south_districts"}   # 史实主攻：南线、舒沙方向、北线（塔利什）
+          - {type: ai_directive, target: AZE, arg: "kind=offensive;aim=shusha_axis"}
+          - {type: ai_directive, target: AZE, arg: "kind=offensive;aim=north_axis"}
     note: 只对 AI 控制的阿方生效；玩家是阿方时转为提示“领导层已批准作战方案”（11 §4.7.5 自动批准）。
   - id: geo_transit_ban_2020
     historical: true

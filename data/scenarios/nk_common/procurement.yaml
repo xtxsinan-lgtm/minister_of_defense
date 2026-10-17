@@ -86,20 +86,24 @@ procurement_profiles:
   harop_launcher:      {cost_musd: 3.0, producers: [ISR], sensitivity: 3, historical_exports_to: [AZE], service_year: 2009, confidence: uncertain, basis: 车载发射箱组（不含弹）数量级}
   skystriker_launcher: {cost_musd: 0.5, producers: [ISR], sensitivity: 3, historical_exports_to: [AZE], service_year: 2016, confidence: uncertain}
   orbiter_1k_launcher: {cost_musd: 0.2, producers: [AZE, ISR], sensitivity: 3, historical_exports_to: [AZE], service_year: 2016, local_assembly_allowed: true, confidence: uncertain}
+  # 战术弹道导弹弹体（tbm_missile，按枚；data/equipment/ground_munitions.yaml）
+  r17_scud_b:       {cost_musd: 1.0, end_production_year: 1987, producers: [RUS], sensitivity: 3, historical_exports_to: [ARM], confidence: uncertain, basis: 只能二手；数量级}
+  9m79_tochka_u:    {cost_musd: 1.5, end_production_year: 1989, producers: [RUS], sensitivity: 3, historical_exports_to: [AZE], confidence: uncertain}
+  9m723_iskander_e: {cost_musd: 3.0, producers: [RUS], sensitivity: 3, historical_exports_to: [ARM], service_year: 2016, confidence: uncertain}
+  lora_missile:     {cost_musd: 5.0, producers: [ISR], sensitivity: 3, historical_exports_to: [AZE], service_year: 2017, confidence: uncertain}
   hresh_launcher:      {cost_musd: 0.1, producers: [ARM], sensitivity: 2, historical_exports_to: [], service_year: 2020, confidence: uncertain}
 
 # ------------------------------------------------------------------ 国内生产线（11 ProductionLine）
 # 产能全部 estimated/bal：公开资料只能确认“生产什么”，不能确认“每年多少”。
 production_lines:
-  - {id: aze_line_mortar_120, owner: AZE, factory: aze_factory_modi_baku, models: [2b11], capacity_per_year: 60, utilization: 0.5, unit_cost_musd: 0.03, confidence: estimated, note: 以 2b11 代表 MODI 的 Komando 20N6MT 等国产迫击炮}
-  - {id: aze_line_small_arms, owner: AZE, factory: aze_factory_modi_baku, models: [ak74], capacity_per_year: 20000, utilization: 0.3, unit_cost_musd: 0.0004, confidence: estimated}
-  - {id: aze_line_uav, owner: AZE, factory: aze_factory_azad_systems, models: [orbiter2, orbiter3, aerostar], capacity_per_year: 20, utilization: 0.5, unit_cost_musd: 0.4, is_assembly_only: true, from_year: 2011, confidence: estimated, note: 依赖以色列零件包（11 §4.4.4 本地组装）}
-  - {id: aze_line_loitering, owner: AZE, factory: aze_factory_azad_systems, models: [orbiter_1k], capacity_per_year: 100, utilization: 0.5, unit_cost_musd: 0.08, is_assembly_only: true, from_year: 2016, confidence: estimated}
-  - {id: aze_line_mpv, owner: AZE, factory: aze_factory_paramount, models: [matador_mpv, marauder_mpv], capacity_per_year: 40, utilization: 0.5, unit_cost_musd: 0.45, is_assembly_only: true, from_year: 2009, confidence: estimated}
-  - {id: arm_line_uav, owner: ARM, factory: arm_industry_yerevan, models: [krunk], capacity_per_year: 10, utilization: 0.5, unit_cost_musd: 0.25, from_year: 2011, confidence: estimated}
-  - {id: arm_line_loitering, owner: ARM, factory: arm_industry_yerevan, models: [hresh], capacity_per_year: 20, utilization: 0.0, unit_cost_musd: 0.05, from_year: 2020, confidence: uncertain}
-expansion_cost_musd_per_unit_year:          # 11 §4.5.3 LineExpansion 的单位扩产成本（bal）
-  default_share_of_unit_cost: 0.8           # 每增加 1 件/年产能 ≈ 0.8 × 单件国产价
+  - {id: aze_line_mortar_120, owner: AZE, factory: aze_factory_modi_baku, models: [2b11], capacity_per_year: 60, utilization: 0.5, unit_cost_musd: 0.03, expansion_cost_musd_per_unit_year: 0.024, confidence: estimated, note: 以 2b11 代表 MODI 的 Komando 20N6MT 等国产迫击炮}
+  - {id: aze_line_small_arms, owner: AZE, factory: aze_factory_modi_baku, models: [ak74], capacity_per_year: 20000, utilization: 0.3, unit_cost_musd: 0.0004, expansion_cost_musd_per_unit_year: 0.00032, confidence: estimated}
+  - {id: aze_line_uav, owner: AZE, factory: aze_factory_azad_systems, models: [orbiter2, orbiter3, aerostar], capacity_per_year: 20, utilization: 0.5, unit_cost_musd: 0.4, expansion_cost_musd_per_unit_year: 0.32, is_assembly_only: true, from_year: 2011, confidence: estimated, note: 依赖以色列零件包（11 §4.4.4 本地组装）}
+  - {id: aze_line_loitering, owner: AZE, factory: aze_factory_azad_systems, models: [orbiter_1k], capacity_per_year: 100, utilization: 0.5, unit_cost_musd: 0.08, expansion_cost_musd_per_unit_year: 0.064, is_assembly_only: true, from_year: 2016, confidence: estimated}
+  - {id: aze_line_mpv, owner: AZE, factory: aze_factory_paramount, models: [matador_mpv, marauder_mpv], capacity_per_year: 40, utilization: 0.5, unit_cost_musd: 0.45, expansion_cost_musd_per_unit_year: 0.36, is_assembly_only: true, from_year: 2009, confidence: estimated}
+  - {id: arm_line_uav, owner: ARM, factory: arm_industry_yerevan, models: [krunk], capacity_per_year: 10, utilization: 0.5, unit_cost_musd: 0.25, expansion_cost_musd_per_unit_year: 0.20, from_year: 2011, confidence: estimated}
+  - {id: arm_line_loitering, owner: ARM, factory: arm_industry_yerevan, models: [hresh], capacity_per_year: 20, utilization: 0.0, unit_cost_musd: 0.05, expansion_cost_musd_per_unit_year: 0.04, from_year: 2020, confidence: uncertain}
+# 每条线的 expansion_cost_musd_per_unit_year（11 ProductionLine.expansionCostMusdPerUnitYear）= 0.8 × unit_cost_musd（bal：每增加 1 件/年产能 ≈ 0.8 × 单件国产价）
 
 # ------------------------------------------------------------------ 升级路径（11 UpgradePath）
 upgrades:
