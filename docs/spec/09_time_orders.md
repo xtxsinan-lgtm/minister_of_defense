@@ -750,7 +750,7 @@ LightCondition GetLightCondition(ulong tile, SimTime t) {
 }
 ```
 - 来源：NOAA 太阳位置简化公式（精度约 ±0.5°，对昼夜分档足够）。
-- 条带和片段按**战斗边中点**还是地块中心？用边的两地块中心的平均经纬度（`Map.EdgeMidpoint`，10）。片段在生成时取一次光照（03 不在片段内部切换昼夜）。
+- 条带和片段按**战斗边中点**还是地块中心？用边两端点的大圆中点（`Edge.midpoint`，10 §3；经 `Map.EdgeMidpoint` 读取）。片段在生成时取一次光照（03 不在片段内部切换昼夜）。
 - 天气：阶段 1 恒为 `Clear`（总纲 §21-20 第二优先）；保留 `GetWeather(tile, t)` 接口，返回固定值。
 
 ---

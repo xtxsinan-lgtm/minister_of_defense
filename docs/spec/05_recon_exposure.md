@@ -658,8 +658,8 @@ Planned → Inserting → OnStation → Exfiltrating → Completed
 | `TerrainConcealment[Urban]` | 0.5 | — | 0.3–0.7 | 建筑遮蔽 |
 | `TerrainConcealment[Forest]` | 0.45 | — | 0.3–0.7 | 树冠遮蔽 |
 | `TerrainConcealment[Mountain]` | 0.6 | — | 0.4–0.8 | 遮蔽 + 阴影；纳卡山地 |
-| `TerrainConcealment[Hills]` | 0.8 | — | 0.6–0.95 | |
-| `TerrainConcealment[Wetland]` | 0.85 | — | 0.7–1.0 | |
+| `TerrainConcealment[Mixed]` | 0.8 | — | 0.6–0.95 | 零散树木/建筑与开阔地交错；估算（10 M-02：TerrainType 无 Hills，起伏用 `elevStdM` 表达） |
+| `TerrainConcealment[Marsh]` | 0.85 | — | 0.7–1.0 | |
 | `TerrainConcealment[Water]` | 1.0 | — | — | |
 | `CamoMaxReduction` | 0.35 | — | 0.2–0.5 | 多光谱伪装网对热/光学的典型削减量级（估算） |
 | `CamoKitDefault` | 0.3 | — | 0–0.6 | 数据缺失时的缺省（🟡 R-18） |

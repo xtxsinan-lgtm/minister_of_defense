@@ -610,7 +610,7 @@ R_hor_masked = (hTargetAgl < MaskAltAglM && !isLookDown) ? R_hor × MaskFactor[�
 探测成立 ⇔ 雷达开机 && SlantRange ≤ R_jam && GroundDistance ≤ R_hor_masked && hTargetAgl ≤ airRadarMaxAltM
 ```
 - 确定性判定（不抽样，A-02）：数字透明，玩家能在包线图上看到“TB2 在 9 km 外被 Osa 雷达发现”。
-- `MaskFactor[主地形]`：Mountain 0.4、Hills 0.7、Forest 0.9、其他 1.0（主地形 = 地块 `TerrainComposition` 占比最大者，10）。纳卡山地让低空目标（直升机、巡航导弹、低飞无人机、巡飞弹俯冲前段）很难被地面雷达早发现。
+- `MaskFactor[主地形]`：Mountain 0.4、Forest 0.9、其他 1.0（主地形 = 地块 `TerrainComposition` 占比最大者，10）。纳卡山地让低空目标（直升机、巡航导弹、低飞无人机、巡飞弹俯冲前段）很难被地面雷达早发现。
 - 下视雷达（预警机、战斗机雷达 `isLookDown`）不受掩蔽；低空目标对下视雷达有杂波：`hTargetAgl < 300` → `R_jam × LookDownClutterFactor`。
 
 #### 4.5.2 光学 / 红外搜索（红外防空、便携导弹、格斗、无雷达时）
@@ -1015,7 +1015,7 @@ JetFuel：Σ 架数 × PlanningSortiesPerDay × fuelKg / 1000（吨）
 | 雷达地平线系数 | 4120 | m/√m | — | 总纲 §12.4（4/3 地球等效） |
 | `SlowTargetSpeedMps` | 60 | m/s | 40–80 | 216 km/h 以下：TB2（36 m/s）、Harop 巡航、An-2 |
 | `MaskAltAglM` | 1 000 | m | 300–2000 | 低于此高度受地形遮蔽 |
-| `MaskFactor` | Mountain 0.4 / Hills 0.7 / Forest 0.9 / 其他 1.0 | — | — | 纳卡山地 |
+| `MaskFactor` | Mountain 0.4 / Forest 0.9 / 其他 1.0 | — | — | 纳卡山地 |
 | `LookDownClutterFactor` | 0.7 | — | 0.5–1 | |
 | `TrackMemoryS` | 120 | s | 60–300 | |
 | `NetworkLatencyS` | 10 | s | 0–60 | |
