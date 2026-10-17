@@ -261,17 +261,17 @@
 | 服役年份 | `serviceYear`（数据 `service_year`） | 型号可采购的起始年份。 | §18.3 | 11 |
 | 紧张程度 | `TensionLevel` | 枚举：`Peace, Tension, Crisis, LimitedConflict, TotalWar`。 | §18.2 🟡 | 11 |
 | 作战方案 | `OperationPlan` | 向领导层提交的目标、兵力、预计成功率与代价。 | §18.2 | 11 |
-| 信任度 | `Trust` | 国防部长的政治资本；太低被解职（失败）。 | §18.2 | 11 |
-| 议题支持度 | `IssueSupport` | 领导层对某议题的支持度 0–100。 | §18.2-6 | 11 |
-| 腐败值 | `Corruption` | 游说累积；越高越易曝光。 | §18.2-7 🟡 | 11 |
+| 信任度 | `Trust`（实现：11 `PoliticalState.trust`，[0,1]） | 国防部长的政治资本；太低被解职（失败）。 | §18.2 | 11 |
+| 议题支持度 | `IssueSupport`（实现：11 `PoliticalState.issueSupport[IssueId]`，存 [0,1]，界面 ×100） | 领导层对某议题的支持度 0–100。 | §18.2-6 | 11 |
+| 腐败值 | `Corruption`（实现：11 `PoliticalState.corruption`） | 游说累积；越高越易曝光。 | §18.2-7 🟡 | 11 |
 | 开战理由 | `CasusBelli` | 枚举：`SelfDefense, AllyRequest, TerritorialClaim, Unprovoked`。 | §18.5 | 11 |
-| 战争疲劳 | `WarFatigue` | 伤亡、费用、时间累积；太高要求停火。 | §18.2-4 | 11 |
-| 动员等级 | `MobilizationLevel` | 枚举：`None, Partial, Full`。 | §18.4 🟡 | 11 |
+| 战争疲劳 | `WarFatigue`（实现：11 `WarSideState.fatigue` + `FatigueBreakdown`；不是独立类型） | 伤亡、费用、时间累积；太高要求停火。 | §18.2-4 | 11 |
+| 动员等级 | `MobilizationLevel` | 枚举：`None, Partial, Full`。**国家级**：存于 11 `Country.mobilization`（危机中无战争也可动员）。 | §18.4 🟡 | 11 |
 | 关系值 / 关系状态 | `Relation` / `RelationFlags` | 两国关系值；`[Flags]`：`Alliance, ArmsEmbargo, Sanctions, Aid`。 | §18.5 | 11 |
 | 同盟等级 | `AllianceTier` | 枚举：`MutualDefense, StrategicPartner, Friendly`。 | §18.13 🟡 | 11 |
-| 威慑值 | `Deterrence` | 打赢上升、打输下降。 | §18.5 | 11 |
-| 核风险值 | `NuclearRisk` | 每场战争单独累积；超最高门槛后每天按概率爆发核大战（失败）。 | §18.10 🟡 | 11 |
-| 危机事件 | `CrisisEvent` | 随机触发的外交/军事事件和选项。 | §18.2-5 | 11 |
+| 威慑值 | `Deterrence`（实现：11 `Country.deterrence`） | 打赢上升、打输下降。 | §18.5 | 11 |
+| 核风险值 | `NuclearRisk`（实现：11 `War.nuclearRisk`，阶段 1 恒为 0） | 每场战争单独累积；超最高门槛后每天按概率爆发核大战（失败）。 | §18.10 🟡 | 11 |
+| 危机事件 | `CrisisEvent`（实现：11 `CrisisEventDef` 定义 / `EventInstance` 实例；09 通知种类 `NotificationKind.CrisisEvent`） | 随机触发的外交/军事事件和选项。 | §18.2-5 | 11 |
 | 联合演习 | `JointExercise` | 与友好国家用同一套模拟对抗演习。 | §18.9 🟡 | 11 |
 | 战争 | `War` | 一组交战国家之间的战争状态；核风险、疲劳按战争计。 | §18 | 11 |
 
@@ -538,6 +538,57 @@
 | 行军道路档 | `MarchRoadClass` | `None, Ordinary, Trunk, Motorway`：`LinkCapacityClass` 到 09 `RoadFactor` 键的映射结果 | 10 §11 | 10（映射）/ 09（使用） |
 | 地图数据版本 | `dataVersion` | 流水线输出内容的版本号；写入每个地图文件头与条带输入 | 10 §11 | 10 |
 
+#### 1.12.11 来自 11（战略层）
+
+| 中文 | 英文标识 | 定义 | 出处 | 归属 |
+|---|---|---|---|---|
+| 预算线 | `BudgetLine` | 年度预算的分配类别（人员、O&M、采购、训练、基建、战备储备、游说） | 11 §11 | 11 |
+| 固定义务 | `ObligationKind` | 年初先扣除的债务偿还、合同付款 | 11 §11 | 11 |
+| 预算分配 | `BudgetAllocation` | 玩家设定的 O&M 资金率、训练强度、可支配资金比例 | 11 §11 | 11 |
+| 训练强度 | `TrainingIntensity` | `Minimal/Low/Normal/High` | 11 §11 | 11 |
+| 信贷额度 | `CreditLine` | 剧本给出的外国军贷 | 11 §11 | 11 |
+| 采购合同 | `ProcurementContract` | 一次采购（进口/国内/二手/升级）的全过程状态 | 11 §11 | 11 |
+| 获取方式 | `AcquisitionKind` | `NewImport/Domestic/SecondHand/Upgrade` | 11 §11 | 11 |
+| 采购属性 | `ProcurementProfile` | `EquipmentModel` 的采购子对象（YAML 键 `procurement`） | 11 §11 | 11 |
+| 批准分项 | `ApprovalBreakdown` | 批准概率 logit 的各项 | 11 §11 | 11 |
+| 交付批次 | `DeliveryLot` | 合同中一次到货 | 11 §11 | 11 |
+| 二手批次 | `MarketLot` | 二手市场上的一批装备 | 11 §11 | 11 |
+| 状态等级 / 状态值 | `ConditionGrade` / `EquipmentConditionState.condition` | 二手装备新旧程度 | 11 §11 | 11（组件 on 01 `EquipmentItem`） |
+| 升级路径 / 升级项目 | `UpgradePath` / `UpgradeProject` | 型号 A → A′ 的改装 | 11 §11 | 11 |
+| 项目 | `Project` | 扩产、重启、基建、升级的通用进度对象 | 11 §11 | 11 |
+| 出口政策 | `ExportPolicy` | 卖方对各买方的意愿与敏感度上限 | 11 §11 | 11 |
+| 外部行为体政策 | `ExternalActorPolicy` | 外部大国的倾向、介入阶梯、红线、调停模板 | 11 §11 | 11 |
+| 介入阶梯 | `InterventionRung` | 声明→供货→情报→调停→维和→直接介入 | 11 §11 | 11 |
+| 红线 | `RedLine` | 外部大国的触发区域与后果 | 11 §11 | 11 |
+| 停火提议 / 停火模板 | `CeasefireOffer` / `CeasefireTemplate`（数据在 14） | 停火的提出与条款 | 11 §11 | 11（提议）/ 14（模板数据） |
+| 维和区 | `PeacekeepingZone` | 停火后双方不得进入/打击的地块集合 | 11 §11 | 11 |
+| 法理归属表 | `TileClaimTable` | 每个地块的 de jure 所有国（区别于 09 的 `TileControl`） | 11 §11 | 11 |
+| 战争方状态 | `WarSideState` | 某国在某场战争中的动员、疲劳、地块统计 | 11 §11 | 11 |
+| 疲劳分项 | `FatigueBreakdown` | 时间、伤亡、领土、费用、战果五项 | 11 §11 | 11 |
+| 方案评估 | `PlanAssessment` | 代理模型给出的成功率 ± 区间、伤亡、天数 | 11 §11 | 11 |
+| 危机事件定义 / 实例 | `CrisisEventDef` / `EventInstance` | 数据驱动事件 | 11 §11 | 11 |
+| 条件 / 效果 | `Condition` / `Effect` | 事件的触发条件与效果 | 11 §11 | 11 |
+| 国防评估 | `DefenseReview` | 年度沙盒指标报告 | 11 §11 | 11 |
+| 历史模式 | `HistoricalMode` | `Historical/Plausible/Free` | 11 §11 | 11 |
+| 战略设置 | `StrategicSettings` | 历史模式、最高决策者沙盒开关、世界种子 | 11 §11 | 11 |
+| 薪酬类别 | `PayCategory` | 人员费计算类别 | 11 §11 | 11 |
+| 边境行动 | `BorderActionType` | `Patrol/Exercise` | 11 §11 | 11 |
+| 战略行动接口 | `IStrategicActions` | 玩家与 AI 共用的战略层命令接口 | 11 §11 | 11 |
+| 情报共享（外部行为体） | 复用 05 `SatelliteAsset.sharesWith` | 外部行为体向受援国共享卫星情报（不新增类型） | 11 §11 | 05（字段）/ 11（写入） |
+| 战略层状态 | `StrategicState` | 战略层全部运行时状态的容器（存档 `Countries`/`Strategic` 段） | 11 §11 | 11 |
+| 地块集合引用 | `TileSetRef` / `TileSetKind` | 指向 de jure 领土、14 区域或运行时集合的引用，由 14 展开为 H3 列表 | 11 §11 | 11 |
+| 红线步骤 / 红线状态 | `RedLineStep` / `RedLineState` | 红线按小时递进的效果序列；每条红线 × 违反方的计时与进度 | 11 §11 | 11 |
+| 市场池条目 | `MarketPoolEntry` | 剧本给出的二手批次生成规则（卖方、型号、年份、概率、数量、状态权重） | 11 §11 | 11 |
+| 历史指令 | `AiDirective` | Historical 模式下事件写给 AI 国家的到期指令（12 读取） | 11 §11 | 11 |
+| 动员选中营 | `MobilizedBattalion` | 本次动员选中营的各专业到位终值、选中时刻、到位天数 | 11 §11 | 11 |
+| 战略查询接口 | `IStrategicQuery` | 供其他系统同步调用的查询与扣款接口（单价、训练强度、动员目标、软件衰减、战争状态、命令封锁） | 11 §11 | 11 |
+| 命令封锁原因 | `OrderBlockReason` | 09 命令校验时 11 返回的封锁原因：和平跨境、停火、维和区、使用限制 | 11 §11 | 11 |
+| 采购报价 | `ProcurementQuote` | `Quote` 的结果：单价、前期投入、批准概率与分项、交付与付款表 | 11 §11 | 11 |
+| 基建项目类型 | `InfraProjectKind` | 新建仓库、节点加固、机场掩体（效果由 06 定义） | 11 §11 | 11 |
+| 软件衰减系数 | `SoftwareDegradeFactor` | 软件保障被切断后进口传感器效能的乘数（05/08 读取） | 11 §11 | 11 |
+| 预算扣款 | `TryCharge` | 其他系统从指定预算线一次性扣款；余额不足返回 false | 11 §11 | 11 |
+| 事件范围 | `EventScope` | `Global/Dyad/Country` | 11 §11 | 11 |
+
 #### 1.12.15 来自 15（存档与确定性）
 
 | 中文 | 英文标识 | 定义 | 出处 | 归属 |
@@ -791,7 +842,7 @@ erDiagram
 | `GameClock`, `Order`, `TileControl` | 时钟、命令、地块控制权 | 09 | 全部 | 0（时钟）/ 1 |
 | `SimBudgetScheduler` | 精度档调度 | 09 | 03, 04 | 1 |
 | `Tile`, `Edge`, `Region`, `TerrainComposition`, 路网表 | 地图静态数据 | 10 | 全部 | 1（阶段 0 用标准地形） |
-| `DefenseBudget`, `ProductionLine`, `Factory`(产能), `ProcurementMode`, 政治与外交实体 | 战略层 | 11 | 12, 13 | 1（简化） |
+| `DefenseBudget`, `ProductionLine`, `Factory`(产能), `ProcurementMode`, 政治与外交实体；`StrategicState`（全部战略状态容器）、`AiDirective`（历史指令）、`RedLineState`（红线计时）、`EquipmentConditionState`（组件 on 01 `EquipmentItem`） | 战略层 | 11 | 01, 07, 12, 13 | 1（简化） |
 | `FormationAi`, `StrategicAi`, `ProxyModel` | AI | 12 | 09 | 1 |
 | 视图模型、`AutoPauseFilter`、AAR 呈现 | 界面 | 13 | — | 0/1 |
 | 纳卡剧本数据（国家、开局部队、地块范围、事件） | 剧本 | 14 | — | 1 |
@@ -845,7 +896,7 @@ erDiagram
 |---|---|---|---|---|
 | 10 | `AiDecision` | 战略 AI：每 60 分钟；编组 AI：每 `StripStepMinutes`（🟡）；和平时期国家 AI：每 1440 分钟 | AI 产生命令（和玩家命令走同一条命令通道、同样有延迟） | 12 |
 | 20 | `OrderIntake` | 每刻 | 接收本刻所有新命令（玩家 + AI），算命令延迟；把 `effectiveTime ≤ 本刻起点` 的命令转为生效 | 09 |
-| 30 | `Calendar` | 年：1 月 1 日 00:00；日：每 1440 分钟；时：每 60 分钟（同一刻内按 年 → 日 → 时 的顺序） | 年度预算；日：远方战争代理结算、核风险日判定、保质期、库存目标、关键节点分析、地图历史版本（dated override）解析（10 §4.10，开局时也执行一次）；时：生产、指挥状态与兵力需求表重算、训练、补充分配、精度窗口（`Scheduler.OpenWindow`）与定期报告检查、事件、紧张度、信任度、战争疲劳；时步内顺序 11 → 01 → 02 → 07 → 12（🟡） | 11（主）、01（时：指挥状态、需求表）、02（训练）、06（日：保质期、库存目标、关键节点分析）、07（补充）、09（时：精度窗口）、12（代理结算）、10（地图历史版本） |
+| 30 | `Calendar` | 年：1 月 1 日 00:00；日：每 1440 分钟；时：每 60 分钟（同一刻内按 年 → 日 → 时 的顺序） | 年：11 年度预算与固定义务、合同兵比例年步、《国防评估》年报（11 §4.0 YearlyStep）；日：11 二手批次（仅季度首日）、生产线萎缩、升级送修、腐败曝光、威慑回落、供应中断（每 7 天）与软件中断计数（11 §4.0 DailyStep）、远方战争代理结算、核风险日判定、保质期、库存目标、关键节点分析、地图历史版本（dated override）解析（10 §4.10，开局时也执行一次）；时：生产、指挥状态与兵力需求表重算、训练、补充分配、精度窗口（`Scheduler.OpenWindow`）与定期报告检查、事件、紧张度、信任度、战争疲劳；时步内顺序 11 → 01 → 02 → 07 → 12（🟡） | 11（主；年/日/时，先应用本刻登记的 `IStrategicActions`）、01（时：指挥状态、需求表）、02（训练）、06（日：保质期、库存目标、关键节点分析）、07（补充）、09（时：精度窗口）、12（代理结算）、10（地图历史版本） |
 | 40 | `Logistics` | 每 60 分钟 | 地块层网络流到旅保障区；节点库存更新；运力冲突（空军弹药调拨与陆军补给争运力） | 06 |
 | 50 | `Exposure` | 每 `ExposureStepMinutes` | 各国对各目标暴露度增长/衰减；特征值重算 | 05 |
 | 60 | `LandMovement` | 每 `LandMoveStepMinutes` | 地块层营的行军、过边进度、地块归属切换、地块控制权更新 | 09 |
