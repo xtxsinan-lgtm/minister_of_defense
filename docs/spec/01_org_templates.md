@@ -464,6 +464,81 @@ public sealed class CheckResult {
 | M8 | 新目录 `data/loadouts/` | 装填模板（阶段 3） | 新增 |
 | M9 | `data/schema/categories.yaml` | 新增弹药类别组 `group: ground_munition`（DC-206 ①）：`small_arms_ammo`、`autocannon_round`、`tank_gun_round`、`grenade_round`、`rocket_grenade`、`atgm_missile`、`mortar_bomb`、`artillery_shell`、`mrl_rocket`、`tbm_missile`；弹药型号放 `data/equipment/ground_munitions.yaml`。`group` 为 `air_munition` / `ground_munition` 的类别统称“弹药类别” | 否 |
 
+### 3.10 编辑、传导、分配与写接口的数据类型（13 编辑器与面板使用）
+
+```csharp
+// ---- 模板编辑（§4.5）----
+public enum TemplateEditKind : byte {
+    None = 0,
+    SetPersonnel = 1,       // 班：specialty 的人数 = count（0 = 删除该专业）
+    SetSlot = 2,            // 班：category 的槽位数 = count（0 = 删除）；unassigned = true 时改 slots_unassigned
+    SetChild = 3,           // 非班：子模板 child 的数量 = count（0 = 删除；原来没有 → 追加到 children 末尾）
+    MoveChild = 4,          // 非班：把 child 移到 children 的第 index 位（0 起；超界夹到末尾）
+    SetDefaultBinding = 5,  // 营及以上：category → model（model = 0 清除）
+    SetName = 6,            // text
+    SetBranch = 7,          // branch
+    SetEchelonLabel = 8,    // 旅及以上：text（null = 清除）
+    SetWeaponEchelon = 9,   // 班：weaponEchelon
+    SetRole = 10            // role
+}
+public sealed class TemplateEdit {             // 一条原子编辑；13 的草稿与 15 的 OrgEdit 输入日志都存这个结构
+    public TemplateHandle template;            // 被编辑的模板（草稿中 = 草稿覆盖层里的同一句柄）
+    public TemplateEditKind kind;
+    public SpecialtyHandle specialty;          // SetPersonnel
+    public CategoryHandle category;            // SetSlot / SetDefaultBinding
+    public bool unassigned;                    // SetSlot
+    public TemplateHandle child;               // SetChild / MoveChild
+    public int count;                          // SetPersonnel / SetSlot / SetChild（≥ 0）
+    public int index;                          // MoveChild
+    public ModelHandle model;                  // SetDefaultBinding
+    public string text;                        // SetName / SetEchelonLabel
+    public Branch branch; public OrgLevel weaponEchelon; public TemplateRole role;
+}
+public enum RetargetScope : int { OnlyThis = 1, AllCountryReferences = 2 }   // §4.5.1 弹窗两个选项（13 引用本定义）
+public enum CheckScope : byte { Self = 1, Ancestors = 2 }                     // RunChecks：只查本模板 / 本模板 + 全部祖先
+
+// 模板表的只读视图：正式模板表，或 13 的草稿沙盒（覆盖层：草稿里改过的模板 + 其余读正式表）。
+// BuildImpact / RunChecks / ComputeTotals 都只通过它读模板，所以可以在草稿上调用（不改任何正式状态）。
+public interface ITemplateSource {
+    Template Get(TemplateHandle h);                              // 不存在 → null
+    IReadOnlyList<TemplateHandle> ParentsOf(TemplateHandle h);   // children 中直接引用 h 的模板，按句柄升序
+}
+
+// ---- 传导报告（§4.5.3）----
+public readonly record struct AncestorDelta(TemplateHandle template, int dPersonnel,
+    SortedDictionary<SpecialtyHandle, int> dPersonnelBySpecialty, SortedDictionary<CategoryHandle, int> dSlots);   // 只含 ≠ 0 的项
+public readonly record struct PersonnelDelta(SpecialtyHandle specialty, int dPersonnel, int toTrain);           // §4.5.3 第 2、3 项
+public readonly record struct EquipmentDelta(CategoryHandle category, ModelHandle model, int dEquip, int toBuy, double costMusd); // 第 2、4 项
+public sealed class ImpactReport {
+    public TemplateHandle template;
+    public List<AncestorDelta> ancestors;       // 第 1 项：有变化的祖先模板，按句柄升序
+    public int battalionsAffected;              // 第 2 项：本国使用该模板（子树含它）的营数
+    public List<PersonnelDelta> personnel;      // 按 SpecialtyHandle 升序，只列 dPersonnel ≠ 0
+    public List<EquipmentDelta> equipment;      // 按 (CategoryHandle, ModelHandle) 升序，只列 dEquip ≠ 0
+    public List<CheckResult> checksAdded;       // 第 5 项：编辑后新出现的检查项
+    public List<CheckResult> checksRemoved;     //        编辑后消失的检查项（两表都按 severity 降序 → code → template 句柄升序）
+}
+// 取整：§4.5.3 的 ΔPersonnel 是小数（乘了在编比例），按 Math.Round(x, MidpointRounding.AwayFromZero) 取整后再算 toTrain。
+// 两个 CheckResult “相同” = code、template、instance 都相同（numbers 不比较）。
+
+// ---- 装备分配（§4.8）----
+public readonly record struct AllocationLine(OrgUnitId battalion, CategoryHandle category, ModelHandle model,
+    int count, bool isSubstitute, bool unassignedSlot, int round);     // 一行 = 某轮发给某营某型号 count 件；round = 1..4
+public readonly record struct BattalionFillRow(OrgUnitId battalion, CategoryHandle category,
+    int target, int exactAfter, int substAfter, double fillExact01, double fillAny01);
+    // fillExact01 = exactAfter / target；fillAny01 = (exactAfter + substAfter) / target；target = 0 → 两者都 = 1
+public sealed class AllocationResult {
+    public CountryId country; public AllocationPolicy policy;
+    public bool isPreview;                      // PreviewAllocation 的结果 = true（没有改任何状态）
+    public List<AllocationLine> lines;          // 按 (battalion, category, model, round) 升序
+    public List<BattalionFillRow> fill;         // scope 内每营每个“目标 > 0”的类别（常规槽与 unassigned 合并计），按 (battalion, category) 升序
+    public int issuedTotal;                     // 发出件数 = Σ lines.count
+    public int returnedTotal;                   // 被正型号替换下来、退回库存的替代品件数
+    public SortedDictionary<ModelHandle, int> depotAfter;   // 分配后本国库存（只列 > 0）
+}
+```
+运行中新建的模板（写时复制、自动生成）句柄 = 当前最大模板句柄 + 1（运行中不重排）；读档时玩家模板与预设模板一起按 id 排序编号（00 §2.2），存档里的旧句柄经 15 `StaticIdTables` 重映射。
+
 ---
 
 ## 4. 算法与公式
@@ -657,15 +732,16 @@ FormationId InstantiateFormation(TemplateHandle th, CountryId country, Formation
 
 #### 4.5.2 一次编辑的处理顺序
 ```csharp
-void ApplyTemplateEdit(TemplateEdit e) {
-    var before = SnapshotTotalsForAncestors(e.template);        // 祖先模板 + 本国实例的合计
-    var beforeChecks = RunChecks(e.template, scope: Ancestors);
-    ApplyChange(e); templates[e.template].version++;
-    InvalidateCache(e.template);                                // 本模板 + 祖先
-    var after = SnapshotTotalsForAncestors(e.template);
-    var afterChecks = RunChecks(e.template, scope: Ancestors);
-    ShowImpactReport(Diff(before, after), Diff(beforeChecks, afterChecks));   // §4.5.3
-    // 实例不立即改；玩家点“确认”后才对实例执行 §4.5.4（编辑器里可以反复试）
+// 正式模板表上的一次编辑（由 CommitTemplateEdits 调用，§4.18）。编辑器里的反复试改在 13 的草稿覆盖层上进行：
+// 13 用 ApplyEditTo 改草稿，用 BuildImpact(草稿, e, country) / RunChecks(草稿, t, Ancestors) 刷新右栏，不调用本函数。
+ImpactReport ApplyTemplateEdit(TemplateEdit e, CountryId country) {
+    var report = BuildImpact(liveTemplates, e, country);        // §4.5.3（编辑前后对比）
+    var t2 = ApplyEditTo(templates[e.template], e, liveTemplates);
+    if (t2 == null) return null;                                // 非法编辑：不改
+    t2.version = templates[e.template].version + 1; templates[e.template] = t2;
+    InvalidateCache(e.template);                                // 本模板 + 祖先的 TemplateTotals
+    return report;
+    // 实例不在这里改；CommitTemplateEdits 第 4 步对实例执行 §4.5.4
 }
 ```
 
@@ -686,7 +762,7 @@ void ApplyTemplateEdit(TemplateEdit e) {
 #### 4.5.4 实例对齐（模板变更落到运行时）`RetargetBattalion(bn)`
 
 ```csharp
-void RetargetBattalion(OrgUnit bn, SimTime now) {
+void RetargetBattalion(OrgUnitId bnId, SimTime now) {   // bn = units[bnId]
     var oldNodes = CollectSubtree(bn);                 // pathKey → 节点
     var newShape = BuildShape(templates[bn.template]); // 按 §4.4.1 的规则只算出 pathKey 和模板，不建实体
     // 1. 匹配：pathKey 相同且模板相同 → 保留原节点（人员、装备不动）
@@ -1246,6 +1322,36 @@ public sealed class LoadoutTemplate {
 | 2020 年前后新增的无人机/巡飞弹单位 | 用新增类别 `loitering_launcher`（发射单元）、`uav_*` 的班模板（M2）；巡飞弹本身（`loitering_munition`）是弹药，按枚计入 06 库存（DC-205 ①）；大型无人机（TB2 等）是空军 `Flight`（08），不进陆军模板 |
 | 自动生成默认风格 | 亚、阿均用 `sov_legacy`；阿塞拜疆 2020 的土耳其式突击部队可用 `aze` 微调风格（阶段 1 可选） |
 
+### 4.18 运行时写接口（13 → 15 输入日志 → 本文件；09 命令生效）
+
+全部在 `OrderIntake` 阶段执行（13 的命令经 15 记为 `OrgEdit` / `UnitAdmin` 输入，00 §5.2），**立即生效、无命令延迟**（09 的 `UnitConfig` 命令除外，见最后一行）。参数非法 → 返回 `false`（void 函数则忽略该元素），不做任何修改，写一条 Warning 日志。每次成功修改都把全军需求表标脏（§4.7）。
+
+| 函数 | 输入通道 | 前置条件 | 效果 |
+|---|---|---|---|
+| `bool SetModelOverride(OrgUnitId bn, CategoryHandle c, ModelHandle m)` | `OrgEdit` | `bn` 是营；`m = 0` 或 `m.category == c` | `m = 0` → 删除 `bn.modelOverrides[c]`；否则写入。不换装备（§4.6 末条） |
+| `bool SetFormationDefaultBinding(FormationId f, CategoryHandle c, ModelHandle m)` | `OrgEdit` | `f` 是 `Organic`；`m = 0` 或 `m.category == c` | 写/删 `f.defaultBindings[c]` |
+| `void SetPriorityList(CountryId country, IReadOnlyList<NodeRef> order)` | `UnitAdmin` | 元素只能是本国 `Organic` 编组或营（`NodeKind.Formation` / `Unit` 且 level = Battalion） | 过滤非法元素与重复项（保留第一次出现）后整表替换 `CountryOrgSettings.priorityList` |
+| `bool SetAllowSubstitution(FormationId f, bool allow)` | `UnitAdmin` | `f` 是 `Organic` | `f.allowSubstitution = allow` |
+| `bool SetReadinessTier(OrgUnitId bn, ReadinessTier t, SimTime now)` | `UnitAdmin`；11 动员也调用 | `bn` 是营；`t ≠ bn.tier` | `bn.tier = t`；按 §4.9 封存/启封；发 `OnStructureChanged(bn)`（02 据此重算在编目标） |
+| `void SetAllocationPolicy(CountryId country, AllocationPolicy p)` | 09 `UnitConfig{field = AllocationPolicy, recipient = Country}` 生效时调用（命令延迟由 09 决定） | — | `CountryOrgSettings.policy = p` |
+| `TemplateHandle CommitTemplateEdits(CountryId country, TemplateHandle original, IReadOnlyList<TemplateEdit> edits, RetargetScope scope, NodeRef origin, SimTime now)` | `OrgEdit` | 每条编辑都能被 `ApplyEditTo` 接受（按顺序在临时副本上试，任一失败 → 整体拒绝，返回 0） | 见下 |
+
+`CommitTemplateEdits` 处理顺序：
+1. 若 `original.isPreset`，或 `scope == OnlyThis`：按 §4.5.1 写时复制得到 `T'`（id `p_<iso3>_NNNN`，`variant_of = original`）；否则 `T' = original`（就地修改玩家模板）。
+2. 对 `T'` 依次 `ApplyTemplateEdit`（§4.5.2）。
+3. 改指向：`AllCountryReferences` → 本国所有引用 `original` 的玩家模板与实例（营 `template`、编组 `template`）改指向 `T'`；
+   `OnlyThis` → 只改 `origin`（13 打开编辑器时所在的营或编组实例；`default` = 不改任何引用，新模板留在模板库里）。若 `origin` 的模板不是 `original` 而是其祖先，沿 `origin` 模板到 `original` 的所有路径逐级写时复制，每级只替换指向下一级的引用（🟡 O-22）。
+4. 对所有模板子树发生变化的本国营调用 `RetargetBattalion(bn, now)`（§4.5.4；在战斗中的营排队）。编组模板变更按 §4.5.4 末条处理。
+5. 返回 `T'`。
+
+查询（纯函数，不改状态；13 经 `Query` 调用）：
+- `Template ApplyEditTo(Template t, TemplateEdit e, ITemplateSource src)`：返回编辑后的**新副本**；违反 §3.4.1 字段规则、产生环（E01）或层级违规（E02）→ 返回 `null`。13 的草稿覆盖层用它改草稿；`ApplyTemplateEdit` 也用它。
+- `ImpactReport BuildImpact(ITemplateSource src, TemplateEdit e, CountryId country)`：在 `src` 上比较“编辑前 / 编辑后（临时覆盖）”，按 §4.5.3 生成报告；实例（营、在编比例、库存）读当前正式状态。
+- `CheckResult[] RunChecks(ITemplateSource src, TemplateHandle t, CheckScope scope)`：§4.14 的模板检查。
+- `CheckResult[] RunInstanceChecks(CountryId country, NodeRef scope)`：实例检查 `W06_unbound`、`W41_crew_short`（按营内实际人数）、`W90_diversity`、`W91_substitute`；`scope = default` 表示全国。结果按 `Calendar` 每 60 分钟缓存，期间若有结构/绑定/分配变化则标脏，下次调用时重算。
+- `AllocationResult PreviewAllocation(CountryId country, IEnumerable<OrgUnitId> scope)`：用与 `AllocateEquipment` **完全相同**的算法（§4.8.1–4.8.4）在计数副本上运行，只算件数、不选具体 `EquipmentItem`、不改状态，`isPreview = true`。测试要求：同一状态下 `PreviewAllocation(...).lines` 与随后 `AllocateEquipment(...).lines` 逐行相同。
+- `TemplateTotals TargetTotals(OrgUnitId bn)`：有模板 → `ComputeTotals(bn.template)`；合成直属队营 → 其子节点模板合计之和（§4.7）。
+
 ---
 
 ## 5. 常数表
@@ -1307,7 +1413,13 @@ public sealed class LoadoutTemplate {
 | `SkillHolderKey GetMaintenanceOrg(OrgUnitId bn)`（`SkillHolderKey` 由 02 定义；= 02 的练度归属规则） | 02、07 | 按需 |
 | `double RepairThroughputMult(SkillHolderKey, string group)` | 07 | 每 60 分钟 |
 | `int PartsTarget(ModelHandle)` | 06、11 | 每天 |
-| `CheckResult[] RunChecks(TemplateHandle, scope)`、`ImpactReport BuildImpact(edit)` | 13（编辑器） | 编辑时 |
+| `CheckResult[] RunChecks(ITemplateSource, TemplateHandle, CheckScope)`、`ImpactReport BuildImpact(ITemplateSource, TemplateEdit, CountryId)`、`Template ApplyEditTo(Template, TemplateEdit, ITemplateSource)`（§4.18；可在 13 草稿覆盖层上调用） | 13（编辑器） | 编辑时 |
+| `TemplateHandle CommitTemplateEdits(CountryId, TemplateHandle original, IReadOnlyList<TemplateEdit>, RetargetScope, NodeRef origin, SimTime now)`；其组成部分 `ImpactReport ApplyTemplateEdit(TemplateEdit, CountryId)`（§4.5.2）、`void RetargetBattalion(OrgUnitId, SimTime)`（§4.5.4） | 13（`OrgEdit`） | `OrderIntake` |
+| `TemplateTotals TargetTotals(OrgUnitId bn)` | 13、02、06 | 按需 |
+| 写接口 `bool SetModelOverride(OrgUnitId, CategoryHandle, ModelHandle)`、`bool SetFormationDefaultBinding(FormationId, CategoryHandle, ModelHandle)`（`OrgEdit`）；`void SetPriorityList(CountryId, IReadOnlyList<NodeRef>)`、`bool SetAllowSubstitution(FormationId, bool)`、`bool SetReadinessTier(OrgUnitId, ReadinessTier, SimTime)`（`UnitAdmin`；后者 11 动员也调用）（§4.18） | 13、11 | `OrderIntake` |
+| `void SetAllocationPolicy(CountryId, AllocationPolicy)` | 09（`UnitConfig` 字段 `AllocationPolicy` 生效，recipient = Country） | 命令生效时 |
+| `AllocationResult PreviewAllocation(CountryId, IEnumerable<OrgUnitId> scope)`（纯函数，与 `AllocateEquipment` 同算法） | 13（S07 分配预览） | 按需 |
+| `CheckResult[] RunInstanceChecks(CountryId, NodeRef scope)`（W06/W41/W90/W91，60 分钟缓存） | 13（S03/S07、参谋建议） | 按需 |
 | `OrgUnitId InstantiateBattalion(TemplateHandle, CountryId, FormationId organic, ReadinessTier tier)`（§4.4.1）、`FormationId InstantiateFormation(TemplateHandle, CountryId, FormationId organicParent)`（§4.4.2） | 14（开局）、12（改革新建营）、13（编辑器新建） | 初始化 / 命令生效时 |
 | `FormationId CreateOrganicFormation(OrgLevel echelon, OrgUnitId hqBn, IEnumerable<NodeRef> members)`（§4.12；失败返回 0）、`CreateAdHoc(IEnumerable<NodeRef>)`、`Attach`、`Detach`、`Reassign` | 14（开局）、13（编制编辑）、09（命令生效） | 初始化 / 命令生效时 |
 | `EquipmentModel.massKg`、核心字段 | 06、03 | 加载后只读 |
@@ -1475,6 +1587,7 @@ public sealed class LoadoutTemplate {
 | O-19 | 检查阈值 | 15 kg / 30 kg（总纲）；人均负重 33 kg；射程越格 60 km | 来自总纲与常见条令量级 | 由试验场校准后修改 |
 | O-20 | 建制编组必须有指挥部营；指挥部营不能单独配属 | 是 | 总纲“建制编组有指挥部单位” | 允许无指挥部的建制编组（指挥能力取最小值） |
 | O-21 | 高于 corps 的单位（战区陆军 `pla_theater_army`）怎么表示 | 🟡 建议：`OrgLevel` 不新增层级；用可选字段 `subordinate_formations` 只记录隶属关系，不实例化、不计入合计（§3.4.1） | 阶段 1–2 不需要战区级实例化；新增层级会牵动指挥负荷（§4.10）、13 显示、15 存档枚举；O-02 禁止 corps 引用 corps | `OrgLevel` 追加第 8 级 `ArmyGroup`，战区陆军按普通编组实例化 |
+| O-22 | “只改这一处”且编辑的是 origin 实例模板的下级模板 | 🟡 建议：沿 origin 模板到被编辑模板的所有路径逐级写时复制，每级只替换指向下一级的引用（§4.18） | 玩家在某个营的界面改一个班，期望只影响这个营；逐级复制是唯一不波及其他营的做法 | 只复制被编辑的模板、不改任何引用（新模板留在库里，由玩家自己指派） |
 
 ---
 
