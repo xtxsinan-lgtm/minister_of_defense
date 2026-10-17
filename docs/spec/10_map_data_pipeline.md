@@ -748,7 +748,7 @@ overrides:
    法理 AZE 的格：controller = (landA > landB) ? "ARM" : "AZE"    // 多数决（🟡 M-09；G-13：阿尔察赫部队归亚美尼亚一方）
    法理 ARM 的格：controller = "ARM"（阿塞拜疆控制的亚美尼亚小飞地、亚方控制的阿方小飞地均远小于一格，忽略）
    minority = min(landA, landB) / (landA + landB)；≥ SplitMinorityFraction → 标 IsSplitByControlLine
-快照：nk_loc_1994（1994-05-12 停火线；2016 年四月冲突的变化 < 10 km²，远小于一格，所以 nk_2010 与 nk_2020_09 共用）
+快照：nk_loc_1994（1994-05-12 停火线；2016 年四月冲突的变化 < 10 km²，远小于一格，所以 nk_2010 与 nk_2020 共用）
       nk_loc_2020_11（2020-11-10 停火后，供验证）
 ```
 
