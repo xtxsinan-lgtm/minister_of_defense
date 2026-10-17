@@ -1,0 +1,75 @@
+# 地面弹药型号（DC-206 ①：类别组 ground_munition，见 data/schema/categories.yaml）
+# 规格：03 §3.1 MunitionProfile（YAML 键 munition）、03 §5.7 参考弹药表、06 §3.1 Ammunition 库存（按发/枚计）、00 §4.3（弹药也是 EquipmentModel）。
+# 弹药不进班模板槽位；武器型号通过 munitions / weapon.munitions 引用这里的 id（03 WeaponProfile.munitions、defaultLoad）。
+#
+# 本文件只填“型号身份”：类别、口径、MunitionKind（snake_case，00 §5 枚举映射）与公开来源可查的弹体参数。
+#   03 §5.7 的效能矩阵（effect / penetration_mm / alloc_value 等）全部是 estimated，由 03/14 的数据任务填入 munition 键，不在这里臆造。
+#   round_weight_kg（06 运输重量）同样待数据任务补；缺省时 06 按类别默认值。
+# 来源键同 nk_models.yaml 文件头（wp_<页面> = 英文维基百科同名条目，访问 2026-10）。
+# confidence：未写 = stated（来源直接给出）。
+
+models:
+  # ======================= 枪弹 =======================
+  - {id: ammo_545x39, name: 5.45×39mm 枪弹, category: small_arms_ammo, family: cal_545x39, origin: RUS, specs: {caliber_mm: 5.45},
+     munition: {kind: bullet, caliber_mm: 5.45}, src: wp_5.45×39mm, notes: AK-74 / RPK-74 用弹（03 §5.7）。}
+  - {id: ammo_762x54r, name: 7.62×54mmR 枪弹, category: small_arms_ammo, family: cal_762x54r, origin: RUS, specs: {caliber_mm: 7.62},
+     munition: {kind: bullet, caliber_mm: 7.62}, src: wp_7.62×54mmR, notes: PKM / SVD 用弹。}
+
+  # ======================= 机关炮弹 =======================
+  - {id: 3ubr6_30mm_ap, name: 3UBR6 30mm 穿甲弹, category: autocannon_round, family: cal_30x165, origin: RUS, specs: {caliber_mm: 30},
+     munition: {kind: cannon_ap, caliber_mm: 30}, src: wp_2A42, notes: BMP-2 2A42 用弹。}
+  - {id: 3uor6_30mm_he, name: 3UOR6 30mm 杀爆弹, category: autocannon_round, family: cal_30x165, origin: RUS, specs: {caliber_mm: 30},
+     munition: {kind: cannon_he, caliber_mm: 30}, src: wp_2A42}
+  - {id: zu23_23mm_api, name: 23×152mm 穿甲燃烧弹（BZT）, category: autocannon_round, family: cal_23x152, origin: RUS, specs: {caliber_mm: 23},
+     munition: {kind: cannon_ap, caliber_mm: 23}, src: wp_ZU-23-2, notes: ZU-23-2 / ZSU-23-4 用弹。}
+
+  # ======================= 坦克炮弹 =======================
+  - {id: 3bm42_125mm_apfsds, name: 3BM42 Mango 125mm 尾翼稳定脱壳穿甲弹, category: tank_gun_round, family: cal_125_sov, origin: RUS, specs: {caliber_mm: 125},
+     munition: {kind: apfsds, caliber_mm: 125}, src: wp_125_mm_smoothbore_ammunition}
+  - {id: 3of26_125mm_he, name: 3OF26 125mm 杀爆弹, category: tank_gun_round, family: cal_125_sov, origin: RUS, specs: {caliber_mm: 125},
+     munition: {kind: cannon_he, caliber_mm: 125}, src: wp_125_mm_smoothbore_ammunition}
+
+  # ======================= 榴弹 / 火箭筒弹 =======================
+  - {id: vog17_30mm, name: VOG-17M 30mm 榴弹, category: grenade_round, family: cal_30x29, origin: RUS, specs: {caliber_mm: 30},
+     munition: {kind: grenade, caliber_mm: 30}, src: wp_AGS-17, notes: AGS-17 用弹。}
+  - {id: pg7vl_93mm_heat, name: PG-7VL 93mm 破甲火箭弹, category: rocket_grenade, family: pg7, origin: RUS, specs: {caliber_mm: 93},
+     munition: {kind: heat, caliber_mm: 93}, src: wp_RPG-7, notes: RPG-7V 用弹。}
+
+  # ======================= 反坦克导弹（弹）=======================
+  - {id: 9m113m_konkurs, name: 9M113M Konkurs-M 反坦克导弹, category: atgm_missile, family: fagot_konkurs, origin: RUS, specs: {caliber_mm: 135, range_km: 4},
+     munition: {kind: atgm_saclos, caliber_mm: 135}, src: wp_9M113_Konkurs, notes: 串联破甲（03 §5.7）；9K113 / BMP-2 / 9P149 等发射。}
+  - {id: 9m133_kornet, name: 9M133 Kornet 反坦克导弹, category: atgm_missile, family: kornet, origin: RUS, specs: {caliber_mm: 152, range_km: 5.5},
+     munition: {kind: atgm_saclos, caliber_mm: 152}, src: wp_9M133_Kornet, notes: 激光驾束、串联破甲。}
+
+  # ======================= 迫击炮弹 =======================
+  - {id: o832_82mm_he, name: O-832DU 82mm 杀爆弹, category: mortar_bomb, family: cal_82_sov, origin: RUS, specs: {caliber_mm: 82},
+     munition: {kind: mortar_he, caliber_mm: 82}, src: wp_2B14_Podnos}
+  - {id: of843b_120mm_he, name: OF-843B 120mm 杀爆弹, category: mortar_bomb, family: cal_120_sov, origin: RUS, specs: {caliber_mm: 120},
+     munition: {kind: mortar_he, caliber_mm: 120}, src: wp_120-PM-43_mortar, notes: 2B11 / M1938 共用。}
+
+  # ======================= 身管火炮炮弹 =======================
+  - {id: of462_122mm_he, name: OF-462 122mm 杀爆榴弹, category: artillery_shell, family: cal_122_sov, origin: RUS, specs: {caliber_mm: 122},
+     munition: {kind: artillery_he, caliber_mm: 122}, src: wp_D-30, notes: D-30 / 2S1 共用。}
+  - {id: m795_155mm_he, name: M795 155mm 榴弹, category: artillery_shell, family: cal_155_nato, origin: USA, specs: {caliber_mm: 155},
+     munition: {kind: artillery_he, caliber_mm: 155}, src: wp_M795_projectile, notes: 00 §5 与 06 §6 的示例 id；北约 155mm 通用弹。}
+
+  # ======================= 火箭炮火箭弹 =======================
+  - {id: 9m22u_122mm_rocket, name: 9M22U 122mm 杀爆火箭弹, category: mrl_rocket, family: cal_122_grad, origin: RUS, specs: {caliber_mm: 122, range_km: 20},
+     munition: {kind: rocket_he, caliber_mm: 122}, src: wp_BM-21_Grad, notes: BM-21 / RM-70 / T-122 通用 122mm 火箭。}
+
+  # ======================= 防空导弹（弹）=======================
+  - {id: 9m39_igla, name: 9M39 Igla 导弹, category: sam_missile, family: igla, origin: RUS, specs: {caliber_mm: 72, range_km: 5.2},
+     munition: {kind: manpads, caliber_mm: 72}, src: wp_9K38_Igla, notes: 便携防空导弹弹体；sam_missile 为 08 第 11 节新增类别（air_munition 组）。}
+
+  # ======================= 战术弹道导弹（弹；tbm_missile，按“枚”计）=======================
+  # 发射车（tbm_launcher）在 nk_models.yaml；发射车的 munitions 引用这里。
+  - {id: r17_scud_b, name: R-17 (8K14) 弹道导弹（Scud-B）, category: tbm_missile, family: scud, origin: RUS, service_year: 1964,
+     specs: {range_km: 300, weight_kg: 5860, cep_m: 450}, munition: {kind: guided_he, warhead_kg: 985}, src: wp_Scud,
+     notes: 亚方 32 枚 / 8 部发射车（wp_arm_eq_2020）。}
+  - {id: 9m79_tochka_u, name: 9M79-1 Tochka-U 弹道导弹, category: tbm_missile, family: tochka, origin: RUS, service_year: 1989,
+     specs: {range_km: 120, weight_kg: 2010, cep_m: 95}, munition: {kind: guided_he, warhead_kg: 482}, src: wp_OTR-21_Tochka}
+  - {id: 9m723_iskander_e, name: 9M723 弹道导弹（Iskander-E 出口型）, category: tbm_missile, family: iskander, origin: RUS, service_year: 2006,
+     specs: {range_km: 280, weight_kg: 3800}, munition: {kind: guided_he, warhead_kg: 480}, src: wp_9K720_Iskander}
+  - {id: lora_missile, name: LORA 弹道导弹, category: tbm_missile, family: lora, origin: ISR, service_year: 2017,
+     specs: {range_km: 400, cep_m: 10}, munition: {kind: guided_he}, confidence: uncertain, src: wp_LORA_(missile),
+     notes: 战斗部质量各来源 440–570kg，不填。}

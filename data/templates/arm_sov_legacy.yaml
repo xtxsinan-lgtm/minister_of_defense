@@ -4,7 +4,8 @@
 # 依据：苏军编制基准 US Army FM 100-2-3 (1991) https://irp.fas.org/doddir/army/fm100-2-3.pdf ；
 #       亚、阿军继承苏式摩步团/旅（01 §4.17）。除注明外 confidence: estimated（后苏联军队普遍缺编、改编，
 #       真实各营满编率由剧本的 ReadinessTier 与库存分配体现，不改模板）。
-# 需要新增类别（loitering_munition、tbm_launcher，01 M2）的模板放在 data/templates_pending/，迁移完成后移入本目录。
+# 依赖 01 M2 新类别（loitering_launcher、tbm_launcher）的模板原在 data/templates_pending/，已并入本文件末尾（审查第 2 部分）。
+# DC-205 ①：巡飞弹班的槽位写发射单元类别 loitering_launcher；巡飞弹本身（loitering_munition）是弹药，按枚计入 06 库存，不占槽位。
 templates:
 - id: arm_mr_bmp_sq
   name: BMP 摩步班（苏式 8 人）
@@ -1081,3 +1082,37 @@ templates:
     howitzer_heavy_towed: d20
   confidence: uncertain
   notes: 纳卡防卫军前沿团（G-13：作为 ARM 一方的编组）。公开资料只有总量（坦克 316–371 等），团内结构为估算：3 个固守步兵营 + 1 机步营 + 坦克营 + 2 个牵引炮兵营。
+
+# ================================================================================================
+# 战术导弹营、巡飞弹/无人机连（原 data/templates_pending/nk_pending_templates.yaml；01 M2 落地后并入）
+# confidence: estimated（公开资料没有此类分队的编制表；结构按“发射单元 + 操作手 + 运输车”最小化估算）。
+# ================================================================================================
+- id: arm_tbm_sq
+  name: 战术弹道导弹发射车组（Scud-B/Iskander-E）
+  level: squad
+  branch: artillery
+  personnel: {squad_leader: 1, rocket_artilleryman: 4, driver: 1}
+  slots: {tbm_launcher: 1, truck_heavy: 1, rifle: 6}
+  confidence: estimated
+  notes: truck_heavy 为导弹运输装填车；导弹（tbm_missile）按枚计入 06 库存。
+- id: arm_tbm_bn
+  name: 战术导弹营
+  level: battalion
+  branch: artillery
+  children: [{template: arm_tbm_sq, count: 4}, {template: arm_arty_bn_hq, count: 1}, {template: arm_bn_support_sq, count: 1}]
+  default_bindings: {tbm_launcher: scud_b, truck_heavy: kamaz_5350}
+  confidence: estimated
+- id: arm_loitering_sq
+  name: 巡飞弹/无人机组（Krunk/HRESH）
+  level: squad
+  branch: fire_support
+  personnel: {squad_leader: 1, uav_operator: 2, driver: 1}
+  slots: {loitering_launcher: 1, uav_tactical: 1, truck_medium: 1, rifle: 4}
+  confidence: estimated
+  notes: 发射单元 loitering_launcher（HRESH 发射架）+ 1 架侦察无人机；巡飞弹按枚计入 06 库存（DC-205 ①）。
+- id: arm_loitering_btry
+  name: 无人机/巡飞弹连
+  level: company
+  branch: fire_support
+  children: [{template: arm_loitering_sq, count: 4}, {template: arm_btry_hq, count: 1}]
+  confidence: estimated

@@ -4,7 +4,8 @@
 # 依据：苏军编制基准 US Army FM 100-2-3 (1991) https://irp.fas.org/doddir/army/fm100-2-3.pdf ；
 #       亚、阿军继承苏式摩步团/旅（01 §4.17）。除注明外 confidence: estimated（后苏联军队普遍缺编、改编，
 #       真实各营满编率由剧本的 ReadinessTier 与库存分配体现，不改模板）。
-# 需要新增类别（loitering_munition、tbm_launcher，01 M2）的模板放在 data/templates_pending/，迁移完成后移入本目录。
+# 依赖 01 M2 新类别（loitering_launcher、tbm_launcher）的模板原在 data/templates_pending/，已并入本文件末尾（审查第 2 部分）。
+# DC-205 ①：巡飞弹班的槽位写发射单元类别 loitering_launcher；巡飞弹本身（loitering_munition）是弹药，按枚计入 06 库存，不占槽位。
 templates:
 - id: aze_mr_bmp_sq
   name: BMP 摩步班（苏式 8 人）
@@ -1099,3 +1100,47 @@ templates:
     mrl_light: bm21
   confidence: estimated
   notes: 火箭炮旅（Smerch/Polonez/Lynx + Grad）。
+
+# ================================================================================================
+# 巡飞弹连、战术导弹营（原 data/templates_pending/nk_pending_templates.yaml；01 M2 落地后并入）
+# confidence: estimated（公开资料没有此类分队的编制表；结构按“发射单元 + 操作手 + 运输车”最小化估算）。
+# ================================================================================================
+- id: aze_loitering_sq
+  name: 巡飞弹发射组（Harop/SkyStriker/Orbiter-1K）
+  level: squad
+  branch: fire_support
+  personnel: {squad_leader: 1, uav_operator: 2, driver: 1}
+  slots: {loitering_launcher: 1, truck_medium: 1, rifle: 4}
+  confidence: estimated
+  notes: 一个“发射单元”= 1 部发射箱组/发射架（loitering_launcher）；巡飞弹按枚作为 06 弹药库存（DC-205 ①）。
+- id: aze_loitering_btry
+  name: 巡飞弹连
+  level: company
+  branch: fire_support
+  children: [{template: aze_loitering_sq, count: 4}, {template: aze_btry_hq, count: 1}]
+  confidence: estimated
+  notes: 型号绑定（harop_launcher 等）由剧本实例或上级营/编组给出；连级模板不写 default_bindings（01 §3.4.1）。
+- id: aze_tbm_sq
+  name: 战术弹道导弹发射车组（Tochka-U/LORA）
+  level: squad
+  branch: artillery
+  personnel: {squad_leader: 1, rocket_artilleryman: 3, driver: 1}
+  slots: {tbm_launcher: 1, truck_heavy: 1, rifle: 5}
+  confidence: estimated
+  notes: truck_heavy 为导弹运输装填车；导弹（tbm_missile）按枚计入 06 库存。
+- id: aze_tbm_bn
+  name: 战术导弹营
+  level: battalion
+  branch: artillery
+  children: [{template: aze_tbm_sq, count: 4}, {template: aze_arty_bn_hq, count: 1}, {template: aze_bn_support_sq, count: 1}]
+  default_bindings: {tbm_launcher: lora, truck_heavy: kamaz_5350}
+  confidence: estimated
+  notes: 独立营，直属国家或军（01 §4.17）。
+- id: aze_loitering_bn
+  name: 巡飞弹营（独立）
+  level: battalion
+  branch: fire_support
+  children: [{template: aze_loitering_btry, count: 2}, {template: aze_arty_bn_hq, count: 1}, {template: aze_bn_support_sq, count: 1}]
+  default_bindings: {loitering_launcher: harop_launcher, truck_medium: ural4320}
+  confidence: estimated
+  notes: 剧本与 AI 改革（12 ReformOption、14 InstantiateBattalion）需要营级模板，故以 2 个巡飞弹连 + 炮兵营营部 + 营保障排组成。独立营，直属国家或军（01 §4.17）。

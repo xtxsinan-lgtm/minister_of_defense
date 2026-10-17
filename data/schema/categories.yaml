@@ -117,7 +117,10 @@ categories:
   - {id: ashm_surface,        name: 舰/岸射反舰导弹,         group: air_munition}
 
   # ---- 规格审查新增（01 O-12 / 03 C-18 / 05 R-18 / 08 第 11 节）----
-  - {id: loitering_munition,  name: 巡飞弹,                 group: fire_support}
+  # DC-205 ①：巡飞弹型号就是弹药（一枚 = 一件装备，按枚计库存，带 08 的 munition.air）；
+  #           发射车/发射箱/弹射架是独立类别 loitering_launcher（班模板槽位写它）。
+  - {id: loitering_munition,  name: 巡飞弹（弹药，一枚 = 一件）, group: air_munition}
+  - {id: loitering_launcher,  name: 巡飞弹发射车/发射箱/弹射架（发射单元）, group: fire_support}
   - {id: fpv_drone,           name: FPV 无人机,             group: uav}
   - {id: body_armor,          name: 防弹衣,                 group: personal_equipment}
   - {id: tbm_launcher,        name: 战术弹道导弹发射车（飞毛腿/圆点/伊斯坎德尔）, group: artillery}
@@ -125,3 +128,16 @@ categories:
   - {id: decoy_vehicle,       name: 假目标车辆/充气假目标,   group: deception}
   - {id: decoy_emitter,       name: 假辐射源（假雷达/假电台）, group: deception}
   - {id: sam_missile,         name: 地空导弹（弹药）,        group: air_munition}
+
+  # ---- 地面弹药（DC-206 ①；03 §5.7 MunitionProfile、06 Ammunition 库存）----
+  # 弹药型号也是 EquipmentModel（00 §4.3），按发/枚计数；不进班模板槽位，只出现在武器的 munitions / 默认基数与 06 库存里。
+  - {id: small_arms_ammo,     name: 枪弹（步枪/机枪）,        group: ground_munition}
+  - {id: autocannon_round,    name: 机关炮弹（20–40mm）,      group: ground_munition}
+  - {id: tank_gun_round,      name: 坦克炮/反坦克炮炮弹,      group: ground_munition}
+  - {id: grenade_round,       name: 榴弹发射器榴弹（30/40mm）, group: ground_munition}
+  - {id: rocket_grenade,      name: 火箭筒/无后坐力炮弹,      group: ground_munition}
+  - {id: atgm_missile,        name: 反坦克导弹（弹）,         group: ground_munition}
+  - {id: mortar_bomb,         name: 迫击炮弹,                 group: ground_munition}
+  - {id: artillery_shell,     name: 身管火炮炮弹,             group: ground_munition}
+  - {id: mrl_rocket,          name: 火箭炮火箭弹（含制导火箭）, group: ground_munition}
+  - {id: tbm_missile,         name: 战术弹道导弹（弹）,        group: ground_munition}
