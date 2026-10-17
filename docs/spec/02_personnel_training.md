@@ -330,7 +330,7 @@ bool UpgradeLinked(m1, m2)   // 沿 upgrade_of 链（各自最多 3 步）相遇
 
 `SimilarityFloor`：`small_arms` 组 0.5，`c4i` 组 0.5，其他组 0。
 
-`explicitRules` 文件格式：`similarity: [{a: t72b, b: t90s, factor: 0.6, notes: ...}]`。
+`explicitRules` 文件格式：`similarity: [{a: bmp1, b: bmp2, factor: 0.6, notes: ...}]`。
 
 ### 4.4 练度的合并原语（事件驱动）
 
@@ -535,9 +535,13 @@ cohort.graduateAt ≤ now → TrainedPool[(country, specialty, serviceType)] 并
 **学校型号** `SchoolModel(country, s)`：本国所有 `EquipmentItem`（含库存）中、类别在 `Operates(s)` 内、件数最多的型号（平局按句柄升序）；`Operates(s)` 为空 → 0。每天 D1 前重算。
 > 这就是总纲 §6 第 1 条的机制：型号越杂，学校按“主力型号”培训，毕业生分到少数型号的部队时专有练度要再乘相似度。
 
-#### 4.8.5 产能扩建
+#### 4.8.5 产能扩建与学校/人力设置写接口（13 调用）
 - 玩家下单：`ExpandSchool(country, school, ΔcapacityPerYear)` → 11 建设项目（费用 `SchoolExpansionCostMusdPerSeat × Δ`，工期 `SchoolExpansionDays`）；完工时 `capacityPerYear += Δ`。
 - 训练学校的运行费含在 11 的训练费里。
+- 玩家直接设置（13 `IUiCommands`，在 `OrderIntake` 应用，记入 15 `InputKind.UnitAdmin`）：
+  - `void SetSchoolPriority(CountryId c, SpecialtyHandle s, double weight)`：`SchoolState[(c, s.school)].priorityWeight[s] = Math.Max(0.0, weight)`（D4）。
+  - `void SetCrashCourse(CountryId c, SchoolHandle school, bool on)`：`SchoolState[(c, school)].accelerated = on`（D5；对已入学批次不追溯，只影响此后招训的批次）。
+  - `void SetAcceptVolunteers(CountryId c, bool on)`：`CountryManpowerState[c].allowVolunteers = on`（D8）。
 
 #### 4.8.6 人员池出口（给 07）
 ```csharp
@@ -693,6 +697,7 @@ pool.count   −= pool.count × ReserveAttritionPerYear / 365      （累加器�
 | `JoinSquad(PersonnelId, SquadId)`、`LeaveSquad(PersonnelId, DetachReason)` | 07（补充、后送、归队、重组）、11（复员） | 事件 |
 | `HeadcountByPayCategory(country)` | 11（人员费） | 年初、每小时 |
 | 学校状态、缺口、毕业预测（训练强度覆盖存于 11 `trainingOverride`） | 13 | 界面 |
+| 写接口 `SetSchoolPriority(CountryId, SpecialtyHandle, double)`、`SetCrashCourse(CountryId, SchoolHandle, bool)`、`SetAcceptVolunteers(CountryId, bool)`（§4.8.5，`UnitAdmin`） | 13 `IUiCommands` | `OrderIntake` |
 | 写 11：`ConscriptionSystem.reservePool`、`reserveGeneralSkill` | 11 | 每天 D5 |
 | `AirborneQualifiedShare(OrgUnitId)` | 08 | 按需 |
 | 学校扩建请求 `ExpandSchool(...)` → 11 建设项目 | 11 | 玩家下令 |

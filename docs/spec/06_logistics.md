@@ -445,25 +445,41 @@ public sealed class PrepositionOrder                   // D8
 }
 
 public enum LogisticsConfigKind : int {                // 只能追加；数值对应第 2 节玩家决策编号
-    None = 0, StockTargets = 2, DirectionWeights = 4, MoveHub = 6, Dispersion = 7,
-    Preposition = 8, StockCap = 9, PriorityFlag = 11, ForwardResupply = 13, Transfer = 14
+    None = 0, AmmoComposition = 1, StockTargets = 2, DirectionWeights = 4, MoveHub = 6, Dispersion = 7,
+    Preposition = 8, StockCap = 9, PriorityFlag = 11, ForwardResupply = 13, Transfer = 14, DeployHub = 15
 }
 
 public sealed class LogisticsConfigChange              // 09 LogisticsConfigPayload.configChange 的运行时类型；由 ApplyConfig 应用
 {
     public LogisticsConfigKind kind;
     public CountryId country;
+    public AmmoComposition ammoComposition;            // AmmoComposition（D1，🟡 U-28）：整份替换该旅配比
     public StockTargetSettings stockTargets;           // StockTargets（D2、D3、D10、D12）：整份替换
     public List<StrategicDirection> directions;        // DirectionWeights（D4）：整份替换，权重归一
     public NodeId node;                                // Dispersion / StockCap / PriorityFlag（机场）；Transfer 的源节点
-    public FormationId formation;                      // MoveHub（后勤旅）/ PriorityFlag（旅）/ ForwardResupply（旅）
-    public ulong targetTile;                           // MoveHub：新地块（§4.16）
+    public FormationId formation;                      // AmmoComposition（旅）/ MoveHub 或 DeployHub（后勤旅）/ PriorityFlag（旅）/ ForwardResupply（旅）
+    public ulong targetTile;                           // MoveHub / DeployHub：新地块（§4.16）
     public double value;                               // Dispersion：dispersionTarget ∈ [0,1]；StockCap：NodeCaps.maxDaysOfSupply
     public SortedDictionary<int, double> maxCountByMunition;   // StockCap（机场，D9）
     public bool flag;                                  // PriorityFlag
     public ForwardResupplyPolicy policy;               // ForwardResupply（D13）
     public PrepositionOrder preposition;               // Preposition（D8）
     public NodeId toNode; public ItemKey item; public double qty;   // Transfer（D14，按 §4.5.1 生成 P2 请求）
+}
+
+public sealed class PocketInfo                         // §4.9 包围圈与耐久预测（00 `PocketInfo`）
+{
+    public int pocketId;                               // 分量编号（1, 2, …；按最小 tileId 升序）
+    public List<ulong> tiles;                          // 圈内己方地块（H3 升序）
+    public double[] enduranceDaysByClass;              // 下标 = SupplyClass；EnduranceDays(pocket, cls)
+    public List<FormationId> brigades;                 // 圈内旅 BSA（FormationId 升序）
+}
+
+public sealed class NetworkView                        // §4.15 AnalyzeKeyNodes 的可见网络输入
+{
+    public CountryId owner;
+    public bool fullNetwork = true;                    // true = 自方全网（13 使用）；false = 仅 visibleNodes 内的节点（12 对敌方使用）
+    public SortedSet<NodeId> visibleNodes;             // fullNetwork == false 时有效（暴露度 ≥ L3 的敌方节点）
 }
 ```
 
@@ -478,6 +494,56 @@ public sealed class StorageBase                        // 00：`StorageBase`，�
 public sealed class StoredItem { public EquipmentItemId item; public double condition; /*[0,1]，每年 −StorageConditionDecayPerY*/ public bool cannibalized; }
 ```
 启封决策（时间、钱、备件）由 11 定义；06 只负责存放、状态衰减、启封后作为 `ReplacementEquipment` 运输。
+
+### 3.12 界面只读视图与储备预览结构（供 13 使用，🟡 U-15）
+
+```csharp
+public sealed class UnitSupplyView                     // 营/旅补给摘要（13 UnitSupplyVm / UnitMapTokenVm）
+{
+    public OrgUnitId battalion; public FormationId brigade;
+    public double[] carriedDays;                       // 下标 = SupplyClass（Ammunition / Fuel / SpareParts / General）
+    public double bsaStockDays;                        // 所属 BSA 库存可撑天数（按弾药与燃油最小者）
+    public bool isCutOff;                              // §4.9 营或所属 BSA 被切断
+    public int pocketId;                               // 0 = 未被包围
+    public double[] pocketEnduranceDays;               // 下标 = SupplyClass（来自 PocketInfo.enduranceDaysByClass）
+    public ForwardResupplyPolicy policy;               // 所属 BSA.policy
+    public bool priorityFlag;                          // 所属 BSA.priorityFlag
+}
+
+public readonly record struct EdgeFlowSummary(ulong tileA, ulong tileB, double flowTPerDay, double capacityTPerDay, bool isCut);
+public sealed class FlowMapView                        // 13 S11 流量图图层（按有向边 (tileA→tileB) 汇总该边上各模式弧）
+{
+    public List<EdgeFlowSummary> edges;
+    public List<NodePanelView> nodes;
+    public List<PocketInfo> pockets;
+}
+
+public sealed class NodePanelView                      // 13 S11 节点面板（§4.14）
+{
+    public NodeId node; public ulong tileId; public NodeRole role;
+    public int hardeningLevel; public double dispersion, dispersionTarget, throughputDamage;
+    public NodeCaps caps; public bool priorityFlag;
+    public double[] receivedTPerDay, demandTPerDay, stockT, daysOfSupply;   // 下标 = SupplyClass
+    public List<(int modelHandle, double days)> keyMunitionDays;            // 关键弹药型号可撑天数
+}
+
+public readonly record struct KeyNodeEntry(int candidateKind, ulong candidateId, double dropTotal,
+    int affectedTopFormations, List<(FormationId formation, double drop)> dropByFormation, List<OrgUnitId> affectedBattalions);
+public sealed class KeyNodeReport                      // §4.15 关键节点分析结果
+{
+    public SimTime computedAt;
+    public List<KeyNodeEntry> entries;                 // 前 KeyNodeTopN 项
+}
+
+public readonly record struct ReserveGapItem(ItemKey item, double daysCovered, double targetDays, double shortfallQty);
+public sealed class ReserveGapReport { public List<ReserveGapItem> items; }
+public sealed class ShelfLifeReport { public double expiredTonsThisYear, expiredMusdThisYear, expiringTonsNextYear, expiringMusdNextYear; }
+public sealed class ImportView { public List<(NodeId gateway, bool isOpen, string closedReason, double usedTPerDay, double capTPerDay, int inboundBatches)> gateways; }
+public sealed class CarrierView { public List<(CarrierId id, CarrierKind kind, FormationId formation, double usedTH, double budgetTH, int trucksHeld, int trucksNeeded)> pools; }
+public sealed class ConvoyView { public List<SupplyConvoy> convoys; }
+
+public readonly record struct StockTargetPreview(double requiredTonsTotal, double deltaPurchaseCostMusd, double annualStorageCostMusd);
+```
 
 ---
 
@@ -851,7 +917,7 @@ Outbound/Returning：
   open 图 = §4.2 的图中 capFactor > 0 的弧
   源集合 S0 = c 的所有 Operational 节点中 role ∈ {Depot, Factory, ImportGateway(isOpen)} 的
   从 S0 做 BFS（无容量限制）→ 可达集合 R
-  对每个 BSA s：isCutOff = (s 的 GNode ∉ R)；isCutOff 由 false → true 时：09.PostNotification(Notification{kind = NotificationKind.SupplyCut, audience = c})
+  对每个 BSA s：isCutOff = (s 的 GNode ∉ R)；isCutOff 由 false → true 时：09.PostNotification(Notification{kind = NotificationKind.SupplyCut, audience = c, tile = s.tileId, unitIds = s.brigade 下属营的 OrgUnitId.value 升序列表})
   包围圈：对所有 ∉ R 的 TileRoad 节点做连通分量；pocketId = 分量内最小 tileId 的稳定编号（按出现顺序 1,2,…，每小时重新编号，界面用 tileId 显示）
   被切断的 BSA 仍可以从**同一分量内**的节点（ForwardHub/FieldCache/Depot）取货——§4.5 自然只会找到可达的源
   营的切断：营所在地块 ∉ R 且与其 BSA 不在同一分量 → 该营 isCutOff（只能靠随身库存）
@@ -954,6 +1020,7 @@ arc.lossFraction（每小时 L3）= 到达端地块的 lossEma
 DaysCovered[item] = 全国库存[item] / NatRate[item]    （NatRate = 0 → 不报告）
 若 DaysCovered < landDays × GapWarnFraction → 09.PostNotification(Notification{kind = NotificationKind.ReserveGap, audience = c})：“按当前编制，<型号> 储备只够 N 天”（N 向下取整）
 采购缺口给 11：Shortfall[item] = max(0, NatTarget − 全国库存 − 在途 − 11.OnOrderQty(c, item))   // 已下订单，11 §6.2
+预览纯函数（供 13 S11 滑块实时预览，不改状态）：`StockTargetPreview PreviewStockTargets(CountryId c, StockTargetSettings candidate)`：按上式用 `candidate.landDays` 与 `candidate.airMunitionCount` 重算 `NatTarget`、`Shortfall`，返回 `(Σ NatTarget 吨数, Σ Shortfall × 11.GetUnitCostMusd, 按 candidate 目标吨计算的年仓储费)`。
 ```
 
 ### 4.12 进口
@@ -1243,13 +1310,14 @@ OnInfrastructureCompleted：
 | `void OnNodeStrike(NodeStrikeEvent)` / `OnCrossingStrike(CrossingStrikeEvent)` / `OnLocStrike(...)` | 04、08 | `GroundEventApply` | §4.10 |
 | `double GetTrafficTrucksPerH(CountryId, ulong tile)` | 04、08 | 结算 LOC 打击前 | §4.10.3 |
 | `void StripLogistics.Step(...)` | 04 | `StripStep` | §4.8 |
-| `UnitSupplyView`、`NodePanelView`、`FlowMapView`、`KeyNodeReport`、`ConvoyView`、`ReserveGapReport`、`ShelfLifeReport`、`ImportView`、`CarrierView` | 13 | 界面刷新 | 只读视图 |
-| `KeyNodeReport AnalyzeKeyNodes(CountryId owner, NetworkView view)` | 12 | 每日 | 对敌方：view 只含其暴露度 ≥ L3 的节点和已知的路网 |
+| `UnitSupplyView`、`NodePanelView`、`FlowMapView`、`KeyNodeReport`、`ConvoyView`、`ReserveGapReport`、`ShelfLifeReport`、`ImportView`、`CarrierView`、`IReadOnlyList<PocketInfo> GetPockets(CountryId)`（结构见 §3.10、§3.12） | 13 | 界面刷新 | 只读视图 |
+| `StockTargetPreview PreviewStockTargets(CountryId, StockTargetSettings)` | 13（S11 滑块预览） | 按需 | §4.11 纯函数 |
+| `KeyNodeReport AnalyzeKeyNodes(CountryId owner, NetworkView view)` | 12、13 | 每日 / 按需 | `view.fullNetwork = true` 为自方全网；对敌方只含暴露度 ≥ L3 的节点和已知路网 |
 | `IEnumerable<LogisticsNode> NodesInTile(ulong tile)` | 05（暴露度）、08/04（目标选择） | 按需 | 节点作为目标；暴露度按 05 §4.8 固定设施规则（不算特征值） |
 | `NodeId NearestDepot(CountryId, ulong tile)` | 01（发放/退回库存）、07（撤编营装备） | 按需 | 该国 Operational 的 Depot 中，从 tile 的 TileRoad 节点出发按 §4.2.4 路径成本最小者；平局 NodeId 升序；不可达 → 0 |
 | `double RoadDistanceM(NodeId a, NodeId b)` | 01 | 按需 | 节点 a 所有国的 `SupplyGraph` 上 a → b 最短路径（按 §4.2.4 成本选路）的 Σ `lengthM`；不可达 → `double.PositiveInfinity` |
 | `double FuelDensityKgPerL(FuelType f)` / `double FuelDensityTPerL(FuelType f)` | 02 | 按需 | `f == JetFuel ? JetFuelDensityKgPerL : DieselDensityKgPerL`；`TPerL` = `KgPerL / 1000` |
-| `void ApplyConfig(LogisticsConfigPayload p)` | 09（`LogisticsConfig` 命令生效时） | 命令执行时 | `p.configChange` 的运行时类型 = `LogisticsConfigChange`（§3.10），按 `kind` 写入对应字段；`Dispersion` 只改 `dispersionTarget`（§3.4），`MoveHub` 走 §4.16 |
+| `void ApplyConfig(LogisticsConfigPayload p)`、`void SetAmmoComposition(FormationId brigade, AmmoComposition comp)` | 09（`LogisticsConfig` 命令生效时）、13（`UnitAdmin`，🟡 U-28） | 命令执行时 | `p.configChange` 的运行时类型 = `LogisticsConfigChange`（§3.10），按 `kind` 写入对应字段；`Dispersion` 只改 `dispersionTarget`（§3.4），`DeployHub`/`MoveHub` 走 §4.16，`AmmoComposition` 写旅基数配比 |
 
 ### 6.2 06 需要的输入
 

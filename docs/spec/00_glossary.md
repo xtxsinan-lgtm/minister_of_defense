@@ -599,6 +599,36 @@
 | 战争规模 | `WarScope` | `Limited/Total`；事件开战时由 arg 给出，供停火模板条件读取 | 11 §11 | 11 |
 | 系统旗标 | `big_contract_signed_last_90d` | 11 实时计算的条件旗标：对手近 90 天签了大额军购 | 11 §11 | 11 |
 
+#### 1.12.12 来自 12（AI）
+
+| 中文 | 英文标识 | 定义 | 出处 | 归属 |
+|---|---|---|---|---|
+| 作战 AI | `OperationalAi` | AI 国家的战区层规划（姿态、轴线、防御分配、空中与纵深打击） | 12 §11 | 12 |
+| 国家 AI | `CountryAi` | AI 国家的预算、采购、改革、战备、开战与停火决策 | 12 §11 | 12 |
+| 条令预设 | `DoctrineProfile` | 条带条令（04 §4.11）、片段内（03）与编组/作战层读取的一套条令数值（western/soviet/small_state_defensive）；**唯一定义在 12**（DC-101） | 12 §11 | 12（04、03 读取） |
+| 条令日志记录 | `StripDirective` / `DirectiveKind` | 04 条令决策写出的部署、轮换、投入、反冲击记录（只用于显示与战斗事件记录） | 12 §11 | 12（类型）/ 04（写入） |
+| 防守分配 | `EdgeAssignment` / `EdgeRole` | 营在地块内负责的边或作为地块预备 | 12 §11 | 12 |
+| 保障旅覆盖 | `SupportBrigadeOverride` | 玩家为独立营指定的保障旅 | 12 §11 | 12 |
+| 轮换请求 | `RotationRequest` | 07 请求的整建制轮换，等待 12 安排替换与后撤 | 12 §11 | 12 |
+| 剧本 AI 参考数据 | `AiScenarioRefs` / `HistoricalBuy` | 参考模板、编组角色标签、首都；史实采购清单条目 | 12 §11 | 12（schema）/ 14（数值） |
+| 估计上下文 | `EstimateContext` | `EstimateEdge` 的视角国家、遭遇战标志与时刻 | 12 §11 | 12 |
+| 编组任务 | `FormationTask` / `FormationTaskKind` | 编组 AI 当前执行的任务（Defend/Attack/Move/Reserve） | 12 §11 | 12 |
+| 战斗力指数 | CP（`cpEstimate`） | 以参考机步营 = 1.0 的战斗力标量 | 12 §11 | 12 |
+| 情报画面 | `AiIntelPicture` / `EnemyUnitEstimate` | AI 可见的敌情（由 05 情报派生） | 12 §11 | 12 |
+| 影响力层 | `InfluenceLayer` | FriendlyCp/EnemyCp/Threat/Support/Value/Frontline/Vulnerability | 12 §11 | 12 |
+| 作战计划 / 轴线 | `OperationalPlan` / `OperationalAxis` / `AxisState` | 作战 AI 的持久计划与进攻方向 | 12 §11 | 12 |
+| 战役姿态 | `CampaignStance` | Hold/Defensive/Offensive/Counteroffensive/PreWar | 12 §11 | 12 |
+| HTN 任务 | `HtnTask` / `HtnTaskKind` | 分层任务规划的任务节点 | 12 §11 | 12 |
+| AI 国家参数 | `AiCountryProfile` | 剧本给出的 AI 国家性格、采购偏好、战争目标等 | 12 §11 | 12（schema）/ 14（数值） |
+| 战争目标 | `WarAim` | AI 可选的作战目标地块集合与价值 | 12 §11 | 12 / 14 |
+| 编制改革选项 | `ReformOption` | AI 可执行的组建新营等改革 | 12 §11 | 12 / 14 |
+| AI 难度 | `AiDifficulty` / `AiDifficultySettings` | Recruit/Regular/Veteran/Elite 及其参数 | 12 §11 | 12 |
+| 效用曲线 / 考量 | `UtilityCurve` / `Consideration` | 分段线性响应曲线与加权考量 | 12 §11 | 12 |
+| 代理模型特征 / 输出 | `ProxyFeature` / `ProxyOutput` | 48 个输入、7 个输出的固定顺序枚举 | 12 §11 | 12 |
+| 梯度提升树 | `GbdtModel` / `GbdtTree` | 代理模型的推理结构 | 12 §11 | 12 |
+| 情报三档 | low/mid/high | 用情报误差上下限各算一次，得到置信区间 | 12 §11 | 12 |
+| AI 决策记录 | `AiDecisionTrace` | 只写的解释/调试记录 | 12 §11 | 12 |
+
 #### 1.12.13 来自 13（界面）
 
 | 中文 | 英文标识 | 定义 | 出处 | 归属 |

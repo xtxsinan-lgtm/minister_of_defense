@@ -167,6 +167,12 @@ public sealed class ReplacementRequest {         // 06 的 RequestTransport 使�
 public sealed class DepotRepairOrder {
     public EquipmentItemId itemId; public NodeId depot; public SimTime startedAt, readyAt; public double costMusd;
 }
+
+public sealed class CapturedPool {               // 每国一个（H-12）
+    public CountryId country;
+    public bool useCaptured;                     // 默认 false；由 SetUseCapturedEquipment 修改
+    public List<EquipmentItemId> items;          // 升序；level == Captured 的装备实例
+}
 ```
 
 ### 3.3 静态数据：`ReliabilityProfile`（YAML 键 `reliability`，00 §4.3 归 07）
@@ -567,6 +573,7 @@ PartsPerItemPerYear(model m) = 365 × 24 × PeaceOpHoursFrac / mtbfH(m) × Break
 ### 4.9 缴获（可选，H-12，默认关闭）
 
 - `level == Captured` 的物品：归入俘获方国家的 `CapturedPool`（国家级，按型号计数，保留实例）。
+- 玩家开关：`void SetUseCapturedEquipment(CountryId c, bool allow)`（写 `CapturedPool.useCaptured = allow`；13 `IUiCommands` 调用，记入 15 `InputKind.UnitAdmin`）。
 - 开关打开时：俘获方可以把它们作为同类别的**替代装备**发放（01 §4.8.3），型号专有练度从 `CapturedTypeSkill` 开始（02），备件只能来自本国同型号库存或拆东补西。2020 纳卡里双方都用 T-72 → 缴获的 T-72 对阿方几乎立即可用；这正是该机制的意义。
 - 关闭时：缴获只计入战报与对方的损失统计。
 
@@ -709,7 +716,8 @@ mechanic、medic、uav_operator、radar_operator、jtac、forward_observer 作�
 | `double PartsUnitCostMusd(ModelHandle)`、`void AddPartsFunding(CountryId, ModelHandle, double musd)` | 11 | 每小时 |
 | `double ActivationPartsUnits(EquipmentItemId)` | 01 | 启封时 |
 | `bool IsRetraining(OrgUnitId)` | 02 | 每小时 |
-| `MergeBattalions`、`MergeCompanies`、`DisbandBattalion` | 13（玩家行政命令，H-11） | 命令时 |
+| `MergeBattalions`、`MergeCompanies`、`DisbandBattalion` | 09（`OrgAdminPayload` 生效时，H-11 / DC-041）、13 | 命令生效时 |
+| `void SetUseCapturedEquipment(CountryId, bool)`（§4.9，`CapturedPool.useCaptured`，`UnitAdmin`） | 13 `IUiCommands` | `OrderIntake` |
 
 ### 6.2 本文件需要
 
