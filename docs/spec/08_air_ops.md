@@ -499,7 +499,7 @@ avoidKnownAd = true 时：对直线航段与“已知敌防空包线”（敌方
 #### 4.3.2 降落后
 ```
 availableAt = landAt + turnaroundMin + maintElapsedPerFlightH × 本次飞行小时 × 60（分钟）
-故障：Bernoulli(1 − exp(−本次飞行小时 / mtbfH))（mtbfH 读 07 `ReliabilityProfile`，飞机按飞行小时计；缺省值归 07；RNG SaltMaintFail，键 = itemId）
+故障：Bernoulli(1 − exp(−本次飞行小时 × failurePerFlightH))（`failurePerFlightH` 读 07 `ReliabilityProfile`，缺省值归 07 §5.3；RNG SaltMaintFail，键 = itemId）
      命中 → 07.ApplyVehicleDamage(item, FieldRepairable, Breakdown, …)，status = Damaged（07 修好后回到 Ready）
 战损返航（被命中未坠毁）→ 07.ApplyVehicleDamage(item, DepotRepair, Firepower, …)
 ```
@@ -945,7 +945,7 @@ BurnPerM(低空段) = 1 / (2 × radiusLoLoLoM × (1 + RadiusMarginFrac))
    装备：Paradrop 需 06 MobilityProfile.isAirdroppable；SlingLoad 需 isSlingLoadable；AirLanding 只看质量
          单件质量 ≤ cargoKg（吊挂：≤ 吊挂上限 SlingMaxKg）
    班结果：Full / PersonnelOnly / None；CompleteSquadsOnly 时 PersonnelOnly 班视为 None
-   留下的人和装备 → 01 的 RearDetachment（00 §1.1；由 08 调 01 `CreateRearDetachment` 建立，见 01 §3）
+   留下的人和装备 → 01 的 RearDetachment（00 §1.1；由 08 调 01 `CreateRearDetachment(bn, tile, persons, items)` 建立，见 01 §6.1）
 2. 架次：totalMassKg = Σ 可运人员 × PaxMassKg + Σ 可运装备质量；
    sortiesNeeded = max(ceil(totalMassKg / (cargoKg × LoadFactor)), ceil(人数 / paxCount))
    cycleH = 2 × 距离 / cruiseMps / 3600 + LoadUnloadH[method] + turnaroundMin / 60

@@ -321,7 +321,7 @@ fortMult    = 1 − FortMaxReduction × fortLevel01            // fortLevel01 �
 densityMult = min(DensityMultMax, 1 + DensityK × max(0, VE_tileSide / DensityRefVe − 1))
 ```
 - `camoKitFill`：营内配了伪装器材（新类别 `camo_kit`，见第 11 节）的车辆比例 = min(1, 伪装器材件数 / 车辆件数)。数据里没有任何伪装器材时取 `CamoKitDefault = 0.3`（🟡 R-18）。
-- `camoSkill`：营的平均通用练度（02 `GetSkill` 的通用部分，按人数加权）。
+- `camoSkill`：营的平均通用练度 = 02 `UnitAverageGeneral(battalionId)`。
 - `VE_tileSide`：同一地块内**同一国家所有营**的 VE 之和（含本营）。这体现“堆兵有代价”（§9.3①）。
 - **过边中的营**（`Posture.CrossingEdge`）：对两个地块的观察都有效（§11.1.2）；地形乘子取两地块按过边进度加权：`terrainMult = (1−p) × T_from + p × T_to`。
 
