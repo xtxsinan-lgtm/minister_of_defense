@@ -71,6 +71,11 @@ public enum TargetClass : int {         // 00 §1.5；SoftVehicle 为新增（C-
 }
 // 计数常量：TargetClassCount = 10；数组下标 = (int)class - 1。
 
+public enum Aspect : int { None = 0, Front = 1, Side = 2, Top = 3, Bottom = 4 }   // 车辆被命中方位（03 抽样；07 RollVehicleDamage 使用）
+public enum OpticsClass : int {                 // 观瞄等级（§4.2.2 表；05 SensorProfile.opticsClassDay/Night 引用）
+    NakedEye = 1, Binocular = 2, NightVision = 3, VehicleDayOptics = 4, ThermalGen1 = 5, ThermalGen2 = 6, UavCamera = 7
+}
+
 public readonly record struct AccuracyPoint(double rangeM, double pHit);   // 折线点，rangeM 严格递增
 
 public sealed class WeaponProfile {             // YAML 键：weapon
@@ -88,12 +93,12 @@ public sealed class WeaponProfile {             // YAML 键：weapon
     public double weaponWeightKg;               // 不含弹药
     public int crewMin;                         // 能开火的最少操作人数（≥ 1；车载武器 = 炮长 1）
     public int crewFull;                        // 满射速所需人数（≥ crewMin）
-    public string operatorSpecialty;            // 对口专业 id（data/schema/specialties.yaml）
+    public SpecialtyHandle operatorSpecialty;   // 对口专业（YAML 写 data/schema/specialties.yaml 的 id，加载时转句柄，00 §2.2）
     public double skillReq;                     // [0,1] 操作练度要求（迫击炮 0.6，步枪 0.3）
     public bool canSmoke;
     public bool canAntiAir;
-    public string[] munitions;                  // 可用弹药型号 id，顺序 = 默认优先顺序
-    public Dictionary<string,int> defaultLoad;  // 默认基数：弹药 id → 发数（00 DefaultAmmoLoad）
+    public ModelHandle[] munitions;             // 可用弹药型号（YAML 写 id，加载时转句柄），顺序 = 默认优先顺序
+    public List<(ModelHandle munition, int rounds)> defaultLoad;  // 默认基数（00 DefaultAmmoLoad）；顺序同 munitions（确定性遍历，00 §6.4）
     public int tubesPerItem;                    // 一件装备的发射管数（火箭炮 40，其他 1）
     public double layTimeS;                     // 间瞄：已展开时接到诸元 → 可射击（含解算）；直射武器 = 0
     public bool autoLay;                        // 全自动调炮（fire_control: auto_lay）→ layTimeS × AutoLayFactor
@@ -168,6 +173,7 @@ public sealed class Engagement {                 // 归属 03（实体）；创�
     public EdgeBattleId battleId;
     public EngagementType type;
     public SimTime startTime;
+    public long startTick;                       // 片段创建所在刻（§4.2.1 视线配对 RNG 用）
     public int stepIndex;                        // 已执行的步数
     public int maxSteps;                         // 见 §5 MaxDurationMin[type]
     public FidelityTier fidelity;                // Full | Cached（09 决定）
@@ -207,8 +213,27 @@ public sealed class EngagementSideState {
     public List<SupportAssetRef> supportAssets;  // 04 给的可申请的支援火力单位（营迫、旅炮…）
     public double fireSupportSuppression;        // [0,1] C 线结果：本方支援火力被压制的程度（04）
     public ExposureLevel knowledgeOfEnemy;       // 开始时对敌方连的暴露等级（05）
-    public double commandFactor;                 // = min(1, CommandCapacity / CommandLoad)（01）
+    public double commandFactor;                 // = 01 CommandState.coordinationFactor（已含整编、失能修正）
     public double fortificationLevel;            // [0,1] 守方工事等级（04）；攻方 = 0
+}
+
+public sealed class SectorContext {              // 类型归属 03；04 填写（04 §4.9.1）
+    public EdgeBattleId battleId;
+    public EngagementType type;
+    public double x0M;                           // 扇区左端 x（战斗坐标）
+    public double frontageM;                     // 扇区宽
+    public Func<double, double> contactYAt;      // 接触线 y = c(x)（战斗坐标）
+    public int attackDir;                        // ±1，见 §4.1 第 2 步
+    public LightCondition light;                 // 09
+    public double visibilityFactor;              // (0,1]，阶段 1 = 1
+    public double obstacleDensity;               // [0,1]
+    public double breach;                        // [0,1]
+    public double fortificationLevel;            // [0,1] B 方元素 F 的人数加权平均（04）
+    public ExposureLevel[] knowledgeOfEnemy;     // 长度 2，按 EngagementSide
+    public List<SupportAssetRef>[] supportAssets;// 长度 2（04 §4.9.3）
+    public double[] fireSupportSuppression;      // 长度 2
+    public DoctrineProfile[] doctrine;           // 长度 2（04 §3.3）
+    public FidelityTier fidelity;                // 09
 }
 
 public sealed class SpatialElement {             // 归属 03
@@ -240,7 +265,7 @@ public sealed class WeaponRuntime {              // 每件武器一个（随元�
     public SpatialElementId elementId;
     public PersonnelId[] operators;              // 当前操作者（长度 0..crewFull）
     public SpatialElementId target;              // 0 = 无
-    public string munitionId;                    // 当前选用弹种
+    public ModelHandle munition;                 // 当前选用弹种
     public double nextReadyS;                    // 片段内时刻：下一次可开火
     public double setupRemainingS;               // >0 正在架设
     public bool isSetUp;
@@ -409,10 +434,10 @@ void Step(Engagement e, long tick) {
 
 1. **槽位**：`slotCount = max(2, ceil(ctx.frontageM / FrontSlotWidthM))`。
 2. **格子**：行 `row ∈ [0, (YMaxM − YMinM)/CellRowM)`，格子中心 `y = YMinM + (row + 0.5) × CellRowM`。每格映射到条带坐标：`xStrip = ctx.x0M + (slot + 0.5) × slotWidthM`，`yStrip = ctx.contactYAt(xStrip) + y × ctx.attackDir`（`attackDir ∈ {+1, −1}`，片段 A 方在战斗坐标中朝 +y 推进时为 +1）。
-   - `terrain`、`elevationM` 读 04 的 `StripTerrain` 在该点的格子（双线性插值高程）。
+   - `terrain`、`elevationM` 由 04 `TerrainAtBattle(ctx.battleId, xStrip, yStrip)` 取得（04 已做规范方向 → 战斗坐标变换；高程双线性插值）。
    - `microCover` 抽样（RNG：`For(SquadSim, e.id, tick0, SaltMicroCover)`，按 slot 升序、row 升序逐格抽）：概率见常数表 `MicroCoverP[terrain]`。
    - `reverseSlopeForB`：该格是 B 方阵地且地形坡面背向 A 方：`elev(row) < elev(row−1)` 且 `elev(row−1)` 为本槽位从 A 方向看的局部最高点（向 A 方向 300 m 内）。`reverseSlopeForA` 对称。
-   - `losScaleM = LosScaleM[terrain] × MicroCoverLosMult[microCover]`。
+   - `losScaleM = cell.losScaleM × MicroCoverLosMult[microCover]`（`cell` = 上一步取得的 04 `StripCell`，已含起伏修正；试验场无条带时 `cell.losScaleM = LosScaleM[terrain]`）。
    - `obstacleDensity`、`breach`：守方阵地带（`y ∈ [−ObstacleBeltDepthM, +ObstacleBeltDepthM/2]`）取 `ctx.obstacleDensity`、`ctx.breach`，其他格 0。
 3. **元素生成**（按 `SquadId` 升序）：每个参战班生成一个 `SpatialElement`。乘车班（车上有下车步兵）生成 `MountedSquad`；坦克/无步兵车辆生成 `Vehicle`；徒步班 `Infantry`；建制迫击炮班 `IndirectFireSection`；班组无人机作为 `Uav` 元素（每架一个，`yM` = 操作员所在元素 y − 200，高度不参与几何）。
 4. **初始位置**：
@@ -479,7 +504,7 @@ P(本步内发现) = 1 − exp(−λ × 60)
 ```text
 Sig(t) = SigBase[kindPosture(t)] × SigModel(t) × FireReveal(t) × (1 − 0.6 × t.fortLevel)
 SigBase：MBT 1.0 | IFV/APC 0.9 | SoftVehicle 1.1 | 步兵班 跃进 0.25 / 静止 0.12 / 隐蔽(MicroCover Good) 0.06 | Uav 0.15（小型四旋翼 0.05）
-SigModel(t) = 05 SignatureProfile 的型号倍率（缺省 1.0）
+SigModel(t) = 05 SignatureProfile.engagementSigMult（缺省 1.0）
 FireReveal(t) = 1 + FireRevealMult       若 t 在过去 60 s 内开火（ATGM/RPG 用 AtgmRevealMult）
               = 1                        否则
 车辆移动时 × VehicleMovingSigMult
@@ -545,7 +570,7 @@ void OnFire(FireEvent f) {
     Enqueue(new ImpactEvent(w, f.target, f.munition, f.timeS + tof, rangeAtFire));
     double cycle = 60.0 * w.roundsPerShot / w.rofSustainedRpm / CrewRateFactor(w) / (1 - SuppFireCut * s(sh));
     w.nextReadyS = f.timeS + cycle;
-    if (w.nextReadyS < t0 + 60) Enqueue(new FireEvent(w, w.target, w.munitionId, w.nextReadyS));
+    if (w.nextReadyS < t0 + 60) Enqueue(new FireEvent(w, w.target, w.munition, w.nextReadyS));
 }
 void OnImpact(ImpactEvent i) {
     if (i.munition.kind == MunitionKind.AtgmSaclos && (!Alive(shooter) || s(shooter) >= SaclosBreakSupp))
@@ -579,14 +604,15 @@ void OnImpact(ImpactEvent i) {
 
 ```text
 路径：请求者班 → 排部 → 连部 → 营部（火力协调） → 旅部 → 火力单位
-      在拥有该火力单位的那一级停止（01 提供 GetRequestChain(squadId, fireUnitOrgId) → OrgLevel[]）
+      在拥有该火力单位的那一级停止（01 提供 GetRequestChain(squadId, NodeRef fireOwner) → OrgLevel[]）
 前观员捷径：请求者元素内有 forward_observer 或 jtac，且该人可战斗 → 直接一跳到火力单位，跳延迟用 HopDelayS[Observer]
 
 commDelayS = Σ_hop HopDelayS[level] × CommsMult(sender of hop) × CommandMult(level) × JamMult
 CommsMult  = 1.0 有电台 | NoRadioMult（3.0，靠喊/跑） ；有 tactical_terminal（数据链）× DatalinkMult（0.4）
 CommandMult(level) = max(1, CommandLoad / CommandCapacity)（01，取该层指挥部的值）
-JamMult    = 1 + JamIntensity（[0,1]，来自 05/08 的电子战，阶段 0 = 0）
-配属惩罚：火力单位不属于请求者的建制编组（Attachment，01）→ 额外 + AttachedExtraHopS
+JamMult    = 1 + JamIntensity，JamIntensity = 05.GetCommsJamming(片段所在地块, 本方国家)（[0,1]，阶段 0 = 0）
+配属惩罚：01.IsAttachedHop(requester, fireOwner) 为真 → 额外 + AttachedExtraHopS
+GetRequestChain 返回空链 → 该资产对本请求者不可达（不作为候选）
 ```
 
 #### 4.5.3 目标定位误差 σ_TLE
@@ -597,7 +623,7 @@ JamMult    = 1 + JamIntensity（[0,1]，来自 05/08 的电子战，阶段 0 = 0
 | 无人机视频（班组/连无人机在跟踪 t） | 20 |
 | 车辆火控测距（有激光测距的车辆跟踪 t） | 30 |
 | 班长估算（地图 + 目测） | 100 |
-| 仅暴露度情报（无直接跟踪，04 的 C 线射击） | `BaseIntelTleM / ExposureAccuracyFactor(level, ageMs)`（05） |
+| 仅暴露度情报（无直接跟踪，04 的 C 线射击） | `05.TargetLocationErrorM(level, ageMs, posture)`（同 04 §4.4.2） |
 
 - **试射**：若 `σ_TLE > AdjustThresholdM` 且请求者对 t 有视线 → `adjustFire = true`：先打 1 发试射（落点按 §4.6.4 正常结算，有杀伤），`AdjustDelayS` 后效力射，效力射使用 `σ_TLE × AdjustTleMult`。没有观察者视线时不能试射。
 - 守方的**预先测定诸元**：t 位于守方预设火力区（守方阵地前 `ObstacleBeltDepthM` 内、且 `fortificationLevel ≥ 0.3`）时，守方的 `σ_TLE × (1 − PreRegisteredTleCut × fortificationLevel)`，`layTimeS × 0.5`。
@@ -607,13 +633,13 @@ JamMult    = 1 + JamIntensity（[0,1]，来自 05/08 的电子战，阶段 0 = 0
 - `arrivedAtFdcAt = sentAt + commDelayS`。
 - 火力单位队列排序全序键：`(priority, sameEchelonOwner ? 0 : 1, arrivedAtFdcAt, requestId)`——**本级建制内的请求优先**（“专门为本级服务”）。
 - 火力单位空闲且已展开时：`fireAt = max(arrivedAtFdcAt, unitFreeAt) + layTimeS × (autoLay ? AutoLayFactor : 1) × LaySkillMult`；未展开时加 `setupTimeS`。
-- 一次任务：`rounds = RoundsPerTube[target cls, weapon] × 可用发射管数`（发射管数 = 有足够乘员的炮/迫击炮门数 × `tubesPerItem`，火箭炮整齐射）。各发落地时刻 `impactAt + k × (60 / rofSustainedRpm)`，`impactAt = fireAt + range / speedMps`。
+- 一次任务：`rounds = RoundsPerTube[target cls, weapon] × 可用发射管数`（发射管数 = 有足够乘员的炮/迫击炮门数 × `tubesPerItem`，火箭炮整齐射）。各发落地时刻 `impactAt + floor(k / tubes) × 60 / rofSustainedRpm`（k = 0…rounds−1，各管同时射击；火箭炮整齐射例外：齐射时长按发数均分），`impactAt = fireAt + range / speedMps`。
 - 火力单位在任务结束后 `unitFreeAt = 最后一发出膛时刻`。若 C 线压制（`fireSupportSuppression`）> 0，`layTimeS` 和间隔 × `1/(1 − 0.7 × fireSupportSuppression)`（反炮兵压力下射击更慢、更少）。
 - 请求过期：若 t 已被毁或航迹丢失超过 `RequestExpireS`，未开火的请求取消（统计为 `Cancelled`）。
 
 #### 4.5.5 时序保证
 
-请求在阶段 100 内产生，**先缓冲**；阶段 100 结束时 broker 按 `(fireUnitId, 上面的全序键)` 统一入队（00 §5.2 规则 6）。落点时刻必然 ≥ 下一刻起点（因为 `commDelayS + layTimeS + 飞行时间 ≥ 60 s` 在常数下恒成立；若计算结果 < 下一刻起点，钳到下一刻起点 + 1 ms）。落点作为 `ExternalImpactEvent` 在之后的步插入目标所在片段（若片段已结束，交给 04 在条带上结算，§6.2）。
+请求在阶段 100 内产生，**先缓冲**；阶段 100 结束时 broker 按 04 §4.9.4 的全序键排序并分配火力单位，统一入队（00 §5.2 规则 6）。落点时刻必然 ≥ 下一刻起点（因为 `commDelayS + layTimeS + 飞行时间 ≥ 60 s` 在常数下恒成立；若计算结果 < 下一刻起点，钳到下一刻起点 + 1 ms）。落点作为 `ExternalImpactEvent` 在之后的步插入目标所在片段（若片段已结束，交给 04 在条带上结算，§6.2）。
 
 ### 4.6 命中与毁伤结算
 
@@ -646,7 +672,7 @@ TargetClass ClassOf(SpatialElement t, SpatialElement sh) {
 pHit = Interp(curve, r) × M_skill × M_supp × M_fat × M_mov_sh × M_mov_tg × M_size × M_cover × M_light × M_elev × M_screen
 curve      = 车辆类目标用 accuracyVsVehicle；人员/工事类用 accuracyVsPersonnel；超出折线范围取端点值；r < rangeMinM 时 pHit = 0
 M_skill    = 0.4 + 0.6 × min(1, effSkill / skillReq)
-effSkill   = 02.GetSkill(formation, operatorSpecialty, model) 的 (0.4 × 通用 + 0.6 × 专有)；
+effSkill   = 02.GetSkillForBattalion(bn, operatorSpecialty, model) 的 (0.4 × 通用 + 0.6 × 专有)（bn = 班所属营）；
              操作者专业不对口时 × 07.CrossTrainFactor(personSpecialty, operatorSpecialty)；轻伤操作者 × LightWoundedSkillMult
 M_supp     = 1 − 0.7 × s(shooter)
 M_fat      = 1 − 0.3 × fatigue(shooter)
@@ -665,14 +691,14 @@ pHit = clamp(pHit, 0, PHitMax)
 #### 4.6.3 对车辆：方位、击穿、毁伤
 
 ```text
-方位：攻顶弹 → Top；否则 u < FrontAspectP → Front，否则 Side
+方位（Aspect）：攻顶弹 → Top；否则 u < FrontAspectP → Front，否则 Side
 装甲：KE 类（Apfsds/CannonAp/Bullet） → front/sideKeMm；化学能类 → front/sideHeatMm
       单级 Heat/AtgmSaclos/RocketHe(HEAT) 且该方位有 ERA → + eraHeatBonusMm（TandemHeat、攻顶不加）
       Top → topMm
 穿深：pen = penetrationMm − penDropPerKmMm × r/1000（KE）；化学能不衰减
 P_pen = 1 / (1 + exp(−(pen − armor) / (PenSigmaFrac × armor + PenSigmaFloorMm)))
-击穿后：P_disable = pKillGivenPen；若失去战斗力：调用 07.RollVehicleDamage(item, munitionKind, aspect, rng) 得到 DamageLevel
-未击穿：机炮/榴弹（caliber ≥ 20 mm）以 NonPenDamageP 造成 FirepowerKill 或 SensorKill（07，FieldRepairable）；否则无损伤
+击穿后：P_disable = pKillGivenPen；若失去战斗力：调用 07.RollVehicleDamage(item, munitionKind, aspect, ref rng) 得到 (DamageLevel, DamageFlags)（殉爆由 07 判定，flags 含 Catastrophic）
+未击穿：机炮/榴弹（caliber ≥ 20 mm）以 NonPenDamageP 调用 07.ApplyVehicleDamage(item, DamageLevel.FieldRepairable, DamageFlags.Firepower 或 DamageFlags.Sensor, …)；否则无损伤
 压制：车辆元素只吃 suppPerShot × (1 − suppressionResist)
 ```
 
@@ -680,8 +706,8 @@ P_pen = 1 / (1 + exp(−(pen − armor) / (PenSigmaFrac × armor + PenSigmaFloor
 
 | 车辆结果 | 每名车组/载员：阵亡 | 重伤 | 轻伤 | 无恙 |
 |---|---|---|---|---|
-| `Destroyed` 且殉爆（`catastrophicGivenKill` 抽中） | 0.60 | 0.20 | 0.10 | 0.10 |
-| `Destroyed` 未殉爆 | 0.25 | 0.25 | 0.20 | 0.30 |
+| `Destroyed` 且 flags 含 `Catastrophic`（07 返回） | 0.60 | 0.20 | 0.10 | 0.10 |
+| `Destroyed` 且不含 `Catastrophic` | 0.25 | 0.25 | 0.20 | 0.30 |
 | 击穿但未失去战斗力 / `FieldRepairable` / `DepotRepair` | 0.05 | 0.10 | 0.15 | 0.70 |
 
 （`confidence: estimated`；来源：二战与海湾、车臣、俄乌公开统计里“坦克被击穿时乘员伤亡约 1–1.5 人/车”的量级，由 V2 复核。）车被毁后，幸存的人自动下车成为 `Infantry` 元素（车组成员携带个人武器）。
@@ -726,7 +752,7 @@ P_pen = 1 / (1 + exp(−(pen − armor) / (PenSigmaFrac × armor + PenSigmaFloor
   Thermobaric：阵亡 0.45 | 重伤 0.35 | 轻伤 0.20
   Mine：      阵亡 0.20 | 重伤 0.60 | 轻伤 0.20
 防弹衣（人员装备有 body_armor 或班模板标记）：Bullet 命中先以 BodyArmorStopP 无效（不计伤亡），否则阵亡概率的一半移到重伤
-调用 07.ApplyCasualty(personId, state, time, sourceTag)
+调用 07.ApplyCasualty(personId, state, time, lossSource, posBattle /*Vec2D 战斗坐标*/, e.battleId)
 ```
 
 - `LightWounded` 留在元素里，继续操作武器（练度 × `LightWoundedSkillMult`），移动速度 × 0.8；片段结束后进入 07 的医疗链。
@@ -834,7 +860,7 @@ A 方元素 el 本步欲前进 Δy = v × 1 min（朝 +y）：
 ```
 
 - 进攻方的烟幕：A 方 `canSmoke` 武器在有元素被门槛挡住 ≥ 2 步时，对 C 中压制最低的元素所在格打烟（`smokeUntilS = t + smokeDurationS`），优先级高于杀伤射击（规则 AI）。
-- **雷场**：元素在 `obstacleDensity > 0` 的格内每移动 100 m，车辆以 `MineVehicleP100 × density × (1 − breach)`、徒步元素以 `MineFootP100 × density × (1 − breach)` 触雷（RNG `SaltMine`）。车辆触雷 → `07.RollVehicleDamage(item, Mine, Bottom)`；徒步触雷 → 1 人按 `Mine` 伤情；损失标记 `BattleLine.Breaching`（04 的 AAR 归因）。
+- **雷场**：元素在 `obstacleDensity > 0` 的格内每移动 100 m，车辆以 `MineVehicleP100 × density × (1 − breach)`、徒步元素以 `MineFootP100 × density × (1 − breach)` 触雷（RNG `SaltMine`）。车辆触雷 → `07.RollVehicleDamage(item, MunitionKind.Mine, Aspect.Bottom, ref rng /*SaltMine*/)`；徒步触雷 → 1 人按 `Mine` 伤情；损失标记 `BattleLine.Breaching`（04 的 AAR 归因）。
 - 守方前沿被夺取：A 方可战斗的**徒步**元素进入守方元素所在格（|Δy| ≤ `SeizeDistanceM` 且同槽位），且该格守方元素已失效或 `Withdraw` → 该槽位守方阵地被夺取，`seizedDepthM = max(seizedDepthM, 守方该元素的 y + CellRowM)`。**只有车辆不能夺取阵地**（总纲 §9.10(5)：下车后才能清剿建筑和战壕）。
 
 #### 4.9.3 下车 / 上车
@@ -867,9 +893,9 @@ isBroken ⟸ (casualtyFrac ≥ BreakCasualtyFrac 且 s ≥ BreakSupp) 或 (可�
 | 3 | 夺取槽位数 ≥ `ceil(slotCount × SeizeSlotFrac)` 且 B 方在这些槽位无可战斗元素 | `AttackerSeized` |
 | 4 | `stallCounter ≥ StallSteps`（A 方所有元素连续若干步未前进且 mean s_A ≥ 0.5） | `AttackerRepulsed`（进攻停顿，转入对峙，04 决定是否再生成） |
 | 5 | `noContactCounter ≥ NoContactSteps`（双方都没有任何航迹）且 `stepIndex ≥ 5` | `Stalemate` |
-| 6 | `stepIndex ≥ maxSteps` | `Stalemate`（若 `seizedDepthM > 0` 则 `AttackerSeized` 部分） |
+| 6 | `stepIndex ≥ maxSteps` | `Stalemate`（`seizedDepthM` 保持，04 §4.9.6 据此移动接触线） |
 
-`CombatStrength` 定义见 §4.13。`Reconnaissance` 类型：A 方在获得 ≥ 50% 守方元素航迹后自动 `Withdraw`，结局记 `Stalemate`，其价值在于把暴露度贡献交给 05（§6.3）。
+`CombatStrength` 定义见 §4.13。`Reconnaissance` 类型：A 方在获得 ≥ 50% 守方元素航迹后自动 `Withdraw`，结局记 `Stalemate`，其价值在于把侦察贡献经 `EngagementResult.reconCoverage` 交给 04，由 04 计入写给 05 的侦察速率（§6.2 → 04 §4.5.1）。
 
 **强制结束 `EngagementResult ForceEnd(EngagementId id)`**（04 E-11；04 在战斗被判定结束时调用，如停火、地块因别处原因易手）：
 ```text
@@ -907,6 +933,7 @@ windowS(t) = 60 × SevereLossValue(x*) / max(ε, ThreatRateTo)          x* = 取
 
 ```text
 CapIndex(w, c) = (60 / cycle_w) × Interp(curve_c, RefRangeM[c]) × pKillRef(w, c) × M_skill   （期望杀伤/分钟，开阔地、白天、静止、未压制）
+CapIndex(ModelHandle m, TargetClass c) = 型号级重载：同上式，M_skill = 1、CrewRateFactor = 1，对 m 的 munitions 取最大值（12、01 用）
 pKillRef：车辆类用 §4.6.3 对参考装甲 RefArmor[c]（正面 60% / 侧面 40% 期望）；人员用 pKillPerHit 或 d=0 面杀伤 ÷ 9
 CapabilityVector 各分量 = Σ_{可操作武器} CapIndex(w, c)（c 对应：PersonnelCovered→antiPersonnel，LightArmor，HeavyArmor，Fortification，Uav/Helicopter→antiAir）
 suppression  = Σ (60/cycle_w) × suppPerShot(w, PersonnelCovered)
@@ -917,7 +944,7 @@ CombatStrength = 0.4 × personnelEffective/P0 + 0.2 × antiArmor/AA0 + 0.2 × su
 ```
 
 - `BattalionSummary` 由营下所有班汇总，每 60 分钟或编制变更时重算；`fillRate` = 分量 / 模板满编参考值（用同样练度，以免练度变化混进满编率）。
-- **能力衰减曲线**（编辑器，总纲 §9.11(2)）：`ComputeResilienceCurve(companyTemplate)`：对 k = 0…N 人随机伤亡（每个 k 抽 200 次，按 §4.6.6 角色权重选人，再跑 §4.8.3 重分配），输出各能力分量的均值 vs 减员比例。RNG：`For(Cache, templateHash, 0, SaltResilience)`。
+- **能力衰减曲线**（编辑器，总纲 §9.11(2)）：`ComputeResilienceCurve(companyTemplate)`：对 k = 0…N 人随机伤亡（每个 k 抽 200 次，按 §4.6.6 角色权重选人，再跑 §4.8.3 重分配），输出各能力分量的均值 vs 减员比例。RNG：`Rng.ForKey(Cache, templateHash, SaltResilience)`。
 
 ### 4.14 结果分布缓存（`OutcomeCache`，总纲 §9.3④、§9.12(2)）
 
@@ -930,7 +957,7 @@ CombatStrength = 0.4 × personnelEffective/P0 + 0.2 × antiArmor/AA0 + 0.2 × su
 
 #### 4.14.2 生成（确定性）
 
-每格的模拟用合成编成：从模板满编实例出发，按 §4.6.6 的角色权重随机移除人员/车辆直到 `CombatStrength` 落入该格 ±0.05；RNG 为 `For(Cache, Mix(keyHash) ^ cellIdx, 0, SaltCacheGen + sampleIdx)`——**与世界时刻无关**，因此后台是否预先算好不影响结果（00 G-21）。缓存未命中时**同步**生成所需格子。数据/规则版本变化（`dataVersion`）使全部条目失效；玩家改模板只使含该签名的条目失效。
+每格的模拟用合成编成：从模板满编实例出发，按 §4.6.6 的角色权重随机移除人员/车辆直到 `CombatStrength` 落入该格 ±0.05；RNG 为 `Rng.ForKey(Cache, Mix(keyHash) ^ cellIdx, SaltCacheGen + sampleIdx)`——**与世界时刻无关**，因此后台是否预先算好不影响结果（00 G-21）。缓存未命中时**同步**生成所需格子。数据/规则版本变化（`dataVersion`）使全部条目失效；玩家改模板只使含该签名的条目失效。
 
 #### 4.14.3 使用（`FidelityTier.Cached`）
 
@@ -943,7 +970,7 @@ CombatStrength = 0.4 × personnelEffective/P0 + 0.2 × antiArmor/AA0 + 0.2 × su
       敌方造成的伤亡 × AmmoMod(敌 ammoFraction) × SkillMod(敌 avgSkill / 参考) × (1 − 0.3 × 敌 avgFatigue)
       AmmoMod(a) = min(1, a / 0.3)；SkillMod(x) = clamp(x^0.5, 0.5, 1.5)
 5. 落到真实名册（不四舍五入，07 原则）：每名参战人员 Bernoulli(伤亡比例) → 按 §4.6.6 伤情表；
-   每辆车 Bernoulli(该类损失比例) → 07.RollVehicleDamage(item, 代表弹种[由敌方编成主反装甲武器决定], Front)
+   每辆车 Bernoulli(该类损失比例) → 07.RollVehicleDamage(item, 代表弹种[由敌方编成主反装甲武器决定], Aspect.Front, ref rng /*SaltCacheSample*/)
    弹药按 ammoUsedFrac 按武器比例扣除；疲劳 += fatigueDelta
 6. 结局、seizedDepthM、durationMin 直接取样本；片段在 startTime + durationMin 结束（04 期间锁定该连）
 ```
@@ -991,10 +1018,10 @@ ProvingGroundReport Run(ProvingGroundSpec spec) {
 | 名称 | 初始值 | 单位 | 调参范围 | 来源/理由 |
 |---|---|---|---|---|
 | `LosScaleM[terrain]` | Open 3000, Mixed 1500, Forest 250, Urban 150, Mountain 1200, Marsh 2000, Water 5000 | m | ×0.5–2 | 视距分布量级：欧洲开阔地平均视距 1–2 km、森林 < 300 m（冷战北约地形研究的常见量级） |
-| `MicroCoverP[terrain]` (None/Light/Good) | Open .7/.25/.05; Mixed .4/.4/.2; Forest .1/.4/.5; Urban .1/.3/.6; Mountain .3/.4/.3 | — | — | 估计 |
+| `MicroCoverP[terrain]` (None/Light/Good) | Open .7/.25/.05; Mixed .4/.4/.2; Forest .1/.4/.5; Urban .1/.3/.6; Mountain .3/.4/.3; Marsh .6/.3/.1; Water 1/0/0 | — | — | 估计 |
 | `MicroCoverLosMult` | None 1.0, Light 0.8, Good 0.5 | — | — | |
 | `ElevLosPerM` / `ElevLosMaxMult` | 50 / 3.0 | m / — | 30–100 / 2–4 | 每高 50 m 视距尺度 +100% |
-| `UavLosMult[terrain]` | Open 1.5, Mixed 1.2, Forest 0.3, Urban 0.5, Mountain 1.5 | — | — | 俯视不受起伏遮挡，受林冠遮挡 |
+| `UavLosMult[terrain]` | Open 1.5, Mixed 1.2, Forest 0.3, Urban 0.5, Mountain 1.5, Marsh 1.5, Water 1.5 | — | — | 俯视不受起伏遮挡，受林冠遮挡 |
 | `ReverseSlopeVisibleM` | 300 | m | 150–500 | 越过山脊线后才看得到反斜面阵地 |
 | `SmokeLosMultVisual` / `Thermal` | 0.1 / 0.7 | — | — | 普通烟幕对热像效果有限 |
 | `DetBaseRatePerS` | 0.05 | 1/s | 0.02–0.1 | 近距离、标准车辆目标平均 20 s 被发现；V1 校准 |
@@ -1055,9 +1082,9 @@ ProvingGroundReport Run(ProvingGroundSpec spec) {
 | `LoadSpeedK` / `LoadFatigueK` | 1.2 / 3.0 | — | — | 负重 45% 体重时速度 −18%、疲劳速度 ×1.45 |
 | `MaxCarryRatio` | 0.65 | — | 0.5–0.75 | 超过即不能再接手武器 |
 | `FatigueRate` | Rest −0.004, Hold 0.0005, Mounted 0.0003, Move 0.002, Assault 0.006, UnderFire 0.003 | /min | ×0.5–2 | 30 分钟负重突击约 +0.25 |
-| `BaseFootSpeedMpm` | Open 70, Mixed 60, Forest 40, Urban 25, Mountain 30 | m/min | — | 战斗队形徒步 2–4 km/h |
+| `BaseFootSpeedMpm` | Open 70, Mixed 60, Forest 40, Urban 25, Mountain 30, Marsh 30, Water 0（不可通行） | m/min | — | 战斗队形徒步 2–4 km/h |
 | `BoundingMult` | 0.5 | — | — | 交替跃进 |
-| `BaseVehicleSpeedMpm` (tracked/wheeled) | Open 250/300, Mixed 200/200, Forest 80/50, Urban 100/120, Mountain 60/40 | m/min | — | 战斗队形越野 10–18 km/h |
+| `BaseVehicleSpeedMpm` (tracked/wheeled) | Open 250/300, Mixed 200/200, Forest 80/50, Urban 100/120, Mountain 60/40, Marsh 40/20, Water 0/0（不可通行） | m/min | — | 战斗队形越野 10–18 km/h |
 | `RoadMult` | 1.5 | — | — | |
 | `DismountTimeS` / `MountTimeS` | 30 / 45 | s | 15–60 | |
 | `DismountRangeM` | Soviet 400, Nato 1000 | m | 200–1500 | 苏式条令 BMP 在 300–400 m 下车；北约在 1000 m 以外 |
@@ -1143,13 +1170,14 @@ ProvingGroundReport Run(ProvingGroundSpec spec) {
 
 | 来源 | 数据 | 时机 |
 |---|---|---|
-| 04 | `CreateEngagement(SectorContext ctx, List<SquadId> sideA, List<SquadId> sideB)`；`ctx` 包含：`battleId, type, x0M, frontageM, contactYAt(x), attackDir, light, visibilityFactor, obstacleDensity, breach, fortificationLevel, knowledgeOfEnemy[2], supportAssets[2], fireSupportSuppression[2], doctrine[2], fidelity` | 阶段 80 |
+| 04 | `CreateEngagement(SectorContext ctx, List<SquadId> sideA, List<SquadId> sideB)`；`ctx`（§3.2 `SectorContext`）包含：`battleId, type, x0M, frontageM, contactYAt(x), attackDir, light, visibilityFactor, obstacleDensity, breach, fortificationLevel, knowledgeOfEnemy[2], supportAssets[2], fireSupportSuppression[2], doctrine[2], fidelity` | 阶段 80 |
 | 04 | `ForceEnd(EngagementId)`（§4.10，04 E-11）：战斗被判定结束时强制收尾，返回 `EngagementResult` | 任意阶段（通常 140 `BattleEnd`） |
+| 04 | `StripCell TerrainAtBattle(EdgeBattleId, double xM, double yM)`（§4.1 第 2 步） | 片段创建时 |
 | 04 | `SupportFireBroker` 回填的 `FireSupportRequest.fireAt/impactAt` 与 `ExternalImpactEvent` 列表 | 阶段 100 开始时取本刻落入本片段的事件 |
-| 08 | 空袭/CAS/巡飞弹的 `GroundStrikeEvent { timeMs, munitionId, aimElement 或 aimPoint, pHitDirect, cepM, sourceTag }`（04 转交属于本片段的事件） | 阶段 90 产生，阶段 100 插入 |
-| 01 | `Squad`、`EquipmentItem`、`EquipmentModel`（含本文件的三个 Profile）、`GetRequestChain()`、`CommandLoad/CommandCapacity`、`SquadTemplate` 中车组专业标记 | 片段创建时 |
-| 02 | `Roster`/`PersonnelRecord`（专业、携带物）、`GetSkill(formationId, specialtyId, modelId)` | 片段创建时缓存，片段内不变 |
-| 05 | `ExposureLevel`（双方对敌方连）、`ExposureAccuracyFactor(level, ageMs)`、`SensorProfile`（需要字段：`opticsClassDay`, `opticsClassNight`，枚举 `OpticsClass` 见 §4.2.2——C-08）、`SignatureProfile.engagementSigMult` | 片段创建时 |
+| 08 | 空袭/CAS/巡飞弹的 `GroundStrikeEvent { timeMs, munitionId, attacker, targetKind, targetId, preferredItem, aimLatDeg, aimLonDeg, pHitDirect, cepM, sourceEntityId, seq, sourceTag }`（08 §4.4；04 转交属于本片段的事件，并把经纬度换成战斗坐标、sourceTag 换成 BattleLine，04 §4.14.1） | 阶段 90 产生，阶段 100 插入 |
+| 01 | `Squad`、`EquipmentItem`、`EquipmentModel`（含本文件的三个 Profile）、`GetRequestChain()`、`IsAttachedHop()`、`CommandLoad/CommandCapacity`、`CommandState.coordinationFactor`、`SquadTemplate` 中车组专业标记 | 片段创建时 |
+| 02 | `Roster`/`PersonnelRecord`（专业、携带物）、`GetSkillForBattalion(OrgUnitId, SpecialtyHandle, ModelHandle)` | 片段创建时缓存，片段内不变 |
+| 05 | `ExposureLevel`（双方对敌方连）、`ExposureAccuracyFactor(level, ageMs)`、`TargetLocationErrorM(level, ageMs, posture)`、`GetCommsJamming(tile, victimCountry)`、`SensorProfile`（需要字段：`opticsClassDay`, `opticsClassNight`，枚举 `OpticsClass` 见 §4.2.2——C-08）、`SignatureProfile.engagementSigMult` | 片段创建时 |
 | 06 | `SquadCarriedState` 的当前值，经 `GetAvailable(SquadId, ItemKey)` 读取，用于初始化 `EngagementAmmoCache`（§3.3）；`GetFatigueFloor(SquadId)` | 片段创建时 |
 | 07 | `RollVehicleDamage()`、`ApplyCasualty()`、`ApplyVehicleDamage()`、`CrossTrainFactor()`、`PlatoonReorgInCombat()` | 片段内调用 |
 | 09 | 本刻号、`FidelityTier`、`LightCondition`（按太阳高度：> 0° Day，−6°…0° Twilight，< −6° Night） | 每刻 |
@@ -1159,12 +1187,12 @@ ProvingGroundReport Run(ProvingGroundSpec spec) {
 
 | 去向 | 数据 | 时机 |
 |---|---|---|
-| 04 | `EngagementResult { engagementId, outcome, seizedDepthM, durationMin, perSquad 状态摘要, droppedItems[], lossLedger[], requestStats, threatRecords }` | 片段结束那一刻（阶段 100 末），04 在阶段 140/下一条带步处理 |
+| 04 | `EngagementResult { engagementId, outcome, seizedDepthM, durationMin, perSquad 状态摘要, droppedItems[], lossLedger[], requestStats, threatRecords, reconCoverage[2] }`（`reconCoverage[s]` = s 方在片段内对敌方元素的航迹覆盖率 [0,1]，按步平均） | 片段结束那一刻（阶段 100 末）；04 在下一条带步阶段 80（04 §4.9.6）处理；EndEdgeBattle 时经 ForceEnd 立即处理 |
 | 04 | 新的 `FireSupportRequest`（缓冲） | 阶段 100 末统一提交 |
 | 04 | 片段已结束时仍在飞的落点：交回 04 在条带上结算 | 落点所在刻 |
-| 07 | `ApplyCasualty(personId, CasualtyState, time, LossSource)`、`ApplyVehicleDamage(itemId, DamageLevel, flags, time, LossSource, stripPos)` | 事件发生即时 |
-| 02 | 实战经验（参战人员按专业的“交战分钟数”），02 定义练度增长 | 片段结束 |
-| 05 | `ReconContribution`：片段内对敌方元素航迹覆盖率 → 05 的 `GroundRecon` 贡献；开火/电台使用 → 特征值事件 | 片段结束（以及每 10 分钟汇总一次） |
+| 07 | `ApplyCasualty(PersonnelId, CasualtyState, SimTime, LossSource, Vec2D, EdgeBattleId)`、`ApplyVehicleDamage(EquipmentItemId, DamageLevel, DamageFlags, SimTime, LossSource, Vec2D, EdgeBattleId)`（Vec2D = 战斗坐标位置）；`(DamageLevel, DamageFlags) RollVehicleDamage(EquipmentItemId, MunitionKind, Aspect, ref Pcg32)` | 事件发生即时 |
+| 02 | `CombatExperienceReport(battalion, specialty, model, survivors, contactMinutes)`（02 §4.7）：参战人员按（营, 专业, 型号）汇总；`contactMinutes` = 人均处于有航迹或受压制状态的分钟数 | 片段结束 |
+| 04 | `EngagementResult.reconCoverage`：04 在 §4.5.1 计入写给 05 的侦察速率（同一战斗内的侦察只经 04 交给 05） | 片段结束 |
 | 06 | 弹药消耗：按 §3.3 `EngagementAmmoCache` 求差后调 `TryConsume(SquadId, ItemKey, qty, out got)` + `ReportConsumption(battalion, ItemKey, qty)`；燃油消耗（车辆移动距离 × 06 的油耗）同样走 `TryConsume` | 片段结束 |
 | 13/15 | `BattleEventLog` 事件（`Full` 精度）：发现、开火、命中、伤亡、下车、请求时间戳 | 每刻阶段 150 |
 | 12 | `OutcomeCache` 读取接口 `Query(key, so, se) → (mean, var)` | 任意时刻（只读） |
@@ -1185,6 +1213,22 @@ ProvingGroundReport Run(ProvingGroundSpec spec) {
 | `SaltCacheGen` | 100 + sampleIdx | 缓存生成（`RngDomain.Cache`，tick = 0） | `Mix(keyHash) ^ cellIdx` |
 | `SaltCacheSample` | 8 | 缓存抽样与落到名册（`Cache` 域） | `engagementId` |
 | `SaltResilience` | 9 | 能力衰减曲线（`Cache` 域） | `templateHash` |
+
+### 6.4 本文件提供的查询函数
+
+| 接口 | 定义 | 调用者 |
+|---|---|---|
+| `double GetMaxRangeM(ModelHandle m)` | = 该型号 `WeaponProfile.rangeMaxM`（无 `weapon` 键 = 0） | 01 |
+| `double GetSystemMassKg(ModelHandle m)` | = `weaponWeightKg + Σ defaultLoad[k].rounds × roundWeightKg(defaultLoad[k].munition)` | 01 |
+| `double ComputeDismountLoadKg(TemplateHandle squadTemplate, SortedDictionary<CategoryHandle, ModelHandle> bindings)` | 对该班模板满编实例按 §4.8.1 分配规则计算下车人员平均负重（期望值，不抽样） | 01 |
+| `double Effectiveness(ModelHandle m, TargetClass tc, DepthBand band)` | = `CapIndex(m, tc)`（§4.13 型号级重载）在该纵深带中点距离处的值：Close 150 m / Medium 650 m / Far 2500 m；`Beyond` = 0 | 01 |
+| `double CapIndex(ModelHandle m, TargetClass c)` | §4.13 型号级重载 | 12、01 |
+
+### 6.5 存档（15）
+
+| 去向 | 内容 |
+|---|---|
+| 15 | 存档：`SectionId.SquadCombat`（= 30，15 §3.2）；组件：`SquadCombatState`、`PersonLoadState`、所有未结束的 `Engagement`（含 `EngagementCell`、`EngagementSideState`、`SectorContext`、`SpatialElement`、`WeaponRuntime`、`EngagementAmmoCache`、`EngagementStats`/`WeaponStats`/`ThreatRecord`）、未完成的 `FireSupportRequest`；不存档（派生，读档后重建）：`OutcomeCache`（键的纯函数，15 §4）、`CapabilityVector`/`BattalionSummary`（重算）、步内事件队列（不跨步） |
 
 ---
 
@@ -1305,6 +1349,7 @@ ProvingGroundReport Run(ProvingGroundSpec spec) {
 | C-16 | `MinFireScore` 等分配阈值 | 先用 0.02，由 V1 校准 | 直接决定职能重复武器何时闲置 | — |
 | C-17 | 车内人员伤亡表 | 采用 §4.6.3 的估计表，V2 复核 | 公开统计不足，需验证 | 按车型给不同表 |
 | C-18 | 新增装备类别 `loitering_munition`、`fpv_drone`、`body_armor`（01 的 schema） | 建议 01 增加 | 现有 categories.yaml 无巡飞弹/FPV/防弹衣，纳卡与俄乌都需要 | 巡飞弹作为 `uav_*` 子类 |
+| C-19 | Marsh/Water 的地形表数值 | 见 §5 | 估算 | — |
 
 ---
 
