@@ -174,7 +174,7 @@ public static class SaveRegistry {             // 各规格在启动时注册自
 ```csharp
 public enum InputKind : int {                  // 只能追加
     None = 0, Order = 1,                       // 09 Order（Player 来源）
-    StrategicAction = 2,                       // 11 IStrategicActions 的一次调用（方法枚举 + 参数）
+    StrategicAction = 2,                       // 11 IStrategicActions 的一次调用（方法枚举 + 参数；Quote 除外，见 §4.8）
     StarToggle = 3,                            // 13 星标（影响 09 调度）
     FidelityProfile = 4,                       // 09
     AiDifficulty = 5,                          // 12
@@ -391,7 +391,7 @@ World Load(Stream s) {
 
 ### 4.8 输入日志 `InputLog` 与完整回放
 **什么算输入**：改变模拟结果的一切玩家行为（白名单）：
-- 09 `SubmitOrder`（Player 来源）、`CancelOrder`（`InputKind.CancelOrder`）；11 `IStrategicActions` 的每次调用；13 `IUiCommands` 的编制编辑（`OrgEdit`）与单位管理（`UnitAdmin`）；事件与停火答复；星标增删；`FidelityProfile`；AI 难度；旅条令预设切换；其他列入 `SettingWithSimEffect` 白名单的设置（新增需要在本文件登记）。
+- 09 `SubmitOrder`（Player 来源）、`CancelOrder`（`InputKind.CancelOrder`）；11 `IStrategicActions` 的每次调用（`Quote` 除外：纯查询，不改状态；`AnswerEvent`/`AnswerCeasefire` 记为 `EventAnswer`/`CeasefireAnswer`，其余记 `StrategicAction`，payload 首字段 = 方法编号，按 11 §6.3 接口中的声明顺序从 1 起编、只能追加，其后为参数的规范化序列化）；13 `IUiCommands` 的编制编辑（`OrgEdit`）与单位管理（`UnitAdmin`）；事件与停火答复；星标增删；`FidelityProfile`；AI 难度；旅条令预设切换；其他列入 `SettingWithSimEffect` 白名单的设置（新增需要在本文件登记）。
 **不是输入**：暂停、速度、镜头、界面过滤器、自动暂停设置、打开哪个视图、存档/读档本身。
 
 **记录**：每条输入提交时 `tick = clock.currentTick`（即将执行的刻），`seq` = 本刻内提交序号。AI 命令**不记录**（回放时由 AI 重新产生）。
