@@ -115,3 +115,13 @@ categories:
   - {id: guidance_kit,        name: 制导/增程改装套件,       group: air_munition}
   - {id: dispenser,           name: 滑翔/动力布撒器,         group: air_munition}
   - {id: ashm_surface,        name: 舰/岸射反舰导弹,         group: air_munition}
+
+  # ---- 规格审查新增（01 O-12 / 03 C-18 / 05 R-18 / 08 第 11 节）----
+  - {id: loitering_munition,  name: 巡飞弹,                 group: fire_support}
+  - {id: fpv_drone,           name: FPV 无人机,             group: uav}
+  - {id: body_armor,          name: 防弹衣,                 group: personal_equipment}
+  - {id: tbm_launcher,        name: 战术弹道导弹发射车（飞毛腿/圆点/伊斯坎德尔）, group: artillery}
+  - {id: camo_kit,            name: 伪装器材（多光谱伪装网等）, group: deception}
+  - {id: decoy_vehicle,       name: 假目标车辆/充气假目标,   group: deception}
+  - {id: decoy_emitter,       name: 假辐射源（假雷达/假电台）, group: deception}
+  - {id: sam_missile,         name: 地空导弹（弹药）,        group: air_munition}
