@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>战争部长 Minister of Defense — V8 交互式网页原型验证与 V1–V7 评测台</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <!-- Top Command Header -->
+  <header class="top-header">
+    <div class="brand-group">
+      <span class="brand-badge">PHASE 0/1 MVP · V8 WEB PLAYTEST</span>
+      <div>
+        <div class="brand-title">战争部长 / MINISTER OF DEFENSE</div>
+        <div class="brand-subtitle">现代军事战略与编制推演（1990–2025）· 纳卡战区十年建军与 2020 四十四日战争交互验证台</div>
+      </div>
+    </div>
+
+    <div class="top-controls">
+      <div class="ctrl-pill">
+        <label for="select-player-country">扮演国家 (DS-044)：</label>
+        <select id="select-player-country">
+          <option value="ARM">亚美尼亚 / 阿尔察赫 (ARM)</option>
+          <option value="AZE">阿塞拜疆 (AZE)</option>
+        </select>
+      </div>
+
+      <div class="ctrl-pill">
+        <label for="select-icon-style">单位图标 (DS-027)：</label>
+        <select id="select-icon-style">
+          <option value="NatoApp6">北约军标 (NATO APP-6A)</option>
+          <option value="Silhouette">装备剪影 (Wargame Silhouette)</option>
+        </select>
+      </div>
+
+      <div class="ctrl-pill">
+        <label for="select-aze-ai-tier">对手 AI 档位 (14 §9.3)：</label>
+        <select id="select-aze-ai-tier">
+          <option value="H">H 档：史实预算与采办 (Historical)</option>
+          <option value="P">P 档：合理自适应 AI (Plausible)</option>
+          <option value="B">B 档：理性最优针对回应 (Best-Response)</option>
+        </select>
+      </div>
+
+      <button class="btn btn-cyan" id="btn-export-aar">导出战报 / AAR (JSON)</button>
+    </div>
+  </header>
+
+  <!-- Navigation Tabs -->
+  <nav class="nav-tabs">
+    <button class="nav-tab active" data-tab="tab-v8-campaign">1. V8 交互推演：2010–2020 十年建军 & 2020 纳卡战争</button>
+    <button class="nav-tab" data-tab="tab-proving-ground">2. Phase 0 编制试验场 & 班排战术沙盒 (V1 / V5)</button>
+    <button class="nav-tab" data-tab="tab-logistics-lab">3. 纳卡后勤网络、拉钦走廊切断与关键节点实验室 (V3)</button>
+    <button class="nav-tab" data-tab="tab-validation-suite">4. V1–V8 全量数值验证报告与自动审计台</button>
+  </nav>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 1: V8 INTERACTIVE CAMPAIGN & 2020 WAR PLAYTEST                    -->
+  <!-- ===================================================================== -->
+  <main id="tab-v8-campaign" class="tab-view active">
+    <div class="wargame-grid">
+      <!-- LEFT COLUMN: Minister of Defense Strategic & Peacetime Build-up -->
+      <div>
+        <div class="panel">
+          <div class="panel-header">
+            <span>国防部长建军与采办决策台 (2010–2020)</span>
+            <span class="tag">11 / 14 / DC-009</span>
+          </div>
+          <div class="panel-body">
+            <div class="control-desc" style="margin-bottom:8px;">
+              快速套用典型十年建军路线，或逐项自定义改革方案后点击下方<strong>「结算和平建军期 &amp; 进入 2020 战争」</strong>：
+            </div>
+            <div class="btn-row" style="margin-bottom:12px;">
+              <button class="btn" data-preset="historical">史实默认路线 (必败基准)</button>
+              <button class="btn btn-primary" data-preset="optimal">V4 最优综合防御路线</button>
+              <button class="btn" data-preset="armor_heavy">传统重装大炮路线</button>
+              <button class="btn" data-preset="su30_trap">Su-30SM 面子工程陷阱</button>
+            </div>
+
+            <!-- 1. DC-009 Readiness & Reserve Reform -->
+            <div class="control-group">
+              <div class="control-title">
+                <span>1. 兵役与简编/预备役复训改革 (DC-009)</span>
+                <span id="lbl-payroll-saved" style="color:var(--accent-green);font-family:var(--font-mono);font-size:11.5px;">省 $0M</span>
+              </div>
+              <div class="control-desc">定期复训预备役以 15–20% 平时军饷保留 75–85% 战时熟练度：</div>
+              <div class="radio-pills" id="grp-readiness-reform">
+                <div class="radio-pill" data-val="0">维持常备重兵<br/><small>军饷占 48.8%</small></div>
+                <div class="radio-pill" data-val="1">温和简编改革<br/><small>十年省 $440M</small></div>
+                <div class="radio-pill selected" data-val="2">深度简编+复训<br/><small>十年省 $640M</small></div>
+              </div>
+            </div>
+
+            <!-- 2. SHORAD & SAM -->
+            <div class="control-group">
+              <div class="control-title">
+                <span>2. 野战防空导弹网 (Tor-M2KM / Buk / Osa-1T)</span>
+                <span id="lbl-cost-shorad" style="font-family:var(--font-mono);font-size:11.5px;">$330M</span>
+              </div>
+              <div class="radio-pills" id="grp-shorad">
+                <div class="radio-pill" data-val="0">Lv0 维持老旧 Osa<br/><small>$30M</small></div>
+                <div class="radio-pill" data-val="1">Lv1 少量 Tor+翻新<br/><small>$165M</small></div>
+                <div class="radio-pill selected" data-val="2">Lv2 完整中近程伞<br/><small>$330M</small></div>
+              </div>
+            </div>
+
+            <!-- 3. EW, Counter-Battery & Decoys -->
+            <div class="control-group">
+              <div class="control-title">
+                <span>3. 电子战、反炮兵雷达与假目标群 (05 / 08)</span>
+                <span id="lbl-cost-ew" style="font-family:var(--font-mono);font-size:11.5px;">$190M</span>
+              </div>
+              <div class="radio-pills" id="grp-ew">
+                <div class="radio-pill" data-val="0">Lv0 无专用电抗<br/><small>$15M</small></div>
+                <div class="radio-pill" data-val="1">Lv1 基础干扰+假目标<br/><small>$95M</small></div>
+                <div class="radio-pill selected" data-val="2">Lv2 Repellent+动物园<br/><small>$190M</small></div>
+              </div>
+            </div>
+
+            <!-- 4. Southern Fortifications & Minefields -->
+            <div class="control-group">
+              <div class="control-title">
+                <span>4. 南线河谷二三线筑垒与反坦克雷场 (04 / 09)</span>
+                <span id="lbl-cost-fort" style="font-family:var(--font-mono);font-size:11.5px;">$265M</span>
+              </div>
+              <div class="radio-pills" id="grp-fort">
+                <div class="radio-pill" data-val="0">Lv0 仅一线哨所<br/><small>$25M</small></div>
+                <div class="radio-pill" data-val="1">Lv1 局部支撑点<br/><small>$135M</small></div>
+                <div class="radio-pill selected" data-val="2">Lv2 纵深暗堡+雷场群<br/><small>$265M</small></div>
+              </div>
+            </div>
+
+            <!-- 5. ATGM, Night Thermal & Deep Fires -->
+            <div class="control-group">
+              <div class="control-title">
+                <span>5. 反坦克导弹、坦克热像仪与远程火箭炮</span>
+                <span id="lbl-cost-atgm" style="font-family:var(--font-mono);font-size:11.5px;">$290M</span>
+              </div>
+              <div class="radio-pills" id="grp-atgm">
+                <div class="radio-pill" data-val="0">Lv0 苏式库存<br/><small>$45M</small></div>
+                <div class="radio-pill" data-val="1">Lv1 增配 Kornet-E<br/><small>$150M</small></div>
+                <div class="radio-pill selected" data-val="2">Lv2 全旅热像+重反甲<br/><small>$290M</small></div>
+              </div>
+            </div>
+
+            <!-- 6. Domestic UAV & Digital C2 -->
+            <div class="control-group">
+              <div class="control-title">
+                <span>6. 国产战术侦察无人机与炮兵数字化校射链</span>
+                <span id="lbl-cost-uav" style="font-family:var(--font-mono);font-size:11.5px;">$80M</span>
+              </div>
+              <div class="radio-pills" id="grp-uav">
+                <div class="radio-pill" data-val="0">Lv0 传统观察所<br/><small>$10M</small></div>
+                <div class="radio-pill selected" data-val="1">Lv1 旅属侦察无人机<br/><small>$80M</small></div>
+                <div class="radio-pill" data-val="2">Lv2 侦察+巡飞弹产线<br/><small>$175M</small></div>
+              </div>
+            </div>
+
+            <!-- 7. Ammo Stockpile Target Days -->
+            <div class="control-group">
+              <div class="control-title">
+                <span>7. 战备弹药储备天数目标 (06 StockTarget)</span>
+                <span id="lbl-cost-ammo" style="font-family:var(--font-mono);font-size:11.5px;">$165M</span>
+              </div>
+              <div class="radio-pills" id="grp-ammo">
+                <div class="radio-pill" data-val="20">20 天标准消耗<br/><small>$40M</small></div>
+                <div class="radio-pill selected" data-val="40">40 天高强度储备<br/><small>$165M</small></div>
+                <div class="radio-pill" data-val="60">60 天全面持久储备<br/><small>$320M</small></div>
+              </div>
+            </div>
+
+            <!-- 8. Su-30SM Fighter Purchase (Historical Trap) -->
+            <div class="control-group">
+              <div class="control-title">
+                <span>8. Su-30SM 重型战斗机采购 (空军游说项)</span>
+                <span id="lbl-cost-su30" style="color:var(--accent-amber);font-family:var(--font-mono);font-size:11.5px;">$0M</span>
+              </div>
+              <div class="radio-pills" id="grp-su30">
+                <div class="radio-pill selected" data-val="0">0 架 (拒批面子工程)<br/><small>省下宝贵外汇</small></div>
+                <div class="radio-pill" data-val="4">4 架 (史实 2019 采购)<br/><small>-$128M 缺配套弹</small></div>
+                <div class="radio-pill" data-val="8">8 架 (满编中队)<br/><small>-$256M 挤占防空</small></div>
+              </div>
+            </div>
+
+            <!-- 10-Year Budget Balance Summary -->
+            <div class="kpi-grid" style="margin-top:10px;">
+              <div class="kpi-card">
+                <div class="kpi-label">十年可支配采办空间</div>
+                <div class="kpi-val" id="kpi-avail-budget">$1,323M</div>
+                <div class="kpi-sub">含俄 $300M 军贸信贷</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">当前方案计划支出</div>
+                <div class="kpi-val" id="kpi-planned-spend">$1,320M</div>
+                <div class="kpi-sub" id="kpi-fulfillment-sub">资金到位率 100.0%</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">50 种子预期守住率</div>
+                <div class="kpi-val" id="kpi-expected-winrate" style="color:var(--accent-green);">73.0%</div>
+                <div class="kpi-sub" id="kpi-expected-sub">A威慑 + B守住舒沙</div>
+              </div>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn btn-primary" id="btn-apply-peacetime" style="width:100%;padding:9px;">
+                结算 2010–2020 建军方案（含 2016 四日战争检验）并重置 2020 战局
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CENTER COLUMN: Interactive H3 Hex Map & 5-Phase Strip Visualizer -->
+      <div>
+        <div class="hex-map-wrap" style="margin-bottom:14px;">
+          <div class="hex-map-toolbar">
+            <div>
+              <strong id="map-date-label" style="color:var(--accent-amber);font-family:var(--font-mono);font-size:14px;">
+                2020-09-27 (Day 0 · 开战前夕)
+              </strong>
+              <span id="map-status-badge" class="badge-warn" style="margin-left:8px;">等待开战命令</span>
+            </div>
+            <div class="legend-items">
+              <span><i class="legend-dot" style="background:var(--arm-color);"></i>亚美尼亚/阿尔察赫控制</span>
+              <span><i class="legend-dot" style="background:var(--aze-color);"></i>阿塞拜疆控制</span>
+              <span><i class="legend-dot" style="background:#e74c3c;"></i>激战易手/被切断</span>
+            </div>
+          </div>
+
+          <!-- Interactive SVG Hex Map -->
+          <svg id="nk-hex-svg" viewBox="0 0 780 450" xmlns="http://www.w3.org/2000/svg"></svg>
+
+          <!-- Operational Time Step Bar -->
+          <div style="padding:10px 12px;background:var(--bg-2);border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+            <div class="btn-row" style="margin-top:0;">
+              <button class="btn btn-primary" id="btn-step-1d">推进 +1 天</button>
+              <button class="btn btn-primary" id="btn-step-5d">推进 +5 天 (至自动暂停)</button>
+              <button class="btn btn-cyan" id="btn-run-full-war">一键推演至停火结局</button>
+              <button class="btn" id="btn-reset-war">重置到 Day 0</button>
+            </div>
+            <div style="font-family:var(--font-mono);font-size:12px;color:var(--text-1);">
+              核心地块持有：<strong id="lbl-core-tiles-held" style="color:#fff;">26 / 26 (100%)</strong> ·
+              舒沙状态：<strong id="lbl-shusha-status" style="color:var(--accent-green);">亚方固守</strong>
+            </div>
+          </div>
+        </div>
+
+        <!-- Selected Hex / Frontline Strip 5-Phase Inspector (04_strip_layer.md, DC-023, DC-022) -->
+        <div class="panel">
+          <div class="panel-header">
+            <span id="strip-panel-title">五阶段交战条带与地块详情：南线（菲祖利—杰布拉伊尔—舒沙方向）</span>
+            <span class="tag">04 Strip / DC-023 单一推进度 / DC-022 自动炮火优先级</span>
+          </div>
+          <div class="panel-body">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:6px;">
+              <div>
+                当前选中地块：<strong id="sel-hex-name" style="color:var(--accent-amber);">舒希 (Shushi)</strong> ·
+                地形：<span id="sel-hex-terrain" class="tag">Forest / 森林高地</span> ·
+                工事等级：<strong id="sel-hex-fort">0.62</strong>
+              </div>
+              <div style="font-family:var(--font-mono);font-size:12px;">
+                条带统一推进进度 (`advanceKm`, DC-023)：<strong id="sel-strip-adv-km" style="color:var(--accent-cyan);">0.0 / 8.0 km (0%)</strong>
+              </div>
+            </div>
+
+            <div class="progress-track">
+              <div class="progress-fill" id="bar-strip-progress" style="width:0%;"></div>
+            </div>
+
+            <!-- 5 Phases A-E -->
+            <div class="strip-phases">
+              <div class="phase-box active-phase">
+                <div class="phase-code">PHASE A</div>
+                <div class="phase-name">纵深无人机/巡飞弹</div>
+                <div class="phase-stat" id="ph-a-stat">损失归因 42%</div>
+              </div>
+              <div class="phase-box">
+                <div class="phase-code">PHASE B</div>
+                <div class="phase-name">侦察与前哨警戒</div>
+                <div class="phase-stat" id="ph-b-stat">暴露度 L3</div>
+              </div>
+              <div class="phase-box active-phase">
+                <div class="phase-code">PHASE C</div>
+                <div class="phase-name">反炮兵与远程消耗</div>
+                <div class="phase-stat" id="ph-c-stat">损失归因 31%</div>
+              </div>
+              <div class="phase-box">
+                <div class="phase-code">PHASE D</div>
+                <div class="phase-name">前沿火力准备</div>
+                <div class="phase-stat" id="ph-d-stat">压制均值 0.48</div>
+              </div>
+              <div class="phase-box">
+                <div class="phase-code">PHASE E</div>
+                <div class="phase-name">班排直瞄突击 (03)</div>
+                <div class="phase-stat" id="ph-e-stat">损失归因 27%</div>
+              </div>
+            </div>
+
+            <div style="font-size:12px;color:var(--text-1);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:6px;">
+              <span>旅属炮兵自动优先级 (`DC-022`)：<strong id="lbl-arty-auto-prio" style="color:var(--accent-cyan);">自动锁定 L4 高价值防空/炮兵目标 → 压制 Phase E 接触线</strong></span>
+              <span>北线战况：<strong id="lbl-north-axis">塔利什前推 0.0 km</strong> · 南线战况：<strong id="lbl-south-axis">推进 0.0 / 132.0 km</strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN: Wartime Orders, DC-010 Command Latency, Air/AD Posture & Battle Ledger -->
+      <div>
+        <!-- Wartime Operational Orders & Air Defense Posture -->
+        <div class="panel">
+          <div class="panel-header">
+            <span>战时统帅部指令与防空/后勤态势</span>
+            <span class="tag">08 / 09 / DC-010</span>
+          </div>
+          <div class="panel-body">
+            <!-- Air Defense EMCON Posture -->
+            <div class="control-group">
+              <div class="control-title">
+                <span>1. 防空雷达电磁态势 (S-300PS / Tor / Osa)</span>
+                <span class="tag">08 Air/AD</span>
+              </div>
+              <div class="radio-pills" id="grp-ad-posture">
+                <div class="radio-pill" data-val="always_active">全程开机迎敌<br/><small>高击落/易遭反辐射</small></div>
+                <div class="radio-pill selected" data-val="doctrine_mixed">游击伏击开机<br/><small>打完即撤+假目标</small></div>
+                <div class="radio-pill" data-val="always_silent">全面电磁静默<br/><small>保雷达/放任TB2</small></div>
+              </div>
+            </div>
+
+            <!-- Frontline Operational Stance & DC-010 Command Echelon -->
+            <div class="control-group">
+              <div class="control-title">
+                <span>2. 南线作战方针与下令层级 (DC-010 延迟反置)</span>
+                <span id="lbl-order-delay" style="color:var(--accent-amber);font-family:var(--font-mono);font-size:11.5px;">延迟 98.0 min</span>
+              </div>
+              <div class="radio-pills" id="grp-cmd-echelon" style="grid-template-columns:repeat(4,1fr);margin-bottom:6px;">
+                <div class="radio-pill" data-val="corps">给军部下令<br/><small>29.4m 初始</small></div>
+                <div class="radio-pill selected" data-val="brigade">建制旅逐级<br/><small>98.0m 到营</small></div>
+                <div class="radio-pill" data-val="skip_hq">越级手操单营<br/><small>176.4m 惩罚</small></div>
+                <div class="radio-pill" data-val="sof">特种直通链<br/><small>14.7m 破袭</small></div>
+              </div>
+              <div class="radio-pills" id="grp-war-stance">
+                <div class="radio-pill" data-val="rigid_counter">死守一线+装甲反扑<br/><small>史实10月初高战损</small></div>
+                <div class="radio-pill selected" data-val="elastic_depth">依托二线工事弹性迟滞<br/><small>保存实力护舒沙</small></div>
+                <div class="radio-pill" data-val="sof_ambush">山地反坦克与特种破袭<br/><small>专打峡谷补给线</small></div>
+              </div>
+            </div>
+
+            <!-- Frontline Convoy Policy -->
+            <div class="control-group">
+              <div class="control-title">
+                <span>3. 拉钦走廊与前线车队补给策略 (06 L-07)</span>
+                <span id="lbl-convoy-loss" style="color:var(--accent-cyan);font-family:var(--font-mono);font-size:11.5px;">车损 -77.2%</span>
+              </div>
+              <div class="radio-pills" id="grp-convoy-policy" style="grid-template-columns:repeat(2,1fr);">
+                <div class="radio-pill" data-val="continuous">全天候连续运输 (24h)<br/><small>820t/d · 卡车日损 18.4 辆</small></div>
+                <div class="radio-pill selected" data-val="night_only">仅夜间闭灯运输 (NightOnly)<br/><small>540t/d · 卡车日损 4.2 辆</small></div>
+              </div>
+            </div>
+
+            <!-- Live War KPIs -->
+            <div class="kpi-grid">
+              <div class="kpi-card">
+                <div class="kpi-label">亚方阵亡 (KIA)</div>
+                <div class="kpi-val" id="war-arm-kia">0</div>
+                <div class="kpi-sub">史实 44 天: 3,825</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">阿方阵亡 (KIA)</div>
+                <div class="kpi-val" id="war-aze-kia">0</div>
+                <div class="kpi-sub">史实 44 天: 2,906</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">亚/阿坦克损失</div>
+                <div class="kpi-val" id="war-tank-loss">0 : 0</div>
+                <div class="kpi-sub">Oryx: 255 : 62</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">亚方防空/火炮损失</div>
+                <div class="kpi-val" id="war-sam-art-loss">0 / 0</div>
+                <div class="kpi-sub">Oryx: 39 / 363</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Auto-Pause Notification & Battle Event Log -->
+        <div class="panel">
+          <div class="panel-header">
+            <span>自动暂停通知与战报流 (09 Notification / AAR)</span>
+            <span class="tag" id="lbl-autopause-count">自动暂停 0 次</span>
+          </div>
+          <div class="panel-body">
+            <div class="event-feed" id="war-event-feed"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 2: PHASE 0 PROVING GROUND & SQUAD COMBAT SANDBOX (V1 & V5)        -->
+  <!-- ===================================================================== -->
+  <section id="tab-proving-ground" class="tab-view">
+    <div class="wargame-grid">
+      <!-- Left: Template & Echelon Designer -->
+      <div>
+        <div class="panel">
+          <div class="panel-header">
+            <span>Phase 0 编制试验场 (Proving Ground · V1 &amp; V5)</span>
+            <span class="tag">01 / 02 / 03</span>
+          </div>
+          <div class="panel-body">
+            <div class="control-group">
+              <div class="control-title"><span>蓝方（进攻/试验连）编制模板</span></div>
+              <select id="pg-select-att" style="width:100%;padding:6px;"></select>
+            </div>
+
+            <div class="control-group">
+              <div class="control-title"><span>红方（防守参考连）编制模板</span></div>
+              <select id="pg-select-dfn" style="width:100%;padding:6px;"></select>
+            </div>
+
+            <div class="control-group">
+              <div class="control-title"><span>交战地形 (`Terrain`) 与任务 (`Mission`)</span></div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                <select id="pg-select-terrain" style="padding:6px;">
+                  <option value="Open">开阔地 (Open - 视距 2.8km)</option>
+                  <option value="Mixed" selected>混合地形 (Mixed - 视距 1.5km)</option>
+                  <option value="Forest">森林 (Forest - 视距 420m)</option>
+                  <option value="Urban">城市巷战 (Urban - 视距 260m)</option>
+                  <option value="Mountain">高地山地 (Mountain - 俯射 2.4km)</option>
+                </select>
+                <select id="pg-select-mission" style="padding:6px;">
+                  <option value="AttackPosition">阵地进攻 (AttackPosition)</option>
+                  <option value="Meeting">遭遇战 (Meeting)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-title">
+                <span>步兵班火器负重与老兵传帮带实验 (V1-d / DC-001)</span>
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;">
+                <div>
+                  <label style="font-size:11px;color:var(--text-2);">班支援火器总重 (kg):</label>
+                  <select id="pg-squad-weight" style="width:100%;padding:5px;margin-top:2px;">
+                    <option value="6">6 kg (仅轻机枪 RPK-74)</option>
+                    <option value="12">12 kg (PKM + 少量弹药)</option>
+                    <option value="18" selected>18 kg (黄金拐点: PKM + RPG-7)</option>
+                    <option value="26">26 kg (超重: PKM + AGS-17)</option>
+                    <option value="30">30 kg (严重超重: 双重武器)</option>
+                  </select>
+                </div>
+                <div>
+                  <label style="font-size:11px;color:var(--text-2);">班规模与老兵传帮带 (DC-001):</label>
+                  <select id="pg-squad-mentoring" style="width:100%;padding:5px;margin-top:2px;">
+                    <option value="size_7_all_green">7人全生手班 (无老兵)</option>
+                    <option value="size_7_veteran_mentored">7人老兵带新兵 (+20.9%)</option>
+                    <option value="size_9_all_green">9人全生手班 (无老兵)</option>
+                    <option value="size_9_veteran_mentored" selected>9人老兵带新兵 (+24.0%)</option>
+                    <option value="size_11_veteran_mentored">11人老兵带新兵 (+26.2%)</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-title">
+                <span>重型 ATGM 编制层级放置实验 (V1-a)</span>
+              </div>
+              <div class="radio-pills" id="grp-pg-atgm-echelon">
+                <div class="radio-pill" data-val="squad">下放步兵班<br/><small>响应8s/暴露大</small></div>
+                <div class="radio-pill selected" data-val="company_plt">集中连属反坦排<br/><small>响应33s/均衡</small></div>
+                <div class="radio-pill" data-val="battalion_coy">集中营属反坦连<br/><small>响应76-138s/远射</small></div>
+              </div>
+            </div>
+
+            <div class="btn-row">
+              <button class="btn btn-primary" id="btn-pg-run-battle" style="width:100%;padding:8px;">
+                启动 60 分钟步实时班排交战模拟 (50 vs 50 空间单元)
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center: Live 2D Spatial Tactical Battle Canvas -->
+      <div>
+        <div class="panel">
+          <div class="panel-header">
+            <span>60 分钟步实时空间交战画布 (6 正面槽位 × 纵深 [-1800m, +1200m])</span>
+            <span class="tag" id="pg-battle-step-tag">Step 0 / 60 min</span>
+          </div>
+          <div class="panel-body">
+            <canvas id="squad-battle-canvas" width="680" height="360"></canvas>
+            <div class="kpi-grid" style="margin-top:10px;">
+              <div class="kpi-card">
+                <div class="kpi-label">蓝方预测胜率</div>
+                <div class="kpi-val" id="pg-win-prob" style="color:var(--accent-cyan);">55.9%</div>
+                <div class="kpi-sub" id="pg-matchup-sub">全地形均值 55.9%</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">ATGM 层级击毁/交换比</div>
+                <div class="kpi-val" id="pg-atgm-kills">8.61 AFV</div>
+                <div class="kpi-sub" id="pg-atgm-exch">交换比 8.26 (响应 33.6s)</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">班火器净战力 &amp; 传帮带</div>
+                <div class="kpi-val" id="pg-weight-eff">2.675</div>
+                <div class="kpi-sub" id="pg-mentor-eff">有效熟练度 0.551 (+24%)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: V5 Anti-Cheese Matrix & Echelon Emergence Table -->
+      <div>
+        <div class="panel">
+          <div class="panel-header">
+            <span>16 典型编制（8 历史 + 8 邪道）全地形胜率榜 (V5)</span>
+            <span class="badge-pass">ALL PASS</span>
+          </div>
+          <div class="panel-body" style="max-height:460px;overflow-y:auto;">
+            <table class="data-table" id="tbl-v5-templates">
+              <thead>
+                <tr>
+                  <th>模板名称</th>
+                  <th class="num">总胜率</th>
+                  <th class="num">开阔</th>
+                  <th class="num">城市</th>
+                  <th class="num">山地</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 3: LOGISTICS & LACHIN CORRIDOR STRESS LAB (V3)                    -->
+  <!-- ===================================================================== -->
+  <section id="tab-logistics-lab" class="tab-view">
+    <div class="wargame-grid">
+      <div>
+        <div class="panel">
+          <div class="panel-header">
+            <span>纳卡后勤网络与走廊切断实验室 (V3)</span>
+            <span class="tag">06 Logistics</span>
+          </div>
+          <div class="panel-body">
+            <div class="control-group">
+              <div class="control-title"><span>1. 战区日消耗强度档位 (戈里斯 → 斯捷潘纳克特)</span></div>
+              <select id="log-select-tier" style="width:100%;padding:6px;">
+                <option value="low_peacetime_200t">低强度 / 平时驻训 (200 t/天)</option>
+                <option value="medium_skirmish_700t">中等交火 (700 t/天)</option>
+                <option value="high_t5_reference_1200t" selected>标准高强度交战 / T5 基准 (1,200 t/天)</option>
+                <option value="surge_intense_1500t">极限高强度突击 (1,500 t/天)</option>
+              </select>
+            </div>
+
+            <div class="control-group">
+              <div class="control-title"><span>2. 走廊切断与北线 M11 (瓦尔德尼斯—马尔塔克特) 状态</span></div>
+              <div class="radio-pills" id="grp-log-corridor">
+                <div class="radio-pill selected" data-val="both_open">M12 + M11 双通<br/><small>正常补给</small></div>
+                <div class="radio-pill" data-val="m12_cut_m11_open">M12 舒沙被断<br/><small>仅靠北线 M11</small></div>
+                <div class="radio-pill" data-val="all_cut">双通道全断<br/><small>完全包围圈</small></div>
+              </div>
+            </div>
+
+            <div class="control-group">
+              <div class="control-title"><span>3. 格鲁吉亚军用过境禁令 (`geo_transit_ban_2020`)</span></div>
+              <div class="radio-pills" id="grp-log-geo-ban" style="grid-template-columns:1fr 1fr;">
+                <div class="radio-pill" data-val="open">格鲁吉亚口岸开放<br/><small>全国进口 8,300 t/d</small></div>
+                <div class="radio-pill selected" data-val="closed">格鲁吉亚关闭过境 (史实)<br/><small>进口降至 1,300 t/d (-84.3%)</small></div>
+              </div>
+            </div>
+
+            <div class="kpi-grid">
+              <div class="kpi-card">
+                <div class="kpi-label">所需 10t 卡车数</div>
+                <div class="kpi-val" id="log-kpi-trucks">54 辆</div>
+                <div class="kpi-sub" id="log-kpi-util">道路容量利用率 10.42%</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">纳卡包围圈耐久</div>
+                <div class="kpi-val" id="log-kpi-endurance" style="color:var(--accent-green);">持续畅通</div>
+                <div class="kpi-sub" id="log-kpi-endurance-sub">前推库存 6,480 t</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <div class="panel-header">
+            <span>被切断营 10 日弹药/给养/饥饿减员曲线 (06 §8 T6 精确对标)</span>
+            <span class="badge-pass">T6 EXACT MATCH</span>
+          </div>
+          <div class="panel-body">
+            <table class="data-table" id="tbl-v3-cutoff">
+              <thead>
+                <tr>
+                  <th>切断天数</th>
+                  <th class="num">圈内剩余弹药 (t)</th>
+                  <th class="num">断粮天数</th>
+                  <th class="num">疲劳下限 (`FatigueFloor`)</th>
+                  <th class="num">每营累计非战斗减员</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="panel">
+          <div class="panel-header">
+            <span>关键节点分析排行 (`KeyNodeReport` · 亚/阿 Top 5)</span>
+            <span class="tag">06 §4.15</span>
+          </div>
+          <div class="panel-body">
+            <div style="font-weight:700;margin-bottom:4px;color:var(--arm-color);">亚美尼亚 Top-5 关键节点（单点依赖极高）：</div>
+            <table class="data-table" id="tbl-v3-keynodes-arm" style="margin-bottom:12px;">
+              <thead>
+                <tr><th>排名</th><th>节点 ID</th><th class="num">纳卡补给下降</th><th class="num">全国下降</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+
+            <div style="font-weight:700;margin-bottom:4px;color:var(--aze-color);">阿塞拜疆 Top-5 关键节点（铁公冗余，无单点 &gt; 50%）：</div>
+            <table class="data-table" id="tbl-v3-keynodes-aze">
+              <thead>
+                <tr><th>排名</th><th>节点 ID</th><th class="num">全国补给下降</th><th class="num">受影响军团</th></tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================================================================== -->
+  <!-- TAB 4: V1-V8 VALIDATION SUITE DASHBOARD                               -->
+  <!-- ===================================================================== -->
+  <section id="tab-validation-suite" class="tab-view">
+    <div class="panel">
+      <div class="panel-header">
+        <span>V1–V8 全量验证套件汇总与一键浏览器端自检 (All 8 Validation Suites)</span>
+        <button class="btn btn-primary" id="btn-run-v8-selfcheck">运行 V8 网页交互完整性自检</button>
+      </div>
+      <div class="panel-body">
+        <div class="kpi-grid" id="val-summary-cards"></div>
+        <table class="data-table" id="tbl-val-overview" style="margin-top:10px;">
+          <thead>
+            <tr>
+              <th>验证编号</th>
+              <th>验证模块名称</th>
+              <th>核心验证目标与判据</th>
+              <th>实测关键指标</th>
+              <th>状态</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <script src="data_bundle.js"></script>
+  <script src="sim_engine.js"></script>
+</body>
+</html>
