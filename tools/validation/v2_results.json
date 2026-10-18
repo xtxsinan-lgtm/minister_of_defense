@@ -1,0 +1,253 @@
+{
+  "elapsed_s": 0.248,
+  "n_seeds": 200,
+  "all_pass": true,
+  "criteria_checks": {
+    "duration_in_band": true,
+    "arm_killed_in_band": true,
+    "aze_killed_in_band": true,
+    "killed_ratio_in_band": true,
+    "combat_territory_in_band": true,
+    "total_territory_in_band": true,
+    "nov10_ceasefire_rate_ok": true,
+    "no_red_line_rate_ok": true,
+    "equipment_losses_in_band_ok": true,
+    "south_milestones_within_15d_ok": true,
+    "drones_and_artillery_dominate_ac_line": true,
+    "armenian_ad_attrited_early_day14": true,
+    "v1_scenario_data_ok": true,
+    "v2b_2016_april_war_ok": true
+  },
+  "summary_metrics": {
+    "duration_days": {
+      "median": 45.0,
+      "p10": 44,
+      "p90": 47,
+      "historical": 44,
+      "band": [
+        35,
+        55
+      ]
+    },
+    "arm_killed": {
+      "median": 3900,
+      "p10": 3700,
+      "p90": 4081,
+      "historical": 3825,
+      "band": [
+        2500,
+        5500
+      ]
+    },
+    "aze_killed": {
+      "median": 3076,
+      "p10": 2913,
+      "p90": 3216,
+      "historical": 2906,
+      "band": [
+        1800,
+        4500
+      ]
+    },
+    "killed_ratio_arm_to_aze": {
+      "median": 1.27,
+      "historical": 1.32,
+      "band": [
+        1.0,
+        1.8
+      ]
+    },
+    "combat_tile_share": {
+      "median": 0.385,
+      "historical_est": 0.35,
+      "band": [
+        0.25,
+        0.5
+      ]
+    },
+    "total_tile_share_incl_handover": {
+      "median": 0.731,
+      "historical": 0.72,
+      "band": [
+        0.55,
+        0.85
+      ]
+    },
+    "nov10_template_share_pct": 100.0,
+    "no_red_line_share_pct": 100.0,
+    "south_4_milestones_within_15d_pct": 100.0,
+    "ac_line_equipment_loss_share": 0.731,
+    "day14_sam_loss_share": 0.794,
+    "tank_loss_ratio_arm_to_aze": {
+      "median": 3.87,
+      "historical": 4.1,
+      "band": [
+        2.0,
+        8.0
+      ]
+    }
+  },
+  "arm_equipment_losses_vs_oryx": {
+    "tanks": {
+      "sim_median": 256,
+      "oryx_value": 255,
+      "band": [
+        150,
+        350
+      ],
+      "in_band": true
+    },
+    "ifv": {
+      "sim_median": 120,
+      "oryx_value": 82,
+      "band": [
+        50,
+        160
+      ],
+      "in_band": true
+    },
+    "towed_artillery": {
+      "sim_median": 289,
+      "oryx_value": 250,
+      "band": [
+        150,
+        350
+      ],
+      "in_band": true
+    },
+    "sp_artillery": {
+      "sim_median": 31,
+      "oryx_value": 29,
+      "band": [
+        15,
+        60
+      ],
+      "in_band": true
+    },
+    "mrl": {
+      "sim_median": 83,
+      "oryx_value": 84,
+      "band": [
+        50,
+        120
+      ],
+      "in_band": true
+    },
+    "sam_systems": {
+      "sim_median": 54,
+      "oryx_value": 39,
+      "band": [
+        25,
+        70
+      ],
+      "in_band": true
+    },
+    "trucks_vehicles": {
+      "sim_median": 858,
+      "oryx_value": 737,
+      "band": [
+        400,
+        1100
+      ],
+      "in_band": true
+    }
+  },
+  "aze_equipment_losses_medians": {
+    "tanks": 66,
+    "ifv": 79,
+    "uav": 13
+  },
+  "milestone_medians": {
+    "talysh": {
+      "reached_rate_pct": 100.0,
+      "median_day": 5.0
+    },
+    "jabrayil": {
+      "reached_rate_pct": 100.0,
+      "median_day": 8.0
+    },
+    "hadrut": {
+      "reached_rate_pct": 100.0,
+      "median_day": 14.0
+    },
+    "fuzuli": {
+      "reached_rate_pct": 100.0,
+      "median_day": 17.0
+    },
+    "zangilan": {
+      "reached_rate_pct": 100.0,
+      "median_day": 24.0
+    },
+    "qubadli": {
+      "reached_rate_pct": 100.0,
+      "median_day": 29.0
+    },
+    "shusha": {
+      "reached_rate_pct": 100.0,
+      "median_day": 45.0
+    }
+  },
+  "air_defense_counterfactuals": {
+    "s300_always_active": {
+      "median_s300_radars_lost": 5.0,
+      "median_arm_sam_lost": 54.0,
+      "median_aze_uav_lost": 13.0,
+      "median_arm_tanks_lost": 253.0
+    },
+    "s300_doctrine_mixed": {
+      "median_s300_radars_lost": 4.71,
+      "median_arm_sam_lost": 54,
+      "median_aze_uav_lost": 13,
+      "median_arm_tanks_lost": 256
+    },
+    "s300_always_silent": {
+      "median_s300_radars_lost": 0.91,
+      "median_arm_sam_lost": 50.0,
+      "median_aze_uav_lost": 13.0,
+      "median_arm_tanks_lost": 256.0
+    },
+    "without_an2_decoys": {
+      "median_day14_ad_loss_share": 0.69,
+      "median_arm_sam_lost": 49.0
+    }
+  },
+  "v1_scenario_data_check": {
+    "inventory_vs_oryx_floor": {
+      "tanks": {
+        "inventory": 449,
+        "oryx_loss": 255,
+        "ok": true
+      },
+      "towed_artillery": {
+        "inventory": 439,
+        "oryx_loss": 250,
+        "ok": true
+      },
+      "sp_artillery": {
+        "inventory": 108,
+        "oryx_loss": 29,
+        "ok": true
+      },
+      "mrl": {
+        "inventory": 109,
+        "oryx_loss": 84,
+        "ok": true
+      },
+      "sam_systems": {
+        "inventory": 109,
+        "oryx_loss": 39,
+        "ok": true
+      }
+    },
+    "arm_2020_payroll_share": 0.488,
+    "aze_2020_payroll_share": 0.229,
+    "pass": true
+  },
+  "v2b_2016_april_war": {
+    "median_duration_days": 4.5,
+    "median_arm_killed": 91.0,
+    "median_aze_killed": 76.5,
+    "max_tiles_flipped": 0,
+    "pass": true
+  }
+}
