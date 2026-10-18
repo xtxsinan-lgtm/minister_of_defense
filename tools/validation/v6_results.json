@@ -1,0 +1,24 @@
+{
+  "python_single_engagement_60steps_ms": 30.52,
+  "python_per_step_us": 508.6,
+  "total_possible_pairs": 150000,
+  "evaluated_pairs_after_spatial_pruning": 49887,
+  "spatial_pruning_active_ratio_pct": 33.3,
+  "detected_pairs": 48461,
+  "total_fire_events_processed": 10940,
+  "hotspot_breakdown_pct": {
+    "los_and_detection_pct": 60.9,
+    "fire_allocation_and_heap_push_pct": 17.6,
+    "event_execution_and_state_update_pct": 21.5
+  },
+  "csharp_extrapolation_conservative_25x": {
+    "single_engagement_60steps_ms": 1.221,
+    "single_edge_10_engagements_per_hour_s": 0.012,
+    "target_single_edge_s": 0.3,
+    "theater_100_edges_per_game_hour_s": 0.076,
+    "target_theater_100_edges_s": "0.5 - 2.0",
+    "outcome_cache_single_key_768_runs_s": 0.31,
+    "target_cache_key_s": 30.0
+  },
+  "pass": true
+}

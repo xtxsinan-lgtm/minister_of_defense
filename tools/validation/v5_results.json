@@ -1,0 +1,289 @@
+{
+  "elapsed_s": 0.446,
+  "all_pass": false,
+  "criteria_checks": {
+    "C1_no_template_above_90pct": {
+      "max_named_overall_win_rate_pct": 57.9,
+      "best_of_2000_random_win_rate_pct": 78.7,
+      "best_random_shares": [
+        0.196,
+        0.16,
+        0.127,
+        0.08,
+        0.365,
+        0.072
+      ],
+      "pass": true
+    },
+    "C2_weapon_cost_ratio_under_3x": {
+      "top_to_second_ratio_by_target_class": {
+        "Personnel": 1.05,
+        "LightArmor": 1.03,
+        "HeavyArmor": 1.18,
+        "Fortification": 1.17,
+        "Air_UAV": 3.69
+      },
+      "max_ratio_overall": 3.69,
+      "pass": false
+    },
+    "C3_degenerate_cheese_templates_fail": {
+      "pure_tank_urban_win_rate_pct": 0.8,
+      "highest_cheese_overall_win_rate_pct": 15.2,
+      "lowest_historical_overall_win_rate_pct": 31.2,
+      "pass": true
+    },
+    "C4_suppression_before_advance_enforced": {
+      "unsuppressed_seize_share_pct": 1.36,
+      "threshold_pct": 10.0,
+      "pass": true
+    },
+    "C5_rps_counter_cycle": {
+      "tank_beats_medium_mech_in_open_pct": 63.1,
+      "mtn_atgm_inf_defends_vs_tank_in_mtn_pct": 95.2,
+      "medium_mech_beats_mtn_light_in_mixed_pct": 69.9,
+      "pass": true
+    }
+  },
+  "templates": {
+    "us_abct_mech_coy": {
+      "name": "美军 ABCT 机步连 (M2A3+Javelin+60迫)",
+      "is_historical": true,
+      "cost_m": 16.5,
+      "manpower": 132,
+      "overall_win_rate_pct": 55.5,
+      "max_single_matchup_win_rate_pct": 93.9,
+      "win_rate_by_terrain_pct": {
+        "Open": 57.4,
+        "Mixed": 54.4,
+        "Forest": 55.2,
+        "Urban": 54.7,
+        "Mountain": 55.8
+      }
+    },
+    "us_sbct_inf_coy": {
+      "name": "美军 SBCT 斯崔克连 (Stryker+Javelin+60迫)",
+      "is_historical": true,
+      "cost_m": 14.2,
+      "manpower": 128,
+      "overall_win_rate_pct": 57.9,
+      "max_single_matchup_win_rate_pct": 95.0,
+      "win_rate_by_terrain_pct": {
+        "Open": 52.6,
+        "Mixed": 56.0,
+        "Forest": 60.5,
+        "Urban": 60.5,
+        "Mountain": 60.1
+      }
+    },
+    "rus_btg_mr_coy": {
+      "name": "俄式摩步加强连 (BMP-2+T-72B+Kornet+82迫)",
+      "is_historical": true,
+      "cost_m": 13.8,
+      "manpower": 120,
+      "overall_win_rate_pct": 46.8,
+      "max_single_matchup_win_rate_pct": 91.3,
+      "win_rate_by_terrain_pct": {
+        "Open": 48.2,
+        "Mixed": 45.0,
+        "Forest": 47.0,
+        "Urban": 46.8,
+        "Mountain": 47.2
+      }
+    },
+    "pla_heavy_synth_coy": {
+      "name": "解放军重型合成连 (04A+99A配属+红箭+迫炮)",
+      "is_historical": true,
+      "cost_m": 16.0,
+      "manpower": 126,
+      "overall_win_rate_pct": 51.4,
+      "max_single_matchup_win_rate_pct": 92.7,
+      "win_rate_by_terrain_pct": {
+        "Open": 53.6,
+        "Mixed": 50.1,
+        "Forest": 51.2,
+        "Urban": 50.7,
+        "Mountain": 51.6
+      }
+    },
+    "aze_2020_assault_coy": {
+      "name": "阿军 2020 摩步突击连 (BMP-2+Spike+无人机引导)",
+      "is_historical": true,
+      "cost_m": 14.5,
+      "manpower": 118,
+      "overall_win_rate_pct": 55.9,
+      "max_single_matchup_win_rate_pct": 94.2,
+      "win_rate_by_terrain_pct": {
+        "Open": 54.2,
+        "Mixed": 54.4,
+        "Forest": 56.9,
+        "Urban": 56.6,
+        "Mountain": 57.2
+      }
+    },
+    "aze_tank_reinf_coy": {
+      "name": "阿军 T-72Aslan 坦克加强连 (3坦克排+1摩步排)",
+      "is_historical": true,
+      "cost_m": 15.8,
+      "manpower": 96,
+      "overall_win_rate_pct": 31.2,
+      "max_single_matchup_win_rate_pct": 86.5,
+      "win_rate_by_terrain_pct": {
+        "Open": 59.6,
+        "Mixed": 47.2,
+        "Forest": 16.4,
+        "Urban": 15.6,
+        "Mountain": 17.3
+      }
+    },
+    "arm_nk_def_coy": {
+      "name": "亚方纳卡守备摩步连 (BMP-1/T-72A+Konkurs+82迫)",
+      "is_historical": true,
+      "cost_m": 11.2,
+      "manpower": 115,
+      "overall_win_rate_pct": 50.9,
+      "max_single_matchup_win_rate_pct": 93.7,
+      "win_rate_by_terrain_pct": {
+        "Open": 44.8,
+        "Mixed": 48.4,
+        "Forest": 53.8,
+        "Urban": 54.2,
+        "Mountain": 53.5
+      }
+    },
+    "arm_mtn_light_coy": {
+      "name": "亚方山地轻步兵连 (PKM+RPG-7+Metis+82迫)",
+      "is_historical": true,
+      "cost_m": 8.5,
+      "manpower": 124,
+      "overall_win_rate_pct": 50.3,
+      "max_single_matchup_win_rate_pct": 95.3,
+      "win_rate_by_terrain_pct": {
+        "Open": 29.6,
+        "Mixed": 44.4,
+        "Forest": 59.0,
+        "Urban": 60.9,
+        "Mountain": 57.4
+      }
+    },
+    "cheese_pure_tank_no_inf": {
+      "name": "极端：纯坦克无步兵连 (13辆T-72, 0步兵)",
+      "is_historical": false,
+      "cost_m": 16.5,
+      "manpower": 42,
+      "overall_win_rate_pct": 0.9,
+      "max_single_matchup_win_rate_pct": 3.9,
+      "win_rate_by_terrain_pct": {
+        "Open": 1.3,
+        "Mixed": 0.9,
+        "Forest": 0.8,
+        "Urban": 0.8,
+        "Mountain": 0.8
+      }
+    },
+    "cheese_all_atgm_spam": {
+      "name": "极端：全反坦克导弹班海 (36具Kornet, 无车无迫炮)",
+      "is_historical": false,
+      "cost_m": 14.0,
+      "manpower": 110,
+      "overall_win_rate_pct": 7.2,
+      "max_single_matchup_win_rate_pct": 90.2,
+      "win_rate_by_terrain_pct": {
+        "Open": 1.9,
+        "Mixed": 4.1,
+        "Forest": 9.8,
+        "Urban": 10.3,
+        "Mountain": 10.1
+      }
+    },
+    "cheese_all_mortar_no_inf": {
+      "name": "极端：全迫击炮无步兵连 (18门82/120迫, 极少步兵)",
+      "is_historical": false,
+      "cost_m": 12.0,
+      "manpower": 108,
+      "overall_win_rate_pct": 1.7,
+      "max_single_matchup_win_rate_pct": 16.7,
+      "win_rate_by_terrain_pct": {
+        "Open": 1.0,
+        "Mixed": 1.1,
+        "Forest": 2.3,
+        "Urban": 2.1,
+        "Mountain": 2.1
+      }
+    },
+    "cheese_pure_militia_rifle": {
+      "name": "极端：纯步枪民兵人海 (无重火器/无反装甲/无电台)",
+      "is_historical": false,
+      "cost_m": 6.0,
+      "manpower": 160,
+      "overall_win_rate_pct": 1.0,
+      "max_single_matchup_win_rate_pct": 2.1,
+      "win_rate_by_terrain_pct": {
+        "Open": 0.8,
+        "Mixed": 0.9,
+        "Forest": 1.1,
+        "Urban": 1.1,
+        "Mountain": 1.0
+      }
+    },
+    "cheese_uav_indirect_only": {
+      "name": "极端：纯无人机观察员+迫炮 (无直瞄与步兵占领能力)",
+      "is_historical": false,
+      "cost_m": 13.5,
+      "manpower": 90,
+      "overall_win_rate_pct": 5.1,
+      "max_single_matchup_win_rate_pct": 68.9,
+      "win_rate_by_terrain_pct": {
+        "Open": 1.3,
+        "Mixed": 2.0,
+        "Forest": 7.6,
+        "Urban": 7.1,
+        "Mountain": 7.6
+      }
+    },
+    "cheese_overweight_wpn_squad": {
+      "name": "极端：每班塞满30kg重武器 (AGS+重机枪+双ATGM)",
+      "is_historical": false,
+      "cost_m": 14.8,
+      "manpower": 120,
+      "overall_win_rate_pct": 15.2,
+      "max_single_matchup_win_rate_pct": 71.6,
+      "win_rate_by_terrain_pct": {
+        "Open": 4.3,
+        "Mixed": 9.8,
+        "Forest": 19.7,
+        "Urban": 21.2,
+        "Mountain": 21.1
+      }
+    },
+    "cheese_zero_recon_heavy": {
+      "name": "极端：瞎子重装连 (坦克+步战车但0侦察0电台)",
+      "is_historical": false,
+      "cost_m": 15.5,
+      "manpower": 115,
+      "overall_win_rate_pct": 10.7,
+      "max_single_matchup_win_rate_pct": 44.0,
+      "win_rate_by_terrain_pct": {
+        "Open": 19.1,
+        "Mixed": 7.7,
+        "Forest": 8.6,
+        "Urban": 9.6,
+        "Mountain": 8.6
+      }
+    },
+    "cheese_pure_recon_sniper": {
+      "name": "极端：纯侦察狙击连 (高观瞄但无重火器与装甲)",
+      "is_historical": false,
+      "cost_m": 11.0,
+      "manpower": 95,
+      "overall_win_rate_pct": 10.3,
+      "max_single_matchup_win_rate_pct": 54.2,
+      "win_rate_by_terrain_pct": {
+        "Open": 1.8,
+        "Mixed": 4.1,
+        "Forest": 15.9,
+        "Urban": 16.8,
+        "Mountain": 12.9
+      }
+    }
+  }
+}
