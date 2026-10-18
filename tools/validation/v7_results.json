@@ -1,0 +1,47 @@
+{
+  "elapsed_s": 0.017,
+  "all_pass": true,
+  "V7_1_peacetime_decision_density": {
+    "catalog_count": 12,
+    "months_simulated": 120,
+    "mean_decisions_per_month": 3.79,
+    "min_decisions_per_month": 2,
+    "max_decisions_per_month": 11,
+    "mean_notifications_per_month": 5.81,
+    "max_consecutive_zero_decision_months": 0,
+    "pass": true
+  },
+  "V7_2_wartime_decision_and_autopause_density": {
+    "days_simulated": 44,
+    "mean_decisions_per_day": 13.55,
+    "min_decisions_per_day": 8,
+    "max_decisions_per_day": 20,
+    "mean_notifications_per_day": 20.41,
+    "mean_autopauses_per_day": 2.59,
+    "max_autopauses_per_day": 4,
+    "pass": true
+  },
+  "V7_3_top_down_command_latency_dc010": {
+    "corps_hq_initial_min": 29.4,
+    "division_hq_initial_min": 44.1,
+    "brigade_hq_initial_min": 58.8,
+    "brigade_cascaded_to_bn_min": 98.0,
+    "direct_regular_bn_skip_hq_min": 176.4,
+    "direct_sof_unit_min": 14.7,
+    "pass": true
+  },
+  "V7_4_scheduler_crossing_and_solar": {
+    "t5_scheduler_exact_ok": true,
+    "scheduler_200x10_permutation_mismatches": 0,
+    "t4_crossing_duration_min": 18.0,
+    "t4_exact_ok": true,
+    "t8_solar_altitudes_deg": {
+      "08:00Z": 47.65,
+      "14:30Z": 1.72,
+      "15:00Z": -4.05,
+      "20:00Z": -50.47
+    },
+    "t8_exact_ok": true,
+    "pass": true
+  }
+}

@@ -1,0 +1,235 @@
+{
+  "elapsed_s": 0.049,
+  "all_pass": true,
+  "V3_1_lachin_steady_state": {
+    "speed_kph": 24.0,
+    "one_way_h": 3.542,
+    "cycle_h": 9.083,
+    "arc_cap_t_per_h": 480.0,
+    "tiers": {
+      "low_peacetime_200t": {
+        "demand_t_per_day": 200.0,
+        "demand_t_per_h": 8.33,
+        "required_payload_t": 75.69,
+        "trucks_required": 9,
+        "arc_utilization_pct": 1.74
+      },
+      "medium_skirmish_700t": {
+        "demand_t_per_day": 700.0,
+        "demand_t_per_h": 29.17,
+        "required_payload_t": 264.93,
+        "trucks_required": 32,
+        "arc_utilization_pct": 6.08
+      },
+      "high_t5_reference_1200t": {
+        "demand_t_per_day": 1200.0,
+        "demand_t_per_h": 50.0,
+        "required_payload_t": 454.17,
+        "trucks_required": 54,
+        "arc_utilization_pct": 10.42
+      },
+      "surge_intense_1500t": {
+        "demand_t_per_day": 1500.0,
+        "demand_t_per_h": 62.5,
+        "required_payload_t": 567.71,
+        "trucks_required": 67,
+        "arc_utilization_pct": 13.02
+      }
+    },
+    "t5_exact_match_54_trucks": true,
+    "road_not_bottleneck_under_40pct": true,
+    "pass": true
+  },
+  "V3_2_cutoff_and_second_corridor": {
+    "t6_exact_endurance_days": 3.0,
+    "t6_day7_fatigue_floor": 0.2,
+    "t6_day7_starvation_cas_per_bn": 5.0,
+    "t6_daily_curve": [
+      {
+        "day": 1,
+        "ammo_remaining_t": 90.0,
+        "days_without_general": 0.0,
+        "fatigue_floor": 0.0,
+        "cum_starvation_casualties_per_bn": 0.0
+      },
+      {
+        "day": 2,
+        "ammo_remaining_t": 45.0,
+        "days_without_general": 0.0,
+        "fatigue_floor": 0.0,
+        "cum_starvation_casualties_per_bn": 0.0
+      },
+      {
+        "day": 3,
+        "ammo_remaining_t": 0.0,
+        "days_without_general": 0.0,
+        "fatigue_floor": 0.0,
+        "cum_starvation_casualties_per_bn": 0.0
+      },
+      {
+        "day": 4,
+        "ammo_remaining_t": 0.0,
+        "days_without_general": 1.0,
+        "fatigue_floor": 0.0,
+        "cum_starvation_casualties_per_bn": 0.0
+      },
+      {
+        "day": 5,
+        "ammo_remaining_t": 0.0,
+        "days_without_general": 2.0,
+        "fatigue_floor": 0.0,
+        "cum_starvation_casualties_per_bn": 0.0
+      },
+      {
+        "day": 6,
+        "ammo_remaining_t": 0.0,
+        "days_without_general": 3.0,
+        "fatigue_floor": 0.1,
+        "cum_starvation_casualties_per_bn": 2.5
+      },
+      {
+        "day": 7,
+        "ammo_remaining_t": 0.0,
+        "days_without_general": 4.0,
+        "fatigue_floor": 0.2,
+        "cum_starvation_casualties_per_bn": 5.0
+      },
+      {
+        "day": 8,
+        "ammo_remaining_t": 0.0,
+        "days_without_general": 5.0,
+        "fatigue_floor": 0.3,
+        "cum_starvation_casualties_per_bn": 7.5
+      },
+      {
+        "day": 9,
+        "ammo_remaining_t": 0.0,
+        "days_without_general": 6.0,
+        "fatigue_floor": 0.4,
+        "cum_starvation_casualties_per_bn": 10.0
+      },
+      {
+        "day": 10,
+        "ammo_remaining_t": 0.0,
+        "days_without_general": 7.0,
+        "fatigue_floor": 0.5,
+        "cum_starvation_casualties_per_bn": 12.5
+      }
+    ],
+    "nk_cutoff_m12_only_endurance_days": 5.4,
+    "nk_cutoff_with_m11_vardenis_delivered_t_day": 560.8,
+    "nk_cutoff_with_m11_endurance_days": 10.14,
+    "pass": true
+  },
+  "V3_3_convoy_uav_vs_night_only": {
+    "continuous_policy": {
+      "delivered_t_per_day": 820.0,
+      "trucks_lost_per_day": 18.4,
+      "cargo_loss_fraction": 0.245
+    },
+    "night_only_policy": {
+      "delivered_t_per_day": 540.0,
+      "trucks_lost_per_day": 4.2,
+      "cargo_loss_fraction": 0.068
+    },
+    "truck_loss_reduction_pct": 77.2,
+    "throughput_tradeoff_pct": 34.1,
+    "pass": true
+  },
+  "V3_4_key_node_analysis": {
+    "arm_top5_key_nodes": [
+      {
+        "rank": 1,
+        "id": "crossing_hakari_lachin_m12",
+        "role": "crossing",
+        "drop_nk_direction": 0.88,
+        "drop_total_national": 0.56,
+        "affected_formations": 1
+      },
+      {
+        "rank": 2,
+        "id": "arm_depot_stepanakert",
+        "role": "depot",
+        "drop_nk_direction": 0.82,
+        "drop_total_national": 0.52,
+        "affected_formations": 1
+      },
+      {
+        "rank": 3,
+        "id": "arm_depot_goris",
+        "role": "depot",
+        "drop_nk_direction": 0.74,
+        "drop_total_national": 0.47,
+        "affected_formations": 2
+      },
+      {
+        "rank": 4,
+        "id": "arm_depot_yerevan",
+        "role": "depot",
+        "drop_nk_direction": 0.45,
+        "drop_total_national": 0.44,
+        "affected_formations": 4
+      },
+      {
+        "rank": 5,
+        "id": "tile_road_vardenis_sotk_m11",
+        "role": "tile_road",
+        "drop_nk_direction": 0.28,
+        "drop_total_national": 0.19,
+        "affected_formations": 1
+      }
+    ],
+    "arm_lachin_rank1_nk_drop": 0.88,
+    "arm_import_total_t_per_day": 8300,
+    "arm_import_georgia_t_per_day": 7000,
+    "arm_georgia_transit_ban_drop_share": 0.8434,
+    "aze_top5_key_nodes": [
+      {
+        "rank": 1,
+        "id": "aze_depot_yevlakh",
+        "role": "depot_rail_hub",
+        "drop_total_national": 0.34,
+        "affected_formations": 2
+      },
+      {
+        "rank": 2,
+        "id": "aze_depot_baku",
+        "role": "depot_rail_hub",
+        "drop_total_national": 0.31,
+        "affected_formations": 3
+      },
+      {
+        "rank": 3,
+        "id": "aze_depot_ganja",
+        "role": "depot_rail_hub",
+        "drop_total_national": 0.26,
+        "affected_formations": 2
+      },
+      {
+        "rank": 4,
+        "id": "aze_depot_beylagan",
+        "role": "depot_rail_hub",
+        "drop_total_national": 0.22,
+        "affected_formations": 1
+      },
+      {
+        "rank": 5,
+        "id": "aze_depot_barda",
+        "role": "depot",
+        "drop_total_national": 0.18,
+        "affected_formations": 1
+      }
+    ],
+    "aze_max_single_node_drop": 0.34,
+    "pass": true
+  },
+  "V3_5_determinism_and_phase2_scale": {
+    "t3_proportional_fairness_ok": true,
+    "t4_priority_strictness_ok": true,
+    "t11_max_permutation_diff": 0.0,
+    "phase2_200bde_python_alloc_ms": 0.218,
+    "phase2_700tiles_200bde_csharp_est_ms": 0.171,
+    "target_phase2_csharp_ms": 20.0,
+    "pass": true
+  }
+}
