@@ -1,0 +1,221 @@
+{
+  "elapsed_s": 0.091,
+  "single_run_us": 25.91,
+  "all_pass": true,
+  "criteria_checks": {
+    "C1_existence_above_50pct": {
+      "best_vs_H_success_rate": 0.73,
+      "pass": true
+    },
+    "C2_difficulty_random_viable_1_to_15pct": {
+      "viable_share_in_2000_random_pct": 3.2,
+      "band_pct": [
+        1.0,
+        15.0
+      ],
+      "pass": true
+    },
+    "C3_default_strategy_matches_history": {
+      "hist_default_DE_rate": 1.0,
+      "hist_default_median_lost_tile_share": 0.433,
+      "pass": true
+    },
+    "C4_robustness_vs_best_response_B_above_25pct": {
+      "best_vs_P_success_rate": 0.69,
+      "best_vs_B_success_rate": 0.51,
+      "pass": true
+    },
+    "C5_no_silver_bullet": {
+      "best_vs_H_under_85pct": true,
+      "max_single_item_contribution_share": 0.452,
+      "pass": true
+    },
+    "C6_no_exploit_budget_balanced": {
+      "fulfillment_ratio": 1.0,
+      "pass": true
+    },
+    "C7_sensitivity_16_perturbations": {
+      "combos_above_40pct": 14,
+      "required_combos": 10,
+      "min_rate": 0.275,
+      "max_rate": 0.9,
+      "pass": true
+    }
+  },
+  "historical_default_strategy_report": {
+    "outcome_shares": {
+      "A": 0.0,
+      "B": 0.0,
+      "C": 0.0,
+      "D": 1.0,
+      "E": 0.0
+    },
+    "success_rate_ab": 0.0,
+    "defeat_rate_de": 1.0,
+    "median_lost_tile_share": 0.433,
+    "budget_and_caps": {
+      "total_budget_10y_m": 5150.0,
+      "payroll_10y_m": 2367.0,
+      "om_10y_m": 1480.0,
+      "available_discretionary_m": 683.0,
+      "desired_discretionary_m": 293.0,
+      "fulfillment_ratio": 1.0,
+      "capabilities": {
+        "shorad_sam": 0.0,
+        "ew_counterbattery": 0.0,
+        "fires_atgm": 0.0,
+        "uav_recon": 0.0,
+        "southern_fort": 0.0,
+        "ammo_stock": 0.0,
+        "readiness_dc009": 0.0,
+        "su30_contribution": 0.016
+      },
+      "total_defense_index": 0.016
+    }
+  },
+  "optimal_integrated_strategy_report": {
+    "strategy_parameters": {
+      "name": "arm_optimal_integrated_iads_fort_reserve",
+      "readiness_reform": 2,
+      "shorad_sam_level": 2,
+      "ew_counterbattery_level": 2,
+      "fires_atgm_level": 2,
+      "uav_recon_level": 1,
+      "su30_purchased": 0,
+      "southern_fort_level": 2,
+      "ammo_stock_days": 40,
+      "use_rus_loan": 1,
+      "om_funding_level": 1
+    },
+    "vs_H_historical": {
+      "outcome_shares": {
+        "A": 0.09,
+        "B": 0.64,
+        "C": 0.0,
+        "D": 0.27,
+        "E": 0.0
+      },
+      "success_rate_ab": 0.73,
+      "defeat_rate_de": 0.27,
+      "median_lost_tile_share": 0.276,
+      "budget_and_caps": {
+        "total_budget_10y_m": 5150.0,
+        "payroll_10y_m": 1727.0,
+        "om_10y_m": 1480.0,
+        "available_discretionary_m": 1323.0,
+        "desired_discretionary_m": 1320.0,
+        "fulfillment_ratio": 1.0,
+        "capabilities": {
+          "shorad_sam": 0.38,
+          "ew_counterbattery": 0.32,
+          "fires_atgm": 0.34,
+          "uav_recon": 0.12,
+          "southern_fort": 0.36,
+          "ammo_stock": 0.13,
+          "readiness_dc009": 0.2,
+          "su30_contribution": 0.0
+        },
+        "total_defense_index": 1.85
+      }
+    },
+    "vs_P_plausible": {
+      "outcome_shares": {
+        "A": 0.05,
+        "B": 0.64,
+        "C": 0.0,
+        "D": 0.31,
+        "E": 0.0
+      },
+      "success_rate_ab": 0.69,
+      "defeat_rate_de": 0.31,
+      "median_lost_tile_share": 0.279,
+      "budget_and_caps": {
+        "total_budget_10y_m": 5150.0,
+        "payroll_10y_m": 1727.0,
+        "om_10y_m": 1480.0,
+        "available_discretionary_m": 1323.0,
+        "desired_discretionary_m": 1320.0,
+        "fulfillment_ratio": 1.0,
+        "capabilities": {
+          "shorad_sam": 0.38,
+          "ew_counterbattery": 0.32,
+          "fires_atgm": 0.34,
+          "uav_recon": 0.12,
+          "southern_fort": 0.36,
+          "ammo_stock": 0.13,
+          "readiness_dc009": 0.2,
+          "su30_contribution": 0.0
+        },
+        "total_defense_index": 1.85
+      }
+    },
+    "vs_B_best_response": {
+      "outcome_shares": {
+        "A": 0.01,
+        "B": 0.5,
+        "C": 0.0,
+        "D": 0.49,
+        "E": 0.0
+      },
+      "success_rate_ab": 0.51,
+      "defeat_rate_de": 0.49,
+      "median_lost_tile_share": 0.299,
+      "budget_and_caps": {
+        "total_budget_10y_m": 5150.0,
+        "payroll_10y_m": 1727.0,
+        "om_10y_m": 1480.0,
+        "available_discretionary_m": 1323.0,
+        "desired_discretionary_m": 1320.0,
+        "fulfillment_ratio": 1.0,
+        "capabilities": {
+          "shorad_sam": 0.38,
+          "ew_counterbattery": 0.32,
+          "fires_atgm": 0.34,
+          "uav_recon": 0.12,
+          "southern_fort": 0.36,
+          "ammo_stock": 0.13,
+          "readiness_dc009": 0.2,
+          "su30_contribution": 0.0
+        },
+        "total_defense_index": 1.85
+      }
+    }
+  },
+  "marginal_contribution_ablation": {
+    "drop_shorad_sam_to_lvl1": {
+      "ablated_success_rate_ab": 0.58,
+      "success_rate_drop": 0.15,
+      "share_of_total_improvement": 0.205
+    },
+    "drop_ew_counterbattery_to_lvl1": {
+      "ablated_success_rate_ab": 0.6,
+      "success_rate_drop": 0.13,
+      "share_of_total_improvement": 0.178
+    },
+    "drop_southern_forts_to_lvl1": {
+      "ablated_success_rate_ab": 0.58,
+      "success_rate_drop": 0.15,
+      "share_of_total_improvement": 0.205
+    },
+    "drop_fires_atgm_to_lvl1": {
+      "ablated_success_rate_ab": 0.59,
+      "success_rate_drop": 0.14,
+      "share_of_total_improvement": 0.192
+    },
+    "drop_readiness_reform_to_lvl1": {
+      "ablated_success_rate_ab": 0.4,
+      "success_rate_drop": 0.33,
+      "share_of_total_improvement": 0.452
+    },
+    "drop_ammo_stockpile_to_20d": {
+      "ablated_success_rate_ab": 0.62,
+      "success_rate_drop": 0.11,
+      "share_of_total_improvement": 0.151
+    },
+    "drop_uav_recon_to_0": {
+      "ablated_success_rate_ab": 0.62,
+      "success_rate_drop": 0.11,
+      "share_of_total_improvement": 0.151
+    }
+  }
+}
