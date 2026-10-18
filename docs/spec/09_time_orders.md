@@ -4,6 +4,17 @@
 > 依据：总纲 §11、§12.1、§13、§9.3④、§21-1；00 §3.2、§5、§6。
 > 标记：✅ 总纲已确认；🟡 建议待确认（本文件编号 `T-xx`，汇总在第 10 节）；00 的 🟡 `G-xx` 视为已暂定采用。
 
+> [!IMPORTANT]
+> **✅ 设计者拍板定案覆写（Round 3 最终确认，最高优先级，见 [decisions_A_level.md](../review/decisions_A_level.md)）**：
+> 1. **自上而下的命令延迟倒置与逐级传导（覆写 `T-01 / DC-010`）**：
+>    - 玩家扮演最高统帅部（国防部长）。**统帅部直接向高层指挥部下令的初始通联延迟更短**：集团军/军 `BaseInitialDelay = 30 min`，师 `45 min`，旅 `60 min`。
+>    - 命令到达受令指挥部后，若需向下一级传导（`Corps → Division → Brigade → Battalion`），每向下传导一级叠加该级指挥部的计划与通联延迟：
+>      $$\Delta t_{\text{step}}(h) = \text{StepBaseMin}(h) \cdot f_{\text{hq}}(h) \cdot f_{\text{load}}(h) \cdot f_{\text{org}}(h) \cdot f_{\text{emcon}}(h) \cdot f_{\text{ew}}(h)$$
+>      其中旅→营基准 $\text{StepBaseMin} = 30\,\text{min}$（师→旅 $40\,\text{min}$，军→师 $45\,\text{min}$），组织度修正 $f_{\text{org}} = \text{ clamp}(1.5 - 0.5 \cdot \text{organization},\, 1.0,\, 2.0)$。
+>    - **越级直接指挥建制营惩罚**：若玩家跳过所属旅部直接对普通建制营下达命令，承受高额越级基础延迟 `DirectBattalionPenaltyBase = 180 min`（再乘各项修正）；**唯有特种部队营（SOF）享受最高统帅部直通链路 `SofDirectBase = 15 min`**。
+> 2. **取消手动 `FireSupportPriority` 配置项（覆写 `DC-022`）**：从 `UnitConfigField` 中移除 `FireSupportPriority = 9`，旅属炮兵由 `04` 自动按态势排优。
+> 3. **默认自动暂停规则包含“我方营被包围”（`DS-037`）**：`UnitEncircled` 默认开启自动暂停。
+
 ---
 
 ## 1. 目标与范围

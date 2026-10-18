@@ -5,6 +5,13 @@
 > 标记沿用总纲：✅ 总纲已确认；🟡 建议、待确认（编号 `G-xx`，见第 8 节）；❓ 未定。
 > “出处”列里的 `§9.3` 指 [设计文档 v0.1](../design_doc_v0.1.md) 的章节号。
 
+> [!IMPORTANT]
+> **✅ 设计者拍板定案覆写（Round 3 最终确认，最高优先级，见 [decisions_A_level.md](../review/decisions_A_level.md)）**：
+> 1. **单兵级练度与老带新（覆写 `G-07 / DC-001`）**：`generalSkill` 与 `typeSkill` 直接存储在每个士兵个体 `PersonnelRecord`（归属 `02`）上，不再仅存“旅×专业”标量；营/旅显示的练度为下属人员均值。班内老带新：设班内最高技能 $s_{\max}$，低练度成员有效战斗技能 $s_{\text{eff},i} = s_i + 0.30 \max(0, s_{\max}-s_i)$，技能增长速度 $\times (1 + 0.50 \max(0, s_{\max}-s_i))$。
+> 2. **组织度（`Organization ∈ [0, 1]`，覆写 `DC-005 / DC-019`）**：`OrgUnit` / `Formation` 新增核心状态属性 `organization` 与上限 `orgCeiling = fillRatio^0.8`（归属 `07`）。只要操作的武器型号不变，整编/改模板/合编对个人 `typeSkill` 零惩罚，改为扣减 `organization`（$\Delta \text{org} = -0.60 \times \text{changedSlotFraction}$），非交战休整按 $+0.03/\text{h}$ 恢复；伤亡与压制削减实时 `organization`，低于 $0.15$ 时失去进攻能力并后撤。
+> 3. **自上而下的命令延迟倒置（`DC-010`）**：统帅部直达高层指挥部初始延迟更短（军 30m / 师 45m / 旅 60m），再逐级向下传导（每级 +30–60m × 通信/负荷/组织度系数）；越级直接指挥建制营承受高额基础延迟（180m），唯独特种部队（SOF）享 15m 直通链路。
+> 4. **取消独立战术条令预设（覆写 `DS-015`）**：移除 `DoctrineProfile` 预设切换，全军共用统一理性的战术 AI 规则，风格由编制、装备、练度与组织度自然涌现。
+
 ---
 
 ## 0. 怎么用本文件（给规格作者的 6 条硬规则）

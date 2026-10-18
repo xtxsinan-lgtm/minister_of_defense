@@ -1,9 +1,18 @@
 # 07 损伤、回收、修复、医疗、补充与重组
 
 > 依据：总纲 §6（型号多样性的代价：备件、拆东补西）、§9.12（战后损伤、修复与补充，全部小节）、§9.3③（伤员分类进入补充系统）、§3.3（分配策略、替代装备）、§11.1.1（脱离接触与遗弃）、§15.3（不四舍五入的原则）；术语表 [00](00_glossary.md)。
-> 本文件定义：`CasualtyState` 的转移规则、`VehicleDamageState`（损伤分类）、战场控制与回收、野战修理与后方大修 `RepairQueue`、医疗链 `MedicalQueue`、`FillRate`、`UnassignedPool`、`Reorganization`（三级范围）与 `ReorgPolicy`、`ReplacementMode` 与补充流程、`ReliabilityProfile`（故障、备件）、`Cannibalization`、缴获。
+> 本文件定义：`CasualtyState` 的转移规则、`VehicleDamageState`（损伤分类）、战场控制与回收、野战修理与后方大修 `RepairQueue`、医疗链 `MedicalQueue`、`FillRate`、`UnassignedPool`、`Reorganization`（三级范围）与 `ReorgPolicy`、`ReplacementMode` 与补充流程、`ReliabilityProfile`（故障、备件）、`Cannibalization`、缴获、以及部队**组织度（`Organization ∈ [0, 1]`）**的上限、扣减与恢复规则。
 > **谁被打中、打成什么等级**由 [03](03_squad_combat.md)（片段内）和 [04](04_strip_layer.md)（条带上）决定，它们调用本文件的 `RollVehicleDamage` / `ApplyCasualty` / `ApplyVehicleDamage`；**之后怎么恢复**由本文件决定。
 > 标记：✅ 总纲已定；🟡 建议待确认（编号 `H-xx`，汇总在第 10 节）。
+
+> [!IMPORTANT]
+> **✅ 设计者拍板定案覆写（Round 3 最终确认，最高优先级，见 [decisions_A_level.md](../review/decisions_A_level.md)）**：
+> 1. **组织度（`organization ∈ [0, 1]`）归属与核心公式（覆写 `DC-005 / DC-019`）**：
+>    - **缺编上限**：$\text{orgCeiling}(u) = (\text{fillRatio}(u))^{0.8}$；当前组织度始终满足 $\text{organization}(u) \le \text{orgCeiling}(u)$。
+>    - **整编/换表/合编不降武器熟练度，改为扣减组织度**：只要士兵本人操作的武器型号（`boundModelId`）未变，整编、修改模板或合并残营对个人 `typeSkill` **零惩罚**；改为按变动槽位/人员比例扣减当前组织度：
+>      $$\Delta \text{org} = -0.60 \times \text{changedSlotFraction}$$
+>    - **休整恢复**：在非交战状态（脱离接触休整）下，组织度按 $+0.03/\text{h}$ 向 $\text{orgCeiling}$ 线性恢复。
+> 2. **伤愈归队与单兵补充保留个人练度（`DC-001`）**：伤员治愈归队直接恢复其本人 `PersonnelRecord`；新兵进入营部待编池（`UnassignedPool`），休整编入班后享受班内老兵“老带新”加成。
 
 ---
 

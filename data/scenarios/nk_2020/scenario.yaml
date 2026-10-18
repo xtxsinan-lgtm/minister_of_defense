@@ -18,7 +18,8 @@ scenario:
 
 presentation_overrides: {tutorial_file: data/tutorial/nk_2020.yaml}   # 14 §3.9
 
-ai_profile_overrides: {AZE: {doctrine_id: western}}   # 12 I-02：2020 年阿方反映土耳其顾问影响（14 §3.11）
+# DS-015 ✅：取消独立战术条令预设（DoctrineProfile），2020 年阿方作战风格由其无人机/巡飞弹/特种营编制与高训练度自然涌现
+ai_profile_overrides: {}
 
 war_state_at_start:
   wars: []                                  # 战争由事件 aze_2020_september_offensive 在 03:00Z 创建（Historical）；玩家为阿方时由玩家决定

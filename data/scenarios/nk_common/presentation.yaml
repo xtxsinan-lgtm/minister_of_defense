@@ -29,14 +29,13 @@ projection:
 # 亚美尼亚 AMT、阿塞拜疆 AZT 均为 UTC+4。历史夏令时（亚 2011 年前、阿 2015 年前夏季 UTC+5）不显示（14 N-21）。
 display_utc_offset_min: 240
 
-# ------------------------------------------------------------------ 地名（叙事中立；14 §3.9、N-22）
-# disputed: true = 冲突区内（法理属 AZE、1994–2020 由亚方控制或有亚方官方名）的地名：两国官方名并列显示。
-# name_hy = 亚美尼亚官方名的拉丁转写；name_az = 阿塞拜疆官方拉丁字母名；name_en = 英语常用名。
-# 坐标与 theater.yaml 的 key_tiles / control_anchors 相同（维基信息框）；界面语言译名走本地化键 data.place.<id>.name（13 §4.5.2）。
+# ------------------------------------------------------------------ 地名（14 §3.9、N-22 / DS-044 ✅）
+# 争议地名与非争议地名均只显示玩家当前所扮演国家的官方地名（player_official_only）：
+# 扮演 ARM 时显示 name_hy（如 Stepanakert / 斯捷潘纳克特）；扮演 AZE 时显示 name_az（如 Xankəndi / 汉肯德）；观战显示 name_en。
+# 坐标与 theater.yaml 的 key_tiles / control_anchors 相同（维基信息框）；界面语言译名走本地化键 data.place.<id>.name_<iso3>（13 §4.5.2）。
 place_name_policy:
-  disputed_order: player_first        # 14 N-22（🟡）
-  separator: " / "
-  observer_name_field: name_en        # 无玩家（观战/V2）时
+  disputed_order: player_official_only  # 14 N-22 / DS-044 ✅：仅显示玩家所扮演国家的官方名称
+  observer_name_field: name_en          # 无玩家（观战/V2）时
 place_names:
   # ---- 争议地名（冲突区）----
   - {id: stepanakert, lat: 39.8153, lon: 46.7519, name_hy: Stepanakert, name_az: Xankəndi,  name_en: Stepanakert, disputed: true}

@@ -1,9 +1,20 @@
 # 02 人员与练度
 
-> 依据：总纲 §4（两层练度、相似度、增长衰减、训练学校产能）、§3.4（战备等级）、§9.3③（名册、单兵不记练度）、§9.12（伤员归队保留练度、补充方式）、§15.1（伞降资格）、§18.11（兵役制度）、§6 第 1 条（型号越多人员越难调用）。
-> 术语、ID、单位以 [00_glossary.md](00_glossary.md) 为准；G-xx 🟡 视为暂定采用（尤其 **G-07：练度按“旅 × 专业”记录，独立营按“营 × 专业”**）。
+> 依据：总纲 §4（两层练度、相似度、增长衰减、训练学校产能）、§3.4（战备等级）、§9.3③（名册到人）、§9.12（伤员归队保留练度、补充方式）、§15.1（伞降资格）、§18.11（兵役制度）、§6 第 1 条（型号越多人员越难调用）。
+> 术语、ID、单位以 [00_glossary.md](00_glossary.md) 为准。
 > 本文件 🟡 编号 `P-xx`，汇总在第 10 节。
-> 已对齐的相邻规格：01（编制树、`OnCrewModelChange`、维护组织）、03（`GetSkill` 用法 `0.4 × 通用 + 0.6 × 专有`；交战经验报告）、05（伪装/侦察练度）、06（`ConsumeForTraining`、`MobilityProfile`）、11（`TrainingIntensity`、`ConscriptionSystem`、动员到位目标、升级保留系数、训练计费）。
+> 已对齐的相邻规格：01（编制树、`OnCrewModelChange`、维护组织）、03（单兵 `GetSoldierEffectiveSkill` + 班内老带新；交战经验报告）、05（伪装/侦察练度）、06（`ConsumeForTraining`、`MobilityProfile`）、11（`TrainingIntensity`、`ConscriptionSystem`、动员到位目标、升级保留系数、训练计费）。
+
+> [!IMPORTANT]
+> **✅ 设计者拍板定案覆写（Round 3 最终确认，最高优先级，见 [decisions_A_level.md](../review/decisions_A_level.md)）**：
+> 1. **单兵级直接存储练度 + 班内“老带新”（覆写 `G-07 / P-01 / DC-001`）**：
+>    - `PersonnelRecord` 直接存储每个士兵个体的 `double generalSkill`、`ModelId boundModelId`、`double typeSkill`（取值 $[0, 1]$）；不再只按“旅 × 专业”存聚合标量。界面与战报显示的营/旅练度为下属在编人员的算术平均值。
+>    - **班内老带新（Veteran Mentoring）**：设同一班（`Squad`）内所有在位士兵的最高综合技能为 $s_{\max} = \max_{j \in \text{squad}} s_j$（其中 $s_j = 0.4 \cdot \text{generalSkill}_j + 0.6 \cdot \text{typeSkill}_j$），则班内士兵 $i$ 的**有效战斗技能**为：
+>      $$s_{\text{eff},i} = s_i + 0.30 \cdot \max(0,\, s_{\max} - s_i)$$
+>      且士兵 $i$ 在日常训练与实战中的技能增长速率乘以老带新加速因子：
+>      $$M_{\text{mentor},i} = 1 + 0.50 \cdot \max(0,\, s_{\max} - s_i)$$
+> 2. **定期复训预备役的高费效比（覆写 `DC-009`）**：经过周期性复训的预备役、`Reduced`（简编）与 `Cadre`（骨干）人员，其技能均衡态维持在现役常备部队的 **75%–85%**（即当常备军均衡练度为 $0.65$ 时，定期复训预备役保持 $0.50\text{–}0.55$），而平时人员薪资维持成本仅为常备部队的 **15%–20%**。
+> 3. **整编不扣武器熟练度（覆写 `DC-005 / P-19 / DC-019`）**：只要士兵操作的武器型号（`boundModelId`）未变，调整编制模板、合编或重组时个人 `typeSkill` **100% 保留（零惩罚）**；整编磨合代价统一体现为部队**组织度（`organization ∈ [0, 1]`）**的扣减（归属 `07`）。
 
 ---
 

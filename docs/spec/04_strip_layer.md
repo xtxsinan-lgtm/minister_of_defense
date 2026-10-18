@@ -5,6 +5,12 @@
 > 片段**内部**怎么打见 [03](03_squad_combat.md)；战斗**何时触发、何时判定结束、地块归属**由 [09](09_time_orders.md) 判定（本文件提供指标并执行创建/结束）；暴露度见 [05](05_recon_exposure.md)；条带补给车队的逻辑见 [06](06_logistics.md) §4.8；损伤之后的恢复见 [07](07_damage_repair.md)。
 > 标记：✅ 总纲已定；🟡 建议待确认（编号 `E-xx`，汇总在第 10 节）。
 
+> [!IMPORTANT]
+> **✅ 设计者拍板定案覆写（Round 3 最终确认，最高优先级，见 [decisions_A_level.md](../review/decisions_A_level.md)）**：
+> 1. **取消多扇区独立推进与侧翼暴露惩罚，改为单条带统一纵深推进度（覆写 `E-08 / DC-023`）**：移除多扇区独立推进数组 `SectorState[]` 与 `FlankPenalty`；每条交界边（`Strip`）只维护**单一统一的纵深推进位置**（`contactLineY_m` / `advanceKm ∈ [0, 8]` / `advanceProgress ∈ [0, 1]`，推进满 8 km = 100%）。约 23 km 的交界边宽度与可通行地形仅决定阶段 E **最多可同时展开的连级交战片段数 `maxConcurrentEngagements`**。
+> 2. **取消旅面板手动“火力支援优先”三档开关（覆写 `E-05 / DC-022`）**：移除 `FireSupportPriority`（`CloseSupport / Balanced / CounterFire`）手动开关与 `SetFireSupportPriority` 接口。旅属炮兵由 `SupportFireBroker` 按战场实时态势自动排优：当反炮兵雷达或侦察无人机捕捉到敌方新鲜 L4 炮兵/防空/指挥高价值目标时优先执行阶段 C 反炮兵/防空压制，当一线机动连处于阶段 E 直瞄接触时自动提供近距支援。
+> 3. **取消独立战术条令预设（覆写 `DS-015`）**：`StripDoctrineAi` 不再读取 `DoctrineProfile`（`western / soviet / small_state_defensive`），全军共用同一套理性战术 AI 规则，轮换与推进表现由部队实际编制、装备、单兵练度与**组织度（`organization ∈ [0, 1]`）**自然涌现。
+
 ---
 
 ## 1. 目标与范围
