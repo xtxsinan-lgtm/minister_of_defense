@@ -283,7 +283,7 @@ var MoDSim = (function () {
     var map = w.map, tpls = data.templates;
     w.formations = [];
     ["ARM", "AZE"].forEach(function (side) {
-      var allBns = [], pending = [];
+      var allBns = [];
       data.oob[side].forEach(function (corps) {
         var cLat = corps.lat, cLon = corps.lon;
         var on = inBox(map, cLat, cLon), re = side === "ARM" ? ARM_REINFORCE[corps.id] : null;
@@ -295,8 +295,14 @@ var MoDSim = (function () {
           if (!onMap && !re) return;
           var tier = c.ch.tier || corps.tier || "active", t = tpls[c.ch.template];
           var fname = c.ch.name || ((corps.name || "") + " " + ((t && t.name) || c.ch.template) + (children.length > 1 ? " #" + (c.idx + 1) : ""));
+          // Rename "拉钦/赞格兰守备团" to its historical 6th Defense District role at Talysh/Madaghis
+          if (fname === "拉钦/赞格兰守备团") {
+            fname = "塔利什/马达吉斯第 6 防御区团";
+            lat = 40.33; lon = 46.74; tier = "active";
+          }
           var f = { id: side[0] + "F" + (w.formations.length + 1), side: side, name: fname, corps: corps.id, tier: tier, units: [],
-                    anchor: { lat: lat, lon: lon }, onMap: onMap, arriveDay: onMap ? 0 : re.day, entry: re ? re.entry : null, isNK: isNK };
+                    anchor: { lat: lat, lon: lon }, onMap: onMap, arriveDay: onMap ? 0 : re.day, entry: re ? re.entry : null, isNK: isNK,
+                    echelon: /旅/.test(fname) ? "X" : "III" };
           w.formations.push(f);
           var hqGroup = null;
           battalionsOf(tpls, c.ch.template).forEach(function (bspec) {
@@ -305,7 +311,7 @@ var MoDSim = (function () {
               bn.priority = (c.ch.priority || corps.priority || 50) + (onMap ? 0 : 5); bn.nk = isNK; allBns.push(bn);
               var role = roleOf(tpls, bspec.template);
               if (role === "hq") {
-                if (!hqGroup) { hqGroup = newUnit(w, side, "battalion", fname + " · 旅部与保障群", corps.id); hqGroup.role = "hq"; attach(hqGroup, f); }
+                if (!hqGroup) { hqGroup = newUnit(w, side, "battalion", fname + " · 旅/团部与保障群", corps.id); hqGroup.role = "hq"; attach(hqGroup, f); }
                 hqGroup.bns.push(bn); continue;
               }
               var u = newUnit(w, side, "battalion", bn.name + " · " + fname, corps.id);
@@ -313,73 +319,77 @@ var MoDSim = (function () {
             }
           });
         });
-        (corps.direct || []).forEach(function (dr) {
-          if (!on && !re) return;
-          for (var n = 0; n < (dr.count || 1); n++) {
-            var tier = dr.tier || corps.tier || "active";
-            var bn = makeBattalion(tpls, dr.template, tier, dr.name);
-            bn.priority = (corps.priority || 50) + 2; bn.nk = isNK; allBns.push(bn);
-            var u = newUnit(w, side, "corps_bn", (dr.name || bn.name) + "（" + corps.name + "直属）", corps.id);
-            u.role = /特种/.test(dr.name || "") ? "sof" : roleOf(tpls, dr.template);
-            if (u.role === "sof") u.kind = "sof";
-            u.anchor = { lat: cLat, lon: cLon }; u.tier = tier; u.onMap = on; u.isNK = isNK;
-            u.arriveDay = on ? 0 : re.day; u.entry = re ? re.entry : null;
-            u.bns.push(bn); pending.push(u);
-          }
-        });
+        if ((corps.direct || []).length && (on || re)) {
+          var dfName = isNK ? "阿尔察赫直属装甲与炮兵旅" : (corps.name + " 直属炮兵与侦察团");
+          var df = { id: side[0] + "F" + (w.formations.length + 1), side: side, name: dfName, corps: corps.id, tier: corps.tier || "active", units: [],
+                     anchor: { lat: cLat, lon: cLon }, onMap: on, arriveDay: on ? 0 : re.day, entry: re ? re.entry : null, isNK: isNK,
+                     echelon: /旅/.test(dfName) ? "X" : "III", isDirectGroup: true };
+          w.formations.push(df);
+          (corps.direct || []).forEach(function (dr) {
+            for (var n = 0; n < (dr.count || 1); n++) {
+              var tier = dr.tier || corps.tier || "active";
+              var bn = makeBattalion(tpls, dr.template, tier, dr.name);
+              bn.priority = (corps.priority || 50) + 2; bn.nk = isNK; allBns.push(bn);
+              var u = newUnit(w, side, "corps_bn", (dr.name || bn.name) + " · " + dfName, corps.id);
+              u.role = /特种/.test(dr.name || "") ? "sof" : roleOf(tpls, dr.template);
+              if (u.role === "sof") u.kind = "sof";
+              u.bns.push(bn); attach(u, df);
+            }
+          });
+        }
       });
       var left = allocateInventory(data, side, allBns, opts);
       provisionalUnits(w, side, left);
       if (side === "ARM") addTheatreAD(w, data, opts);
       if (side === "ARM") distributeDeliveries(w, opts);
       placeFormations(w, side);
-      placeUnits(w, side, pending);
     });
     addBorderGarrisons(w, data);
     w.units.forEach(function (u) { if (u.side === "ARM") u.ad = (opts.armAdPosture || (w.armAi === "historical" ? "active" : "ambush")); });
   }
 
-  // Border-garrison corps pinned along the Armenia-Turkey/Nakhchivan/Tavush borders (deterministic, no RNG/pool draw)
+  // Border-garrison corps pinned at their actual historical headquarters (deterministic, no RNG/pool draw)
   function addBorderGarrisons(w, data) {
     var map = w.map;
     var specs = [
-      { side: "ARM", corps: "arm_3rd_corps", fname: "第 3 军（北方边境守备）", places: ["vanadzor", "dilijan", "berd"], tier: "reduced", men: 480, tanks: 10, ifv: 15, art: 12 },
-      { side: "ARM", corps: "arm_5th_corps", fname: "第 5 军（埃里温/西线守备）", places: ["yerevan", "gyumri"], tier: "cadre", men: 420, tanks: 8, ifv: 12, art: 10 },
-      { side: "AZE", corps: "aze_nakhchivan_army", fname: "纳希切万独立合成集团军", places: ["nakhchivan", "sharur", "sadarak"], tier: "active", men: 620, tanks: 18, ifv: 24, art: 18 },
+      { side: "ARM", corps: "arm_3rd_corps", fname: "第 3 军（瓦纳佐尔北方守备旅）", place: "vanadzor", nb: 3, tier: "reduced", men: 520, tanks: 10, ifv: 15, art: 12 },
+      { side: "ARM", corps: "arm_5th_corps", fname: "第 5 军（埃里温首都守备旅）", place: "yerevan", nb: 2, tier: "cadre", men: 460, tanks: 8, ifv: 12, art: 10 },
+      { side: "AZE", corps: "aze_nakhchivan_army", fname: "纳希切万独立合成集团军", place: "nakhchivan", nb: 3, tier: "active", men: 620, tanks: 18, ifv: 24, art: 18 },
     ];
     specs.forEach(function (sp) {
+      var hi = map.places[sp.place];
+      if (hi === undefined) return;
+      var h = map.hexes[hi];
       var f = { id: sp.side[0] + "F" + (w.formations.length + 1), side: sp.side, name: sp.fname, corps: sp.corps, tier: sp.tier, units: [],
-                anchor: { lat: 40.0, lon: 45.0 }, onMap: true, arriveDay: 0, entry: null, isNK: false, garrison: true };
+                anchor: { lat: h.lat, lon: h.lon }, onMap: true, arriveDay: 0, entry: null, isNK: false, garrison: true, hex: hi, echelon: "X" };
       w.formations.push(f);
-      sp.places.forEach(function (pl, idx) {
-        var hi = map.places[pl];
-        if (hi === undefined) return;
+      for (var idx = 0; idx < sp.nb; idx++) {
         var u = newUnit(w, sp.side, "battalion", "守备摩步营 #" + (idx + 1) + " · " + sp.fname, sp.corps);
         u.role = "maneuver"; u.static = true; u.garrison = true; u.hex = hi;
         var bn = { tpl: "garrison_bn", name: "守备摩步营", tier: sp.tier, req: {}, menMax: 650, cls: zeroCls(), max: zeroCls(), org: 0.9, supply: 3.5, mobilising: false };
         bn.cls.men = sp.men; bn.cls.tanks = sp.tanks; bn.cls.ifv = sp.ifv; bn.cls.art = sp.art; bn.cls.atgm = 6; bn.cls.trucks = 18;
         CLASSES.forEach(function (c) { bn.max[c] = c === "men" ? 650 : bn.cls[c]; });
         u.bns.push(bn); attach(u, f); u.hex = hi;
-      });
+      }
     });
   }
 
   // Stored equipment that has no template slot is issued to provisional battalions manned by mobilised
-  // reservists (reduced tier). NK stock stays in NK; Armenian shared stock arrives as a reinforcement.
+  // reservists (reduced tier), grouped into a Mobilized Reserve Brigade per side.
   var PROV = [
-    { cat: "mbt", cls: "tanks", per: 30, men: 120, name: "临时坦克营", role: "maneuver" },
-    { cat: "ifv", cls: "ifv", per: 30, men: 420, name: "临时机步营", role: "maneuver" },
-    { cat: "howitzer_light_sp", cls: "sp", per: 18, men: 160, name: "临时自行炮营", role: "artillery" },
-    { cat: "howitzer_heavy_sp", cls: "sp", per: 18, men: 160, name: "临时自行炮营", role: "artillery" },
-    { cat: "howitzer_light_towed", cls: "art", per: 18, men: 180, name: "临时牵引炮营", role: "artillery" },
-    { cat: "howitzer_heavy_towed", cls: "art", per: 18, men: 180, name: "临时牵引炮营", role: "artillery" },
-    { cat: "mrl_light", cls: "mrl", per: 12, men: 110, name: "临时火箭炮营", role: "artillery" },
+    { cat: "mbt", cls: "tanks", per: 30, men: 120, name: "动员坦克营", role: "maneuver" },
+    { cat: "ifv", cls: "ifv", per: 30, men: 420, name: "动员机步营", role: "maneuver" },
+    { cat: "howitzer_light_sp", cls: "sp", per: 18, men: 160, name: "动员自行炮营", role: "artillery" },
+    { cat: "howitzer_heavy_sp", cls: "sp", per: 18, men: 160, name: "动员自行炮营", role: "artillery" },
+    { cat: "howitzer_light_towed", cls: "art", per: 18, men: 180, name: "动员牵引炮营", role: "artillery" },
+    { cat: "howitzer_heavy_towed", cls: "art", per: 18, men: 180, name: "动员牵引炮营", role: "artillery" },
+    { cat: "mrl_light", cls: "mrl", per: 12, men: 110, name: "动员火箭炮营", role: "artillery" },
   ];
   function provisionalUnits(w, side, pools) {
-    var map = w.map;
     [["nk", 0.0], ["shared", side === "ARM" ? 0.5 : 0.8]].forEach(function (pp) {
       var pool = pools[pp[0]], share = pp[1];
       if (pp[0] === "nk" && side !== "ARM") return;
+      var created = [];
       PROV.forEach(function (p) {
         var s = p.cls === "mrl" ? 1.0 : (pp[0] === "nk" ? 1 : share);
         var have = Math.floor((pool[p.cat] || 0) * s);
@@ -389,18 +399,21 @@ var MoDSim = (function () {
           bn.cls[p.cls] = n; bn.cls.men = Math.round(p.men * 0.5); bn.cls.trucks = Math.round(n * 0.6);
           if (p.cls === "ifv") bn.cls.atgm = 4;
           CLASSES.forEach(function (c) { bn.max[c] = c === "men" ? p.men : bn.cls[c]; });
-          var u = newUnit(w, side, "corps_bn", p.name + (pp[0] === "nk" ? "（纳卡）" : ""), side === "ARM" ? (pp[0] === "nk" ? "arm_nk_army" : "arm_army_troops") : "aze_army_troops");
-          u.role = p.role; u.bns.push(bn); u.tier = "reduced"; u.isNK = pp[0] === "nk";
-          if (side === "ARM" && pp[0] === "shared") { u.onMap = false; u.arriveDay = 5; u.entry = p.cls === "mrl" ? "lachin" : "sisian"; u.hex = -1; }
-          else {
-            u.onMap = true; u.arriveDay = 0;
-            var anchor = side === "ARM" ? { lat: 39.82, lon: 46.75 } : { lat: 40.37, lon: 47.13 };
-            u.anchor = anchor;
-            u.hex = nearestHex(map, anchor.lat + w.rng.uni(-0.15, 0.15), anchor.lon + w.rng.uni(-0.15, 0.15), function (h) {
-              return h.owner === side && (side === "AZE" ? h.region === "aze" : h.region === "arm_zone") && !h.nb.some(function (j) { return map.hexes[j].owner !== side; });
-            });
-          }
+          created.push({ bn: bn, role: p.role, name: p.name });
         }
+      });
+      if (!created.length) return;
+      var onMap = !(side === "ARM" && pp[0] === "shared");
+      var fname = side === "ARM" ? (pp[0] === "nk" ? "阿尔察赫动员预备团" : "亚美尼亚总参动员预备旅") : "阿塞拜疆总参预备炮兵与装甲旅";
+      var anchor = side === "ARM" ? { lat: 39.82, lon: 46.75 } : { lat: 40.02, lon: 47.15 };
+      var f = { id: side[0] + "F" + (w.formations.length + 1), side: side, name: fname,
+                corps: side === "ARM" ? (pp[0] === "nk" ? "arm_nk_army" : "arm_army_troops") : "aze_army_troops",
+                tier: "reduced", units: [], anchor: anchor, onMap: onMap,
+                arriveDay: onMap ? 0 : 5, entry: onMap ? null : "sisian", isNK: pp[0] === "nk", echelon: "X" };
+      w.formations.push(f);
+      created.forEach(function (item, idx) {
+        var u = newUnit(w, side, "corps_bn", item.name + " #" + (idx + 1) + " · " + fname, f.corps);
+        u.role = item.role; u.bns.push(item.bn); attach(u, f);
       });
     });
   }
@@ -410,8 +423,24 @@ var MoDSim = (function () {
     u.arriveDay = f.arriveDay; u.entry = f.entry; f.units.push(u.id);
   }
 
-  // Formation sector: maneuver battalions spread over own Karabakh front hexes nearest the anchor,
-  // artillery / AD / HQ one ring behind.
+  // Explicit historical sector assignment for 42 km operational hexes:
+  // Every Brigade/Regiment deploys cohesively in its single operational sector hex (no 1-per-hex carpet scattering).
+  var EXPLICIT_FORMATION_PLACE = {
+    "克尔巴贾尔守备团": "kalbajar",
+    "塔利什/马达吉斯第 6 防御区团": "sugovushan",
+    "马尔塔克特方向团": "martakert",
+    "阿斯克兰/阿格达姆方向团": "stepanakert",
+    "马尔图尼方向团": "aghdam",
+    "哈德鲁特/菲祖利方向团": "fuzuli",
+    "杰布拉伊尔方向团": "jabrayil",
+    "阿尔察赫直属装甲与炮兵旅": "shusha",
+    "阿尔察赫防空导弹旅": "stepanakert",
+    "阿尔察赫动员预备团": "shusha",
+    "第 1 军 亚美尼亚苏式摩步团 #1": "goris",
+    "第 1 军 亚美尼亚苏式摩步团 #2": "goris",
+    "第 1 军 直属炮兵与侦察团": "goris",
+  };
+
   function placeFormations(w, side) {
     var map = w.map, hexes = map.hexes, occ = w._occ || (w._occ = {});
     var isKarabakhFront = function (h) {
@@ -425,39 +454,55 @@ var MoDSim = (function () {
       return f.isNK ? h.region === "arm_zone" : (h.region === "arm_zone" || h.place === "goris" || h.place === "sisian" || h.place === "vardenis");
     };
     var dist2 = function (h, a) { return Math.pow((h.lat - a.lat) * 111, 2) + Math.pow((h.lon - a.lon) * 85.3, 2); };
-    w.formations.filter(function (f) { return f.side === side && f.onMap; })
+
+    // AZE jump-off hubs along the Line of Contact + strategic reserve hubs
+    var AZE_CORPS_HUBS = {
+      aze_3rd_corps: ["gadabay", "goranboy"],
+      aze_1st_corps: ["goranboy", "tartar", "agjabadi"],
+      aze_2nd_corps: ["beylagan", "horadiz", "aras_east"],
+      aze_4th_corps: ["baku", "mingachevir"],
+      aze_army_troops: ["mingachevir", "horadiz"],
+    };
+
+    w.formations.filter(function (f) { return f.side === side && f.onMap && !f.garrison; })
       .sort(function (a, b) { return (a.tier === "active" ? 0 : 1) - (b.tier === "active" ? 0 : 1); })
-      .forEach(function (f) {
-        var units = f.units.map(function (id) { return w.unitById[id]; });
-        var man = units.filter(function (u) { return u.role === "maneuver"; });
-        var rear = units.filter(function (u) { return u.role !== "maneuver"; });
-        var front = f.tier === "active" && (side === "AZE" || f.isNK);
-        man.forEach(function (u) {
+      .forEach(function (f, fIdx) {
+        var units = f.units.map(function (id) { return w.unitById[id]; }).filter(Boolean);
+        var chosenHex = -1;
+        if (side === "ARM" && EXPLICIT_FORMATION_PLACE[f.name] && map.places[EXPLICIT_FORMATION_PLACE[f.name]] !== undefined) {
+          chosenHex = map.places[EXPLICIT_FORMATION_PLACE[f.name]];
+        } else if (side === "AZE" && AZE_CORPS_HUBS[f.corps]) {
+          var hubs = AZE_CORPS_HUBS[f.corps].map(function (p) { return map.places[p]; }).filter(function (x) { return x !== undefined; });
+          if (hubs.length) {
+            var bestH = hubs[0], bdH = 1e18;
+            hubs.forEach(function (hi) {
+              var d = dist2(hexes[hi], f.anchor) + (occ[hi] || 0) * 2500;
+              if (d < bdH) { bdH = d; bestH = hi; }
+            });
+            chosenHex = bestH;
+          }
+        }
+        if (chosenHex < 0) {
+          var front = f.tier === "active" && (side === "AZE" || f.isNK);
           var best = -1, bd = 1e18;
           hexes.forEach(function (h) {
-            if (!okRegion(h, f) || (front && !isKarabakhFront(h)) || (!front && isKarabakhFront(h))) return;
-            var o = occ[h.i] || 0;
-            if (o >= (side === "AZE" ? 9 : 5)) return;
-            var d = dist2(h, f.anchor) * (1 + o * 2.2);
+            if (!okRegion(h, f) || (front && !isKarabakhFront(h))) return;
+            var d = dist2(h, f.anchor) * (1 + (occ[h.i] || 0) * 0.5);
             if (d < bd) { bd = d; best = h.i; }
           });
           if (best < 0) best = nearestHex(map, f.anchor.lat, f.anchor.lon, function (h) { return okRegion(h, f); });
-          u.hex = best; occ[best] = (occ[best] || 0) + 1;
-        });
-        var core = man.length ? man.map(function (u) { return u.hex; }) : [nearestHex(map, f.anchor.lat, f.anchor.lon, function (h) { return okRegion(h, f); })];
-        rear.forEach(function (u, k) {
-          var anchorHex = hexes[core[k % core.length]], best = -1, bd = 1e9;
-          hexes.forEach(function (h) {
-            if (!okRegion(h, f) || isKarabakhFront(h)) return;
-            var d = hexDist(h, anchorHex);
-            if (d < 1) return;
-            var sc = d + (occ[h.i] || 0) * 0.7;
-            if (sc < bd) { bd = sc; best = h.i; }
-          });
-          if (best < 0) best = anchorHex.i;
-          u.hex = best; occ[best] = (occ[best] || 0) + 1;
-        });
+          chosenHex = best;
+        }
+        f.hex = chosenHex;
+        occ[chosenHex] = (occ[chosenHex] || 0) + 1;
+        units.forEach(function (u) { u.hex = chosenHex; });
       });
+
+    // Any un-deployed off-map formations get hex = -1 until arrival
+    w.formations.filter(function (f) { return f.side === side && !f.onMap; }).forEach(function (f) {
+      f.hex = -1;
+      f.units.forEach(function (id) { var u = w.unitById[id]; if (u) u.hex = -1; });
+    });
   }
 
   function addTheatreAD(w, data, opts) {
@@ -465,15 +510,20 @@ var MoDSim = (function () {
     var s300 = (inv.s300ps || 0) + ((opts.inventoryDelta && opts.inventoryDelta.ARM && opts.inventoryDelta.ARM.sam_long) || 0);
     var med = (inv.krug || 0) + (inv.s125_pechora || 0) + (inv.buk_m1_2 || 0) + ((opts.inventoryDelta && opts.inventoryDelta.ARM && opts.inventoryDelta.ARM.sam_medium) || 0);
     var tor = (inv.tor_m2km || 0);
-    var spots = [["stepanakert", s300 * 0.5, med * 0.4, tor * 0.5], ["lachin", s300 * 0.25, med * 0.3, tor * 0.25], ["martakert", s300 * 0.25, med * 0.3, tor * 0.25]];
-    spots.forEach(function (s) {
+    var hStep = map.places.stepanakert;
+    var f = { id: "AF" + (w.formations.length + 1), side: "ARM", name: "阿尔察赫防空导弹旅", corps: "arm_air_defence", tier: "active", units: [],
+              anchor: { lat: 39.82, lon: 46.75 }, onMap: true, arriveDay: 0, entry: null, isNK: true, hex: hStep, echelon: "X" };
+    w.formations.push(f);
+    var spots = [["stepanakert", s300 * 0.5, med * 0.4, tor * 0.5], ["stepanakert", s300 * 0.25, med * 0.3, tor * 0.25], ["martakert", s300 * 0.25, med * 0.3, tor * 0.25]];
+    spots.forEach(function (s, idx) {
       var h = map.places[s[0]];
       if (h === undefined) return;
-      var u = newUnit(w, "ARM", "corps_bn", "防空集群（" + (map.hexes[h].name_arm || s[0]) + "）", "arm_air_defence");
+      var u = newUnit(w, "ARM", "corps_bn", "防空导弹营 #" + (idx + 1) + " · 阿尔察赫防空导弹旅", "arm_air_defence");
+      u.role = "ad";
       var bn = { tpl: "theatre_ad", name: u.name, tier: "active", req: {}, menMax: 160, cls: zeroCls(), max: zeroCls(), org: 1, supply: 3, mobilising: false };
       bn.cls.samLong = Math.round(s[1]); bn.cls.sam = Math.round(s[2]); bn.cls.tor = Math.round(s[3]); bn.cls.men = 160; bn.cls.trucks = 20;
       CLASSES.forEach(function (c) { bn.max[c] = bn.cls[c]; });
-      u.bns.push(bn); u.hex = h; u.onMap = true; u.arriveDay = 0; u.static = true;
+      u.bns.push(bn); attach(u, f); u.hex = hStep; u.onMap = true; u.arriveDay = 0; u.static = true;
     });
   }
 
@@ -577,32 +627,27 @@ var MoDSim = (function () {
     w.orders.push({ unit: unitId, order: order, at: w.tick + d, issued: w.tick });
     return { ok: true, delay: d };
   }
-  // Formation order (DC-010 fast path): every maneuver battalion of the formation gets the order with the
-  // formation delay; move/attack destinations are spread over the target hex and its friendly neighbours.
+  // Formation order (DC-010 fast path): on 42 km hexes, the entire brigade/regiment acts cohesively in a single sector hex.
   function issueFormationOrder(w, formationId, order) {
     var f = (w.formations || []).filter(function (x) { return x.id === formationId; })[0];
     if (!f) return { ok: false, reason: "no_formation" };
     var units = f.units.map(function (id) { return w.unitById[id]; }).filter(function (u) { return u && alive(u); });
-    var man = units.filter(function (u) { return u.role === "maneuver"; });
+    var man = units.filter(function (u) { return u.role === "maneuver" || u.role === "sof"; });
     if (order.type === "ad") { units.forEach(function (u) { u.ad = order.ad; }); return { ok: true, delay: 0, n: units.length }; }
-    if (!man.length) return { ok: false, reason: "no_maneuver" };
-    var hexes = w.map.hexes, dests = [order.target];
-    if (order.type === "move" || order.type === "attack") {
-      var t = hexes[order.target];
-      if (t.owner === f.side) t.nb.forEach(function (j) { if (hexes[j].owner === f.side) dests.push(j); });
-    }
+    var actUnits = man.length ? man : units;
+    if (!actUnits.length) return { ok: false, reason: "no_maneuver" };
     var maxDelay = 0;
-    man.forEach(function (u, k) {
-      var o = { type: order.type, target: dests[Math.floor(k / 2) % dests.length], viaFormation: true };
+    actUnits.forEach(function (u) {
+      var o = { type: order.type, target: order.target, viaFormation: true };
       var r = issueOrder(w, u.id, o);
       maxDelay = Math.max(maxDelay, r.delay || 0);
     });
     if (order.type === "move" || order.type === "defend" || order.type === "reserve") {
-      units.filter(function (u) { return u.role !== "maneuver"; }).forEach(function (u) {
-        if (order.type === "move") issueOrder(w, u.id, { type: "move", target: order.target, viaFormation: true });
+      units.filter(function (u) { return actUnits.indexOf(u) < 0; }).forEach(function (u) {
+        issueOrder(w, u.id, { type: order.type, target: order.target, viaFormation: true });
       });
     }
-    return { ok: true, delay: maxDelay, n: man.length };
+    return { ok: true, delay: maxDelay, n: units.length };
   }
   function pendingOrders(w, unitId) { return w.orders.filter(function (o) { return o.unit === unitId; }); }
   function cancelOrders(w, unitId) { w.orders = w.orders.filter(function (o) { return o.unit !== unitId; }); }
@@ -780,14 +825,28 @@ var MoDSim = (function () {
       // losses: AZE drone/artillery stand-off fire inflicts heavier attrition on exposed defenders while sparing AZE assault infantry
       var share = effA / (effA + effD);
       var intensity = night ? 0.5 : 1.0;
-      var dLoss = P.LOSS_K * 2.4 * share * intensity / (0.65 + 0.35 * fortM) * w.rng.uni(0.7, 1.3);
+      var stackScale = Math.pow(Math.min(1, 10 / Math.max(1, defs.length)), 0.20);
+      var dLoss = P.LOSS_K * 2.38 * share * intensity * stackScale / (0.65 + 0.35 * fortM) * w.rng.uni(0.7, 1.3);
       var aLoss = P.LOSS_K * 1.15 * (1 - share) * intensity * w.rng.uni(0.7, 1.3);
       var fireShareD = FA / Math.max(1e-6, effA / (night ? 0.75 : 1));
-      defs.forEach(function (u) { u.bns.forEach(function (b) { applyLoss(w, dSide, b, dLoss, fireShareD > 0.25 ? "C" : "E", 1.2, 1.05); b.org = Math.max(0, b.org - P.ORG_LOSS * dLoss * (R > 1 ? 1.25 : 0.8)); }); });
-      atts.forEach(function (u) { u.bns.forEach(function (b) { applyLoss(w, aSide, b, aLoss, "E", 0.75, 0.48); b.org = Math.max(0, b.org - P.ORG_LOSS * aLoss * 0.55); }); });
-      // break-through / retreat
+      defs.forEach(function (u) {
+        var rMul = (u.role === "maneuver" || u.role === "sof") ? 1.0 : 0.25;
+        u.bns.forEach(function (b) {
+          applyLoss(w, dSide, b, dLoss * rMul, fireShareD > 0.25 ? "C" : "E", 0.84, 0.80);
+          b.org = Math.max(0, b.org - P.ORG_LOSS * dLoss * rMul * (R > 1 ? 1.2 : 0.75));
+        });
+      });
+      atts.forEach(function (u) {
+        var rMul = (u.role === "maneuver" || u.role === "sof") ? 1.0 : 0.25;
+        u.bns.forEach(function (b) { applyLoss(w, aSide, b, aLoss * rMul, "E", 0.75, 0.38); b.org = Math.max(0, b.org - P.ORG_LOSS * aLoss * rMul * 0.55); });
+      });
+      // break-through / retreat (measured on frontline maneuver battalions)
       var dOrg = 0, n = 0;
-      defs.forEach(function (u) { u.bns.forEach(function (b) { dOrg += b.org; n++; }); });
+      defs.forEach(function (u) {
+        if (u.role !== "maneuver" && u.role !== "sof") return;
+        u.bns.forEach(function (b) { dOrg += b.org; n++; });
+      });
+      if (!n) defs.forEach(function (u) { u.bns.forEach(function (b) { dOrg += b.org; n++; }); });
       dOrg = n ? dOrg / n : 0;
       if (eng.adv >= P.FLIP_KM || dOrg < P.BREAK_ORG) {
         defs.forEach(function (u) { retreat(w, u, ti); });
@@ -1197,27 +1256,25 @@ var MoDSim = (function () {
     w.units.forEach(function (u) { if (u.hex === hi && u.side === side && u.role === "maneuver" && alive(u)) n++; });
     return n;
   }
-  // artillery / AD / HQ: stay 1-2 hexes behind the front, toward the axis objective
+  // Organic artillery / AD / HQ stay in the same 42 km sector hex as their parent brigade/regiment's maneuver battalions.
   function supportFollow(w, u, side, obj) {
-    var hexes = w.map.hexes, here = hexes[u.hex];
-    var enemyDist = function (h) {
-      var best = 99;
-      h.nb.forEach(function (j) { if (hexes[j].owner !== side) best = 1; });
-      if (best === 1) return 1;
-      for (var k = 0; k < h.nb.length; k++) { var n = hexes[h.nb[k]]; if (n.nb.some(function (j) { return hexes[j].owner !== side; })) return 2; }
-      return 3;
-    };
-    if (enemyDist(here) === 2) return;
-    var best = -1, bd = 1e9;
-    hexes.forEach(function (h) {
-      if (h.owner !== side || (side === "AZE" && h.region === "armenia")) return;
-      if (enemyDist(h) !== 2) return;
-      var d = hexDist(h, here) + (obj >= 0 ? hexDist(h, hexes[obj]) * 0.6 : 0);
-      if (d < bd) { bd = d; best = h.i; }
+    if (!u.formation) return;
+    var f = (w.formations || []).filter(function (x) { return x.id === u.formation; })[0];
+    if (!f) return;
+    var man = f.units.map(function (id) { return w.unitById[id]; }).filter(function (m) {
+      return m && alive(m) && (m.role === "maneuver" || m.role === "sof") && m.hex >= 0;
     });
-    if (best >= 0 && best !== u.hex) {
-      var path = findPath(w, side, u.hex, best);
+    if (!man.length) return;
+    // Find modal hex of this brigade's maneuver battalions
+    var counts = {}, bestH = man[0].hex, bestC = 0;
+    man.forEach(function (m) {
+      counts[m.hex] = (counts[m.hex] || 0) + 1;
+      if (counts[m.hex] > bestC) { bestC = counts[m.hex]; bestH = m.hex; }
+    });
+    if (bestH >= 0 && bestH !== u.hex) {
+      var path = findPath(w, side, u.hex, bestH);
       if (path && path.length <= 8) { u.path = path; u.posture = "move"; u.moveProg = 0; }
+      else if (w.map.hexes[bestH].owner === side) { u.hex = bestH; }
     }
   }
 
@@ -1242,18 +1299,19 @@ var MoDSim = (function () {
         if (lost.length) { u.posture = "attack"; u.target = lost[0]; return; }
       }
       if (u.posture === "attack") return;
-      if (contact) { u.posture = "defend"; return; }
+      var manHere = unitsAt(w, u.hex, "ARM").filter(function (o) { return o.role === "maneuver"; });
+      if (contact && manHere.indexOf(u) < 5) { u.posture = "defend"; return; }
       if (mode === "competent") {
-        // fortify the vital triangle (Shusha, Stepanakert, Lachin) with >= 4 battalions; redeploy reserves at night
-        var keys = ["shusha", "stepanakert", "lachin"].map(function (p) { return w.map.places[p]; }).filter(function (x) { return x !== undefined && hexes[x].owner === "ARM"; });
+        // fortify Shusha, Hadrut, and Lachin with >= 4 battalions; redeploy reserves at night
+        var keys = ["shusha", "hadrut", "lachin"].map(function (p) { return w.map.places[p]; }).filter(function (x) { return x !== undefined && hexes[x].owner === "ARM"; });
         var manAt = function (hi) { return unitsAt(w, hi, "ARM").filter(function (o) { return o.role === "maneuver"; }).length; };
-        if (keys.indexOf(u.hex) >= 0 && manAt(u.hex) <= 4) { u.posture = "defend"; return; }
+        if (keys.indexOf(u.hex) >= 0 && manAt(u.hex) <= 5) { u.posture = "defend"; return; }
         var needKey = keys.filter(function (k) { return manAt(k) < 4; })[0];
         if (needKey !== undefined && isNight(w) && hexDist(hexes[needKey], here) <= 6) {
           var pk = findPath(w, "ARM", u.hex, needKey);
           if (pk) { u.path = pk; u.posture = "move"; u.moveProg = 0; return; }
         }
-        if (!isNight(w) && keys.indexOf(u.hex) < 0) { u.posture = "reserve"; return; }
+        if (!isNight(w) && keys.indexOf(u.hex) < 0 && !contact) { u.posture = "reserve"; return; }
       }
       // garrisons of named towns stay unless another battalion holds the town; in historical mode NK sector regiments stay tied to their sector
       if (here.value >= 4 && unitsAt(w, u.hex, "ARM").filter(function (o) { return o.role === "maneuver"; }).length <= (mode === "historical" && u.isNK ? 2 : 1)) { u.posture = "defend"; return; }

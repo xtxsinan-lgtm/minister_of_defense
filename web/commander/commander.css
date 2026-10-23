@@ -114,16 +114,28 @@ small { color: var(--t2); font-size: 11px; }
 .leaflet-underlay .leaflet-control-attribution a { color: var(--t1) !important; }
 
 #map { position: relative; z-index: 1; width: 100%; height: 100%; display: block; user-select: none; }
-.hx { stroke: rgba(12, 20, 30, 0.82); stroke-width: 1.5; transition: filter .1s; }
-.hx:hover { filter: brightness(1.28); stroke: rgba(255, 255, 255, 0.75); stroke-width: 2.2; }
+.hx { stroke: rgba(210, 230, 250, 0.28); stroke-width: 1.1; transition: filter .1s; }
+.hx:hover { filter: brightness(1.28); stroke: rgba(255, 255, 255, 0.82); stroke-width: 2.2; }
 .hx.target { stroke: #ffd28c !important; stroke-width: 4.5 !important; }
-.lbl { font-size: 10.5px; font-weight: 700; fill: #f4f8ff; paint-order: stroke; stroke: rgba(6, 10, 16, 0.92); stroke-width: 3.6px; stroke-linejoin: round; pointer-events: none; }
-.lbl.big { font-size: 13px; fill: #ffe6a3; stroke-width: 4.2px; }
-.lbl-sub { font-size: 8px; font-weight: 500; fill: #c6d6ea; paint-order: stroke; stroke: rgba(6, 10, 16, 0.88); stroke-width: 2.6px; pointer-events: none; }
+.lbl { font-size: 9.8px; font-weight: 700; fill: #f4f8ff; paint-order: stroke; stroke: rgba(6, 10, 16, 0.92); stroke-width: 3.4px; stroke-linejoin: round; pointer-events: none; }
+.lbl.big { font-size: 12.2px; fill: #ffe6a3; stroke-width: 4.0px; }
+.lbl-sub { font-size: 7.6px; font-weight: 500; fill: #c6d6ea; paint-order: stroke; stroke: rgba(6, 10, 16, 0.88); stroke-width: 2.4px; pointer-events: none; }
+.lbl-country { font-size: 19px; font-weight: 850; letter-spacing: 5px; paint-order: stroke; stroke: rgba(5, 9, 15, 0.92); stroke-width: 5.5px; stroke-linejoin: round; pointer-events: none; opacity: 0.92; }
+.lbl-country.arm { fill: #ffd28c; }
+.lbl-country.aze { fill: #9de0ff; }
+.lbl-country-en { font-size: 10.5px; font-weight: 700; letter-spacing: 3px; paint-order: stroke; stroke: rgba(5, 9, 15, 0.90); stroke-width: 3.5px; pointer-events: none; opacity: 0.82; }
+.lbl-neighbor { font-size: 13.5px; font-weight: 750; letter-spacing: 3.5px; fill: #b8cadc; paint-order: stroke; stroke: rgba(4, 8, 14, 0.92); stroke-width: 4.2px; pointer-events: none; opacity: 0.85; }
+.lbl-region { font-size: 10.5px; font-weight: 700; letter-spacing: 1.5px; fill: #ffe094; paint-order: stroke; stroke: rgba(5, 9, 15, 0.92); stroke-width: 3.5px; pointer-events: none; opacity: 0.88; }
 .unit { cursor: pointer; }
-.unit .frame { stroke-width: 1.4; }
-.unit.sel .frame { stroke: #fff !important; stroke-width: 2.4; }
+.unit .frame { stroke-width: 1.5; }
+.unit.sel .frame { stroke: #fff !important; stroke-width: 2.5; }
 .unit .str { pointer-events: none; }
+.unit-lbl { font-size: 5.2px; font-weight: 700; fill: #f2f7ff; paint-order: stroke; stroke: rgba(5, 9, 15, 0.94); stroke-width: 1.8px; pointer-events: none; }
+.sub-bns { display: flex; flex-direction: column; gap: 4px; max-height: 185px; overflow-y: auto; padding-right: 2px; }
+.sub-bn { display: flex; align-items: center; gap: 6px; background: var(--bg-2); border: 1px solid var(--border-soft); border-radius: 4px; padding: 4px 7px; font-size: 11px; cursor: pointer; }
+.sub-bn:hover { background: var(--bg-hover); border-color: var(--border-bright); }
+.sub-bn .s-nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sub-bn .s-eq { font: 10px var(--mono); color: var(--t2); white-space: nowrap; }
 .tip { position: absolute; pointer-events: none; min-width: 225px; max-width: 300px; background: rgba(10,16,24,.96); border: 1px solid var(--border-bright);
   border-radius: 6px; padding: 9px 11px; font-size: 11.5px; color: var(--t1); box-shadow: 0 10px 30px rgba(0,0,0,.55); opacity: 0; transition: opacity .1s; z-index: 10; }
 .tip.show { opacity: 1; }

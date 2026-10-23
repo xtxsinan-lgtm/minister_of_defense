@@ -13,8 +13,8 @@
     <div class="brand">
       <div class="brand-mark"><svg viewBox="0 0 24 24"><path d="M12 2l8.66 5v10L12 22l-8.66-5V7z" fill="none" stroke="#1b1105" stroke-width="2"/><path d="M12 7l2 4h-4zM8 15h8" stroke="#1b1105" stroke-width="2" fill="#1b1105"/></svg></div>
       <div>
-        <div class="brand-title">战争部长 · 司令模式<span class="pill">H3 r4 · 72格真实底图</span></div>
-        <div class="brand-sub">2020 年纳卡战争 · 对边 42 km 战役六角格（纳卡 12 格 / 全战区 72 格）</div>
+        <div class="brand-title">战争部长 · 司令模式<span class="pill">旅/团级 · 亚阿全境 72 格</span></div>
+        <div class="brand-sub">2020 年纳卡战争 · 对边 42 km 战役六角格 · 默认以旅/团（X / III）为指挥单位</div>
       </div>
     </div>
 
@@ -78,15 +78,15 @@
               <option value="none">纯六角格 (无底图)</option>
             </select>
           </label>
-          <label class="chk" title="调节六边形填色透明度，方便观察底图真实山脉与河流">填色
-            <input type="range" id="hex-opacity" min="0.06" max="0.80" step="0.04" value="0.34" class="toolbar-rng" />
+          <label class="chk" title="调节六边形填色透明度，方便观察底图真实国界、山脉与河流">填色
+            <input type="range" id="hex-opacity" min="0.04" max="0.75" step="0.04" value="0.22" class="toolbar-rng" />
           </label>
-          <label class="chk"><input type="checkbox" id="lyr-borders" checked /> 国界/接触线</label>
+          <label class="chk"><input type="checkbox" id="lyr-borders" checked /> 国界/国家全貌</label>
           <label class="chk"><input type="checkbox" id="lyr-terrain" /> 地形纹样</label>
           <label class="chk"><input type="checkbox" id="lyr-supply" /> 补给</label>
           <label class="chk"><input type="checkbox" id="lyr-ad" /> 防空覆盖</label>
-          <button class="btn ghost sm" id="btn-zoom-nk" title="聚焦纳卡核心战场（12 格）">聚焦纳卡</button>
-          <button class="btn ghost sm" id="btn-zoom-all" title="查看亚美尼亚—阿塞拜疆全战区（72 格）">全战区(72格)</button>
+          <button class="btn ghost sm" id="btn-zoom-all" title="查看亚美尼亚、阿塞拜疆及周边邻国（格鲁吉亚/土耳其/伊朗）全貌">亚阿全貌(72格)</button>
+          <button class="btn ghost sm" id="btn-zoom-nk" title="聚焦纳卡核心战场（12 格）">聚焦纳卡前线</button>
           <button class="btn ghost sm" id="btn-zoom-in">＋</button>
           <button class="btn ghost sm" id="btn-zoom-out">－</button>
         </div>
@@ -107,8 +107,8 @@
           </g>
         </svg>
         <div class="tip" id="tip"></div>
-        <div class="map-scale-badge" id="map-scale-badge">H3 r4 尺度 · 对边 42 km（边长 24.2 km · 面积 1,528 km²）· 全战区 72 格（亚美尼亚 17 · 纳卡及七区 12 · 纳希切万 3 · 阿塞拜疆本部 40）</div>
-        <div class="map-hint" id="map-hint">左键选择部队 · 右键下达移动/进攻 · 滚轮缩放 · 拖动平移 · 可切换真实地形/卫星底图</div>
+        <div class="map-scale-badge" id="map-scale-badge">H3 r4 尺度 · 对边 42 km · 亚美尼亚(17格) + 纳卡及七区(12格) + 纳希切万(3格) + 阿塞拜疆本部(40格) · 默认旅/团级兵牌</div>
+        <div class="map-hint" id="map-hint">左键选择旅/团 · 右键地图下达移动/进攻 · 滚轮缩放 · 拖动平移 · 顶部可切换“亚阿全貌”或“聚焦纳卡前线”</div>
       </div>
       <div class="feed" id="feed"></div>
     </section>
@@ -118,8 +118,8 @@
       <div class="panel-h"><span id="sel-title">未选择</span><span class="tag" id="sel-tag">—</span></div>
       <div class="sel-body" id="sel-body">
         <div class="empty">
-          <p>在地图或左侧战斗序列中选择一个营或旅。</p>
-          <p class="muted">选旅（编组）下令更快：命令经旅部传达约 1 小时；越级直接指挥单个营约 3 小时（DC-010）。</p>
+          <p>在地图或左侧战斗序列中选择一个<strong>旅 / 团</strong>。</p>
+          <p class="muted">默认以<strong>旅（X）/ 团（III）</strong>为战役机动与指挥单位：下达命令经旅/团部传达约 1 小时（DC-010），右侧可查看下辖各建制营与装备明细。</p>
         </div>
       </div>
     </aside>

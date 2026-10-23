@@ -28,7 +28,7 @@
   var st = {
     w: null, opts: null, speed: 0, acc: 0, last: 0, sel: null, view: { x: 0, y: 0, k: 1 },
     hexEls: [], evSeen: 0, orderLog: [], dirty: true, frontKey: "", lastRender: 0, baseline: null, adCache: null, adTick: -1,
-    lmap: null, ltile: null, basemap: "topo", hexOpacity: 0.34,
+    lmap: null, ltile: null, basemap: "topo", hexOpacity: 0.22, fitAll: true,
   };
   var $ = function (id) { return document.getElementById(id); };
   function el(tag, attrs, parent) {
@@ -210,9 +210,21 @@
       if (h.terrain !== "Open") el("polygon", { points: hexPts(h, 0.97), fill: "url(#pt-" + h.terrain + ")", "pointer-events": "none", class: "terr" }, $("lyr-overlay"));
     });
 
-    // Real geographic boundaries (Natural Earth 10m Admin-0 + 1994 Line of Contact + 1988 NKAO)
+    // Real geographic boundaries (Natural Earth 10m Admin-0 + Neighbor Dim Mask + Sovereign Borders + 1994 LOC)
     var gb = DATA.geo_borders;
     if (gb && $("lyr-geoborders")) {
+      var ringToPath = function (ring) {
+        return ring.map(function (pt, idx) {
+          var p = llToSvg(pt[0], pt[1]);
+          return (idx === 0 ? "M" : "L") + p.x.toFixed(1) + "," + p.y.toFixed(1);
+        }).join(" ") + " Z";
+      };
+      // 1) Outside-country dim mask: dims Georgia, Turkey, Iran, Russia & Caspian Sea while keeping Armenia & Azerbaijan bright
+      var maskD = "M-4500,-4500 H4500 V4500 H-4500 Z ";
+      (gb.armenia || []).forEach(function (r) { maskD += ringToPath(r) + " "; });
+      (gb.azerbaijan || []).forEach(function (r) { maskD += ringToPath(r) + " "; });
+      el("path", { d: maskD, "fill-rule": "evenodd", fill: "rgba(5, 9, 16, 0.56)", "pointer-events": "none" }, $("lyr-geoborders"));
+
       var drawRings = function (rings, attrs) {
         (rings || []).forEach(function (ring) {
           var pts = ring.map(function (pt) {
@@ -222,10 +234,47 @@
           el("polygon", Object.assign({ points: pts, fill: "none", "pointer-events": "none" }, attrs), $("lyr-geoborders"));
         });
       };
-      drawRings(gb.azerbaijan, { stroke: "rgba(126, 232, 250, 0.50)", "stroke-width": 1.6, "stroke-dasharray": "5,4" });
-      drawRings(gb.armenia, { stroke: "rgba(255, 195, 120, 0.65)", "stroke-width": 1.8, "stroke-dasharray": "5,4" });
-      drawRings(gb.nk_oblast, { stroke: "rgba(255, 255, 255, 0.45)", "stroke-width": 1.3, "stroke-dasharray": "2.5,2.5" });
-      drawRings(gb.loc_1994, { stroke: "rgba(255, 209, 102, 0.85)", "stroke-width": 2.2, "stroke-dasharray": "6,3" });
+      // 2) Neighboring country boundaries (Georgia, Turkey, Iran, Russia)
+      drawRings(gb.georgia, { stroke: "rgba(175, 205, 235, 0.52)", "stroke-width": 1.6, "stroke-dasharray": "6,4" });
+      drawRings(gb.turkey, { stroke: "rgba(175, 205, 235, 0.48)", "stroke-width": 1.6, "stroke-dasharray": "6,4" });
+      drawRings(gb.iran, { stroke: "rgba(175, 205, 235, 0.48)", "stroke-width": 1.6, "stroke-dasharray": "6,4" });
+      drawRings(gb.russia, { stroke: "rgba(175, 205, 235, 0.42)", "stroke-width": 1.5, "stroke-dasharray": "6,4" });
+
+      // 3) Lake Sevan shoreline & tint
+      drawRings(gb.sevan, { fill: "rgba(38, 136, 212, 0.46)", stroke: "rgba(130, 215, 255, 0.82)", "stroke-width": 1.5 });
+
+      // 4) Sovereign borders of Armenia & Azerbaijan (dual-stroke casing + bright inner line)
+      drawRings(gb.azerbaijan, { stroke: "rgba(5, 10, 18, 0.88)", "stroke-width": 4.4, fill: "rgba(48, 152, 228, 0.05)" });
+      drawRings(gb.armenia, { stroke: "rgba(5, 10, 18, 0.88)", "stroke-width": 4.4, fill: "rgba(235, 138, 48, 0.07)" });
+      drawRings(gb.azerbaijan, { stroke: "rgba(126, 232, 250, 0.92)", "stroke-width": 2.2 });
+      drawRings(gb.armenia, { stroke: "rgba(255, 198, 115, 0.96)", "stroke-width": 2.4 });
+
+      // 5) 1988 NKAO & 1994–2020 Line of Contact
+      drawRings(gb.nk_oblast, { stroke: "rgba(255, 255, 255, 0.45)", "stroke-width": 1.3, "stroke-dasharray": "3,3" });
+      drawRings(gb.loc_1994, { stroke: "rgba(15, 10, 5, 0.85)", "stroke-width": 4.2 });
+      drawRings(gb.loc_1994, { stroke: "rgba(255, 209, 102, 0.95)", "stroke-width": 2.4, "stroke-dasharray": "7,4" });
+
+      // 6) Country & Neighbor Macro-Labels
+      var macroLabels = [
+        { lat: 40.32, lon: 44.45, cn: "亚 美 尼 亚", en: "ARMENIA", cls: "lbl-country arm" },
+        { lat: 40.55, lon: 48.25, cn: "阿 塞 拜 疆", en: "AZERBAIJAN", cls: "lbl-country aze" },
+        { lat: 41.66, lon: 44.80, cn: "格 鲁 吉 亚 · GEORGIA（第比利斯）", cls: "lbl-neighbor" },
+        { lat: 39.85, lon: 43.52, cn: "土 耳 其 · TURKEY", cls: "lbl-neighbor" },
+        { lat: 38.54, lon: 46.85, cn: "伊 朗 · IRAN", cls: "lbl-neighbor" },
+        { lat: 41.95, lon: 47.35, cn: "俄 罗 斯 · RUSSIA", cls: "lbl-neighbor" },
+        { lat: 39.65, lon: 49.92, cn: "里 海 · CASPIAN SEA", cls: "lbl-neighbor" },
+        { lat: 39.32, lon: 45.45, cn: "纳希切万自治共和国（阿塞拜疆飞地）", cls: "lbl-region" },
+        { lat: 39.96, lon: 46.48, cn: "纳戈尔诺-卡拉巴赫（1994 实控区）", cls: "lbl-region" },
+      ];
+      macroLabels.forEach(function (m) {
+        var p = llToSvg(m.lat, m.lon);
+        var t = el("text", { x: p.x, y: p.y, "text-anchor": "middle", class: m.cls }, $("lyr-geoborders"));
+        t.textContent = m.cn;
+        if (m.en) {
+          var te = el("text", { x: p.x, y: p.y + 15, "text-anchor": "middle", class: "lbl-country-en", fill: m.cls.indexOf("arm") >= 0 ? "#ffd28c" : "#9de0ff" }, $("lyr-geoborders"));
+          te.textContent = m.en;
+        }
+      });
     }
 
     // roads
@@ -369,52 +418,122 @@
   }
   function unitStrength(u) { var m = 0, M = 0; u.bns.forEach(function (b) { m += b.cls.men; M += b.menMax; }); return M ? m / M : 0; }
   function symbol(g, kind, color) {
-    var s = { stroke: color, fill: "none", "stroke-width": 1.2 };
+    var s = { stroke: color, fill: "none", "stroke-width": 1.25 };
     if (kind === "inf" || kind === "mech") { el("path", Object.assign({ d: "M-8,-5 L8,5 M8,-5 L-8,5" }, s), g); }
     if (kind === "armor" || kind === "mech") { el("ellipse", Object.assign({ cx: 0, cy: 0, rx: 5, ry: 2.8 }, s), g); }
-    if (kind === "art") { el("circle", { cx: 0, cy: 0, r: 2.2, fill: color }, g); }
+    if (kind === "art") { el("circle", { cx: 0, cy: 0, r: 2.3, fill: color }, g); }
     if (kind === "ad") { el("path", Object.assign({ d: "M-6,4 Q0,-6 6,4" }, s), g); }
     if (kind === "hq") { el("path", Object.assign({ d: "M-6,5 L-6,-5 L4,-5 L4,0 L-6,0" }, s), g); }
     if (kind === "sof") { var t = el("text", { x: 0, y: 3, "text-anchor": "middle", "font-size": 7, fill: color, "font-weight": 700 }, g); t.textContent = "SF"; }
   }
 
+  function shortFmName(name) {
+    return name
+      .replace(/^第 (\d+) 军 亚美尼亚苏式摩步团 #(\d+)$/, "$1军$2摩步团")
+      .replace(/^第 (\d+) 军 亚美尼亚筑垒固守步兵团 #(\d+)$/, "$1军$2固守团")
+      .replace(/^第 (\d+) 军 阿塞拜疆主力摩步旅 #(\d+)$/, "阿$1军$2摩步旅")
+      .replace(/^第 (\d+) 军 阿塞拜疆二线\/轻型摩步旅 #(\d+)$/, "阿$1军$2轻摩旅")
+      .replace(/^第 (\d+) 军 直属炮兵与侦察团$/, "$1军炮兵团")
+      .replace(/^第 (\d+) 军（(.+?)）$/, "$1军守备旅")
+      .replace(/^陆军直属部队 /, "")
+      .replace(/方向团$/, "团")
+      .replace(/守备团$/, "团")
+      .replace(/第 6 防御区团$/, "6团")
+      .replace(/^阿尔察赫直属装甲与炮兵旅$/, "中枢装炮旅")
+      .replace(/^阿尔察赫防空导弹旅$/, "防空导弹旅")
+      .replace(/^阿尔察赫动员预备团$/, "动员预备团")
+      .replace(/^亚美尼亚总参动员预备旅$/, "总参预备旅")
+      .replace(/^纳希切万独立合成集团军$/, "纳希切万军");
+  }
+
+  function formationState(w, f) {
+    var units = f.units.map(function (id) { return w.unitById[id]; }).filter(function (u) { return u && S.alive(u) && u.hex >= 0; });
+    if (!units.length) return null;
+    var vis = f.side === "ARM" || f.garrison || units.some(function (u) { return S.visibleToArm(w, u); });
+    if (!vis) return null;
+    var man = units.filter(function (u) { return u.role === "maneuver" || u.role === "sof"; });
+    var pool = man.length ? man : units;
+    var cnt = {}, bestH = pool[0].hex, bestC = 0;
+    pool.forEach(function (u) {
+      cnt[u.hex] = (cnt[u.hex] || 0) + 1;
+      if (cnt[u.hex] > bestC) { bestC = cnt[u.hex]; bestH = u.hex; }
+    });
+    var men = 0, menMax = 0, tanks = 0, ifv = 0, art = 0, sam = 0;
+    units.forEach(function (u) {
+      u.bns.forEach(function (b) {
+        men += b.cls.men; menMax += b.menMax;
+        tanks += b.cls.tanks; ifv += b.cls.ifv + b.cls.apc;
+        art += b.cls.art + b.cls.sp + b.cls.mrl + b.cls.mrl_lr;
+        sam += b.cls.sam + b.cls.tor + b.cls.samLong;
+      });
+    });
+    var kind = "inf";
+    if (sam >= 6 && !man.length) kind = "ad";
+    else if (art >= 18 && !man.length) kind = "art";
+    else if (tanks >= 28) kind = "armor";
+    else if (ifv >= 20) kind = "mech";
+    var posture = pool.some(function (u) { return u.posture === "attack"; }) ? "attack"
+                : pool.some(function (u) { return u.posture === "move"; }) ? "move"
+                : pool.every(function (u) { return u.posture === "reserve"; }) ? "reserve" : "defend";
+    var pend = units.some(function (u) { return S.pendingOrders(w, u.id).length > 0; });
+    var noSup = units.some(function (u) { return u.inSupply === false; });
+    var ai = units.every(function (u) { return u.control === "ai"; });
+    return {
+      f: f, id: f.id, side: f.side, name: f.name, shortName: shortFmName(f.name),
+      echelon: f.echelon || (/旅/.test(f.name) ? "X" : "III"),
+      hex: bestH, units: units, kind: kind, str: menMax ? men / menMax : 0,
+      men: men, menMax: menMax, posture: posture, pend: pend, noSup: noSup, ai: ai,
+    };
+  }
+
   function renderUnits() {
     var w = st.w, H = w.map.hexes, g = $("lyr-units"); g.innerHTML = "";
     var byHex = {};
-    w.units.forEach(function (u) {
-      if (!S.alive(u)) return;
-      if (u.side === "AZE" && !u.garrison && !S.visibleToArm(w, u)) return;
-      (byHex[u.hex] = byHex[u.hex] || []).push(u);
+    w.formations.forEach(function (f) {
+      var fs = formationState(w, f);
+      if (!fs) return;
+      (byHex[fs.hex] = byHex[fs.hex] || []).push(fs);
     });
     Object.keys(byHex).forEach(function (hi) {
       var list = byHex[hi], c = cxy(H[+hi]);
-      list.sort(function (a, b) { return (a.side === "ARM" ? 0 : 1) - (b.side === "ARM" ? 0 : 1) || (a.role === "maneuver" ? 0 : 1) - (b.role === "maneuver" ? 0 : 1); });
-      var selIdx = list.findIndex(function (u) { return isSelected(u); });
+      list.sort(function (a, b) { return (a.side === "ARM" ? 0 : 1) - (b.side === "ARM" ? 0 : 1); });
+      var selIdx = list.findIndex(function (fs) { return isFmSelected(fs.id); });
       if (selIdx > 0) { var s0 = list.splice(selIdx, 1)[0]; list.unshift(s0); }
-      var show = list.slice(0, 4);
-      show.slice().reverse().forEach(function (u, ri) {
+      var show = list.slice(0, 3);
+      show.slice().reverse().forEach(function (fs, ri) {
         var k = show.length - 1 - ri;
-        var ox = (k - (show.length - 1) * 0.5) * 9.5, oy = -k * 5.0;
-        var color = u.side === "ARM" ? "#ffb066" : "#6cc3ff";
-        var gg = el("g", { class: "unit" + (isSelected(u) ? " sel" : ""), transform: "translate(" + (c.x + ox).toFixed(1) + "," + (c.y - 6 + oy).toFixed(1) + ") scale(1.65)", "data-u": u.id }, g);
-        var fill = u.side === "ARM" ? "#1b120a" : "#0a1622";
-        el("rect", { x: -9, y: -6, width: 18, height: 12, rx: 1.5, fill: fill, stroke: color, class: "frame" }, gg);
-        symbol(gg, unitKind(u), color);
-        var s = unitStrength(u);
-        el("rect", { x: -9, y: 7, width: 18, height: 1.8, fill: "rgba(255,255,255,.15)", class: "str" }, gg);
-        el("rect", { x: -9, y: 7, width: (18 * Math.max(0, Math.min(1, s))).toFixed(1), height: 1.8, fill: s > 0.66 ? "#3ddc84" : s > 0.4 ? "#f2a93b" : "#f0604d", class: "str" }, gg);
-        if (u.side === "ARM") {
-          if (u.posture === "attack") { var t = el("text", { x: 9.5, y: -3, "font-size": 6, fill: "#ff8f80" }, gg); t.textContent = "▲"; }
-          else if (u.posture === "reserve") { var t2 = el("text", { x: 9.5, y: -3, "font-size": 5.5, fill: "#9fdcf0", "font-weight": 700 }, gg); t2.textContent = "R"; }
-          if (S.pendingOrders(w, u.id).length) { var t3 = el("text", { x: -12.5, y: -2, "font-size": 5.5, fill: "#3cc8e4" }, gg); t3.textContent = "⏱"; }
-          if (u.inSupply === false) { var t4 = el("text", { x: -12.5, y: 6, "font-size": 5.5, fill: "#f0604d" }, gg); t4.textContent = "⚠"; }
-          if (u.control === "ai" && st.opts.player) { var t5 = el("text", { x: 9.5, y: 6, "font-size": 4.5, fill: "#3cc8e4", "font-weight": 700 }, gg); t5.textContent = "AI"; }
+        var ox = (k - (show.length - 1) * 0.5) * 14.5, oy = -k * 6.5;
+        var color = fs.side === "ARM" ? "#ffb066" : "#6cc3ff";
+        var gg = el("g", {
+          class: "unit" + (isFmSelected(fs.id) ? " sel" : ""),
+          transform: "translate(" + (c.x + ox).toFixed(1) + "," + (c.y - 5 + oy).toFixed(1) + ") scale(1.72)",
+          "data-f": fs.id,
+        }, g);
+        var fill = fs.side === "ARM" ? "#1d130a" : "#0a1724";
+        var pip = el("text", { x: 0, y: -7.4, "text-anchor": "middle", "font-size": 5.0, fill: color, "font-weight": 800, "letter-spacing": "0.5px", "pointer-events": "none" }, gg);
+        pip.textContent = fs.echelon;
+        el("rect", { x: -10, y: -6, width: 20, height: 12, rx: 1.6, fill: fill, stroke: color, class: "frame" }, gg);
+        symbol(gg, fs.kind, color);
+        var s = fs.str;
+        el("rect", { x: -10, y: 7, width: 20, height: 1.9, fill: "rgba(255,255,255,.16)", class: "str" }, gg);
+        el("rect", { x: -10, y: 7, width: (20 * Math.max(0, Math.min(1, s))).toFixed(1), height: 1.9, fill: s > 0.66 ? "#3ddc84" : s > 0.4 ? "#f2a93b" : "#f0604d", class: "str" }, gg);
+        if (k === 0) {
+          var lbl = el("text", { x: 0, y: 13.2, "text-anchor": "middle", class: "unit-lbl" }, gg);
+          lbl.textContent = fs.shortName;
+        }
+        if (fs.side === "ARM") {
+          if (fs.posture === "attack") { var t = el("text", { x: 11, y: -2.5, "font-size": 6, fill: "#ff8f80" }, gg); t.textContent = "▲"; }
+          else if (fs.posture === "reserve") { var t2 = el("text", { x: 11, y: -2.5, "font-size": 5.5, fill: "#9fdcf0", "font-weight": 700 }, gg); t2.textContent = "R"; }
+          if (fs.pend) { var t3 = el("text", { x: -13.5, y: -2, "font-size": 5.5, fill: "#3cc8e4" }, gg); t3.textContent = "⏱"; }
+          if (fs.noSup) { var t4 = el("text", { x: -13.5, y: 6, "font-size": 5.5, fill: "#f0604d" }, gg); t4.textContent = "⚠"; }
+          if (fs.ai && st.opts.player && !fs.f.garrison) { var t5 = el("text", { x: 11, y: 6, "font-size": 4.5, fill: "#3cc8e4", "font-weight": 700 }, gg); t5.textContent = "AI"; }
         }
       });
-      if (list.length > 4) {
-        var b = el("g", { transform: "translate(" + (c.x + 24) + "," + (c.y - 22) + ")", "pointer-events": "none" }, g);
-        el("circle", { r: 8.5, fill: "#0b111a", stroke: "#6f849e", "stroke-width": 1.2 }, b);
-        var t = el("text", { y: 3.5, "text-anchor": "middle", "font-size": 9.5, fill: "#e9f1fb", "font-weight": 700 }, b); t.textContent = "+" + (list.length - 4);
+      if (list.length > 1) {
+        var b = el("g", { transform: "translate(" + (c.x + 25) + "," + (c.y - 23) + ")", "pointer-events": "none" }, g);
+        el("circle", { r: 8.5, fill: "#0b111a", stroke: "#ffd166", "stroke-width": 1.3 }, b);
+        var tb = el("text", { y: 3.3, "text-anchor": "middle", "font-size": 8.8, fill: "#ffe6a3", "font-weight": 800 }, b);
+        tb.textContent = list.length + "旅";
       }
     });
   }
@@ -430,19 +549,32 @@
     if (st.sel.type === "unit") return st.sel.id === u.id;
     return u.formation === st.sel.id;
   }
+  function isFmSelected(fid) {
+    if (!st.sel) return false;
+    if (st.sel.type === "formation") return st.sel.id === fid;
+    var u = st.w.unitById[st.sel.id];
+    return !!(u && u.formation === fid);
+  }
 
   function renderPaths() {
     var w = st.w, H = w.map.hexes, g = $("lyr-paths"); g.innerHTML = "";
+    var seenPath = {}, seenPend = {};
     selectedUnits().forEach(function (u) {
       if (u.path && u.path.length) {
-        var pts = [cxy(H[u.hex])].concat(u.path.map(function (i) { return cxy(H[i]); }));
-        el("polyline", { points: pts.map(function (p) { return p.x.toFixed(1) + "," + p.y.toFixed(1); }).join(" "), fill: "none", stroke: "#fff", "stroke-width": 2.8, "stroke-dasharray": "7,4", "marker-end": "url(#ar-path)", "pointer-events": "none", opacity: 0.9 }, g);
+        var pk = u.hex + ">" + u.path.join(",");
+        if (!seenPath[pk]) {
+          seenPath[pk] = 1;
+          var pts = [cxy(H[u.hex])].concat(u.path.map(function (i) { return cxy(H[i]); }));
+          el("polyline", { points: pts.map(function (p) { return p.x.toFixed(1) + "," + p.y.toFixed(1); }).join(" "), fill: "none", stroke: "#fff", "stroke-width": 2.8, "stroke-dasharray": "7,4", "marker-end": "url(#ar-path)", "pointer-events": "none", opacity: 0.9 }, g);
+        }
       }
       S.pendingOrders(w, u.id).forEach(function (o) {
         if (o.order.target === undefined) return;
+        var ok = u.hex + "->" + o.order.target;
+        if (seenPend[ok]) return; seenPend[ok] = 1;
         var a = cxy(H[u.hex]), b = cxy(H[o.order.target]);
-        el("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, stroke: "#3cc8e4", "stroke-width": 2.4, "stroke-dasharray": "4,4", "pointer-events": "none" }, g);
-        el("circle", { cx: b.x, cy: b.y, r: 7, fill: "none", stroke: "#3cc8e4", "stroke-width": 2.2, "pointer-events": "none" }, g);
+        el("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, stroke: "#3cc8e4", "stroke-width": 2.6, "stroke-dasharray": "5,4", "pointer-events": "none" }, g);
+        el("circle", { cx: b.x, cy: b.y, r: 8, fill: "none", stroke: "#3cc8e4", "stroke-width": 2.2, "pointer-events": "none" }, g);
       });
     });
   }
@@ -464,17 +596,25 @@
     var w = st.w, q = ($("oob-search").value || "").trim().toLowerCase(), onlyMap = $("oob-onlymap").checked;
     var list = $("oob-list"); list.innerHTML = "";
     var groups = w.formations.filter(function (f) { return f.side === "ARM"; });
-    var loose = w.units.filter(function (u) { return u.side === "ARM" && !u.formation; });
-    var count = 0;
-    var mk = function (title, meta, units, fid) {
-      units = units.filter(function (u) { return (!onlyMap || S.alive(u)) && (!q || (u.name + title).toLowerCase().indexOf(q) >= 0); });
+    var fmCount = 0;
+    var mk = function (f) {
+      var allU = f.units.map(function (id) { return w.unitById[id]; }).filter(Boolean);
+      var units = allU.filter(function (u) { return (!onlyMap || S.alive(u)) && (!q || (u.name + f.name).toLowerCase().indexOf(q) >= 0); });
       if (!units.length) return;
-      count += units.length;
-      var box = document.createElement("div"); box.className = "fm" + (st.sel && st.sel.type === "formation" && st.sel.id === fid ? " sel open" : "");
-      if (st.openFm && st.openFm[fid || title]) box.classList.add("open");
+      fmCount++;
+      var box = document.createElement("div");
+      box.className = "fm" + (st.sel && st.sel.type === "formation" && st.sel.id === f.id ? " sel" : "");
+      if (st.openFm && st.openFm[f.id]) box.classList.add("open");
       var men = 0, M = 0; units.forEach(function (u) { u.bns.forEach(function (b) { men += b.cls.men; M += b.menMax; }); });
-      var ai = units.some(function (u) { return u.control === "ai"; }) && st.opts.player;
-      box.innerHTML = '<div class="fm-h"><span class="caret">▸</span><span class="fm-name">' + title + '</span>' + (ai ? '<span class="badge-ai">AI</span>' : "") +
+      var ai = units.some(function (u) { return u.control === "ai"; }) && st.opts.player && !f.garrison;
+      var u0 = units[0], h = u0 && u0.hex >= 0 ? w.map.hexes[u0.hex] : null;
+      var locTag = h ? (h.name_arm || h.place) : ("D" + f.arriveDay + " 增援");
+      var ech = f.echelon || (/旅/.test(f.name) ? "X" : "III");
+      box.innerHTML = '<div class="fm-h" title="点击选择该旅/团（点左侧箭头展开下辖建制营）"><span class="caret">▸</span>' +
+        '<span class="badge-ai" style="color:var(--amber);border-color:rgba(242,169,59,.45)">' + ech + '</span>' +
+        '<span class="fm-name">' + f.name + '</span>' +
+        '<span class="fm-meta">' + locTag + '</span>' +
+        (ai ? '<span class="badge-ai">AI</span>' : "") +
         '<span class="bar"><i style="width:' + Math.round(100 * men / Math.max(1, M)) + '%"></i></span></div><div class="bns"></div>';
       var bns = box.querySelector(".bns");
       units.forEach(function (u) {
@@ -485,17 +625,14 @@
         bns.appendChild(d);
       });
       box.querySelector(".fm-h").addEventListener("click", function (e) {
-        var key = fid || title;
         st.openFm = st.openFm || {};
-        if (e.target.classList.contains("caret")) { st.openFm[key] = !st.openFm[key]; box.classList.toggle("open"); return; }
-        st.openFm[key] = true;
-        if (fid) select({ type: "formation", id: fid }, true); else box.classList.toggle("open");
+        if (e.target.classList.contains("caret")) { st.openFm[f.id] = !st.openFm[f.id]; box.classList.toggle("open"); return; }
+        select({ type: "formation", id: f.id }, true);
       });
       list.appendChild(box);
     };
-    groups.forEach(function (f) { mk(f.name, "", f.units.map(function (id) { return w.unitById[id]; }), f.id); });
-    if (loose.length) mk("军直属 / 战区直属部队", "", loose, null);
-    $("oob-count").textContent = count + " 营";
+    groups.forEach(mk);
+    $("oob-count").textContent = fmCount + " 旅/团";
   }
 
   // ------------------------------------------------------------------ selection panel
@@ -522,59 +659,90 @@
     var units = selectedUnits();
     if (!units.length) {
       $("sel-title").textContent = "未选择"; $("sel-tag").textContent = "—";
-      body.innerHTML = '<div class="empty"><p>在地图或左侧战斗序列中选择一个营或旅。</p><p class="muted">选旅（编组）下令更快：命令经旅部传达约 1 小时；越级直接指挥单个营约 3 小时（DC-010）。</p><p class="muted">提示：顶部工具栏可切换 Esri 真实地形图 / 卫星影像 / 等高线底图，或点击“全战区(72格)”总览亚阿全境。</p></div>';
+      body.innerHTML = '<div class="empty"><p>在地图或左侧战斗序列中选择一个旅或团（X / III）。</p><p class="muted">战役默认以旅 / 团为指挥与机动单位：选中后右键地图即可下达全旅机动或进攻命令（经旅部约 1 小时生效）。</p><p class="muted">提示：顶部工具栏可切换「亚阿全貌(72格)」与「聚焦纳卡前线」，或调整六边形透明度查看真实地形图。</p></div>';
       return;
     }
     var isF = st.sel.type === "formation", u0 = units[0];
     var f = isF ? w.formations.filter(function (x) { return x.id === st.sel.id; })[0] : (u0.formation ? w.formations.filter(function (x) { return x.id === u0.formation; })[0] : null);
+    var fs = f ? formationState(w, f) : null;
     var mine = u0.side === "ARM" && st.opts.player && !u0.garrison;
     $("sel-title").textContent = isF ? f.name : u0.name.split(" · ")[0];
-    $("sel-tag").textContent = isF ? units.length + " 个营" : ({ maneuver: "机动营", artillery: "炮兵", ad: "防空", hq: "旅部/保障", sof: "特种" }[u0.role] || u0.role);
+    $("sel-tag").textContent = isF ? ((f.echelon === "III" ? "团级 (III) · " : "旅级 (X) · ") + units.length + " 营") : ({ maneuver: "机动营", artillery: "炮兵", ad: "防空", hq: "旅部/保障", sof: "特种" }[u0.role] || u0.role);
     var c = sumCls(units), t = c.t, m = c.m;
     var org = units.reduce(function (s, u) { return s + S.avgOrg(u); }, 0) / units.length;
     var sup = units.reduce(function (s, u) { return s + u.bns.reduce(function (a, b) { return a + b.supply; }, 0) / u.bns.length; }, 0) / units.length;
-    var h = w.map.hexes[u0.hex];
+    var h = w.map.hexes[isF && fs ? fs.hex : u0.hex];
+    var CORPS_CN = {
+      arm_nk_army: "阿尔察赫国防军（斯捷潘纳克特）",
+      arm_1_corps: "亚美尼亚第 1 军（戈里斯）",
+      arm_2_corps: "亚美尼亚第 2 军（哈伊卡申）",
+      arm_3_corps: "亚美尼亚第 3 军（瓦纳佐尔）",
+      arm_4_corps: "亚美尼亚第 4 军（叶海格纳佐尔）",
+      arm_5_corps: "亚美尼亚第 5 军（埃里温）",
+      arm_gs_direct: "亚美尼亚总参/防空直属",
+      aze_1_corps: "阿塞拜疆第 1 军（巴尔达）",
+      aze_2_corps: "阿塞拜疆第 2 军（贝拉甘）",
+      aze_3_corps: "阿塞拜疆第 3 军（沙姆基尔）",
+      aze_4_corps: "阿塞拜疆第 4 军（巴库）",
+      aze_nakh_army: "纳希切万独立合成集团军",
+      aze_gs_direct: "阿塞拜疆总参/防空直属",
+    };
     var html = "";
     html += '<div class="sec"><div class="kv">' +
-      (isF ? "" : '<span>所属</span><b style="font-family:var(--sans);font-weight:500;font-size:11.5px;">' + (f ? f.name : "军/战区直属") + "</b>") +
-      '<span>位置</span><b style="font-family:var(--sans)">' + (h.name_arm || (h.q + "," + h.r)) + " · " + ({ Mountain: "山地", Forest: "森林", Mixed: "丘陵", Open: "平原", Urban: "城市" }[h.terrain]) + " · 工事 " + h.fort.toFixed(2) + "</b>" +
-      '<span>兵力</span><b>' + t.men.toLocaleString() + " / " + t.menMax.toLocaleString() + "</b>" +
+      '<span>上级建制</span><b style="font-family:var(--sans);font-weight:500;font-size:11.5px;">' + (f ? (CORPS_CN[f.corps] || f.corps) : "战区直属") + "</b>" +
+      '<span>驻防战区格</span><b style="font-family:var(--sans)">' + (h.name_arm || (h.q + "," + h.r)) + " · " + ({ Mountain: "山地", Forest: "森林", Mixed: "丘陵", Open: "平原", Urban: "城市" }[h.terrain]) + " · 工事 " + h.fort.toFixed(2) + "</b>" +
+      '<span>全旅兵力</span><b>' + t.men.toLocaleString() + " / " + t.menMax.toLocaleString() + "</b>" +
       '<span>组织度</span><b style="color:' + (org > .66 ? "var(--green)" : org > .4 ? "var(--amber)" : "var(--red)") + '">' + Math.round(org * 100) + "%</b>" +
-      '<span>补给</span><b style="color:' + (sup > 1 ? "var(--green)" : sup > .4 ? "var(--amber)" : "var(--red)") + '">' + sup.toFixed(1) + " 天" + (units.some(function (u) { return u.inSupply === false; }) ? "（断补给！）" : "") + "</b>" +
-      (isF ? "" : '<span>姿态</span><b style="font-family:var(--sans)">' + POSTURE[u0.posture] + (u0.dug > 0.05 ? " · 掘壕 " + Math.round(u0.dug * 100) + "%" : "") + "</b>") +
+      '<span>补给储备</span><b style="color:' + (sup > 1 ? "var(--green)" : sup > .4 ? "var(--amber)" : "var(--red)") + '">' + sup.toFixed(1) + " 天" + (units.some(function (u) { return u.inSupply === false; }) ? "（断补给！）" : "") + "</b>" +
+      '<span>当前姿态</span><b style="font-family:var(--sans)">' + POSTURE[isF && fs ? fs.posture : u0.posture] + (u0.dug > 0.05 ? " · 掘壕 " + Math.round(u0.dug * 100) + "%" : "") + "</b>" +
       "</div></div>";
-    html += '<div class="sec"><div class="sec-h">装备</div><div class="eq">' +
+    html += '<div class="sec"><div class="sec-h">全旅/团合成装备</div><div class="eq">' +
       eqCell("坦克", t.tanks, m.tanks) + eqCell("步战/装甲车", t.ifv + t.apc, m.ifv + m.apc) + eqCell("反坦克导弹", t.atgm, m.atgm) +
       eqCell("火炮", t.art + t.sp, m.art + m.sp) + eqCell("火箭炮", t.mrl + t.mrl_lr, m.mrl + m.mrl_lr) + eqCell("迫击炮", t.mortar, m.mortar) +
       eqCell("防空导弹", t.sam + t.tor + t.samLong, m.sam + m.tor + m.samLong) + eqCell("高炮/便携", t.aaa + t.manpads, m.aaa + m.manpads) + eqCell("卡车", t.trucks, m.trucks) +
       "</div></div>";
+    if (isF && units.length) {
+      html += '<div class="sec"><div class="sec-h">下辖建制营明细（' + units.length + ' 个营，点击可单独查看）</div><div class="sub-bns">' +
+        units.map(function (u) {
+          var bnName = u.name.indexOf(" · ") >= 0 ? u.name.split(" · ")[0] : u.name;
+          var uOrg = Math.round(S.avgOrg(u) * 100);
+          return '<div class="sub-bn" data-subu="' + u.id + '"><span>' + bnName + '</span><b>' + S.unitMen(u) + '人 · 组织 ' + uOrg + '%</b></div>';
+        }).join("") +
+        "</div></div>";
+    } else if (!isF && f) {
+      html += '<div class="sec"><button class="btn" id="btn-back-fm" style="width:100%">← 返回所属旅/团：' + f.name + '</button></div>';
+    }
     if (u0.garrison && u0.side === "ARM") {
       html += '<div class="sec"><div class="why">边境守备军团：负责牵制土耳其 / 纳希切万 / 塔武什方向敌军，不可调入纳卡战区。</div></div>';
     } else if (mine) {
       var delayVia = S.orderDelayTicks(w, u0, false, true), delayDirect = S.orderDelayTicks(w, u0, false, false);
-      html += '<div class="sec"><div class="sec-h">命令</div><div class="orders">' +
-        '<button class="btn" data-ord="defend">固守（D）</button><button class="btn" data-ord="reserve">预备队（R）</button>' +
+      html += '<div class="sec"><div class="sec-h">旅/团命令</div><div class="orders">' +
+        '<button class="btn" data-ord="defend">全旅固守（D）</button><button class="btn" data-ord="reserve">转为预备队（R）</button>' +
         '<button class="btn" data-ord="cancel">取消待生效命令</button><button class="btn' + (units.every(function (u) { return u.control === "ai"; }) ? " on" : "") + '" data-ord="ai">交给 AI 托管</button>' +
         "</div>" +
-        '<div class="hint">右键地图：移动到该格；若为相邻敌方格则发起进攻。' + (isF ? "整个旅的机动营会分散占据目标格及周边己方格。" : "") + "</div>" +
-        '<div class="why" style="margin-top:8px;">命令延迟：' + (isF ? "经旅部 <b>" + delayVia + " 小时</b>" : (u0.kind === "battalion" ? "越级直接指挥本营 <b>" + delayDirect + " 小时</b>（选整个旅下令只需 " + delayVia + " 小时）" : "直属部队 <b>" + delayDirect + " 小时</b>")) +
+        '<div class="hint">右键地图任意 42 km 战区格：全旅/团机动到该格；若为相邻敌方格则发起全旅合成进攻。</div>' +
+        '<div class="why" style="margin-top:8px;">命令延迟：' + (isF ? "经旅部传达 <b>" + delayVia + " 小时</b>" : (u0.kind === "battalion" ? "越级直接指挥单营 <b>" + delayDirect + " 小时</b>（建议返回按整旅下令，仅需 " + delayVia + " 小时）" : "直属部队 <b>" + delayDirect + " 小时</b>")) +
         (S.isNight(w) ? "，夜间 ×1.2" : "") + (org < .7 ? "，组织度低 ×" + (1.5 - .5 * org).toFixed(2) : "") + "</div>";
       var pend = [];
       units.forEach(function (u) { S.pendingOrders(w, u.id).forEach(function (o) { pend.push(o); }); });
       if (pend.length) {
         var nx = Math.min.apply(null, pend.map(function (o) { return o.at; }));
-        html += '<div class="pending">⏱ ' + pend.length + " 条命令待生效，最早 " + shortTime(nx) + "（还有 " + (nx - w.tick) + " 小时）</div>";
+        html += '<div class="pending">⏱ ' + pend.length + " 条下辖营命令待生效，最早 " + shortTime(nx) + "（还有 " + (nx - w.tick) + " 小时）</div>";
       }
       html += "</div>";
       var hasAd = t.sam + t.tor + t.samLong > 0;
-      html += '<div class="sec"><div class="sec-h">防空纪律' + (hasAd ? "" : "（本部队无防空导弹，设置对随行高炮有效）") + '</div><div class="seg" id="seg-ad">' +
+      html += '<div class="sec"><div class="sec-h">防空纪律' + (hasAd ? "" : "（本旅无防空导弹，设置对建制高炮/便携防空有效）") + '</div><div class="seg" id="seg-ad">' +
         ["active", "ambush", "silent"].map(function (k) { return '<button data-ad="' + k + '"' + (units.every(function (u) { return u.ad === k; }) ? ' class="on"' : "") + ">" + AD_TXT[k] + "</button>"; }).join("") +
         '</div><div class="hint">开机：拦截最多，但雷达暴露、首先被反辐射打击。伏击：间歇开机。静默：雷达不暴露，但不拦截。</div></div>';
     } else if (u0.side === "AZE") {
-      html = '<div class="sec"><div class="why">敌方部队：只显示侦察到的大致情况。</div></div>' +
-        '<div class="sec"><div class="kv"><span>位置</span><b style="font-family:var(--sans)">' + (h.name_arm || h.q + "," + h.r) + '</b><span>估计兵力</span><b>约 ' + (Math.round(t.men / 100) * 100).toLocaleString() + ' 人</b><span>估计装甲</span><b>约 ' + (Math.round((t.tanks + t.ifv + t.apc) / 5) * 5) + ' 辆</b></div></div>';
+      html = '<div class="sec"><div class="why">敌方旅/团级作战群：仅显示侦察获知的番号与估算规模。</div></div>' +
+        '<div class="sec"><div class="kv"><span>所在战区格</span><b style="font-family:var(--sans)">' + (h.name_arm || h.q + "," + h.r) + '</b><span>番号</span><b style="font-family:var(--sans)">' + (f ? f.name : u0.name) + '</b><span>估计兵力</span><b>约 ' + (Math.round(t.men / 100) * 100).toLocaleString() + ' 人（' + units.length + ' 个营）</b><span>估计装甲</span><b>约 ' + (Math.round((t.tanks + t.ifv + t.apc) / 5) * 5) + ' 辆</b></div></div>';
     }
     body.innerHTML = html;
+    if ($("btn-back-fm") && f) $("btn-back-fm").onclick = function () { select({ type: "formation", id: f.id }, false); };
+    body.querySelectorAll("[data-subu]").forEach(function (el) {
+      el.addEventListener("click", function () { select({ type: "unit", id: el.getAttribute("data-subu") }, false); });
+    });
     body.querySelectorAll("[data-ord]").forEach(function (b) { b.addEventListener("click", function () { quickOrder(b.getAttribute("data-ord")); }); });
     body.querySelectorAll("[data-ad]").forEach(function (b) {
       b.addEventListener("click", function () {
@@ -612,7 +780,7 @@
     var r;
     if (st.sel.type === "formation") {
       r = S.issueFormationOrder(w, st.sel.id, { type: "move", target: hexI });
-      if (!r.ok) { toast("该旅没有可用的机动营", "warn"); return; }
+      if (!r.ok) { toast("该旅没有可用的建制营", "warn"); return; }
     } else {
       var u = units[0];
       var adj = w.map.hexes[u.hex].nb.indexOf(hexI) >= 0;
@@ -625,7 +793,7 @@
     }
     logOrder(h.owner !== "ARM" ? "attack" : "move", hexI);
     flashHex(hexI);
-    toast((h.owner !== "ARM" ? "进攻 " : "移动至 ") + (h.name_arm || "该地块") + "：" + r.delay + " 小时后生效" + (st.sel.type === "unit" && units[0].kind === "battalion" ? "（越级指挥）" : ""), h.owner !== "ARM" ? "warn" : "");
+    toast((h.owner !== "ARM" ? "全旅进攻 " : "全旅机动至 ") + (h.name_arm || "该地块") + "：" + r.delay + " 小时后生效" + (st.sel.type === "unit" && units[0].kind === "battalion" ? "（越级指挥）" : ""), h.owner !== "ARM" ? "warn" : "");
     renderSel(); renderPaths(); renderUnits();
   }
   function flashHex(i) {
@@ -644,8 +812,10 @@
       return all || h.region === "arm_zone" || h.nb.some(function (j) { return st.w.map.hexes[j].region === "arm_zone"; });
     });
     var xs = H.map(function (h) { return cxy(h).x; }), ys = H.map(function (h) { return cxy(h).y; });
-    var minX = Math.min.apply(null, xs) - R * 1.15, maxX = Math.max.apply(null, xs) + R * 1.15;
-    var minY = Math.min.apply(null, ys) - R * 1.15, maxY = Math.max.apply(null, ys) + R * 1.15;
+    var padX = all ? R * 1.45 : R * 1.15;
+    var padY = all ? R * 1.55 : R * 1.15;
+    var minX = Math.min.apply(null, xs) - padX, maxX = Math.max.apply(null, xs) + padX;
+    var minY = Math.min.apply(null, ys) - padY, maxY = Math.max.apply(null, ys) + padY;
     var W = stage.clientWidth, Hh = stage.clientHeight;
     var k = Math.min(W / (maxX - minX), Hh / (maxY - minY)) * 0.94;
     st.view = { k: k, x: (W - (maxX - minX) * k) / 2 - minX * k, y: (Hh - (maxY - minY) * k) / 2 - minY * k };
@@ -676,12 +846,17 @@
     if (moved || !st.w) return;
     var ue = e.target.closest && e.target.closest(".unit");
     if (ue) {
-      var u = st.w.unitById[ue.getAttribute("data-u")];
-      var same = st.w.units.filter(function (x) { return x.hex === u.hex && S.alive(x) && (x.side === "ARM" || x.garrison || S.visibleToArm(st.w, x)); });
-      if (st.sel && st.sel.type === "unit" && same.length > 1 && same.some(function (x) { return x.id === st.sel.id; })) {
-        var idx = same.findIndex(function (x) { return x.id === st.sel.id; }); u = same[(idx + 1) % same.length];
+      var fid = ue.getAttribute("data-f");
+      var f = st.w.formations.filter(function (x) { return x.id === fid; })[0];
+      if (!f) return;
+      var fs = formationState(st.w, f);
+      if (!fs) return;
+      var same = st.w.formations.map(function (x) { return formationState(st.w, x); }).filter(function (s) { return s && s.hex === fs.hex; });
+      if (st.sel && st.sel.type === "formation" && same.length > 1 && same.some(function (s) { return s.f.id === st.sel.id; })) {
+        var idx = same.findIndex(function (s) { return s.f.id === st.sel.id; });
+        f = same[(idx + 1) % same.length].f;
       }
-      select({ type: "unit", id: u.id }, false); return;
+      select({ type: "formation", id: f.id }, false); return;
     }
     if (e.target.classList && e.target.classList.contains("hx")) { select(null); }
   });
@@ -690,29 +865,41 @@
     var t = e.target;
     var ue = t.closest && t.closest(".unit");
     var hi = null;
-    if (ue) hi = st.w.unitById[ue.getAttribute("data-u")].hex;
-    else if (t.classList.contains("hx")) hi = +t.getAttribute("data-i");
+    if (ue) {
+      var fid = ue.getAttribute("data-f");
+      var f = st.w.formations.filter(function (x) { return x.id === fid; })[0];
+      var fs = f ? formationState(st.w, f) : null;
+      if (fs) hi = fs.hex;
+    } else if (t.classList.contains("hx")) hi = +t.getAttribute("data-i");
     if (hi !== null && st.sel) orderTo(hi);
   });
   svg.addEventListener("mousemove", function (e) {
     if (!st.w || drag && drag.moved) { tip.classList.remove("show"); return; }
     var t = e.target, hi = null;
     var ue = t.closest && t.closest(".unit");
-    if (ue) hi = st.w.unitById[ue.getAttribute("data-u")].hex; else if (t.classList.contains("hx")) hi = +t.getAttribute("data-i");
+    if (ue) {
+      var fid = ue.getAttribute("data-f");
+      var f = st.w.formations.filter(function (x) { return x.id === fid; })[0];
+      var fs = f ? formationState(st.w, f) : null;
+      if (fs) hi = fs.hex;
+    } else if (t.classList.contains("hx")) hi = +t.getAttribute("data-i");
     if (hi === null) { tip.classList.remove("show"); return; }
     var h = st.w.map.hexes[hi];
+    var fmsAt = st.w.formations.map(function (f) { return formationState(st.w, f); }).filter(function (s) { return s && s.hex === hi; });
+    var armFms = fmsAt.filter(function (s) { return s.side === "ARM"; });
+    var azeFms = fmsAt.filter(function (s) { return s.side === "AZE"; });
     var arm = S.unitsAt(st.w, hi, "ARM"), aze = S.unitsAt(st.w, hi, "AZE").filter(function (u) { return u.garrison || S.visibleToArm(st.w, u); });
     var eng = st.w.engagements[hi];
-    var regTxt = { armenia: "亚美尼亚本土", arm_zone: "纳卡及周边七区（实控）", nakhchivan: "纳希切万飞地", aze: "阿塞拜疆本部" }[h.region] || h.region;
+    var regTxt = { armenia: "亚美尼亚本土", arm_zone: "纳卡及周边七区（1994 实控）", nakhchivan: "阿塞拜疆·纳希切万飞地", aze: "阿塞拜疆本部" }[h.region] || h.region;
     tip.innerHTML = '<div class="tt">' + (h.name_arm ? h.name_arm + (h.name_aze && h.name_aze !== h.name_arm ? " / " + h.name_aze : "") : "地块 " + h.q + "," + h.r) + "</div>" +
       (h.sub_places && h.sub_places.length ? '<div style="font-size:10.5px;color:var(--t2);margin-bottom:3px;">含：' + h.sub_places.join("、") + "</div>" : "") +
-      '<div class="tr"><span>分区 / 坐标</span><span>' + regTxt + " (" + h.q + "," + h.r + ")</span></div>" +
-      '<div class="tr"><span>控制</span><span style="color:' + (h.owner === "ARM" ? "var(--arm)" : "var(--aze)") + '">' + (h.owner === "ARM" ? "亚方" : "阿方") + (h.owner !== h.owner0 ? "（战时易手）" : "") + "</span></div>" +
+      '<div class="tr"><span>主权分区 / 坐标</span><span>' + regTxt + " (" + h.q + "," + h.r + ")</span></div>" +
+      '<div class="tr"><span>当前控制</span><span style="color:' + (h.owner === "ARM" ? "var(--arm)" : "var(--aze)") + '">' + (h.owner === "ARM" ? "亚方" : "阿方") + (h.owner !== h.owner0 ? "（战时易手）" : "") + "</span></div>" +
       '<div class="tr"><span>地形 / 工事</span><span>' + ({ Mountain: "山地", Forest: "森林", Mixed: "丘陵", Open: "平原", Urban: "城市" }[h.terrain]) + " / " + h.fort.toFixed(2) + "</span></div>" +
-      (arm.length ? '<div class="tr"><span>我方</span><span>' + arm.length + " 个营 · " + arm.reduce(function (s, u) { return s + S.unitMen(u); }, 0).toLocaleString() + " 人</span></div>" : "") +
-      (aze.length ? '<div class="tr"><span>敌方（侦察）</span><span>约 ' + aze.length + " 个营</span></div>" : "") +
+      (armFms.length ? '<div class="tr"><span>我方驻军</span><span>' + armFms.map(function (s) { return shortFmName(s.f.name); }).join("、") + "（" + arm.reduce(function (s, u) { return s + S.unitMen(u); }, 0).toLocaleString() + " 人）</span></div>" : '<div class="tr"><span>我方驻军</span><span style="color:var(--t2)">无常驻旅/团</span></div>') +
+      (azeFms.length ? '<div class="tr"><span>敌方（侦察）</span><span>' + azeFms.map(function (s) { return shortFmName(s.f.name); }).join("、") + "（约 " + aze.length + " 个营）</span></div>" : "") +
       (eng && eng.lastTick >= st.w.tick - 2 ? '<div class="tr" style="color:#ff9a8c"><span>交战</span><span>推进 ' + eng.adv.toFixed(1) + " / " + S.P.FLIP_KM + " km · 力量比 " + (eng.lastR || 0).toFixed(2) + "</span></div>" : "") +
-      (st.sel && st.opts.player ? '<div style="margin-top:4px;color:var(--t2);font-size:10.5px;">右键：' + (h.owner === "ARM" ? "移动到此" : "进攻此地") + "</div>" : "");
+      (st.sel && st.opts.player ? '<div style="margin-top:4px;color:var(--t2);font-size:10.5px;">右键：' + (h.owner === "ARM" ? "全旅机动至此" : "全旅进攻此地") + "</div>" : "");
     var r = stage.getBoundingClientRect(), x = e.clientX - r.left + 14, y = e.clientY - r.top + 14;
     if (x + 290 > r.width) x -= 300; if (y + 180 > r.height) y -= 190;
     tip.style.left = x + "px"; tip.style.top = y + "px"; tip.classList.add("show");
@@ -724,7 +911,7 @@
   if ($("btn-zoom-all")) $("btn-zoom-all").onclick = function () { fit(true); };
   if ($("basemap-sel")) $("basemap-sel").addEventListener("change", function (e) { setBasemap(e.target.value); });
   if ($("hex-opacity")) $("hex-opacity").addEventListener("input", function (e) {
-    st.hexOpacity = parseFloat(e.target.value) || 0.34;
+    st.hexOpacity = parseFloat(e.target.value) || 0.22;
     if (st.w) { st.hexEls.forEach(function (el) { el.__f = ""; }); renderAll(false); }
   });
   ["lyr-borders", "lyr-terrain", "lyr-supply", "lyr-ad"].forEach(function (id) {
@@ -859,18 +1046,19 @@
   };
   $("btn-start").onclick = function () { $("start-modal").classList.remove("show"); startGame(buildOpts()); };
 
-  // deep link for automated screenshots: #autostart[&spectate][&t=hours][&all][&bm=sat|topo|opentopo|dark]
+  // deep link for automated screenshots: #autostart[&spectate][&t=hours][&all][&nk][&bm=sat|topo|opentopo|dark]
   window.__modCommander = st;
   if (/autostart/.test(location.hash)) {
     var bm = location.hash.match(/bm=([a-z]+)/);
     if (bm) { st.basemap = bm[1]; if ($("basemap-sel")) $("basemap-sel").value = bm[1]; }
-    if (/all/.test(location.hash)) st.fitAll = true;
+    if (/nk/.test(location.hash)) st.fitAll = false;
+    else if (/all/.test(location.hash)) st.fitAll = true;
     var o = buildOpts(); o.seed = 1234;
     if (/spectate/.test(location.hash)) { o.player = false; o.mode = "spectate"; }
     $("start-modal").classList.remove("show"); startGame(o);
     var m = location.hash.match(/t=(\d+)/);
     if (m) { S.run(st.w, +m[1]); drainEvents(); renderAll(true); renderOOB(); renderSel(); setSpeed(0); if (st.w.ended) showAAR(); }
     var sm = location.hash.match(/sel=([A-Z0-9]+)/);
-    if (sm) select({ type: sm[1].indexOf("F") > 0 ? "formation" : "unit", id: sm[1] }, true);
+    if (sm) select({ type: sm[1].indexOf("F") > 0 ? "formation" : "unit", id: sm[1] }, !/nocenter/.test(location.hash) && !st.fitAll);
   }
 })();
