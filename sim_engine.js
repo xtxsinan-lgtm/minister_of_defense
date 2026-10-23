@@ -65,6 +65,19 @@
       events: [],
     },
 
+    // S05 Multi-Echelon TO&E Editor State (Squad -> Platoon -> Company -> Battalion -> Brigade)
+    toe: {
+      country: "ARM",
+      levelFilter: "ALL",
+      search: "",
+      activeId: "arm_mr_regt",
+      breadcrumb: ["arm_mr_regt"], // Drill-down trail: e.g. ["arm_mr_regt", "arm_mr_bn_bmp", "arm_mr_bmp_coy"]
+      expandAll: false,
+      expandedNodes: {}, // pathKey -> boolean
+      workingTemplates: {}, // country -> { id -> deepClone }
+      presetTemplates: {},  // country -> { id -> original }
+    },
+
     // Phase 0 Proving Ground State
     pg: {
       attId: "aze_2020_assault_coy",
@@ -799,6 +812,726 @@
   }
 
   // =========================================================================
+  // 5B. S05 MULTI-ECHELON TO&E TEMPLATE EDITOR (班 → 排 → 连 → 营 → 旅/团)
+  // =========================================================================
+  const LEVEL_ORDER = { squad: 1, platoon: 2, company: 3, battalion: 4, brigade: 5 };
+  const LEVEL_LABEL_ZH = {
+    squad: "班 (Squad)",
+    platoon: "排 (Platoon)",
+    company: "连 (Company)",
+    battalion: "营 (Battalion)",
+    brigade: "旅/团 (Brigade)",
+  };
+  const LEVEL_BADGE_COLOR = {
+    brigade: "#f5a623",
+    battalion: "#2ac3de",
+    company: "#2ecc71",
+    platoon: "#9b59b6",
+    squad: "#95a5a6",
+  };
+  const SPECIALTY_NAMES_ZH = {
+    squad_leader: "班长 (Squad Leader)",
+    vehicle_gunner: "车载炮长 (Vehicle Gunner)",
+    vehicle_driver: "装甲驾驶员 (Vehicle Driver)",
+    automatic_rifleman: "轻机枪手 (Auto Rifleman)",
+    mg_gunner: "通用机枪手 (GPMG Gunner)",
+    at_gunner: "反坦射手 (AT/ATGM Gunner)",
+    assistant_gunner: "副射手/装填手 (Asst Gunner)",
+    rifleman: "步枪手 (Rifleman)",
+    marksman: "精确射手 (DMR Marksman)",
+    sniper: "狙击手 (Sniper)",
+    officer: "指挥军官 (Officer)",
+    nco_senior: "高级士官/排副 (Senior NCO)",
+    signaler: "通信兵 (Signaler)",
+    medic: "卫生员 (Combat Medic)",
+    driver: "轮式驾驶员 (Truck Driver)",
+    mortar_gunner: "迫击炮手 (Mortar Crew)",
+    artilleryman: "身管火炮手 (Artilleryman)",
+    rocket_artilleryman: "火箭炮手 (MRL Crew)",
+    air_defense_crew: "防空导弹/高炮手 (AD Crew)",
+    engineer: "战斗工兵 (Combat Engineer)",
+    recon_scout: "侦察兵 (Recon Scout)",
+    uav_operator: "无人机操作手 (UAV Operator)",
+    staff: "参谋人员 (HQ Staff)",
+    intel: "情报参谋 (Intel)",
+    supply: "军需补给兵 (Supply)",
+    mechanic: "装甲维修技师 (Mechanic)",
+  };
+  const SLOT_NAMES_ZH = {
+    ifv: "步兵战车 (IFV: BMP-1/2)",
+    apc: "装甲输送车 (APC: BTR/MT-LB)",
+    mbt: "主战坦克 (MBT: T-72/T-90)",
+    rifle: "突击步枪 (AK-74/AK-74M)",
+    lmg: "班用轻机枪 (RPK-74)",
+    gpmg: "通用机枪 (PKM)",
+    hmg: "重机枪 (NSV/Kord)",
+    dmr: "精确射手步枪 (SVD)",
+    sniper_rifle: "反器材/狙击步枪",
+    reusable_launcher: "重用火箭筒 (RPG-7)",
+    disposable_launcher: "一次性火箭筒 (RPG-26)",
+    atgm_light: "轻型反坦克导弹 (Fagot/Metis)",
+    atgm_heavy: "重型反坦克导弹 (Kornet/Konkurs/Spike)",
+    agl: "自动榴弹发射器 (AGS-17)",
+    manpads: "便携防空导弹 (Igla/Strela)",
+    mortar_medium: "82mm 迫击炮",
+    mortar_heavy: "120mm 重迫击炮 (2B11)",
+    howitzer_light_sp: "122mm 自行榴炮 (2S1)",
+    howitzer_heavy_sp: "152mm 自行加榴炮 (2S3/2S19)",
+    howitzer_heavy_truck: "152mm 卡车炮 (DANA)",
+    howitzer_light_towed: "122mm 牵引榴炮 (D-30)",
+    howitzer_heavy_towed: "152mm 牵引加榴炮 (D-20)",
+    mrl_light: "122mm 火箭炮 (BM-21 Grad)",
+    mrl_long_range: "300mm 远程火箭炮 (BM-30 Smerch)",
+    sam_short: "近程防空系统 (Osa-AKM/Strela-10/Tor)",
+    spaag: "自行高炮 (ZSU-23-4)",
+    uav_tactical: "战术侦察无人机",
+    loitering_launcher: "巡飞弹发射单元 (Harop/HRESH)",
+    tbm_launcher: "战术弹道导弹发射车",
+    radio_handheld: "便携战术电台",
+    truck_medium: "中型军用卡车 (Ural-4320)",
+    truck_heavy: "重型军用卡车 (KamAZ)",
+    armored_command_vehicle: "装甲指挥车 (BTR-60PU)",
+    engineer_vehicle: "装甲工程车",
+    mine_clearing_vehicle: "扫雷破障车 (UR-77)",
+  };
+
+  function initToeEditor() {
+    const rawOrg = BUNDLE.org_templates || { ARM: [], AZE: [] };
+    ["ARM", "AZE"].forEach((c) => {
+      state.toe.workingTemplates[c] = {};
+      state.toe.presetTemplates[c] = {};
+      (rawOrg[c] || []).forEach((t) => {
+        state.toe.presetTemplates[c][t.id] = JSON.parse(JSON.stringify(t));
+        state.toe.workingTemplates[c][t.id] = JSON.parse(JSON.stringify(t));
+      });
+    });
+
+    // Expose drill-down & editing helpers on window for inline onclick handlers
+    window.__toeSelectTemplate = (id, pushBreadcrumb) => {
+      if (!state.toe.workingTemplates[state.toe.country]?.[id]) return;
+      state.toe.activeId = id;
+      if (pushBreadcrumb) {
+        const idx = state.toe.breadcrumb.indexOf(id);
+        if (idx >= 0) {
+          state.toe.breadcrumb = state.toe.breadcrumb.slice(0, idx + 1);
+        } else {
+          state.toe.breadcrumb.push(id);
+        }
+      } else {
+        state.toe.breadcrumb = [id];
+      }
+      renderToeAll();
+    };
+
+    window.__toeToggleNode = (pathKey) => {
+      state.toe.expandedNodes[pathKey] = !state.toe.expandedNodes[pathKey];
+      renderToeActiveEditor();
+    };
+
+    window.__toeChangeChildCount = (childIdx, delta) => {
+      const t = getActiveToeTemplate();
+      if (!t || !t.children || !t.children[childIdx]) return;
+      const nextCount = t.children[childIdx].count + delta;
+      if (nextCount <= 0) {
+        t.children.splice(childIdx, 1);
+      } else {
+        t.children[childIdx].count = nextCount;
+      }
+      renderToeAll();
+    };
+
+    window.__toeAddChildTemplate = () => {
+      const sel = document.getElementById("toe-add-child-select");
+      const t = getActiveToeTemplate();
+      if (!sel || !sel.value || !t) return;
+      const childId = sel.value;
+      t.children = t.children || [];
+      const existing = t.children.find((c) => c.template === childId);
+      if (existing) {
+        existing.count += 1;
+      } else {
+        t.children.push({ template: childId, count: 1 });
+      }
+      renderToeAll();
+    };
+
+    window.__toeChangeSpecialty = (specKey, delta) => {
+      const t = getActiveToeTemplate();
+      if (!t || t.level !== "squad") return;
+      t.personnel = t.personnel || {};
+      const next = (t.personnel[specKey] || 0) + delta;
+      if (next <= 0) {
+        delete t.personnel[specKey];
+      } else {
+        t.personnel[specKey] = next;
+      }
+      renderToeAll();
+    };
+
+    window.__toeAddSpecialty = () => {
+      const sel = document.getElementById("toe-add-spec-select");
+      const t = getActiveToeTemplate();
+      if (!sel || !sel.value || !t) return;
+      t.personnel = t.personnel || {};
+      t.personnel[sel.value] = (t.personnel[sel.value] || 0) + 1;
+      renderToeAll();
+    };
+
+    window.__toeChangeSlot = (slotKey, delta) => {
+      const t = getActiveToeTemplate();
+      if (!t || t.level !== "squad") return;
+      t.slots = t.slots || {};
+      const next = (t.slots[slotKey] || 0) + delta;
+      if (next <= 0) {
+        delete t.slots[slotKey];
+      } else {
+        t.slots[slotKey] = next;
+      }
+      renderToeAll();
+    };
+
+    window.__toeAddSlot = () => {
+      const sel = document.getElementById("toe-add-slot-select");
+      const t = getActiveToeTemplate();
+      if (!sel || !sel.value || !t) return;
+      t.slots = t.slots || {};
+      t.slots[sel.value] = (t.slots[sel.value] || 0) + 1;
+      renderToeAll();
+    };
+
+    renderToeAll();
+  }
+
+  function getActiveToeTemplate() {
+    return state.toe.workingTemplates[state.toe.country]?.[state.toe.activeId] || null;
+  }
+
+  function computeRecursiveTotals(country, templateId, visited = new Set()) {
+    const map = state.toe.workingTemplates[country] || {};
+    const t = map[templateId];
+    const res = {
+      men: 0,
+      leafSquads: 0,
+      personnelBySpec: {},
+      slotsByCat: {},
+    };
+    if (!t || visited.has(templateId)) return res;
+    const nextVisited = new Set(visited);
+    nextVisited.add(templateId);
+
+    if (t.level === "squad" || !t.children || t.children.length === 0) {
+      res.leafSquads = 1;
+      Object.entries(t.personnel || {}).forEach(([k, v]) => {
+        res.men += v;
+        res.personnelBySpec[k] = (res.personnelBySpec[k] || 0) + v;
+      });
+      Object.entries(t.slots || {}).forEach(([k, v]) => {
+        res.slotsByCat[k] = (res.slotsByCat[k] || 0) + v;
+      });
+      Object.entries(t.slots_unassigned || {}).forEach(([k, v]) => {
+        res.slotsByCat[k] = (res.slotsByCat[k] || 0) + v;
+      });
+      return res;
+    }
+
+    (t.children || []).forEach((ch) => {
+      const sub = computeRecursiveTotals(country, ch.template, nextVisited);
+      const mult = ch.count || 0;
+      res.men += sub.men * mult;
+      res.leafSquads += sub.leafSquads * mult;
+      Object.entries(sub.personnelBySpec).forEach(([k, v]) => {
+        res.personnelBySpec[k] = (res.personnelBySpec[k] || 0) + v * mult;
+      });
+      Object.entries(sub.slotsByCat).forEach(([k, v]) => {
+        res.slotsByCat[k] = (res.slotsByCat[k] || 0) + v * mult;
+      });
+    });
+    return res;
+  }
+
+  function computePresetTotals(country, templateId, visited = new Set()) {
+    const map = state.toe.presetTemplates[country] || {};
+    const t = map[templateId];
+    let men = 0;
+    if (!t || visited.has(templateId)) return 0;
+    const nextVisited = new Set(visited);
+    nextVisited.add(templateId);
+    if (t.level === "squad" || !t.children || t.children.length === 0) {
+      Object.values(t.personnel || {}).forEach((v) => { men += v; });
+      return men;
+    }
+    (t.children || []).forEach((ch) => {
+      men += computePresetTotals(country, ch.template, nextVisited) * (ch.count || 0);
+    });
+    return men;
+  }
+
+  function findAncestorTemplates(country, targetId) {
+    const map = state.toe.workingTemplates[country] || {};
+    const all = Object.values(map);
+    // Check if template A transitively references targetId
+    function usesTarget(curId, target, seen = new Set()) {
+      if (seen.has(curId)) return 0;
+      seen.add(curId);
+      const node = map[curId];
+      if (!node || !node.children) return 0;
+      let totalRefs = 0;
+      for (const ch of node.children) {
+        if (ch.template === target) {
+          totalRefs += ch.count;
+        } else {
+          totalRefs += ch.count * usesTarget(ch.template, target, new Set(seen));
+        }
+      }
+      return totalRefs;
+    }
+
+    return all
+      .filter((t) => t.id !== targetId)
+      .map((t) => ({ template: t, refCount: usesTarget(t.id, targetId) }))
+      .filter((x) => x.refCount > 0)
+      .sort((a, b) => (LEVEL_ORDER[b.template.level] || 0) - (LEVEL_ORDER[a.template.level] || 0));
+  }
+
+  function renderToeLibrary() {
+    const country = state.toe.country;
+    const map = state.toe.workingTemplates[country] || {};
+    const allList = Object.values(map);
+    const filtered = allList.filter((t) => {
+      if (state.toe.levelFilter !== "ALL" && t.level !== state.toe.levelFilter) return false;
+      if (state.toe.search) {
+        const q = state.toe.search.toLowerCase();
+        if (!t.name.toLowerCase().includes(q) && !t.id.toLowerCase().includes(q)) return false;
+      }
+      return true;
+    });
+
+    // Sort Brigade -> Battalion -> Company -> Platoon -> Squad
+    filtered.sort((a, b) => (LEVEL_ORDER[b.level] || 0) - (LEVEL_ORDER[a.level] || 0));
+    setText("toe-lib-count", `${filtered.length} / ${allList.length} 模板`);
+
+    const listEl = document.getElementById("toe-template-list");
+    if (!listEl) return;
+
+    listEl.innerHTML = filtered
+      .map((t) => {
+        const isSel = t.id === state.toe.activeId;
+        const tot = computeRecursiveTotals(country, t.id);
+        const badgeColor = LEVEL_BADGE_COLOR[t.level] || "#95a5a6";
+        return `
+        <div onclick="window.__toeSelectTemplate('${t.id}', false)"
+             style="padding:7px 9px;border-radius:4px;cursor:pointer;border:1px solid ${isSel ? "var(--accent-cyan)" : "var(--border)"};background:${isSel ? "rgba(42,195,222,0.12)" : "var(--bg-2)"};display:flex;justify-content:space-between;align-items:center;gap:6px;">
+          <div style="min-width:0;">
+            <div style="font-size:12px;font-weight:600;color:${isSel ? "var(--accent-cyan)" : "var(--text-0)"};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
+              ${t.name}
+            </div>
+            <div style="font-size:10.5px;color:var(--text-2);font-family:var(--font-mono);">
+              ${t.id} · ${tot.men}人 · ${tot.leafSquads}班
+            </div>
+          </div>
+          <span style="font-size:10px;padding:2px 6px;border-radius:3px;background:${badgeColor}22;color:${badgeColor};border:1px solid ${badgeColor}66;white-space:nowrap;">
+            ${LEVEL_LABEL_ZH[t.level]?.split(" ")[0] || t.level}
+          </span>
+        </div>`;
+      })
+      .join("");
+  }
+
+  function renderRecursiveSubtreeHtml(country, templateId, multCount, depth, pathKey) {
+    const map = state.toe.workingTemplates[country] || {};
+    const t = map[templateId];
+    if (!t || depth > 6) return "";
+    const tot = computeRecursiveTotals(country, templateId);
+    const badgeColor = LEVEL_BADGE_COLOR[t.level] || "#95a5a6";
+    const isExpanded = state.toe.expandAll || !!state.toe.expandedNodes[pathKey];
+    const hasSub = t.level !== "squad" && t.children && t.children.length > 0;
+
+    let leafDetailHtml = "";
+    if (t.level === "squad") {
+      const specSummary = Object.entries(t.personnel || {})
+        .map(([k, v]) => `${SPECIALTY_NAMES_ZH[k]?.split(" ")[0] || k}×${v}`)
+        .join("、");
+      const slotSummary = Object.entries(t.slots || {})
+        .map(([k, v]) => `${SLOT_NAMES_ZH[k]?.split(" ")[0] || k}×${v}`)
+        .join("、");
+      leafDetailHtml = `
+        <div style="margin-top:4px;padding:4px 8px;background:var(--bg-1);border-radius:3px;font-size:11px;color:var(--text-1);">
+          <div>👤 <strong>班人员编成 (${tot.men}人/班)</strong>：${specSummary || "无"}</div>
+          <div>🔫 <strong>班武器/载具槽</strong>：${slotSummary || "无"}</div>
+        </div>`;
+    }
+
+    let childrenHtml = "";
+    if (hasSub && isExpanded) {
+      childrenHtml = `<div style="margin-left:16px;padding-left:10px;border-left:1px dashed var(--border);margin-top:4px;">
+        ${t.children
+          .map((ch, idx) =>
+            renderRecursiveSubtreeHtml(country, ch.template, ch.count, depth + 1, `${pathKey}_${idx}_${ch.template}`)
+          )
+          .join("")}
+      </div>`;
+    }
+
+    return `
+      <div style="margin-top:5px;padding:6px 8px;background:var(--bg-2);border:1px solid var(--border);border-radius:4px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:6px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:6px;">
+            ${
+              hasSub
+                ? `<button class="btn" onclick="window.__toeToggleNode('${pathKey}')" style="padding:1px 6px;font-size:11px;">${isExpanded ? "▾ 收起下级" : "▸ 展开下级"}</button>`
+                : `<span style="font-size:11px;color:var(--text-2);padding:0 4px;">● 底层班</span>`
+            }
+            <span style="font-size:10px;padding:1px 5px;border-radius:3px;background:${badgeColor}22;color:${badgeColor};border:1px solid ${badgeColor}66;">
+              ${LEVEL_LABEL_ZH[t.level]?.split(" ")[0] || t.level}
+            </span>
+            <strong style="font-size:12px;color:var(--text-0);">${t.name}</strong>
+            <span style="font-family:var(--font-mono);font-size:11.5px;color:var(--accent-amber);">× ${multCount}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;">
+            <span style="font-size:11px;color:var(--text-2);font-family:var(--font-mono);">
+              单建制 ${tot.men}人 (共 ${tot.men * multCount}人)
+            </span>
+            <button class="btn btn-cyan" onclick="window.__toeSelectTemplate('${t.id}', true)" style="padding:2px 7px;font-size:11px;">
+              🔍 钻取编辑此${LEVEL_LABEL_ZH[t.level]?.split(" ")[0] || "模板"}
+            </button>
+          </div>
+        </div>
+        ${leafDetailHtml}
+        ${childrenHtml}
+      </div>`;
+  }
+
+  function renderToeActiveEditor() {
+    const country = state.toe.country;
+    const map = state.toe.workingTemplates[country] || {};
+    const t = getActiveToeTemplate();
+    if (!t) return;
+
+    setText("toe-editor-badge", `${t.level.toUpperCase()} · ${LEVEL_LABEL_ZH[t.level] || t.level}`);
+    setText("toe-cur-name", `${t.name}`);
+    setText("toe-cur-meta", `ID: ${t.id} · 层级: ${LEVEL_LABEL_ZH[t.level]} · 兵种: ${t.branch || "general"} · 角色: ${t.role || "line"}`);
+
+    // 1. Render Breadcrumb Trail
+    const bcEl = document.getElementById("toe-breadcrumb");
+    if (bcEl) {
+      bcEl.innerHTML =
+        `<span style="color:var(--text-2);margin-right:4px;">钻取路径 (点击任意上级可返回)：</span>` +
+        state.toe.breadcrumb
+          .map((bid, idx) => {
+            const bt = map[bid];
+            if (!bt) return "";
+            const isLast = idx === state.toe.breadcrumb.length - 1;
+            const badgeColor = LEVEL_BADGE_COLOR[bt.level] || "#95a5a6";
+            return `
+              <span onclick="window.__toeSelectTemplate('${bid}', true)"
+                    style="cursor:pointer;padding:2px 7px;border-radius:3px;background:${isLast ? "rgba(42,195,222,0.2)" : "var(--bg-1)"};border:1px solid ${isLast ? "var(--accent-cyan)" : "var(--border)"};color:${isLast ? "var(--accent-cyan)" : "var(--text-0)"};font-weight:${isLast ? "700" : "400"};">
+                [${LEVEL_LABEL_ZH[bt.level]?.split(" ")[0]}] ${bt.name}
+              </span>
+              ${!isLast ? `<span style="color:var(--text-2);">▸</span>` : ""}`;
+          })
+          .join("");
+    }
+
+    const mainEl = document.getElementById("toe-editor-main");
+    if (!mainEl) return;
+
+    // 2. If active template is Platoon / Company / Battalion / Brigade -> Show Direct Children Editor + Add Lower Echelon + Full Recursive Tree
+    if (t.level !== "squad") {
+      const curLvlNum = LEVEL_ORDER[t.level] || 2;
+      const lowerTemplates = Object.values(map)
+        .filter((cand) => (LEVEL_ORDER[cand.level] || 0) < curLvlNum)
+        .sort((a, b) => (LEVEL_ORDER[b.level] || 0) - (LEVEL_ORDER[a.level] || 0));
+
+      const directRowsHtml = (t.children || [])
+        .map((ch, idx) => {
+          const ct = map[ch.template];
+          const cName = ct ? ct.name : ch.template;
+          const cLvl = ct ? LEVEL_LABEL_ZH[ct.level]?.split(" ")[0] : "?";
+          const cTot = computeRecursiveTotals(country, ch.template);
+          return `
+            <tr>
+              <td>
+                <span class="tag" style="margin-right:4px;">${cLvl}</span>
+                <strong>${cName}</strong>
+                <div style="font-size:10.5px;color:var(--text-2);font-family:var(--font-mono);">${ch.template} (单建制 ${cTot.men}人 / ${cTot.leafSquads}班)</div>
+              </td>
+              <td class="num" style="white-space:nowrap;">
+                <button class="btn" onclick="window.__toeChangeChildCount(${idx}, -1)" style="padding:1px 7px;">-</button>
+                <strong style="margin:0 8px;font-family:var(--font-mono);font-size:13px;color:var(--accent-amber);">${ch.count}</strong>
+                <button class="btn" onclick="window.__toeChangeChildCount(${idx}, 1)" style="padding:1px 7px;">+</button>
+              </td>
+              <td class="num" style="font-family:var(--font-mono);">${cTot.men * ch.count} 人</td>
+              <td style="text-align:right;">
+                <button class="btn btn-cyan" onclick="window.__toeSelectTemplate('${ch.template}', true)" style="padding:2px 8px;font-size:11px;">
+                  🔍 查看/编辑该${cLvl}模板
+                </button>
+              </td>
+            </tr>`;
+        })
+        .join("");
+
+      const subtreeHtml = (t.children || [])
+        .map((ch, idx) => renderRecursiveSubtreeHtml(country, ch.template, ch.count, 1, `root_${idx}_${ch.template}`))
+        .join("");
+
+      mainEl.innerHTML = `
+        <div style="margin-bottom:12px;">
+          <div style="font-size:12px;font-weight:700;color:var(--accent-cyan);margin-bottom:6px;">
+            ① 本级直属下级单位编成 (` + "`children: 子模板 × 数量`" + `，支持跨级直属配属)
+          </div>
+          <table class="data-table" style="margin-bottom:8px;">
+            <thead>
+              <tr>
+                <th>下属低层级模板名称</th>
+                <th class="num">建制数量</th>
+                <th class="num">小计人数</th>
+                <th style="text-align:right;">向下钻取</th>
+              </tr>
+            </thead>
+            <tbody>${directRowsHtml || `<tr><td colspan="4" style="text-align:center;color:var(--text-2);">暂无下属分队，请从下方添加</td></tr>`}</tbody>
+          </table>
+
+          <div style="display:flex;gap:6px;align-items:center;background:var(--bg-2);padding:6px 8px;border-radius:4px;border:1px solid var(--border);">
+            <span style="font-size:11.5px;color:var(--text-1);white-space:nowrap;">+ 添加低层级模板：</span>
+            <select id="toe-add-child-select" style="flex:1;padding:4px 6px;font-size:11.5px;">
+              ${lowerTemplates
+                .map((lt) => `<option value="${lt.id}">[${LEVEL_LABEL_ZH[lt.level]?.split(" ")[0]}] ${lt.name} (${lt.id})</option>`)
+                .join("")}
+            </select>
+            <button class="btn btn-primary" onclick="window.__toeAddChildTemplate()" style="padding:4px 10px;font-size:11.5px;white-space:nowrap;">
+              + 编入本级部队
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--accent-amber);margin-bottom:4px;">
+            ② 全层级递归编制树透视 (` + "`旅/团 → 营 → 连 → 排 → 班`" + `，可直接展开看到每一个底层班模板)
+          </div>
+          <div style="font-size:11px;color:var(--text-2);margin-bottom:6px;">
+            提示：点击任意下级节点的 <strong>「▾ 展开下级」</strong> 可原地逐层拆解直至底层步兵班/车组；点击 <strong>「🔍 钻取编辑」</strong> 可进入该下级模板修改，并通过顶部面包屑随时返回上级。
+          </div>
+          ${subtreeHtml}
+        </div>
+      `;
+    } else {
+      // 3. Active template is a Leaf Squad -> Show Personnel Specialties + Equipment Slots Editor
+      const specRows = Object.entries(t.personnel || {})
+        .map(
+          ([k, v]) => `
+          <tr>
+            <td><strong>${SPECIALTY_NAMES_ZH[k] || k}</strong> <code style="color:var(--text-2);">${k}</code></td>
+            <td class="num">
+              <button class="btn" onclick="window.__toeChangeSpecialty('${k}', -1)" style="padding:1px 7px;">-</button>
+              <strong style="margin:0 8px;font-family:var(--font-mono);color:var(--accent-cyan);">${v}</strong>
+              <button class="btn" onclick="window.__toeChangeSpecialty('${k}', 1)" style="padding:1px 7px;">+</button>
+            </td>
+          </tr>`
+        )
+        .join("");
+
+      const slotRows = Object.entries(t.slots || {})
+        .map(
+          ([k, v]) => `
+          <tr>
+            <td><strong>${SLOT_NAMES_ZH[k] || k}</strong> <code style="color:var(--text-2);">${k}</code></td>
+            <td class="num">
+              <button class="btn" onclick="window.__toeChangeSlot('${k}', -1)" style="padding:1px 7px;">-</button>
+              <strong style="margin:0 8px;font-family:var(--font-mono);color:var(--accent-amber);">${v}</strong>
+              <button class="btn" onclick="window.__toeChangeSlot('${k}', 1)" style="padding:1px 7px;">+</button>
+            </td>
+          </tr>`
+        )
+        .join("");
+
+      mainEl.innerHTML = `
+        <div style="margin-bottom:12px;">
+          <div style="font-size:12px;font-weight:700;color:var(--accent-cyan);margin-bottom:6px;">
+            ① 底层班人员专业配置 (` + "`SquadTemplate.personnel`" + `)
+          </div>
+          <table class="data-table" style="margin-bottom:6px;">
+            <thead><tr><th>兵种专业 (` + "`Specialty`" + `)</th><th class="num">在编人数</th></tr></thead>
+            <tbody>${specRows || `<tr><td colspan="2">无人员</td></tr>`}</tbody>
+          </table>
+          <div style="display:flex;gap:6px;">
+            <select id="toe-add-spec-select" style="flex:1;padding:4px 6px;font-size:11.5px;">
+              ${Object.entries(SPECIALTY_NAMES_ZH)
+                .map(([k, lbl]) => `<option value="${k}">${lbl} (${k})</option>`)
+                .join("")}
+            </select>
+            <button class="btn btn-primary" onclick="window.__toeAddSpecialty()" style="padding:4px 10px;font-size:11.5px;">+ 添加专业</button>
+          </div>
+        </div>
+
+        <div>
+          <div style="font-size:12px;font-weight:700;color:var(--accent-amber);margin-bottom:6px;">
+            ② 底层班武器与载具槽位 (` + "`SquadTemplate.slots`" + ` · 模板只定类别，由营/旅绑定具体型号)
+          </div>
+          <table class="data-table" style="margin-bottom:6px;">
+            <thead><tr><th>装备类别 (` + "`EquipmentCategory`" + `)</th><th class="num">槽位数量</th></tr></thead>
+            <tbody>${slotRows || `<tr><td colspan="2">无武器/车辆槽位</td></tr>`}</tbody>
+          </table>
+          <div style="display:flex;gap:6px;">
+            <select id="toe-add-slot-select" style="flex:1;padding:4px 6px;font-size:11.5px;">
+              ${Object.entries(SLOT_NAMES_ZH)
+                .map(([k, lbl]) => `<option value="${k}">${lbl} (${k})</option>`)
+                .join("")}
+            </select>
+            <button class="btn btn-primary" onclick="window.__toeAddSlot()" style="padding:4px 10px;font-size:11.5px;">+ 添加装备槽</button>
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  function renderToeRightPanel() {
+    const country = state.toe.country;
+    const t = getActiveToeTemplate();
+    if (!t) return;
+
+    const tot = computeRecursiveTotals(country, t.id);
+    const presetMen = computePresetTotals(country, t.id);
+    const diffMen = tot.men - presetMen;
+
+    setText("toe-total-men", `${tot.men} 人`);
+    setText(
+      "toe-total-men-diff",
+      diffMen === 0
+        ? `与预设一致 (${presetMen} 人)`
+        : `${diffMen > 0 ? "+" : ""}${diffMen} 人 (预设 ${presetMen} 人)`
+    );
+    setText("toe-total-squads", `${tot.leafSquads} 班`);
+
+    const childCount = (t.children || []).reduce((acc, c) => acc + c.count, 0);
+    setText("toe-cmd-load", t.level === "squad" ? "末端战斗班" : `直属下级 ${childCount} 个单位`);
+
+    // DC-005 Reorg organization cost: Δorg = -0.60 * changedFraction, 0 weapon skill loss
+    const changedRatio = presetMen > 0 ? Math.min(1.0, Math.abs(diffMen) / presetMen) : 0;
+    const orgPenaltyPct = (0.60 * changedRatio * 100).toFixed(1);
+    setText("toe-reorg-cost", `-${orgPenaltyPct}% 组织度`);
+
+    // 1. Automated Checks (RunChecks F3)
+    const checks = [];
+    const ifvCount = (tot.slotsByCat.ifv || 0) + (tot.slotsByCat.apc || 0);
+    if (t.level === "squad" && ifvCount > 0 && tot.men > ifvCount * 10) {
+      checks.push({
+        sev: "WARN",
+        color: "var(--accent-amber)",
+        msg: `⚠ [W40 乘车载员超限] 当前班 ${tot.men} 人，但 ${ifvCount} 辆步战/装甲车最多容纳 ${ifvCount * 10} 人（车组3+载员7）。`,
+      });
+    }
+    const heavyWpns = (tot.slotsByCat.gpmg || 0) + (tot.slotsByCat.reusable_launcher || 0) + (tot.slotsByCat.atgm_heavy || 0) * 2 + (tot.slotsByCat.agl || 0) * 2;
+    if (t.level === "squad" && heavyWpns >= 4) {
+      checks.push({
+        sev: "WARN",
+        color: "var(--accent-amber)",
+        msg: `⚠ [W10 步兵下车负重超 18kg 拐点] 班组携带过多重火器，下车冲锋速度与压制恢复将显著下降 (V1-d)。`,
+      });
+    }
+    if ((t.level === "battalion" || t.level === "brigade") && !(tot.slotsByCat.manpads || tot.slotsByCat.sam_short || tot.slotsByCat.spaag)) {
+      checks.push({
+        sev: "WARN",
+        color: "var(--accent-red)",
+        msg: `⚠ [W30 伴随防空缺口] 该${LEVEL_LABEL_ZH[t.level]?.split(" ")[0]}无任何便携防空/近程防空槽位，在 TB2/Harop 威胁下暴露度极高。`,
+      });
+    }
+    if (t.level !== "squad" && childCount > 9) {
+      checks.push({
+        sev: "WARN",
+        color: "var(--accent-amber)",
+        msg: `⚠ [W50 指挥跨度过载] 本级直辖 ${childCount} 个下级单位（超过推荐跨度 7），将放大命令传导延迟 (DC-010)。`,
+      });
+    }
+    if (checks.length === 0) {
+      checks.push({
+        sev: "PASS",
+        color: "var(--accent-green)",
+        msg: `✔ 全部编制规则检查通过（载员匹配、负重拐点、指挥跨度、伴随火力均在合理区间）。`,
+      });
+    }
+
+    const checksBox = document.getElementById("toe-checks-box");
+    if (checksBox) {
+      checksBox.innerHTML = checks
+        .map(
+          (c) => `
+          <div style="padding:5px 8px;border-radius:4px;background:var(--bg-2);border-left:3px solid ${c.color};color:var(--text-0);">
+            ${c.msg}
+          </div>`
+        )
+        .join("");
+    }
+
+    // 2. Upward Propagation (F2: Which higher-echelon templates reference this template)
+    const ancestors = findAncestorTemplates(country, t.id);
+    const ancBox = document.getElementById("toe-ancestors-box");
+    if (ancBox) {
+      if (ancestors.length === 0) {
+        ancBox.innerHTML = `<div style="color:var(--text-2);">当前模板已是最高层级（或未被其他上级模板引用）。</div>`;
+      } else {
+        ancBox.innerHTML =
+          `<div style="font-size:11px;color:var(--accent-amber);margin-bottom:4px;">修改本模板将自动向上传导影响以下 <strong>${ancestors.length}</strong> 个上级编制模板（点击可直接跳往该上级模板）：</div>` +
+          ancestors
+            .map((a) => {
+              const badgeColor = LEVEL_BADGE_COLOR[a.template.level] || "#95a5a6";
+              return `
+                <div onclick="window.__toeSelectTemplate('${a.template.id}', true)"
+                     style="cursor:pointer;padding:4px 8px;border-radius:3px;background:var(--bg-2);border:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+                  <span>
+                    <span style="font-size:10px;padding:1px 5px;border-radius:3px;background:${badgeColor}22;color:${badgeColor};margin-right:4px;">
+                      ${LEVEL_LABEL_ZH[a.template.level]?.split(" ")[0]}
+                    </span>
+                    <strong>${a.template.name}</strong>
+                  </span>
+                  <span style="font-family:var(--font-mono);font-size:11px;color:var(--accent-cyan);">
+                    含 ${a.refCount} 个本模板 ${diffMen !== 0 ? `(总人数 ${diffMen * a.refCount > 0 ? "+" : ""}${diffMen * a.refCount})` : ""} ▸
+                  </span>
+                </div>`;
+            })
+            .join("");
+      }
+    }
+
+    // 3. Rolled-up Equipment Slots & Default Model Bindings
+    const slotsEl = document.getElementById("toe-slots-summary");
+    if (slotsEl) {
+      const bindings = t.default_bindings || {};
+      const entries = Object.entries(tot.slotsByCat).sort((a, b) => b[1] - a[1]);
+      slotsEl.innerHTML = `
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>装备类别 (` + "`Category`" + `)</th>
+              <th>默认绑定型号 (` + "`Binding`" + `)</th>
+              <th class="num">递归展开总数</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${entries
+              .map(([cat, cnt]) => {
+                const boundModelId = bindings[cat] || "继承上级/国家默认";
+                const modelInfo = (BUNDLE.equipment_catalog || {})[boundModelId];
+                const modelLabel = modelInfo ? `${modelInfo.name} (${boundModelId})` : boundModelId;
+                return `
+                  <tr>
+                    <td><strong>${SLOT_NAMES_ZH[cat] || cat}</strong></td>
+                    <td style="color:var(--accent-cyan);font-family:var(--font-mono);font-size:11px;">${modelLabel}</td>
+                    <td class="num" style="font-weight:700;">${cnt}</td>
+                  </tr>`;
+              })
+              .join("")}
+          </tbody>
+        </table>`;
+    }
+  }
+
+  function renderToeAll() {
+    renderToeLibrary();
+    renderToeActiveEditor();
+    renderToeRightPanel();
+  }
+
+  // =========================================================================
   // 6. TAB 3: LOGISTICS & LACHIN CORRIDOR LAB (V3)
   // =========================================================================
   function renderLogisticsLab() {
@@ -1084,6 +1817,36 @@
     document.getElementById("btn-run-full-war")?.addEventListener("click", () => stepWarDays(60));
     document.getElementById("btn-reset-war")?.addEventListener("click", () => resetWarState(false));
 
+    // Tab 2 S05 Multi-Echelon TO&E Editor controls
+    document.getElementById("toe-select-country")?.addEventListener("change", (e) => {
+      state.toe.country = e.target.value;
+      const defaultId = state.toe.country === "ARM" ? "arm_mr_regt" : "aze_mr_bde";
+      state.toe.activeId = defaultId;
+      state.toe.breadcrumb = [defaultId];
+      renderToeAll();
+    });
+    document.getElementById("toe-select-level")?.addEventListener("change", (e) => {
+      state.toe.levelFilter = e.target.value;
+      renderToeLibrary();
+    });
+    document.getElementById("toe-search-input")?.addEventListener("input", (e) => {
+      state.toe.search = e.target.value.trim();
+      renderToeLibrary();
+    });
+    document.getElementById("btn-toe-expand-all")?.addEventListener("click", (e) => {
+      state.toe.expandAll = !state.toe.expandAll;
+      e.target.textContent = state.toe.expandAll ? "收起全部低层级树" : "展开全部低层级树";
+      renderToeActiveEditor();
+    });
+    document.getElementById("btn-toe-reset")?.addEventListener("click", () => {
+      const c = state.toe.country;
+      const id = state.toe.activeId;
+      if (state.toe.presetTemplates[c]?.[id]) {
+        state.toe.workingTemplates[c][id] = JSON.parse(JSON.stringify(state.toe.presetTemplates[c][id]));
+        renderToeAll();
+      }
+    });
+
     // Tab 2 Proving Ground controls
     document.getElementById("pg-select-att")?.addEventListener("change", (e) => {
       state.pg.attId = e.target.value;
@@ -1171,6 +1934,7 @@
   window.addEventListener("DOMContentLoaded", () => {
     initEvents();
     resetWarState(true);
+    initToeEditor();
     initProvingGround();
     renderLogisticsLab();
     renderValidationSuite();

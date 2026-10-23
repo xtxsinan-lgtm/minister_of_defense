@@ -50,7 +50,7 @@
   <!-- Navigation Tabs -->
   <nav class="nav-tabs">
     <button class="nav-tab active" data-tab="tab-v8-campaign">1. V8 交互推演：2010–2020 十年建军 & 2020 纳卡战争</button>
-    <button class="nav-tab" data-tab="tab-proving-ground">2. Phase 0 编制试验场 & 班排战术沙盒 (V1 / V5)</button>
+    <button class="nav-tab" data-tab="tab-proving-ground">2. S05 五级编制编辑器 (班→排→连→营→旅) & 战术试验场 (V1 / V5)</button>
     <button class="nav-tab" data-tab="tab-logistics-lab">3. 纳卡后勤网络、拉钦走廊切断与关键节点实验室 (V3)</button>
     <button class="nav-tab" data-tab="tab-validation-suite">4. V1–V8 全量数值验证报告与自动审计台</button>
   </nav>
@@ -399,9 +399,130 @@
   </main>
 
   <!-- ===================================================================== -->
-  <!-- TAB 2: PHASE 0 PROVING GROUND & SQUAD COMBAT SANDBOX (V1 & V5)        -->
+  <!-- TAB 2: S05 MULTI-ECHELON TO&E EDITOR + PHASE 0 PROVING GROUND (V1/V5) -->
   <!-- ===================================================================== -->
   <section id="tab-proving-ground" class="tab-view">
+    <!-- S05: 5-Echelon Recursive TO&E Template Editor (Squad -> Platoon -> Company -> Battalion -> Brigade) -->
+    <div class="wargame-grid" style="margin-bottom:14px;">
+      <!-- Column 1: Multi-Echelon Template Library -->
+      <div>
+        <div class="panel">
+          <div class="panel-header">
+            <span>S05 五级编制模板库 (班→排→连→营→旅/团)</span>
+            <span class="tag" id="toe-lib-count">81 模板</span>
+          </div>
+          <div class="panel-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;">
+              <div>
+                <label style="font-size:11px;color:var(--text-2);">所属国家模板库:</label>
+                <select id="toe-select-country" style="width:100%;padding:5px;margin-top:2px;">
+                  <option value="ARM">亚美尼亚 / 纳卡 (ARM · 81)</option>
+                  <option value="AZE">阿塞拜疆 (AZE · 83)</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:11px;color:var(--text-2);">按编制层级筛选 (`OrgLevel`):</label>
+                <select id="toe-select-level" style="width:100%;padding:5px;margin-top:2px;">
+                  <option value="ALL">全部层级 (旅→营→连→排→班)</option>
+                  <option value="brigade">【旅/团级 Brigade】 (编组模板)</option>
+                  <option value="battalion">【营级 Battalion】 (最小作战单位)</option>
+                  <option value="company">【连级 Company】 (条带交战单元)</option>
+                  <option value="platoon">【排级 Platoon】 (战术分队)</option>
+                  <option value="squad">【班级 Squad】 (底层人员与武器槽)</option>
+                </select>
+              </div>
+            </div>
+            <div style="margin-bottom:8px;">
+              <input type="text" id="toe-search-input" placeholder="搜索模板名称或 ID (如: 摩步团 / bmp / atgm)..." style="width:100%;padding:6px 8px;background:var(--bg-2);border:1px solid var(--border);color:var(--text-0);border-radius:4px;font-size:12px;" />
+            </div>
+            <div id="toe-template-list" style="max-height:390px;overflow-y:auto;display:flex;flex-direction:column;gap:4px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Column 2: Active Echelon Structure Editor & Recursive Lower-Echelon Tree Inspector -->
+      <div>
+        <div class="panel">
+          <div class="panel-header">
+            <span id="toe-editor-title">当前编制模板检视与递归树编辑器</span>
+            <span class="tag" id="toe-editor-badge">BRIGADE · 旅/团</span>
+          </div>
+          <div class="panel-body">
+            <!-- Breadcrumb navigation trail for drilling down Brigade -> Battalion -> Company -> Platoon -> Squad -->
+            <div id="toe-breadcrumb" style="background:var(--bg-2);border:1px solid var(--border);border-radius:4px;padding:6px 10px;margin-bottom:10px;font-size:12px;display:flex;align-items:center;flex-wrap:wrap;gap:4px;"></div>
+
+            <!-- Template meta header & reset button -->
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;padding-bottom:8px;border-bottom:1px solid var(--border);">
+              <div>
+                <div style="font-size:14px;font-weight:700;color:var(--text-0);" id="toe-cur-name">—</div>
+                <div style="font-size:11.5px;color:var(--text-2);font-family:var(--font-mono);" id="toe-cur-meta">—</div>
+              </div>
+              <div style="display:flex;gap:6px;">
+                <button class="btn" id="btn-toe-expand-all" style="font-size:11px;padding:4px 8px;">展开全部低层级树</button>
+                <button class="btn" id="btn-toe-reset" style="font-size:11px;padding:4px 8px;">恢复预设默认值</button>
+              </div>
+            </div>
+
+            <!-- Dynamic Editor Container (shows Children + Recursive Tree for Platoon..Brigade, OR Personnel + Weapon Slots for Squad) -->
+            <div id="toe-editor-main" style="max-height:380px;overflow-y:auto;padding-right:4px;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Column 3: Recursive Roll-up Totals (GetTotals), Upward Propagation (ImpactReport) & Auto-Checks (RunChecks) -->
+      <div>
+        <div class="panel">
+          <div class="panel-header">
+            <span>全层级递归汇总、向上传导提示 &amp; 自动检查</span>
+            <span class="tag">01 F1 / F2 / F3 / DC-005</span>
+          </div>
+          <div class="panel-body" style="max-height:475px;overflow-y:auto;">
+            <div class="kpi-grid" style="margin-bottom:10px;">
+              <div class="kpi-card">
+                <div class="kpi-label">递归展开总人数</div>
+                <div class="kpi-val" id="toe-total-men" style="color:var(--accent-cyan);">0</div>
+                <div class="kpi-sub" id="toe-total-men-diff">基准预设值</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">展开底层班总数</div>
+                <div class="kpi-val" id="toe-total-squads">0 班</div>
+                <div class="kpi-sub" id="toe-cmd-load">指挥负荷 —</div>
+              </div>
+              <div class="kpi-card">
+                <div class="kpi-label">整编组织度代价 (DC-005)</div>
+                <div class="kpi-val" id="toe-reorg-cost" style="color:var(--accent-green);">0.0%</div>
+                <div class="kpi-sub">武器熟练度 0 损失</div>
+              </div>
+            </div>
+
+            <!-- Auto-Checks (F3 RunChecks) -->
+            <div class="control-group">
+              <div class="control-title">
+                <span>1. 编制合理性自动检查 (`RunChecks` · F3)</span>
+              </div>
+              <div id="toe-checks-box" style="display:flex;flex-direction:column;gap:4px;font-size:12px;"></div>
+            </div>
+
+            <!-- Upward Propagation (F2 BuildImpact: which higher-echelon templates use this template) -->
+            <div class="control-group">
+              <div class="control-title">
+                <span>2. 向上传导链：引用本模板的上级部队 (`F2 Impact`)</span>
+              </div>
+              <div id="toe-ancestors-box" style="font-size:12px;color:var(--text-1);display:flex;flex-direction:column;gap:4px;"></div>
+            </div>
+
+            <!-- Rolled-up Equipment Slots & Model Bindings -->
+            <div class="control-group">
+              <div class="control-title">
+                <span>3. 递归展开全层级武器/车辆需求汇总 (`GetTotals`)</span>
+              </div>
+              <div id="toe-slots-summary" style="font-size:11.5px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="wargame-grid">
       <!-- Left: Template & Echelon Designer -->
       <div>
