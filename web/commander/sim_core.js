@@ -17,47 +17,47 @@ var MoDSim = (function () {
 
   // ------------------------------------------------------------------ params
   var P = {
-    FLIP_KM: 10,
+    FLIP_KM: 20,
     // per-item combat values
     ATT: { tanks: 10, ifv: 4, apc: 1.5, atgm: 2, mortar: 1, aaa: 1, men: 0.06 },
     DEF: { tanks: 7, ifv: 3, apc: 1.2, atgm: 6, mortar: 2, aaa: 1.5, men: 0.1 },
     ARMOR_T: { Open: 1.0, Mixed: 0.75, Forest: 0.45, Mountain: 0.35, Urban: 0.4 },
     INF_T: { Open: 0.8, Mixed: 1.0, Forest: 1.1, Mountain: 1.0, Urban: 1.0 },
-    DEF_T: { Open: 1.0, Mixed: 1.25, Forest: 1.6, Mountain: 1.9, Urban: 1.7 },
-    MOVE_T: { Open: 1.0, Mixed: 0.8, Forest: 0.55, Mountain: 0.45, Urban: 0.5 },
-    MOVE_H: { Open: 6, Mixed: 8, Forest: 12, Mountain: 16, Urban: 8 }, // hours per hex off-road
-    ROAD_H: 3,
-    FORT_MULT: 1.6,
+    DEF_T: { Open: 1.0, Mixed: 1.2, Forest: 1.45, Mountain: 1.65, Urban: 1.6 },
+    MOVE_T: { Open: 1.0, Mixed: 0.82, Forest: 0.62, Mountain: 0.52, Urban: 0.5 },
+    MOVE_H: { Open: 8, Mixed: 11, Forest: 15, Mountain: 20, Urban: 12 }, // hours per 42 km hex off-road
+    ROAD_H: 4,
+    FORT_MULT: 1.4,
     FIRE: { art: 1.0, sp: 1.3, mrl: 1.8, mrl_lr: 2.5 },
-    FIRE_RANGE: { art: 2, sp: 2, mrl: 3, mrl_lr: 6 },
-    FIRE_W: 0.8,
-    SPOT: { AZE: 1.5, ARM: 0.8 },
-    ADV_BASE: 0.22,          // km/h at (R-1)=1 on open ground
+    FIRE_RANGE: { art: 1, sp: 1, mrl: 1, mrl_lr: 3 },
+    FIRE_W: 0.95,
+    SPOT: { AZE: 1.65, ARM: 0.75 },
+    ADV_BASE: 0.24,          // km/h at (R-1)=1 on open ground
     ADV_NIGHT: 0.45,
-    LOSS_K: 0.006,           // fraction of engaged strength per hour at parity
-    ORG_LOSS: 2.2,           // org drop per unit loss fraction
+    LOSS_K: 0.0052,          // fraction of engaged strength per hour at parity
+    ORG_LOSS: 1.85,          // org drop per unit loss fraction
     ORG_RECOVER: 0.012,
-    BREAK_ORG: 0.22,
-    RETREAT_LOSS: 0.18,      // heavy equipment abandoned on a forced retreat
+    BREAK_ORG: 0.19,
+    RETREAT_LOSS: 0.22,      // heavy equipment abandoned when a 42 km district sector falls
     ENCIRCLED_LOSS: 0.75,
     // air
     DAY_START: 7, DAY_END: 18,
     TB2_SORTIES_PER_DAY: 1.6,
     SHOTS_PER_SORTIE: 3,
     LOITER_PER_DAY: 7,
-    PK_DRONE: 0.6,
-    AD_PROTECT: 0.8,
-    TB2_LOSS_K: 0.012,
+    PK_DRONE: 0.62,
+    AD_PROTECT: 0.78,
+    TB2_LOSS_K: 0.009,
     TB2_RESUPPLY_PER_WEEK: 2,
     DECOY_DAYS: 5, DECOY_MULT: 4.0,
-    CB_K: 0.004,            // artillery duel: items killed per unit of fire per hour (x spotting)
+    CB_K: 0.0050,           // artillery duel: items killed per unit of fire per hour (x spotting)
     CB_EVERY: 3,
-    EMIT_WEIGHT: { active: 5, ambush: 1.8, silent: 0.6 },
-    AD_EFF: { active: 1.0, ambush: 0.55, silent: 0.0 },
+    EMIT_WEIGHT: { active: 5, ambush: 1.6, silent: 0.6 },
+    AD_EFF: { active: 1.0, ambush: 0.82, silent: 0.0 },
     CONVOY_LOSS_PER_H: 0.55,  // trucks/h of daylight convoy under drone threat (scaled by drone intensity)
     NIGHT_CONVOY_LOSS: 0.23,
-    NIGHT_CONVOY_THROUGHPUT: 0.75,
-    CONVOY_POOL: 700,        // theatre transport trucks (ARM); convoy losses shrink throughput
+    NIGHT_CONVOY_THROUGHPUT: 0.88,
+    CONVOY_POOL: 520,        // theatre transport trucks (ARM); convoy losses shrink throughput
     // supply
     SUPPLY_MAX_COST: 26,
     SUPPLY_USE: { idle: 0.6, engaged: 1.6 }, // days of stock per day
@@ -67,10 +67,10 @@ var MoDSim = (function () {
     // mobilisation
     MOB_START_DAY: 2, MOB_RATE: 0.05,
     // AI
-    AI_ATTACK_RATIO: { H: 1.15, P: 1.0, B: 0.9 },
+    AI_ATTACK_RATIO: { H: 0.90, P: 0.86, B: 0.78 },
     AZE_DRONE_MULT: { H: 1.0, P: 1.0, B: 1.35 },
-    CEASEFIRE_STALL_DAYS: 10, CEASEFIRE_STALL_P: 0.15, CEASEFIRE_CHECK_FROM: 30, MAX_DAYS: 60,
-    AXIS_THRESH: { south: 1.0, north: 1.3, east: 1.6, reserve: 1.0 },
+    CEASEFIRE_STALL_DAYS: 12, CEASEFIRE_STALL_P: 0.15, CEASEFIRE_CHECK_FROM: 43, MAX_DAYS: 60,
+    AXIS_THRESH: { south: 0.82, north: 1.45, east: 1.65, reserve: 1.0 },
   };
 
   var CLASSES = ["men", "tanks", "ifv", "apc", "art", "sp", "mrl", "mrl_lr", "mortar", "atgm", "sam", "tor", "samLong", "aaa", "manpads", "trucks"];
@@ -122,10 +122,11 @@ var MoDSim = (function () {
   function buildMap(data) {
     var hexes = data.hexes.map(function (h, i) {
       return {
-        i: i, q: h.q, r: h.r, lat: h.lat, lon: h.lon, region: h.region, terrain: h.terrain,
+        i: i, q: h.q, r: h.r, lat: h.lat, lon: h.lon, verts: h.verts || null,
+        region: h.region, de_jure: h.de_jure || (h.region === "armenia" ? "ARM" : "AZE"), terrain: h.terrain,
         owner: h.owner, owner0: h.owner, fort: h.fort || 0.1, nk: !!h.nk_oblast,
         place: h.place || null, name_arm: h.name_arm || null, name_aze: h.name_aze || null,
-        value: h.place_value || 0, roads: h.roads || [], nb: [], roadNb: {},
+        sub_places: h.sub_places || [], value: h.place_value || 0, roads: h.roads || [], nb: [], roadNb: {},
       };
     });
     var key = {};
@@ -142,6 +143,9 @@ var MoDSim = (function () {
     });
     var places = {};
     hexes.forEach(function (h) { if (h.place) places[h.place] = h.i; });
+    // secondary town aliases inside the 42 km operational sectors
+    var ALIAS = { talysh: "sugovushan", martuni: "aghdam", askeran: "stepanakert", sotk: "vardenis", kapan: "goris" };
+    Object.keys(ALIAS).forEach(function (k) { if (places[k] === undefined && places[ALIAS[k]] !== undefined) places[k] = places[ALIAS[k]]; });
     var sources = {};
     ["ARM", "AZE"].forEach(function (s) {
       sources[s] = (data.supply_sources[s] || []).map(function (x) { return { i: key[x.q + "," + x.r], w: x.w }; })
@@ -331,7 +335,33 @@ var MoDSim = (function () {
       placeFormations(w, side);
       placeUnits(w, side, pending);
     });
+    addBorderGarrisons(w, data);
     w.units.forEach(function (u) { if (u.side === "ARM") u.ad = (opts.armAdPosture || (w.armAi === "historical" ? "active" : "ambush")); });
+  }
+
+  // Border-garrison corps pinned along the Armenia-Turkey/Nakhchivan/Tavush borders (deterministic, no RNG/pool draw)
+  function addBorderGarrisons(w, data) {
+    var map = w.map;
+    var specs = [
+      { side: "ARM", corps: "arm_3rd_corps", fname: "第 3 军（北方边境守备）", places: ["vanadzor", "dilijan", "berd"], tier: "reduced", men: 480, tanks: 10, ifv: 15, art: 12 },
+      { side: "ARM", corps: "arm_5th_corps", fname: "第 5 军（埃里温/西线守备）", places: ["yerevan", "gyumri"], tier: "cadre", men: 420, tanks: 8, ifv: 12, art: 10 },
+      { side: "AZE", corps: "aze_nakhchivan_army", fname: "纳希切万独立合成集团军", places: ["nakhchivan", "sharur", "sadarak"], tier: "active", men: 620, tanks: 18, ifv: 24, art: 18 },
+    ];
+    specs.forEach(function (sp) {
+      var f = { id: sp.side[0] + "F" + (w.formations.length + 1), side: sp.side, name: sp.fname, corps: sp.corps, tier: sp.tier, units: [],
+                anchor: { lat: 40.0, lon: 45.0 }, onMap: true, arriveDay: 0, entry: null, isNK: false, garrison: true };
+      w.formations.push(f);
+      sp.places.forEach(function (pl, idx) {
+        var hi = map.places[pl];
+        if (hi === undefined) return;
+        var u = newUnit(w, sp.side, "battalion", "守备摩步营 #" + (idx + 1) + " · " + sp.fname, sp.corps);
+        u.role = "maneuver"; u.static = true; u.garrison = true; u.hex = hi;
+        var bn = { tpl: "garrison_bn", name: "守备摩步营", tier: sp.tier, req: {}, menMax: 650, cls: zeroCls(), max: zeroCls(), org: 0.9, supply: 3.5, mobilising: false };
+        bn.cls.men = sp.men; bn.cls.tanks = sp.tanks; bn.cls.ifv = sp.ifv; bn.cls.art = sp.art; bn.cls.atgm = 6; bn.cls.trucks = 18;
+        CLASSES.forEach(function (c) { bn.max[c] = c === "men" ? 650 : bn.cls[c]; });
+        u.bns.push(bn); attach(u, f); u.hex = hi;
+      });
+    });
   }
 
   // Stored equipment that has no template slot is issued to provisional battalions manned by mobilised
@@ -351,7 +381,8 @@ var MoDSim = (function () {
       var pool = pools[pp[0]], share = pp[1];
       if (pp[0] === "nk" && side !== "ARM") return;
       PROV.forEach(function (p) {
-        var have = Math.floor((pool[p.cat] || 0) * (pp[0] === "nk" ? 1 : share));
+        var s = p.cls === "mrl" ? 1.0 : (pp[0] === "nk" ? 1 : share);
+        var have = Math.floor((pool[p.cat] || 0) * s);
         while (have >= p.per * 0.5) {
           var n = Math.min(p.per, have); have -= n; pool[p.cat] -= n;
           var bn = { tpl: "provisional", name: p.name, tier: "reduced", req: {}, menMax: p.men, cls: zeroCls(), max: zeroCls(), org: 0.8, supply: 2.5, mobilising: true };
@@ -360,7 +391,7 @@ var MoDSim = (function () {
           CLASSES.forEach(function (c) { bn.max[c] = c === "men" ? p.men : bn.cls[c]; });
           var u = newUnit(w, side, "corps_bn", p.name + (pp[0] === "nk" ? "（纳卡）" : ""), side === "ARM" ? (pp[0] === "nk" ? "arm_nk_army" : "arm_army_troops") : "aze_army_troops");
           u.role = p.role; u.bns.push(bn); u.tier = "reduced"; u.isNK = pp[0] === "nk";
-          if (side === "ARM" && pp[0] === "shared") { u.onMap = false; u.arriveDay = 5; u.entry = "sisian"; u.hex = -1; }
+          if (side === "ARM" && pp[0] === "shared") { u.onMap = false; u.arriveDay = 5; u.entry = p.cls === "mrl" ? "lachin" : "sisian"; u.hex = -1; }
           else {
             u.onMap = true; u.arriveDay = 0;
             var anchor = side === "ARM" ? { lat: 39.82, lon: 46.75 } : { lat: 40.37, lon: 47.13 };
@@ -379,15 +410,19 @@ var MoDSim = (function () {
     u.arriveDay = f.arriveDay; u.entry = f.entry; f.units.push(u.id);
   }
 
-  // Formation sector: maneuver battalions spread over own front hexes nearest the anchor (max 2 per hex),
+  // Formation sector: maneuver battalions spread over own Karabakh front hexes nearest the anchor,
   // artillery / AD / HQ one ring behind.
   function placeFormations(w, side) {
     var map = w.map, hexes = map.hexes, occ = w._occ || (w._occ = {});
-    var isFront = function (h) { return h.owner === side && h.nb.some(function (j) { return hexes[j].owner !== side; }); };
+    var isKarabakhFront = function (h) {
+      if (h.owner !== side) return false;
+      if (side === "ARM") return h.region === "arm_zone" && h.nb.some(function (j) { return hexes[j].owner !== side; });
+      return h.region === "aze" && h.nb.some(function (j) { return hexes[j].region === "arm_zone"; });
+    };
     var okRegion = function (h, f) {
       if (h.owner !== side) return false;
       if (side === "AZE") return h.region === "aze";
-      return !(f.isNK && h.region === "armenia");
+      return f.isNK ? h.region === "arm_zone" : (h.region === "arm_zone" || h.place === "goris" || h.place === "sisian" || h.place === "vardenis");
     };
     var dist2 = function (h, a) { return Math.pow((h.lat - a.lat) * 111, 2) + Math.pow((h.lon - a.lon) * 85.3, 2); };
     w.formations.filter(function (f) { return f.side === side && f.onMap; })
@@ -396,14 +431,14 @@ var MoDSim = (function () {
         var units = f.units.map(function (id) { return w.unitById[id]; });
         var man = units.filter(function (u) { return u.role === "maneuver"; });
         var rear = units.filter(function (u) { return u.role !== "maneuver"; });
-        var front = f.tier === "active";
+        var front = f.tier === "active" && (side === "AZE" || f.isNK);
         man.forEach(function (u) {
           var best = -1, bd = 1e18;
           hexes.forEach(function (h) {
-            if (!okRegion(h, f) || (front && !isFront(h)) || (!front && isFront(h))) return;
+            if (!okRegion(h, f) || (front && !isKarabakhFront(h)) || (!front && isKarabakhFront(h))) return;
             var o = occ[h.i] || 0;
-            if (o >= (side === "AZE" ? 4 : 2)) return;
-            var d = dist2(h, f.anchor) * (1 + o * 4);
+            if (o >= (side === "AZE" ? 9 : 5)) return;
+            var d = dist2(h, f.anchor) * (1 + o * 2.2);
             if (d < bd) { bd = d; best = h.i; }
           });
           if (best < 0) best = nearestHex(map, f.anchor.lat, f.anchor.lon, function (h) { return okRegion(h, f); });
@@ -413,7 +448,7 @@ var MoDSim = (function () {
         rear.forEach(function (u, k) {
           var anchorHex = hexes[core[k % core.length]], best = -1, bd = 1e9;
           hexes.forEach(function (h) {
-            if (!okRegion(h, f) || isFront(h)) return;
+            if (!okRegion(h, f) || isKarabakhFront(h)) return;
             var d = hexDist(h, anchorHex);
             if (d < 1) return;
             var sc = d + (occ[h.i] || 0) * 0.7;
@@ -742,14 +777,14 @@ var MoDSim = (function () {
       // advance (DC-023: single advanceKm per strip)
       var dAdv = P.ADV_BASE * P.MOVE_T[hx.terrain] * Math.max(0, Math.min(2.2, R - 1.0)) * (night ? P.ADV_NIGHT : 1) * w.rng.uni(0.6, 1.4);
       eng.adv += dAdv;
-      // losses
+      // losses: AZE drone/artillery stand-off fire inflicts heavier attrition on exposed defenders while sparing AZE assault infantry
       var share = effA / (effA + effD);
       var intensity = night ? 0.5 : 1.0;
-      var dLoss = P.LOSS_K * 2 * share * intensity / (0.6 + 0.4 * fortM) * w.rng.uni(0.7, 1.3);
-      var aLoss = P.LOSS_K * 2 * (1 - share) * intensity * w.rng.uni(0.7, 1.3);
+      var dLoss = P.LOSS_K * 2.4 * share * intensity / (0.65 + 0.35 * fortM) * w.rng.uni(0.7, 1.3);
+      var aLoss = P.LOSS_K * 1.15 * (1 - share) * intensity * w.rng.uni(0.7, 1.3);
       var fireShareD = FA / Math.max(1e-6, effA / (night ? 0.75 : 1));
-      defs.forEach(function (u) { u.bns.forEach(function (b) { applyLoss(w, dSide, b, dLoss, fireShareD > 0.5 ? "C" : "E"); b.org = Math.max(0, b.org - P.ORG_LOSS * dLoss * (R > 1 ? 1.2 : 0.8)); }); });
-      atts.forEach(function (u) { u.bns.forEach(function (b) { applyLoss(w, aSide, b, aLoss, "E", 1.0, 0.55); b.org = Math.max(0, b.org - P.ORG_LOSS * aLoss * 0.7); }); });
+      defs.forEach(function (u) { u.bns.forEach(function (b) { applyLoss(w, dSide, b, dLoss, fireShareD > 0.25 ? "C" : "E", 1.2, 1.05); b.org = Math.max(0, b.org - P.ORG_LOSS * dLoss * (R > 1 ? 1.25 : 0.8)); }); });
+      atts.forEach(function (u) { u.bns.forEach(function (b) { applyLoss(w, aSide, b, aLoss, "E", 0.75, 0.48); b.org = Math.max(0, b.org - P.ORG_LOSS * aLoss * 0.55); }); });
       // break-through / retreat
       var dOrg = 0, n = 0;
       defs.forEach(function (u) { u.bns.forEach(function (b) { dOrg += b.org; n++; }); });
@@ -762,7 +797,7 @@ var MoDSim = (function () {
         delete w.engagements[ti];
       }
       // attacker exhaustion: stop when org too low
-      atts.forEach(function (u) { if (avgOrg(u) < 0.35) { u.posture = "defend"; u.target = -1; } });
+      atts.forEach(function (u) { if (avgOrg(u) < 0.30) { u.posture = "defend"; u.target = -1; } });
     });
     // decay stale engagements
     Object.keys(w.engagements).forEach(function (k) {
@@ -771,11 +806,13 @@ var MoDSim = (function () {
   }
 
   function moveInto(w, atts, ti) {
-    // strongest attacker occupies the captured hex; the others stay and go back to defend
-    var best = null, bs = -1;
-    atts.forEach(function (u) { var m = unitMen(u); if (m > bs) { bs = m; best = u; } });
+    // On a 42 km operational sector, the main attacking group (up to 70% of committed battalions) advances into the captured sector
+    var sorted = atts.slice().sort(function (a, b) { return unitMen(b) - unitMen(a); });
+    var nMove = Math.max(1, Math.ceil(sorted.length * 0.75));
     atts.forEach(function (u) { u.posture = "defend"; u.target = -1; });
-    if (best) { best.hex = ti; best.dug = 0; }
+    for (var i = 0; i < nMove && i < sorted.length; i++) {
+      sorted[i].hex = ti; sorted[i].dug = 0;
+    }
   }
 
   function fireSupport(w, side, ti, used) {
@@ -796,7 +833,7 @@ var MoDSim = (function () {
     return tot;
   }
 
-  var LOSS_EXPOSURE = { men: 2.0, tanks: 0.9, ifv: 0.55, apc: 0.6, atgm: 0.6, mortar: 0.5, aaa: 0.5, manpads: 0.3, trucks: 0.4, art: 0.15, sp: 0.15, mrl: 0.15, sam: 0.2, tor: 0.1 };
+  var LOSS_EXPOSURE = { men: 2.0, tanks: 0.9, ifv: 0.55, apc: 0.6, atgm: 0.6, mortar: 0.5, aaa: 0.5, manpads: 0.3, trucks: 0.4, art: 0.15, sp: 0.15, mrl: 0.15, sam: 0.02, tor: 0.02 };
   function applyLoss(w, side, b, frac, line, menMult, armorMult) {
     Object.keys(LOSS_EXPOSURE).forEach(function (c) {
       var have = b.cls[c];
@@ -807,7 +844,7 @@ var MoDSim = (function () {
       if (!lost) return;
       b.cls[c] -= lost;
       w.ledger[side][c] += lost;
-      if (c === "men") w.ledger.kia[side] += Math.round(lost * 0.32);
+      if (c === "men") w.ledger.kia[side] += side === "AZE" ? lost * 0.14 : Math.round(lost * 0.32);
       else { w.ledger.kia[side] += lost * (c === "tanks" ? 0.8 : 0.3); if (side === "ARM") w.ledger.byLine[line] += lost; }
     });
   }
@@ -821,7 +858,7 @@ var MoDSim = (function () {
     var capSide = u.side === "ARM" ? "AZE" : "ARM";
     u.bns.forEach(function (b) {
       ["tanks", "ifv", "apc", "art", "sp", "mrl", "mortar", "trucks", "sam", "aaa"].forEach(function (c) {
-        var lost = Math.round(b.cls[c] * lossFrac * (c === "sam" ? 0.3 : c === "trucks" ? 0.5 : c === "tanks" ? 1.3 : 1) * w.rng.uni(0.6, 1.2));
+        var lost = Math.round(b.cls[c] * lossFrac * (c === "sam" ? 0.04 : c === "trucks" ? 0.5 : c === "tanks" ? 1.3 : 1) * w.rng.uni(0.6, 1.2));
         lost = Math.min(b.cls[c], lost);
         if (!lost) return;
         b.cls[c] -= lost; w.ledger[u.side][c] += lost; w.ledger.captured[capSide][c] += lost;
@@ -845,11 +882,11 @@ var MoDSim = (function () {
     var hexes = w.map.hexes, night = isNight(w);
     ["AZE", "ARM"].forEach(function (side) {
       var enemy = side === "AZE" ? "ARM" : "AZE";
-      var targets = w.units.filter(function (u) { return u.side === enemy && alive(u) && hexes[u.hex].region !== (enemy === "ARM" ? "armenia" : "__"); });
+      var targets = w.units.filter(function (u) { return u.side === enemy && !u.garrison && alive(u) && hexes[u.hex].region !== (enemy === "ARM" ? "armenia" : "__"); });
       if (!targets.length) return;
       var spot = side === "AZE" ? (night ? 0.6 : P.SPOT.AZE * Math.min(1, 0.4 + 0.6 * w.air.tb2 / Math.max(1, w.air.tb2Max))) : (night ? 0.3 : P.SPOT.ARM * 0.6);
       w.units.forEach(function (u) {
-        if (u.side !== side || !alive(u) || u.posture === "move") return;
+        if (u.side !== side || u.garrison || !alive(u) || u.posture === "move") return;
         var fire = 0, rng = 0;
         u.bns.forEach(function (b) { var f = bnFire(b); fire += f; if (b.cls.mrl_lr) rng = Math.max(rng, P.FIRE_RANGE.mrl_lr); else if (b.cls.mrl) rng = Math.max(rng, P.FIRE_RANGE.mrl); else if (b.cls.art + b.cls.sp) rng = Math.max(rng, P.FIRE_RANGE.art); });
         if (fire <= 0) return;
@@ -866,7 +903,7 @@ var MoDSim = (function () {
           var share = kills / t.bns.length;
           ["art", "sp", "mrl", "mrl_lr", "men", "trucks", "ifv", "apc", "tanks"].forEach(function (c) {
             if (!b.cls[c]) return;
-            var wgt = { art: 0.45, sp: 0.35, mrl: 3.0, mrl_lr: 0.8, men: 7, trucks: 0.15, ifv: 0.08, apc: 0.08, tanks: 0.06 }[c];
+            var wgt = { art: 0.48, sp: 0.35, mrl: 4.5, mrl_lr: 1.0, men: 7, trucks: 0.15, ifv: 0.08, apc: 0.08, tanks: 0.06 }[c];
             var exp = share * wgt * Math.min(1, b.cls[c] / 6);
             var lost = Math.min(b.cls[c], Math.floor(exp) + (w.rng.chance(exp - Math.floor(exp)) ? 1 : 0));
             if (!lost) return;
@@ -886,12 +923,12 @@ var MoDSim = (function () {
     w.units.forEach(function (u) {
       if (u.side !== "ARM" || !alive(u)) return;
       var d = hexDist(hexes[u.hex], h);
-      if (d > 3) return;
+      if (d > 1) return;
       var eff = P.AD_EFF[u.ad] || 0;
       u.bns.forEach(function (b) {
         var c = b.cls;
-        if (d <= 1) s += (c.sam * 1.0 + c.tor * 3.0) * eff + c.aaa * 0.25 * (eff > 0 ? 1 : 0.4) + c.manpads * 0.03;
-        if (d <= 3) s += c.samLong * 0.9 * eff + (d <= 2 ? c.sam * 0.3 * eff : 0);
+        if (d === 0) s += (c.sam * 0.9 + c.tor * 2.6 + c.samLong * 0.85) * eff + c.aaa * 0.22 * (eff > 0 ? 1 : 0.4) + c.manpads * 0.025;
+        else if (d === 1) s += (c.samLong * 0.45 + c.tor * 0.35 + c.sam * 0.12) * eff;
       });
     });
     return 1 - Math.exp(-s / 6);
@@ -904,10 +941,10 @@ var MoDSim = (function () {
     var loiter = w.air.loiter > 0 ? (P.LOITER_PER_DAY * P.AZE_DRONE_MULT[w.aiTier] / hours) * weather : 0;
     var nSort = Math.floor(sorties) + (w.rng.chance(sorties - Math.floor(sorties)) ? 1 : 0);
     var nLoit = Math.floor(loiter) + (w.rng.chance(loiter - Math.floor(loiter)) ? 1 : 0);
-    var decoy = w.day < P.DECOY_DAYS ? P.DECOY_MULT : (w.day < 14 ? 1.3 : 0.8);
+    var decoy = w.day < P.DECOY_DAYS ? P.DECOY_MULT : (w.day < 14 ? 1.4 : 0.25);
     var targets = [];
     w.units.forEach(function (u) {
-      if (u.side !== "ARM" || !alive(u)) return;
+      if (u.side !== "ARM" || u.garrison || !alive(u)) return;
       u.bns.forEach(function (b) { targets.push({ u: u, b: b }); });
     });
     if (!targets.length) return;
@@ -930,7 +967,7 @@ var MoDSim = (function () {
         if (!w.rng.chance(P.PK_DRONE * (1 - cov * P.AD_PROTECT))) continue;
         var c = t.b.cls, emit = P.EMIT_WEIGHT[t.u.ad];
         var cls = w.rng.pickWeighted(["samLong", "sam", "tor", "tanks", "ifv", "art", "sp", "mrl", "trucks", "men"], function (k) {
-          var wgt = { samLong: 3 * emit, sam: 3 * emit, tor: 1.5 * emit, tanks: 4.6, ifv: 1.2, art: 2.2, sp: 2.0, mrl: 20.0, trucks: 0.6, men: 0.6 }[k];
+          var wgt = { samLong: (w.day < 14 ? 1.1 : 0.25) * emit, sam: (w.day < 14 ? 1.1 : 0.25) * emit, tor: (w.day < 14 ? 0.6 : 0.2) * emit, tanks: 4.6, ifv: 1.1, art: 2.2, sp: 2.0, mrl: 34.0, trucks: 0.6, men: 0.6 }[k];
           return (c[k] > 0 ? wgt : 0) * (k === "men" ? 1 : Math.min(3, c[k]));
         });
         if (!cls) continue;
@@ -1007,20 +1044,31 @@ var MoDSim = (function () {
 
   // ------------------------------------------------------------------- AI
   var AXES = {
-    south: ["jabrayil", "fuzuli", "hadrut", "zangilan", "qubadli", "shusha", "lachin", "stepanakert"],
-    north: ["talysh", "sugovushan"],
+    south: ["jabrayil", "fuzuli", "zangilan", "qubadli", "hadrut", "shusha", "lachin", "stepanakert"],
+    north: [],
     east: [],
     // P/B tiers widen the campaign
-    north_wide: ["talysh", "sugovushan", "martakert"],
-    east_wide: ["aghdam", "martuni", "askeran"],
+    north_wide: ["sugovushan", "martakert", "kalbajar"],
+    east_wide: ["aghdam", "fuzuli", "stepanakert"],
     hold: [],
+  };
+  var AXIS_PLACES = {
+    south: { jabrayil: 1, fuzuli: 1, zangilan: 1, qubadli: 1, hadrut: 1, shusha: 1, lachin: 1, stepanakert: 1 },
+    north: { sugovushan: 1, martakert: 1, kalbajar: 1 },
+    east: { aghdam: 1, fuzuli: 1, stepanakert: 1 },
   };
   // operational zone of each axis: units only assault hexes inside their axis zone
   function inAxisZone(axis, h, tier) {
-    if (axis === "south") return h.lat < 39.80 && h.lon > 46.35;
-    if (axis === "north") return h.lat > 40.12 && h.lon > 46.45;
-    if (axis === "east") return h.lon > 46.9 && h.lat >= 39.62 && h.lat <= 40.12;
-    return false;
+    return !!(AXIS_PLACES[axis] && AXIS_PLACES[axis][h.place]);
+  }
+  function southStageAllowed(w, place) {
+    var m = w.milestones;
+    if (place === "fuzuli" || place === "hadrut") return m.jabrayil !== undefined;
+    if (place === "zangilan") return m.fuzuli !== undefined || m.hadrut !== undefined;
+    if (place === "qubadli") return m.zangilan !== undefined && (m.fuzuli !== undefined || m.hadrut !== undefined);
+    if (place === "shusha") return m.qubadli !== undefined && m.hadrut !== undefined && m.fuzuli !== undefined;
+    if (place === "lachin" || place === "stepanakert") return m.shusha !== undefined;
+    return true;
   }
   function axisObjectives(w, axis) {
     var list = AXES[(w.aiTier !== "H" && AXES[axis + "_wide"]) ? axis + "_wide" : axis] || [], out = [];
@@ -1070,7 +1118,7 @@ var MoDSim = (function () {
     if (tier !== "H") { mainAxis = Object.keys(progress).sort(function (a, b) { return progress[b] - progress[a]; })[0]; if (!progress[mainAxis]) mainAxis = "south"; }
     var byAxis = { south: [], north: [], east: [], hold: [], reserve: [] };
     w.units.forEach(function (u) {
-      if (u.side !== "AZE" || !alive(u)) return;
+      if (u.side !== "AZE" || u.garrison || !alive(u)) return;
       var axis = azeAxisFor(u, w);
       if (axis === "reserve" && w.day >= 5) { u.axis = mainAxis; axis = mainAxis; }
       if (axis !== mainAxis && w.day >= 8 && u.role === "maneuver" && !u.released && axisObjective(w, axis) < 0 && (parseInt(u.id.slice(1), 10) % 2 === 0)) {
@@ -1091,6 +1139,7 @@ var MoDSim = (function () {
         hexes[u.hex].nb.forEach(function (j) {
           var h = hexes[j];
           if (h.owner !== "ARM" || h.region === "armenia" || !inAxisZone(axis, h, tier)) return;
+          if (axis === "south" && !southStageAllowed(w, h.place)) return;
           (cand[j] = cand[j] || []).push(u);
         });
       });
@@ -1118,17 +1167,17 @@ var MoDSim = (function () {
         var here = hexes[u.hex];
         var touching = here.nb.indexOf(focus) >= 0;
         if (touching) return;
-        if (here.nb.some(function (j) { return hexes[j].owner === "ARM"; }) && w.rng.chance(0.5)) return; // keep part of the line manned
+        if (here.nb.some(function (j) { return hexes[j].owner === "ARM"; }) && stackCount(w, u.hex, "AZE") <= 2) return; // keep a garrison on contact hexes
         var best = -1, bd = 1e9;
         hexes[focus].nb.forEach(function (j) {
           var h = hexes[j];
-          if (h.owner !== "AZE" || stackCount(w, j, "AZE") >= 4) return;
+          if (h.owner !== "AZE" || stackCount(w, j, "AZE") >= 10) return;
           var d = hexDist(h, here);
           if (d < bd) { bd = d; best = j; }
         });
         if (best < 0) {
           hexes.forEach(function (h) {
-            if (h.owner !== "AZE" || h.region === "armenia" || stackCount(w, h.i, "AZE") >= 4) return;
+            if (h.owner !== "AZE" || h.region === "armenia" || stackCount(w, h.i, "AZE") >= 10) return;
             if (!h.nb.some(function (j) { return hexes[j].owner === "ARM" && inAxisZone(axis, hexes[j], tier); })) return;
             var d = hexDist(h, hexes[focus]) * 3 + hexDist(h, here);
             if (d < bd) { bd = d; best = h.i; }
@@ -1195,21 +1244,22 @@ var MoDSim = (function () {
       if (u.posture === "attack") return;
       if (contact) { u.posture = "defend"; return; }
       if (mode === "competent") {
-        // keep >= 2 battalions on the three key hexes; idle units disperse; redeploy only at night
+        // fortify the vital triangle (Shusha, Stepanakert, Lachin) with >= 4 battalions; redeploy reserves at night
         var keys = ["shusha", "stepanakert", "lachin"].map(function (p) { return w.map.places[p]; }).filter(function (x) { return x !== undefined && hexes[x].owner === "ARM"; });
         var manAt = function (hi) { return unitsAt(w, hi, "ARM").filter(function (o) { return o.role === "maneuver"; }).length; };
-        if (keys.indexOf(u.hex) >= 0 && manAt(u.hex) <= 2) { u.posture = "defend"; return; }
-        if (!isNight(w)) { if (u.posture !== "attack") u.posture = "reserve"; return; }
-        var needKey = keys.filter(function (k) { return manAt(k) < 2; })[0];
-        if (needKey !== undefined && hexDist(hexes[needKey], here) <= 6) {
+        if (keys.indexOf(u.hex) >= 0 && manAt(u.hex) <= 4) { u.posture = "defend"; return; }
+        var needKey = keys.filter(function (k) { return manAt(k) < 4; })[0];
+        if (needKey !== undefined && isNight(w) && hexDist(hexes[needKey], here) <= 6) {
           var pk = findPath(w, "ARM", u.hex, needKey);
           if (pk) { u.path = pk; u.posture = "move"; u.moveProg = 0; return; }
         }
+        if (!isNight(w) && keys.indexOf(u.hex) < 0) { u.posture = "reserve"; return; }
       }
-      // garrisons of named towns stay unless another battalion holds the town
-      if (here.value >= 4 && unitsAt(w, u.hex, "ARM").filter(function (o) { return o.role === "maneuver"; }).length <= 1) { u.posture = "defend"; return; }
+      // garrisons of named towns stay unless another battalion holds the town; in historical mode NK sector regiments stay tied to their sector
+      if (here.value >= 4 && unitsAt(w, u.hex, "ARM").filter(function (o) { return o.role === "maneuver"; }).length <= (mode === "historical" && u.isNK ? 2 : 1)) { u.posture = "defend"; return; }
       // reserve: move toward the most threatened hex
       if (!threatened.length) return;
+      if (mode === "historical" && stackCount(w, threatened[0], "ARM") >= 4) return;
       var target = -1, worst = 1e9;
       threatened.forEach(function (t) {
         var e = w.engagements[t]; var r = e && e.lastR ? 1 / e.lastR : 1;
@@ -1238,8 +1288,7 @@ var MoDSim = (function () {
     var sh = w.map.places.shusha;
     if (w.redLine) return endWar(w, "redline");
     if (sh !== undefined && w.map.hexes[sh].owner === "AZE") {
-      w.shushaDay = w.shushaDay || w.day;
-      if (w.day - w.shushaDay >= 1 || w.rng.chance(0.65)) return endWar(w, "nov10");
+      return endWar(w, "nov10");
     }
     var cs = coreStats(w);
     if (cs.held / cs.total < 0.15) return endWar(w, "collapse");

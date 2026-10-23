@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>战争部长 · 司令模式 — 2020 纳卡战争试玩</title>
+  <title>战争部长 · 司令模式 — 2020 纳卡战争试玩（H3 r4 真实底图版）</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <link rel="stylesheet" href="commander.css" />
 </head>
 <body>
@@ -12,8 +13,8 @@
     <div class="brand">
       <div class="brand-mark"><svg viewBox="0 0 24 24"><path d="M12 2l8.66 5v10L12 22l-8.66-5V7z" fill="none" stroke="#1b1105" stroke-width="2"/><path d="M12 7l2 4h-4zM8 15h8" stroke="#1b1105" stroke-width="2" fill="#1b1105"/></svg></div>
       <div>
-        <div class="brand-title">战争部长 · 司令模式<span class="pill">试玩 P2</span></div>
-        <div class="brand-sub">2020 年纳卡战争 · 你指挥亚美尼亚 / 阿尔察赫部队</div>
+        <div class="brand-title">战争部长 · 司令模式<span class="pill">H3 r4 · 72格真实底图</span></div>
+        <div class="brand-sub">2020 年纳卡战争 · 对边 42 km 战役六角格（纳卡 12 格 / 全战区 72 格）</div>
       </div>
     </div>
 
@@ -64,22 +65,39 @@
           <span><i class="sw aze"></i>阿方控制</span>
           <span><i class="sw lost"></i>战时易手</span>
           <span><i class="ln front"></i>接触线</span>
-          <span><i class="ln road"></i>道路</span>
+          <span><i class="ln loc"></i>1994 实控边界</span>
+          <span><i class="ln border"></i>真实国界</span>
         </div>
         <div class="map-tools">
-          <label class="chk"><input type="checkbox" id="lyr-terrain" checked /> 地形</label>
+          <label class="chk">底图
+            <select id="basemap-sel" class="toolbar-sel" title="切换真实地理底图">
+              <option value="topo" selected>真实地形 (Esri Topo)</option>
+              <option value="sat">卫星影像 (Esri Imagery)</option>
+              <option value="opentopo">等高线图 (OpenTopo)</option>
+              <option value="dark">深色战术 (Carto Dark)</option>
+              <option value="none">纯六角格 (无底图)</option>
+            </select>
+          </label>
+          <label class="chk" title="调节六边形填色透明度，方便观察底图真实山脉与河流">填色
+            <input type="range" id="hex-opacity" min="0.06" max="0.80" step="0.04" value="0.34" class="toolbar-rng" />
+          </label>
+          <label class="chk"><input type="checkbox" id="lyr-borders" checked /> 国界/接触线</label>
+          <label class="chk"><input type="checkbox" id="lyr-terrain" /> 地形纹样</label>
           <label class="chk"><input type="checkbox" id="lyr-supply" /> 补给</label>
           <label class="chk"><input type="checkbox" id="lyr-ad" /> 防空覆盖</label>
+          <button class="btn ghost sm" id="btn-zoom-nk" title="聚焦纳卡核心战场（12 格）">聚焦纳卡</button>
+          <button class="btn ghost sm" id="btn-zoom-all" title="查看亚美尼亚—阿塞拜疆全战区（72 格）">全战区(72格)</button>
           <button class="btn ghost sm" id="btn-zoom-in">＋</button>
           <button class="btn ghost sm" id="btn-zoom-out">－</button>
-          <button class="btn ghost sm" id="btn-zoom-fit">适配</button>
         </div>
       </div>
       <div class="map-stage" id="map-stage">
+        <div id="leaflet-map" class="leaflet-underlay"></div>
         <svg id="map" xmlns="http://www.w3.org/2000/svg">
           <g id="vp">
             <g id="lyr-hex"></g>
             <g id="lyr-overlay"></g>
+            <g id="lyr-geoborders"></g>
             <g id="lyr-roads"></g>
             <g id="lyr-front"></g>
             <g id="lyr-labels"></g>
@@ -89,7 +107,8 @@
           </g>
         </svg>
         <div class="tip" id="tip"></div>
-        <div class="map-hint" id="map-hint">左键选择部队 · 右键下达移动/进攻 · 滚轮缩放 · 拖动平移</div>
+        <div class="map-scale-badge" id="map-scale-badge">H3 r4 尺度 · 对边 42 km（边长 24.2 km · 面积 1,528 km²）· 全战区 72 格（亚美尼亚 17 · 纳卡及七区 12 · 纳希切万 3 · 阿塞拜疆本部 40）</div>
+        <div class="map-hint" id="map-hint">左键选择部队 · 右键下达移动/进攻 · 滚轮缩放 · 拖动平移 · 可切换真实地形/卫星底图</div>
       </div>
       <div class="feed" id="feed"></div>
     </section>
@@ -111,19 +130,19 @@
     <div class="modal-card wide">
       <div class="modal-h">
         <div>
-          <div class="kicker">司令模式 · 试玩</div>
+          <div class="kicker">司令模式 · H3 r4 真实底图版</div>
           <h1>2020 年 9 月 27 日，阿塞拜疆发起全面进攻</h1>
         </div>
       </div>
       <div class="modal-b">
-        <p class="lead">你是亚美尼亚 / 阿尔察赫方的战区司令。部队、装备与开局部署来自剧本数据（战斗序列 × 编制模板 × 库存）。阿方由 AI 指挥。守住<strong>舒沙</strong>与<strong>拉钦走廊</strong>，并尽量保住纳卡核心地块。</p>
+        <p class="lead">你是亚美尼亚 / 阿尔察赫方的战区司令。地图严格采用设计文档商定的 <strong>H3 Resolution 4 战役尺度（对边 42 km、边长 24.2 km、全战区 72 格，其中纳卡及周边七区 12 格）</strong>，并直接叠加在真实高加索地形与卫星底图上。守住<strong>舒沙</strong>与<strong>拉钦走廊</strong>，尽量保住纳卡核心战区格。</p>
         <div class="grid3">
           <div class="field">
             <label>阿方 AI</label>
             <div class="seg" id="opt-tier">
               <button data-v="H" class="on">H · 史实</button><button data-v="P">P · 自适应</button><button data-v="B">B · 强化</button>
             </div>
-            <small>H：按史实主攻南线；P：寻找你的薄弱点；B：再加 35% 无人机与巡飞弹。</small>
+            <small>H：按史实主攻南线（杰布拉伊尔→哈德鲁特/菲祖利→赞格兰→库巴德利→舒沙）；P：寻找薄弱点；B：+35% 无人机与巡飞弹。</small>
           </div>
           <div class="field">
             <label>亚方部队</label>
@@ -141,11 +160,11 @@
           </div>
         </div>
         <div class="note">
-          <b>和历史不同的地方都可以试：</b>雷达开机与伏击、夜间车队、预备队调度、提前加固舒沙—拉钦方向、主动后撤保存兵力……战后报告会把你的结果与“同一支部队由 AI 指挥”的结果分布放在一起比较。
+          <b>真实地图叠加说明：</b>六边形网格通过 Web Mercator 投影与真实高加索地形图（Esri World Topographic / 卫星图 / 等高线图）像素级锁定对齐；同时绘制了 Natural Earth 10m 亚阿国际国界、1994–2020 实际接触线与原纳卡自治州边界。可在顶部工具栏随时切换底图或调节六边形透明度。
         </div>
       </div>
       <div class="modal-f">
-        <span class="muted" id="start-hint">地图与国界为人工近似，非精确地理。</span>
+        <span class="muted" id="start-hint">H3 r4 尺度（42 km 六角格 · 全战区 72 格）· 叠加真实地形与 Natural Earth 国界</span>
         <button class="btn primary lg" id="btn-start">开始指挥 ▶</button>
       </div>
     </div>
@@ -163,15 +182,14 @@
           <tr><td>1 / 2 / 3</td><td>速度</td></tr>
           <tr><td>D / R</td><td>固守 / 转为预备队（疏散隐蔽，减少无人机发现）</td></tr>
           <tr><td>Esc</td><td>取消选择</td></tr>
-          <tr><td>滚轮 / 拖动</td><td>缩放 / 平移地图</td></tr>
+          <tr><td>滚轮 / 拖动</td><td>缩放 / 平移地图（真实底图与六角格同步锁定）</td></tr>
         </table>
         <h3>需要知道的规则</h3>
         <ul>
-          <li><b>命令延迟（DC-010）：</b>给旅下令经旅部传达约 1 小时；越级直接指挥单个营约 3 小时；夜间与组织度低时更慢。命令生效前部队仍执行旧命令。</li>
+          <li><b>战役六角格尺度（H3 r4）：</b>每格对边 42 km（面积约 1,528 km²）。全战区共 72 格（亚美尼亚本土 17 格、纳卡及周边七区 12 格、纳希切万 3 格、阿塞拜疆本部 40 格）。</li>
+          <li><b>命令延迟（DC-010）：</b>给旅下令经旅部传达约 1 小时；越级直接指挥单个营约 3 小时；夜间与组织度低时更慢。</li>
           <li><b>防空纪律：</b>“开机”能击落无人机，但雷达会被反辐射打击；“伏击”折中；“静默”保住雷达，但无人机会自由猎杀装甲与火炮。</li>
-          <li><b>白天移动</b>的部队最容易被无人机发现；“预备队”姿态疏散隐蔽。</li>
           <li><b>补给：</b>部队必须经己方地块连回亚美尼亚。舒沙和拉钦失守会切断 M12 走廊。</li>
-          <li><b>停火：</b>舒沙失守后很快按“11·10”模式停火；阿方攻势长期停滞也会就地停火。</li>
         </ul>
       </div>
     </div>
@@ -188,6 +206,7 @@
 
   <div class="toasts" id="toasts"></div>
 
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script src="sim_data.js"></script>
   <script src="sim_core.js"></script>
   <script src="ui.js"></script>
