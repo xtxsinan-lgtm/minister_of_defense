@@ -8,6 +8,10 @@
 - **对标规范**：[14_scenario_nk.md](file:///Users/xtxsinan/.gemini/antigravity/scratch/minister_of_defense/docs/spec/14_scenario_nk.md) §9.1–§9.2、[04_frontline_strip.md](file:///Users/xtxsinan/.gemini/antigravity/scratch/minister_of_defense/docs/spec/04_frontline_strip.md) §9 V2（含已拍板决策 `DC-023` 单一 `advanceKm` 推进进度与 `DC-022` 旅属炮兵自动优先级）、[08_air_airdefense.md](file:///Users/xtxsinan/.gemini/antigravity/scratch/minister_of_defense/docs/spec/08_air_airdefense.md) §9 V2。
 - **总体结论**：在 **N = 200 个蒙特卡洛随机种子** 下，**14 项定量与定性校准指标全部 100% 通过（`all_pass = true`，耗时 `0.248 s`）**，其中亚方 7 类重装备损失（坦克、步战车、牵引火炮、自行火炮、火箭炮、防空导弹系统、军用卡车）**7/7 全部落入 Oryx 校准区间**（规范要求 `≥ 5/7`），南线 4 座区首府及哈德鲁特、舒沙易手时间节点与史实误差仅 **0–4 天**。
 
+
+> [!WARNING]
+> **模型性质说明（2026-10-23 补充）**：`v2_nk2020_sim.py` 是**按历史拟合的聚合曲线**，不是部队级模拟：南线日推进距离主要由随机区间决定，亚方兵力与部署对推进速度只有很弱的影响；模型中没有部队、地块交战或命令。因此“14 项全部通过”只说明**这条曲线能重现历史统计量**，**不能**说明战斗、防空、后勤等系统模型已被验证，也不能用来评估“换一种建军方案会怎样”。部队级的校准将由司令模式作战模拟（P1）以本文件同一组 `calibration.yaml` 区间重新进行。
+
 ---
 
 ## 1. 剧本开局数据与预算一致性核验（`14_scenario_nk.md` §9.1）

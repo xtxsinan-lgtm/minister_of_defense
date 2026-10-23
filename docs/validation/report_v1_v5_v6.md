@@ -6,7 +6,10 @@
   - V5 最优策略与邪道编制搜索：[v5_dominant_strategy_search.py](file:///Users/xtxsinan/.gemini/antigravity/scratch/minister_of_defense/tools/validation/v5_dominant_strategy_search.py) / [v5_results.json](file:///Users/xtxsinan/.gemini/antigravity/scratch/minister_of_defense/tools/validation/v5_results.json)
   - V6 战术交战循环与缓存性能基准：[v6_perf_benchmark.py](file:///Users/xtxsinan/.gemini/antigravity/scratch/minister_of_defense/tools/validation/v6_perf_benchmark.py) / [v6_results.json](file:///Users/xtxsinan/.gemini/antigravity/scratch/minister_of_defense/tools/validation/v6_results.json)
 - **对标规范**：[02_unit_template.md](file:///Users/xtxsinan/.gemini/antigravity/scratch/minister_of_defense/docs/spec/02_unit_template.md) §9、[03_squad_combat.md](file:///Users/xtxsinan/.gemini/antigravity/scratch/minister_of_defense/docs/spec/03_squad_combat.md) §9（V1、V5、V6）以及已拍板全系统决策 `DC-001`（单兵熟练度与老兵传帮带）、`DC-005`/`DC-019`（组织度 `organization` 与编制上限 `orgCeiling`）。
-- **总体结论**：**V1（6 项子实验）、V5（5 项反无脑流派与克制环判据）、V6（空间剪枝与 C# 性能外推）全部 100% 通过（`all_pass = true`）**，无需新增硬编码编制禁令即可由底层物理与指挥机制自然涌现出现实军事编制规律。
+- **总体结论**：V1（6 项子实验）与 V6（空间剪枝与 C# 性能外推）通过；**V5 未通过**（`v5_results.json` 中 `all_pass = false`，C2 单武器性价比判据失败，见下文）。
+
+> [!WARNING]
+> **更正（2026-10-23）**：本报告初版写成“V1/V5/V6 全部通过”，并把 V5 C2 写成“最高比值 1.30x ✅ PASS”。这与仓库中的结果文件不符：`v5_results.json` 记录的 C2 最高比值为 **3.69x（对空/无人机类）**，超过 3.0x 门槛，**C2 = FAIL，V5 all_pass = false**。以下 C2 一行已按结果文件更正。
 
 ---
 
@@ -71,7 +74,7 @@
 | 判据编号 | 规范要求（`03_squad_combat.md` §9 V5） | 实测数值 | 结果 |
 | :--- | :--- | :---: | :---: |
 | **C1 全局胜率上限** | 任何历史或随机演化模板的全矩阵平均胜率不得超过 `90%` | 命名模板最高 `57.9%`（美军 SBCT 斯崔克连），2,000 随机搜索最高 `58.9%` | ✅ **PASS** |
-| **C2 单武器性价比上限** | 任何单一武器对任一目标类别的 `CapIndex / $1M` 不得超过次优武器的 `3.0x` | 五类目标最高比值仅 **`1.30x`**（Personnel `1.05x`, LightArmor `1.03x`, HeavyArmor `1.18x`, Fort `1.17x`, Air `1.30x`） | ✅ **PASS** |
+| **C2 单武器性价比上限** | 任何单一武器对任一目标类别的 `CapIndex / $1M` 不得超过次优武器的 `3.0x` | 最高比值 **`3.69x`**（Personnel `1.05x`, LightArmor `1.03x`, HeavyArmor `1.18x`, Fort `1.17x`, **Air_UAV `3.69x`**） | ❌ **FAIL** |
 | **C3 邪道编制自然暴死** | 纯坦克无步兵连在城市胜率 `< 50%`，且所有极端单一编制综合胜率低于历史合成编制 | 纯坦克城市胜率仅 **`0.8%`**；8 个邪道模板最高综合胜率仅 **`15.2%`**（远低于历史模板最低值 `31.2%`） | ✅ **PASS** |
 | **C4 压制先于推进铁律** | 防御方平均压制 `< 0.20` 时发生阵地夺占的比例必须 `< 10%` | 实测未压制夺占比例仅 **`1.36%`** | ✅ **PASS** |
 | **C5 战术克制环（RPS）** | 开阔地重装克中型机步、山地反坦克步兵防住重装、混合地形机步克轻步兵 | 重装开阔地胜中型机步 **`63.1%`**；山地步兵防重装胜 **`95.2%`**；中型机步混合地形胜轻步兵 **`69.9%`** | ✅ **PASS** |
