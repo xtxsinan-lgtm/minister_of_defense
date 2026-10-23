@@ -7,53 +7,57 @@
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
+  <div class="app-chrome">
   <!-- Top Command Header -->
   <header class="top-header">
     <div class="brand-group">
-      <span class="brand-badge">PHASE 0/1 MVP · V8 WEB PLAYTEST</span>
-      <div>
-        <div class="brand-title">战争部长 / MINISTER OF DEFENSE</div>
-        <div class="brand-subtitle">现代军事战略与编制推演（1990–2025）· 纳卡战区十年建军与 2020 四十四日战争交互验证台</div>
+      <div class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><path d="M12 2l8.66 5v10L12 22l-8.66-5V7z" fill="none" stroke="#1b1105" stroke-width="2"/><path d="M12 7l2 4h-4zM8 15h8" stroke="#1b1105" stroke-width="2" fill="#1b1105" stroke-linejoin="round"/></svg>
+      </div>
+      <div style="min-width:0;">
+        <div class="brand-title">战争部长 · MINISTER OF DEFENSE<span class="brand-badge">V8 WEB PLAYTEST</span></div>
+        <div class="brand-subtitle">现代军事战略与编制推演（1990–2025）· 纳卡战区 2010–2020 十年建军与 2020 年 44 天战争</div>
       </div>
     </div>
 
     <div class="top-controls">
       <div class="ctrl-pill">
-        <label for="select-player-country">扮演国家 (DS-044)：</label>
-        <select id="select-player-country">
-          <option value="ARM">亚美尼亚 / 阿尔察赫 (ARM)</option>
-          <option value="AZE">阿塞拜疆 (AZE)</option>
+        <label for="select-player-country">扮演国家</label>
+        <select id="select-player-country" title="DS-044：争议地名按扮演国家显示">
+          <option value="ARM">亚美尼亚 / 阿尔察赫</option>
+          <option value="AZE">阿塞拜疆</option>
         </select>
       </div>
 
       <div class="ctrl-pill">
-        <label for="select-icon-style">单位图标 (DS-027)：</label>
-        <select id="select-icon-style">
-          <option value="NatoApp6">北约军标 (NATO APP-6A)</option>
-          <option value="Silhouette">装备剪影 (Wargame Silhouette)</option>
+        <label for="select-icon-style">单位图标</label>
+        <select id="select-icon-style" title="DS-027">
+          <option value="NatoApp6">北约军标 APP-6</option>
+          <option value="Silhouette">装备剪影</option>
         </select>
       </div>
 
       <div class="ctrl-pill">
-        <label for="select-aze-ai-tier">对手 AI 档位 (14 §9.3)：</label>
-        <select id="select-aze-ai-tier">
-          <option value="H">H 档：史实预算与采办 (Historical)</option>
-          <option value="P">P 档：合理自适应 AI (Plausible)</option>
-          <option value="B">B 档：理性最优针对回应 (Best-Response)</option>
+        <label for="select-aze-ai-tier">对手 AI</label>
+        <select id="select-aze-ai-tier" title="14 §9.3">
+          <option value="H">H 档 · 史实</option>
+          <option value="P">P 档 · 自适应</option>
+          <option value="B">B 档 · 最优针对</option>
         </select>
       </div>
 
-      <button class="btn btn-cyan" id="btn-export-aar">导出战报 / AAR (JSON)</button>
+      <button class="btn btn-cyan" id="btn-export-aar">⤓ 导出 AAR</button>
     </div>
   </header>
 
   <!-- Navigation Tabs -->
   <nav class="nav-tabs">
-    <button class="nav-tab active" data-tab="tab-v8-campaign">1. V8 交互推演：2010–2020 十年建军 & 2020 纳卡战争</button>
-    <button class="nav-tab" data-tab="tab-proving-ground">2. S05 五级编制编辑器 (班→排→连→营→旅) & 战术试验场 (V1 / V5)</button>
-    <button class="nav-tab" data-tab="tab-logistics-lab">3. 纳卡后勤网络、拉钦走廊切断与关键节点实验室 (V3)</button>
-    <button class="nav-tab" data-tab="tab-validation-suite">4. V1–V8 全量数值验证报告与自动审计台</button>
+    <button class="nav-tab active" data-tab="tab-v8-campaign"><span class="tab-num">1</span>十年建军 & 2020 战争<span class="tab-sub">V8</span></button>
+    <button class="nav-tab" data-tab="tab-proving-ground"><span class="tab-num">2</span>编制编辑器 & 试验场<span class="tab-sub">S05 · V1/V5</span></button>
+    <button class="nav-tab" data-tab="tab-logistics-lab"><span class="tab-num">3</span>后勤与拉钦走廊<span class="tab-sub">V3</span></button>
+    <button class="nav-tab" data-tab="tab-validation-suite"><span class="tab-num">4</span>验证总览<span class="tab-sub">V1–V8</span></button>
   </nav>
+  </div>
 
   <!-- ===================================================================== -->
   <!-- TAB 1: V8 INTERACTIVE CAMPAIGN & 2020 WAR PLAYTEST                    -->
@@ -61,21 +65,21 @@
   <main id="tab-v8-campaign" class="tab-view active">
     <div class="wargame-grid">
       <!-- LEFT COLUMN: Minister of Defense Strategic & Peacetime Build-up -->
-      <div>
+      <div class="col-sticky">
         <div class="panel">
           <div class="panel-header">
-            <span>国防部长建军与采办决策台 (2010–2020)</span>
+            <span>十年建军与采办 2010–2020</span>
             <span class="tag">11 / 14 / DC-009</span>
           </div>
           <div class="panel-body">
             <div class="control-desc" style="margin-bottom:8px;">
               快速套用典型十年建军路线，或逐项自定义改革方案后点击下方<strong>「结算和平建军期 &amp; 进入 2020 战争」</strong>：
             </div>
-            <div class="btn-row" style="margin-bottom:12px;">
-              <button class="btn" data-preset="historical">史实默认路线 (必败基准)</button>
-              <button class="btn btn-primary" data-preset="optimal">V4 最优综合防御路线</button>
-              <button class="btn" data-preset="armor_heavy">传统重装大炮路线</button>
-              <button class="btn" data-preset="su30_trap">Su-30SM 面子工程陷阱</button>
+            <div class="preset-grid">
+              <button class="btn" data-preset="historical">史实路线<br/><small>必败基准</small></button>
+              <button class="btn btn-primary" data-preset="optimal">V4 最优综合防御<br/><small style="color:#3a2405;">73% 守住率</small></button>
+              <button class="btn" data-preset="armor_heavy">传统重装大炮<br/><small>坦克 + 火炮</small></button>
+              <button class="btn" data-preset="su30_trap">Su-30SM 面子工程<br/><small>预算陷阱</small></button>
             </div>
 
             <!-- 1. DC-009 Readiness & Reserve Reform -->
@@ -222,24 +226,29 @@
               <span id="map-status-badge" class="badge-warn" style="margin-left:8px;">等待开战命令</span>
             </div>
             <div class="legend-items">
-              <span><i class="legend-dot" style="background:var(--arm-color);"></i>亚美尼亚/阿尔察赫控制</span>
-              <span><i class="legend-dot" style="background:var(--aze-color);"></i>阿塞拜疆控制</span>
-              <span><i class="legend-dot" style="background:#e74c3c;"></i>激战易手/被切断</span>
+              <span><i class="legend-dot" style="background:var(--arm-color);"></i>亚美尼亚 / 阿尔察赫</span>
+              <span><i class="legend-dot" style="background:var(--aze-color);"></i>阿塞拜疆</span>
+              <span><i class="legend-dot" style="background:var(--accent-red);"></i>战时易手</span>
+              <span><i class="legend-line" style="border-color:#f2a93b;"></i>M12 拉钦</span>
+              <span><i class="legend-line" style="border-color:#3cc8e4;border-top-style:dashed;"></i>M11 北线</span>
             </div>
           </div>
 
           <!-- Interactive SVG Hex Map -->
-          <svg id="nk-hex-svg" viewBox="0 0 780 450" xmlns="http://www.w3.org/2000/svg"></svg>
+          <div class="map-stage" id="map-stage">
+            <svg id="nk-hex-svg" viewBox="0 0 780 450" xmlns="http://www.w3.org/2000/svg"></svg>
+            <div class="map-tip" id="map-tip"></div>
+          </div>
 
           <!-- Operational Time Step Bar -->
-          <div style="padding:10px 12px;background:var(--bg-2);border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <div class="map-footer">
             <div class="btn-row" style="margin-top:0;">
-              <button class="btn btn-primary" id="btn-step-1d">推进 +1 天</button>
-              <button class="btn btn-primary" id="btn-step-5d">推进 +5 天 (至自动暂停)</button>
-              <button class="btn btn-cyan" id="btn-run-full-war">一键推演至停火结局</button>
-              <button class="btn" id="btn-reset-war">重置到 Day 0</button>
+              <button class="btn btn-primary" id="btn-step-1d">▶ 推进 +1 天</button>
+              <button class="btn btn-primary" id="btn-step-5d">推进 +5 天</button>
+              <button class="btn btn-cyan" id="btn-run-full-war">▶▶ 推演至停火</button>
+              <button class="btn" id="btn-reset-war">↺ 重置</button>
             </div>
-            <div style="font-family:var(--font-mono);font-size:12px;color:var(--text-1);">
+            <div class="stats">
               核心地块持有：<strong id="lbl-core-tiles-held" style="color:#fff;">26 / 26 (100%)</strong> ·
               舒沙状态：<strong id="lbl-shusha-status" style="color:var(--accent-green);">亚方固守</strong>
             </div>
@@ -306,7 +315,7 @@
       </div>
 
       <!-- RIGHT COLUMN: Wartime Orders, DC-010 Command Latency, Air/AD Posture & Battle Ledger -->
-      <div>
+      <div class="col-sticky">
         <!-- Wartime Operational Orders & Air Defense Posture -->
         <div class="panel">
           <div class="panel-header">
@@ -489,9 +498,9 @@
                 <div class="kpi-sub" id="toe-cmd-load">指挥负荷 —</div>
               </div>
               <div class="kpi-card">
-                <div class="kpi-label">整编组织度代价 (DC-005)</div>
+                <div class="kpi-label">整编组织度代价</div>
                 <div class="kpi-val" id="toe-reorg-cost" style="color:var(--accent-green);">0.0%</div>
-                <div class="kpi-sub">武器熟练度 0 损失</div>
+                <div class="kpi-sub">DC-005 · 熟练度不损失</div>
               </div>
             </div>
 
@@ -641,8 +650,8 @@
       <div>
         <div class="panel">
           <div class="panel-header">
-            <span>16 典型编制（8 历史 + 8 邪道）全地形胜率榜 (V5)</span>
-            <span class="badge-pass">ALL PASS</span>
+            <span>16 典型编制全地形胜率榜（8 历史 + 8 邪道）</span>
+            <span class="badge-warn" id="v5-status-badge">V5</span>
           </div>
           <div class="panel-body" style="max-height:460px;overflow-y:auto;">
             <table class="data-table" id="tbl-v5-templates">
@@ -721,10 +730,17 @@
       <div>
         <div class="panel">
           <div class="panel-header">
-            <span>被切断营 10 日弹药/给养/饥饿减员曲线 (06 §8 T6 精确对标)</span>
-            <span class="badge-pass">T6 EXACT MATCH</span>
+            <span>被切断营 10 日弹药 / 给养 / 减员曲线</span>
+            <span class="tag">06 §8 · T6</span>
           </div>
           <div class="panel-body">
+            <div class="chart-legend">
+              <span><i class="legend-dot" style="background:var(--accent-cyan);"></i>圈内剩余弹药 (t)</span>
+              <span><i class="legend-line" style="border-color:var(--accent-red);"></i>每营累计非战斗减员</span>
+              <span><i class="legend-line" style="border-color:var(--accent-amber);border-top-style:dashed;"></i>疲劳下限 ×100</span>
+            </div>
+            <svg id="chart-v3-cutoff" class="chart-box" viewBox="0 0 560 230"></svg>
+            <div style="height:10px;"></div>
             <table class="data-table" id="tbl-v3-cutoff">
               <thead>
                 <tr>
@@ -775,8 +791,8 @@
   <section id="tab-validation-suite" class="tab-view">
     <div class="panel">
       <div class="panel-header">
-        <span>V1–V8 全量验证套件汇总与一键浏览器端自检 (All 8 Validation Suites)</span>
-        <button class="btn btn-primary" id="btn-run-v8-selfcheck">运行 V8 网页交互完整性自检</button>
+        <span>V1–V8 验证套件总览</span>
+        <button class="btn btn-primary" id="btn-run-v8-selfcheck">▶ 运行网页自检（史实 vs 最优）</button>
       </div>
       <div class="panel-body">
         <div class="kpi-grid" id="val-summary-cards"></div>
@@ -792,11 +808,13 @@
           </thead>
           <tbody></tbody>
         </table>
+        <div class="selfcheck-box" id="selfcheck-box"></div>
       </div>
     </div>
   </section>
 
   <script src="data_bundle.js"></script>
   <script src="sim_engine.js"></script>
+  <div class="toast-host" id="toast-host"></div>
 </body>
 </html>

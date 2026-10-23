@@ -385,114 +385,220 @@
   // =========================================================================
   // 3. HEX MAP SVG RENDERER (WITH DS-044 NAMES & DS-027 ICON STYLES)
   // =========================================================================
+  const TERRAIN_ZH = { Open: "平原", Mixed: "丘陵混合", Forest: "森林高地", Mountain: "山地", Urban: "城市" };
+  const TERRAIN_SHORT = { Open: "平", Mixed: "混", Forest: "林", Mountain: "山", Urban: "城" };
+
+  function shortPlaceName(raw) {
+    // "马尔达凯特/塔利什 (Martakert)" -> "马尔达凯特"
+    return String(raw || "").split(" (")[0].split("(")[0].split("/")[0].trim();
+  }
+
   function renderHexMap() {
     const svg = document.getElementById("nk-hex-svg");
     if (!svg) return;
     const hexes = BUNDLE.theater_hexes || [];
     const w = state.war;
 
-    const R = 36;
-    const dx = R * 1.62;
-    const dy = R * 1.44;
-    const offsetX = 115;
-    const offsetY = 58;
+    // Pointy-top hexes, odd-r offset layout (odd rows shifted right by half a hex)
+    const R = 42;
+    const HW = Math.sqrt(3) * R; // hex width
+    const DY = 1.5 * R;          // row pitch
+    const center = (q, r) => ({ cx: q * HW + (r % 2 === 1 ? HW / 2 : 0), cy: r * DY });
+
+    const coordMap = {};
+    const byQR = {};
+    hexes.forEach((h) => {
+      coordMap[h.id] = { ...center(h.q, h.r), h };
+      byQR[`${h.q},${h.r}`] = h;
+    });
+    const xs = Object.values(coordMap).map((c) => c.cx);
+    const ys = Object.values(coordMap).map((c) => c.cy);
+    const pad = 46;
+    const minX = Math.min(...xs) - HW / 2 - pad, maxX = Math.max(...xs) + HW / 2 + pad;
+    const minY = Math.min(...ys) - R - pad + 6, maxY = Math.max(...ys) + R + pad;
+    svg.setAttribute("viewBox", `${minX.toFixed(0)} ${minY.toFixed(0)} ${(maxX - minX).toFixed(0)} ${(maxY - minY).toFixed(0)}`);
+
+    const ownerOf = (h) => w.hexOwners[h.id] || h.owner;
+    const vtx = (cx, cy, i, rr = R) => {
+      const ang = (Math.PI / 180) * (60 * i - 30);
+      return [cx + rr * Math.cos(ang), cy + rr * Math.sin(ang)];
+    };
+    // Neighbour offsets indexed by edge i (edge between vertex i and i+1): E, SE, SW, W, NW, NE
+    const nbr = (q, r, i) => {
+      const odd = r % 2 === 1;
+      const even = [[1, 0], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1]];
+      const oddD = [[1, 0], [1, 1], [0, 1], [-1, 0], [0, -1], [1, -1]];
+      const d = (odd ? oddD : even)[i];
+      return byQR[`${q + d[0]},${r + d[1]}`];
+    };
 
     let html = `
       <defs>
-        <marker id="arrow-aze" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
-          <path d="M 0 1 L 10 5 L 0 9 z" fill="#f5a623" />
+        <pattern id="pat-Mountain" width="12" height="10" patternUnits="userSpaceOnUse">
+          <path d="M1 8 L4 3 L7 8" fill="none" stroke="rgba(255,255,255,0.13)" stroke-width="1"/>
+        </pattern>
+        <pattern id="pat-Forest" width="8" height="8" patternUnits="userSpaceOnUse">
+          <circle cx="2" cy="2" r="1.1" fill="rgba(120,220,140,0.16)"/><circle cx="6" cy="6" r="1.1" fill="rgba(120,220,140,0.16)"/>
+        </pattern>
+        <pattern id="pat-Urban" width="7" height="7" patternUnits="userSpaceOnUse">
+          <rect x="1" y="1" width="3" height="3" fill="rgba(255,255,255,0.10)"/>
+        </pattern>
+        <pattern id="pat-Mixed" width="10" height="10" patternUnits="userSpaceOnUse">
+          <path d="M0 10 L10 0" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+        </pattern>
+        <pattern id="pat-Open" width="10" height="10" patternUnits="userSpaceOnUse"></pattern>
+        <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="2.4" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <marker id="arrow-aze" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#ff6a4d" />
         </marker>
-      </defs>
-    `;
+      </defs>`;
 
-    // Draw M12 Lachin & M11 Vardenis supply corridors as background lines
-    const coordMap = {};
-    hexes.forEach((h) => {
-      const cx = offsetX + h.q * dx + (h.r % 2 === 1 ? dx * 0.5 : 0);
-      const cy = offsetY + h.r * dy;
-      coordMap[h.id] = { cx, cy, h };
-    });
-
-    const drawRoad = (id1, id2, color, dash = "") => {
-      const a = coordMap[id1], b = coordMap[id2];
-      if (!a || !b) return;
-      html += `<line x1="${a.cx}" y1="${a.cy}" x2="${b.cx}" y2="${b.cy}" stroke="${color}" stroke-width="4" stroke-dasharray="${dash}" opacity="0.55" />`;
-    };
-
-    // M12 Goris -> Lachin -> Shusha -> Stepanakert
-    drawRoad("hex_yerevan", "hex_yeghegnadzor", "#f5a623");
-    drawRoad("hex_yeghegnadzor", "hex_goris", "#f5a623");
-    drawRoad("hex_goris", "hex_lachin_corridor", "#f5a623");
-    drawRoad("hex_lachin_corridor", "hex_shusha", "#f5a623");
-    drawRoad("hex_shusha", "hex_stepanakert", "#f5a623");
-    // M11 Vardenis -> Kalbajar -> Martakert
-    drawRoad("hex_vardenis_sotk", "hex_kalbajar", "#2ac3de", "5,4");
-    drawRoad("hex_kalbajar", "hex_martakert_talysh", "#2ac3de", "5,4");
-
-    // Draw Hexes
+    // 1) Hex bodies
     hexes.forEach((h) => {
       const { cx, cy } = coordMap[h.id];
-      const curOwner = w.hexOwners[h.id] || h.owner;
-      const flipped = curOwner !== h.owner;
-      const isSelected = w.selectedHexId === h.id;
-
-      const fill = flipped
-        ? "rgba(231, 76, 60, 0.36)"
-        : curOwner === "ARM"
-        ? "rgba(217, 119, 36, 0.25)"
-        : "rgba(38, 147, 214, 0.25)";
-      const stroke = flipped
-        ? "#e74c3c"
-        : curOwner === "ARM"
-        ? "#d97724"
-        : "#2693d6";
-
-      const pts = [];
-      for (let i = 0; i < 6; i++) {
-        const ang = (Math.PI / 180) * (60 * i - 30);
-        pts.push(`${(cx + R * Math.cos(ang)).toFixed(1)},${(cy + R * Math.sin(ang)).toFixed(1)}`);
-      }
-
-      // Disputed place name per DS-044 (player_official_only)
-      const rawName = state.playerCountry === "ARM" ? h.name_arm : h.name_aze;
-      const shortName = rawName.split(" ")[0];
-
+      const cur = ownerOf(h);
+      const flipped = cur !== h.owner;
+      const isSel = w.selectedHexId === h.id;
+      const fill = flipped ? "rgba(240,96,77,0.30)" : cur === "ARM" ? "rgba(224,129,47,0.20)" : "rgba(58,155,224,0.18)";
+      const stroke = flipped ? "#f0604d" : cur === "ARM" ? "rgba(224,129,47,0.75)" : "rgba(58,155,224,0.7)";
+      const pts = [0, 1, 2, 3, 4, 5].map((i) => vtx(cx, cy, i, R - 1).map((v) => v.toFixed(1)).join(",")).join(" ");
       html += `<g class="hex-group" data-hex="${h.id}">`;
-      html += `<polygon points="${pts.join(" ")}" fill="${fill}" stroke="${stroke}" class="hex-poly ${isSelected ? "selected" : ""}" />`;
-
-      // Unit Icon rendering per DS-027 (NatoApp6 vs Silhouette)
-      const unitColor = curOwner === "ARM" ? "#ffae52" : "#5cc4ff";
-      if (state.iconStyle === "NatoApp6") {
-        // NATO APP-6A framed rectangle with crossed infantry/armor symbol
-        html += `<rect x="${cx - 11}" y="${cy - 17}" width="22" height="14" fill="#0b111a" stroke="${unitColor}" stroke-width="1.5" rx="1" />`;
-        if (h.terrain === "Open") {
-          // Armor oval
-          html += `<ellipse cx="${cx}" cy="${cy - 10}" rx="7" ry="4" fill="none" stroke="${unitColor}" stroke-width="1.3" />`;
-        } else {
-          // Infantry X
-          html += `<line x1="${cx - 11}" y1="${cy - 17}" x2="${cx + 11}" y2="${cy - 3}" stroke="${unitColor}" stroke-width="1.2" />`;
-          html += `<line x1="${cx + 11}" y1="${cy - 17}" x2="${cx - 11}" y2="${cy - 3}" stroke="${unitColor}" stroke-width="1.2" />`;
-        }
-      } else {
-        // Wargame Silhouette style (tank/turret silhouette)
-        html += `<path d="M ${cx - 11} ${cy - 6} L ${cx + 11} ${cy - 6} L ${cx + 8} ${cy - 11} L ${cx + 3} ${cy - 11} L ${cx + 2} ${cy - 15} L ${cx - 5} ${cy - 15} L ${cx - 6} ${cy - 11} L ${cx - 9} ${cy - 11} Z" fill="${unitColor}" />`;
-        html += `<line x1="${cx + 2}" y1="${cy - 13}" x2="${cx + 13}" y2="${cy - 13}" stroke="${unitColor}" stroke-width="1.8" />`;
+      html += `<polygon points="${pts}" fill="${fill}" stroke="${stroke}" class="hex-poly ${isSel ? "selected" : ""}" />`;
+      html += `<polygon points="${pts}" fill="url(#pat-${h.terrain})" pointer-events="none" />`;
+      if (h.is_nk_core && !flipped) {
+        html += `<polygon points="${[0, 1, 2, 3, 4, 5].map((i) => vtx(cx, cy, i, R - 5).map((v) => v.toFixed(1)).join(",")).join(" ")}" fill="none" stroke="rgba(255,210,140,0.18)" stroke-dasharray="2,3" pointer-events="none"/>`;
       }
-
-      // Label & Terrain / Fort badge
-      html += `<text x="${cx}" y="${cy + 9}" text-anchor="middle" fill="#eaf2fc" font-size="10.5" font-weight="600">${shortName}</text>`;
-      html += `<text x="${cx}" y="${cy + 21}" text-anchor="middle" fill="#8fa6c4" font-size="9" font-family="monospace">${h.terrain[0]}·筑${h.fort.toFixed(1)}</text>`;
       html += `</g>`;
     });
 
+    // 2) Supply corridors (cased lines over hex bodies)
+    const road = (ids, color, dash) => {
+      const pts = ids.map((id) => coordMap[id]).filter(Boolean).map((c) => `${c.cx.toFixed(1)},${c.cy.toFixed(1)}`).join(" ");
+      html += `<polyline points="${pts}" fill="none" stroke="rgba(5,9,14,0.75)" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>`;
+      html += `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="2.4" stroke-dasharray="${dash || ""}" stroke-linecap="round" stroke-linejoin="round" opacity="0.9" pointer-events="none"/>`;
+    };
+    const m12Cut = !w.shushaHeldByArm;
+    road(["hex_yerevan", "hex_yeghegnadzor", "hex_goris", "hex_lachin_corridor", "hex_shusha", "hex_stepanakert"], m12Cut ? "#f0604d" : "#f2a93b", m12Cut ? "3,4" : "");
+    road(["hex_vardenis_sotk", "hex_kalbajar", "hex_martakert_talysh", "hex_stepanakert"], "#3cc8e4", "5,4");
+
+    // 3) Front line: every edge between hexes held by different sides
+    hexes.forEach((h) => {
+      const { cx, cy } = coordMap[h.id];
+      for (let i = 0; i < 6; i++) {
+        const n = nbr(h.q, h.r, i);
+        if (!n || n.id < h.id) continue;
+        if (ownerOf(n) === ownerOf(h)) continue;
+        const [x1, y1] = vtx(cx, cy, i);
+        const [x2, y2] = vtx(cx, cy, (i + 1) % 6);
+        const contact = h.is_nk_core || n.is_nk_core || ownerOf(h) !== h.owner || ownerOf(n) !== n.owner;
+        if (!contact) {
+          html += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="rgba(233,241,251,0.35)" stroke-width="1.2" stroke-dasharray="4,3" pointer-events="none"/>`;
+          continue;
+        }
+        html += `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="#ff6a4d" stroke-width="2.4" stroke-linecap="round" filter="url(#glow)" opacity="0.9" pointer-events="none"/>`;
+      }
+    });
+
+    // 4) Azerbaijani axes of advance, length proportional to progress
+    const axis = (ids, frac) => {
+      const cs = ids.map((id) => coordMap[id]).filter(Boolean);
+      if (cs.length < 2 || frac <= 0) return;
+      const segs = [];
+      let total = 0;
+      for (let i = 1; i < cs.length; i++) {
+        const L = Math.hypot(cs[i].cx - cs[i - 1].cx, cs[i].cy - cs[i - 1].cy);
+        segs.push(L); total += L;
+      }
+      let remain = Math.max(0.12, Math.min(1, frac)) * total;
+      const pts = [[cs[0].cx, cs[0].cy]];
+      for (let i = 1; i < cs.length && remain > 0; i++) {
+        const L = segs[i - 1];
+        const t = Math.min(1, remain / L);
+        pts.push([cs[i - 1].cx + (cs[i].cx - cs[i - 1].cx) * t, cs[i - 1].cy + (cs[i].cy - cs[i - 1].cy) * t]);
+        remain -= L;
+      }
+      const d = pts.map((p) => p.map((v) => v.toFixed(1)).join(",")).join(" ");
+      html += `<polyline points="${d}" fill="none" stroke="rgba(255,106,77,0.25)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" pointer-events="none"/>`;
+      html += `<polyline points="${d}" fill="none" stroke="#ff6a4d" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrow-aze)" pointer-events="none"/>`;
+    };
+    if (w.day > 0) {
+      axis(["hex_beylagan_horadiz", "hex_fuzuli", "hex_hadrut", "hex_shusha"], w.southProgressKm / 132);
+      axis(["hex_barda_tartar", "hex_martakert_talysh"], w.northProgressKm / 8);
+      axis(["hex_kurdamir", "hex_aghdam_martuni"], w.eastProgressKm / 8);
+    }
+
+    // 5) Unit icons, labels, glyphs
+    hexes.forEach((h) => {
+      const { cx, cy } = coordMap[h.id];
+      const cur = ownerOf(h);
+      const unitColor = cur === "ARM" ? "#ffb066" : "#6cc3ff";
+      const name = shortPlaceName(state.playerCountry === "ARM" ? h.name_arm : h.name_aze);
+      const iy = cy - 13;
+      html += `<g pointer-events="none">`;
+      if (state.iconStyle === "NatoApp6") {
+        html += `<rect x="${cx - 10}" y="${iy - 6}" width="20" height="12" fill="#0a1019" stroke="${unitColor}" stroke-width="1.3" rx="1"/>`;
+        if (h.terrain === "Open") {
+          html += `<ellipse cx="${cx}" cy="${iy}" rx="6" ry="3.2" fill="none" stroke="${unitColor}" stroke-width="1.2"/>`;
+        } else {
+          html += `<path d="M${cx - 10} ${iy - 6} L${cx + 10} ${iy + 6} M${cx + 10} ${iy - 6} L${cx - 10} ${iy + 6}" stroke="${unitColor}" stroke-width="1.1"/>`;
+        }
+      } else {
+        html += `<path d="M ${cx - 10} ${iy + 4} L ${cx + 10} ${iy + 4} L ${cx + 7} ${iy} L ${cx + 3} ${iy} L ${cx + 2} ${iy - 4} L ${cx - 5} ${iy - 4} L ${cx - 6} ${iy} L ${cx - 8} ${iy} Z" fill="${unitColor}"/>`;
+        html += `<line x1="${cx + 2}" y1="${iy - 2}" x2="${cx + 12}" y2="${iy - 2}" stroke="${unitColor}" stroke-width="1.6"/>`;
+      }
+      html += `<text x="${cx}" y="${cy + 7}" text-anchor="middle" class="hex-label">${name}</text>`;
+      html += `<text x="${cx}" y="${cy + 18}" text-anchor="middle" class="hex-sub">${TERRAIN_SHORT[h.terrain] || ""} · 筑${h.fort.toFixed(2).slice(1)}</text>`;
+      if (h.key_value >= 10) html += `<text x="${cx + 15}" y="${cy - 15}" font-size="9" fill="#ffd28c">★</text>`;
+      if (h.airbase) html += `<text x="${cx - 22}" y="${cy - 14}" font-size="8.5" fill="#9fb4cf">✈</text>`;
+      html += `</g>`;
+    });
+
+    // Compass + scale
+    html += `<g transform="translate(${(maxX - 30).toFixed(0)},${(minY + 26).toFixed(0)})" pointer-events="none">
+      <circle r="13" fill="rgba(10,16,24,0.8)" stroke="#34506f"/><path d="M0 -10 L3.5 2 L0 0 L-3.5 2 Z" fill="#f2a93b"/>
+      <text y="-15" text-anchor="middle" font-size="8" fill="#6f849e">N</text></g>`;
+    html += `<g transform="translate(${(minX + 18).toFixed(0)},${(maxY - 16).toFixed(0)})" pointer-events="none">
+      <line x1="0" y1="0" x2="${HW.toFixed(0)}" y2="0" stroke="#6f849e" stroke-width="1.5"/>
+      <line x1="0" y1="-3" x2="0" y2="3" stroke="#6f849e"/><line x1="${HW.toFixed(0)}" y1="-3" x2="${HW.toFixed(0)}" y2="3" stroke="#6f849e"/>
+      <text x="${(HW / 2).toFixed(0)}" y="-5" text-anchor="middle" font-size="8.5" fill="#6f849e" font-family="monospace">≈ 1 战役格</text></g>`;
+
     svg.innerHTML = html;
 
-    // Bind hex clicks
+    // Interactions: click to select, hover card
+    const tip = document.getElementById("map-tip");
+    const stage = document.getElementById("map-stage");
     svg.querySelectorAll(".hex-group").forEach((g) => {
+      const h = coordMap[g.getAttribute("data-hex")].h;
       g.addEventListener("click", () => {
-        state.war.selectedHexId = g.getAttribute("data-hex");
+        state.war.selectedHexId = h.id;
         renderAll();
       });
+      if (!tip || !stage) return;
+      g.addEventListener("mouseenter", () => {
+        const cur = ownerOf(h);
+        const ownerTxt = cur === "ARM" ? "亚美尼亚 / 阿尔察赫" : "阿塞拜疆";
+        const flipped = cur !== h.owner ? ` <span class="badge-fail">战时易手</span>` : "";
+        const extras = [h.depot ? "后勤仓库" : "", h.airbase ? "空军基地" : "", h.corridor ? (h.corridor.startsWith("m12") ? "M12 拉钦走廊" : "M11 北线") : "", h.gateway ? "口岸" : ""].filter(Boolean).join(" · ");
+        tip.innerHTML = `
+          <div class="tip-title">${state.playerCountry === "ARM" ? h.name_arm : h.name_aze}</div>
+          <div style="margin-bottom:5px;color:var(--text-2);font-size:10.5px;">${state.playerCountry === "ARM" ? h.name_aze : h.name_arm}</div>
+          <div class="tip-row"><span>控制方</span><span style="color:${cur === "ARM" ? "var(--arm-color)" : "var(--aze-color)"};">${ownerTxt}</span></div>
+          <div class="tip-row"><span>地形</span><span>${TERRAIN_ZH[h.terrain] || h.terrain}</span></div>
+          <div class="tip-row"><span>工事等级</span><span>${h.fort.toFixed(2)}</span></div>
+          <div class="tip-row"><span>战略价值</span><span>${"★".repeat(Math.round(h.key_value / 2))}</span></div>
+          ${extras ? `<div style="margin-top:5px;color:var(--accent-cyan);font-size:11px;">${extras}</div>` : ""}${flipped}`;
+        tip.classList.add("show");
+      });
+      g.addEventListener("mousemove", (e) => {
+        const rect = stage.getBoundingClientRect();
+        let x = e.clientX - rect.left + 14, y = e.clientY - rect.top + 14;
+        if (x + 250 > rect.width) x = e.clientX - rect.left - 250;
+        if (y + 170 > rect.height) y = e.clientY - rect.top - 170;
+        tip.style.left = `${x}px`; tip.style.top = `${y}px`;
+      });
+      g.addEventListener("mouseleave", () => tip.classList.remove("show"));
     });
   }
 
@@ -626,6 +732,64 @@
     if (el) el.textContent = txt;
   }
 
+  // Spec identifiers are written as `foo` throughout the copy; render them as <code>.
+  function enhanceCodeTicks(root) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+      acceptNode: (n) => {
+        if (!n.nodeValue || n.nodeValue.indexOf("`") < 0) return NodeFilter.FILTER_REJECT;
+        const p = n.parentNode;
+        if (!p || /^(SCRIPT|STYLE|CODE|TEXTAREA)$/.test(p.nodeName)) return NodeFilter.FILTER_REJECT;
+        return NodeFilter.FILTER_ACCEPT;
+      },
+    });
+    const nodes = [];
+    while (walker.nextNode()) nodes.push(walker.currentNode);
+    nodes.forEach((n) => {
+      const p = n.parentNode;
+      if (p.nodeName === "OPTION" || p.namespaceURI === "http://www.w3.org/2000/svg") {
+        n.nodeValue = n.nodeValue.replace(/`/g, "");
+        return;
+      }
+      const parts = n.nodeValue.split("`");
+      if (parts.length < 3) { n.nodeValue = n.nodeValue.replace(/`/g, ""); return; }
+      const frag = document.createDocumentFragment();
+      parts.forEach((part, i) => {
+        if (!part) return;
+        if (i % 2 === 1) {
+          const c = document.createElement("code");
+          c.textContent = part;
+          frag.appendChild(c);
+        } else {
+          frag.appendChild(document.createTextNode(part));
+        }
+      });
+      p.replaceChild(frag, n);
+    });
+  }
+
+  function toast(msg, kind = "") {
+    const host = document.getElementById("toast-host");
+    if (!host) return;
+    const t = document.createElement("div");
+    t.className = `toast ${kind}`;
+    t.innerHTML = msg;
+    host.appendChild(t);
+    setTimeout(() => { t.style.transition = "opacity .3s"; t.style.opacity = "0"; }, 2600);
+    setTimeout(() => t.remove(), 3000);
+  }
+
+  function fitCanvasToDpr(canvas) {
+    const dpr = window.devicePixelRatio || 1;
+    const cssW = canvas.clientWidth || 680, cssH = canvas.clientHeight || 360;
+    if (canvas.width !== Math.round(cssW * dpr) || canvas.height !== Math.round(cssH * dpr)) {
+      canvas.width = Math.round(cssW * dpr);
+      canvas.height = Math.round(cssH * dpr);
+    }
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    return { ctx, W: cssW, H: cssH };
+  }
+
   // =========================================================================
   // 5. TAB 2: PHASE 0 PROVING GROUND & 60-STEP SQUAD COMBAT CANVAS
   // =========================================================================
@@ -644,6 +808,15 @@
       .filter(([, t]) => t.is_historical)
       .map(([id, t]) => `<option value="${id}" ${id === state.pg.dfnId ? "selected" : ""}>${t.name}</option>`)
       .join("");
+
+    const v5Badge = document.getElementById("v5-status-badge");
+    if (v5Badge) {
+      const ok = v5.all_pass === true;
+      v5Badge.className = ok ? "badge-pass" : "badge-fail";
+      const failed = Object.entries(v5.criteria_checks || {}).filter(([, c]) => c && c.pass === false).map(([k]) => k.split("_")[0]);
+      v5Badge.textContent = ok ? "✓ ALL PASS" : `✗ 未通过 ${failed.join(", ")}`;
+      v5Badge.title = ok ? "" : "见 tools/validation/v5_results.json criteria_checks";
+    }
 
     // Populate V5 table
     const tbody = document.querySelector("#tbl-v5-templates tbody");
@@ -710,7 +883,6 @@
   function startSquadCanvasAnimation() {
     const canvas = document.getElementById("squad-battle-canvas");
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
 
     if (state.pg.animTimer) clearInterval(state.pg.animTimer);
     state.pg.step = 0;
@@ -733,78 +905,106 @@
 
     const drawStep = () => {
       state.pg.step = (state.pg.step % 60) + 1;
-      setText("pg-battle-step-tag", `Step ${state.pg.step} / 60 min (60s 战术步 + 事件时间戳队列)`);
+      setText("pg-battle-step-tag", `T+${state.pg.step} min / 60`);
 
-      const W = canvas.width;
-      const H = canvas.height;
+      const { ctx, W, H } = fitCanvasToDpr(canvas);
       ctx.clearRect(0, 0, W, H);
 
-      // Draw 6 frontal slot lanes
+      // Background: attacker zone (bottom) and defender zone (top) tint
+      const yZero = H * 0.42;
+      const gTop = ctx.createLinearGradient(0, 0, 0, yZero);
+      gTop.addColorStop(0, "rgba(224,129,47,0.07)"); gTop.addColorStop(1, "rgba(224,129,47,0.0)");
+      ctx.fillStyle = gTop; ctx.fillRect(0, 0, W, yZero);
+      const gBot = ctx.createLinearGradient(0, yZero, 0, H);
+      gBot.addColorStop(0, "rgba(58,155,224,0.0)"); gBot.addColorStop(1, "rgba(58,155,224,0.08)");
+      ctx.fillStyle = gBot; ctx.fillRect(0, yZero, W, H - yZero);
+
+      // 6 frontal slot lanes
       const slotW = W / 6;
+      ctx.font = "10px ui-monospace, Menlo, monospace";
       for (let s = 0; s < 6; s++) {
-        ctx.strokeStyle = "rgba(61, 86, 122, 0.35)";
-        ctx.strokeRect(s * slotW, 0, slotW, H);
-        ctx.fillStyle = "#768ca8";
-        ctx.font = "11px monospace";
-        ctx.fillText(`Slot ${s}`, s * slotW + 8, 16);
+        if (s > 0) {
+          ctx.strokeStyle = "rgba(52, 80, 111, 0.35)";
+          ctx.setLineDash([2, 4]);
+          ctx.beginPath(); ctx.moveTo(s * slotW, 0); ctx.lineTo(s * slotW, H); ctx.stroke();
+          ctx.setLineDash([]);
+        }
+        ctx.fillStyle = "#56708f";
+        ctx.fillText(`槽 ${s + 1}`, s * slotW + 8, 15);
       }
 
-      // Draw y = 0m contact line
-      const yZero = H * 0.42;
-      ctx.strokeStyle = "#f5a623";
-      ctx.setLineDash([5, 4]);
-      ctx.beginPath();
-      ctx.moveTo(0, yZero);
-      ctx.lineTo(W, yZero);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.fillStyle = "#f5a623";
-      ctx.fillText("y = 0m (前沿接触线 / 夺占线 SeizeDistance 50m)", 10, yZero - 6);
+      // Depth ruler
+      ctx.fillStyle = "#56708f";
+      [[1200, "+1200m"], [0, "0"], [-900, "−900m"], [-1800, "−1800m"]].forEach(([m, lbl]) => {
+        const y = yZero - (m / 1800) * (H * 0.52);
+        ctx.fillText(lbl, W - 46, Math.max(12, Math.min(H - 4, y - 3)));
+      });
 
-      const mapY = (yMeters) => {
-        // yMeters in [-1700, +1100] -> [H-20, 25]
-        return yZero - (yMeters / 1800) * (H * 0.52);
+      // Contact line
+      ctx.strokeStyle = "rgba(242,169,59,0.85)";
+      ctx.lineWidth = 1.2;
+      ctx.setLineDash([6, 4]);
+      ctx.beginPath(); ctx.moveTo(0, yZero); ctx.lineTo(W, yZero); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "#f2a93b";
+      ctx.fillText("接触线 · 夺占距离 50m", 8, yZero - 6);
+
+      const mapY = (yMeters) => yZero - (yMeters / 1800) * (H * 0.52);
+
+      const drawUnit = (x, y, color, isArmor, supp) => {
+        ctx.fillStyle = "#0a1019";
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.3;
+        ctx.fillRect(x - 9, y - 6, 18, 12);
+        ctx.strokeRect(x - 9, y - 6, 18, 12);
+        ctx.beginPath();
+        if (isArmor) {
+          ctx.ellipse(x, y, 5.5, 3, 0, 0, Math.PI * 2);
+        } else {
+          ctx.moveTo(x - 9, y - 6); ctx.lineTo(x + 9, y + 6);
+          ctx.moveTo(x + 9, y - 6); ctx.lineTo(x - 9, y + 6);
+        }
+        ctx.stroke();
+        // suppression bar
+        ctx.fillStyle = "rgba(255,255,255,0.08)";
+        ctx.fillRect(x - 9, y + 8, 18, 2.5);
+        ctx.fillStyle = supp > 0.6 ? "#f0604d" : supp > 0.35 ? "#f2a93b" : "#3ddc84";
+        ctx.fillRect(x - 9, y + 8, 18 * supp, 2.5);
       };
 
-      // Update positions & fire rays
+      // Attackers: advance unless suppressed; draw tracers to the same-slot defender
       state.pg.elementsA.forEach((el, idx) => {
-        if (el.supp < 0.5) {
-          el.y = Math.min(-45, el.y + 18);
-        }
+        if (el.supp < 0.5) el.y = Math.min(-45, el.y + 18);
         el.supp = Math.max(0.05, Math.min(0.95, el.supp + (Math.random() - 0.52) * 0.18));
-
-        const x = el.slot * slotW + slotW * 0.35 + (idx % 2) * 24;
+        const x = el.slot * slotW + slotW * 0.32 + (idx % 2) * 22;
         const y = mapY(el.y);
-
-        // Fire ray to same-slot defender
         const target = state.pg.elementsB[idx];
         if (target && Math.random() < 0.45) {
-          const tx = target.slot * slotW + slotW * 0.55;
+          const tx = target.slot * slotW + slotW * 0.6 - (idx % 2) * 18;
           const ty = mapY(target.y);
-          ctx.strokeStyle = el.isArmor ? "rgba(42, 195, 222, 0.55)" : "rgba(46, 204, 113, 0.4)";
-          ctx.beginPath();
-          ctx.moveTo(x, y);
-          ctx.lineTo(tx, ty);
-          ctx.stroke();
+          const g = ctx.createLinearGradient(x, y, tx, ty);
+          g.addColorStop(0, el.isArmor ? "rgba(60,200,228,0.0)" : "rgba(61,220,132,0.0)");
+          g.addColorStop(1, el.isArmor ? "rgba(60,200,228,0.75)" : "rgba(61,220,132,0.6)");
+          ctx.strokeStyle = g;
+          ctx.lineWidth = el.isArmor ? 1.6 : 1;
+          ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(tx, ty); ctx.stroke();
+          ctx.fillStyle = "rgba(255,230,180,0.8)";
+          ctx.beginPath(); ctx.arc(tx, ty, 1.8, 0, Math.PI * 2); ctx.fill();
         }
-
-        ctx.fillStyle = "#2693d6";
-        ctx.fillRect(x - 7, y - 5, 14, 10);
-        // Suppression bar
-        ctx.fillStyle = "#f5a623";
-        ctx.fillRect(x - 7, y + 7, 14 * el.supp, 2.5);
+        drawUnit(x, y, "#6cc3ff", el.isArmor, el.supp);
       });
 
       state.pg.elementsB.forEach((el, idx) => {
         el.supp = Math.max(0.05, Math.min(0.95, el.supp + (Math.random() - 0.48) * 0.18));
-        const x = el.slot * slotW + slotW * 0.55 - (idx % 2) * 20;
-        const y = mapY(el.y);
-
-        ctx.fillStyle = "#d97724";
-        ctx.fillRect(x - 7, y - 5, 14, 10);
-        ctx.fillStyle = "#e74c3c";
-        ctx.fillRect(x - 7, y + 7, 14 * el.supp, 2.5);
+        const x = el.slot * slotW + slotW * 0.6 - (idx % 2) * 18;
+        drawUnit(x, mapY(el.y), "#ffb066", el.isArmor, el.supp);
       });
+
+      // Legend
+      ctx.font = "10px ui-sans-serif, -apple-system, sans-serif";
+      ctx.fillStyle = "#6cc3ff"; ctx.fillText("■ 蓝方进攻", 8, H - 8);
+      ctx.fillStyle = "#ffb066"; ctx.fillText("■ 红方防守", 78, H - 8);
+      ctx.fillStyle = "#8ea3be"; ctx.fillText("底部色条 = 压制度", 148, H - 8);
     };
 
     drawStep();
@@ -1006,18 +1206,23 @@
     return state.toe.workingTemplates[state.toe.country]?.[state.toe.activeId] || null;
   }
 
-  function computeRecursiveTotals(country, templateId, visited = new Set()) {
+  // Recursively expands a template down to its squads.
+  // Model bindings inherit top-down: a squad slot uses the nearest ancestor's default_bindings (01 §4.6).
+  function computeRecursiveTotals(country, templateId, visited = new Set(), inherited = {}) {
     const map = state.toe.workingTemplates[country] || {};
     const t = map[templateId];
-    const res = {
-      men: 0,
-      leafSquads: 0,
-      personnelBySpec: {},
-      slotsByCat: {},
-    };
+    const res = { men: 0, leafSquads: 0, personnelBySpec: {}, slotsByCat: {}, modelsByCat: {} };
     if (!t || visited.has(templateId)) return res;
     const nextVisited = new Set(visited);
     nextVisited.add(templateId);
+    const bindings = { ...inherited, ...(t.default_bindings || {}) };
+
+    const addSlot = (cat, n) => {
+      res.slotsByCat[cat] = (res.slotsByCat[cat] || 0) + n;
+      const model = bindings[cat] || "—";
+      res.modelsByCat[cat] = res.modelsByCat[cat] || {};
+      res.modelsByCat[cat][model] = (res.modelsByCat[cat][model] || 0) + n;
+    };
 
     if (t.level === "squad" || !t.children || t.children.length === 0) {
       res.leafSquads = 1;
@@ -1025,17 +1230,13 @@
         res.men += v;
         res.personnelBySpec[k] = (res.personnelBySpec[k] || 0) + v;
       });
-      Object.entries(t.slots || {}).forEach(([k, v]) => {
-        res.slotsByCat[k] = (res.slotsByCat[k] || 0) + v;
-      });
-      Object.entries(t.slots_unassigned || {}).forEach(([k, v]) => {
-        res.slotsByCat[k] = (res.slotsByCat[k] || 0) + v;
-      });
+      Object.entries(t.slots || {}).forEach(([k, v]) => addSlot(k, v));
+      Object.entries(t.slots_unassigned || {}).forEach(([k, v]) => addSlot(k, v));
       return res;
     }
 
     (t.children || []).forEach((ch) => {
-      const sub = computeRecursiveTotals(country, ch.template, nextVisited);
+      const sub = computeRecursiveTotals(country, ch.template, nextVisited, bindings);
       const mult = ch.count || 0;
       res.men += sub.men * mult;
       res.leafSquads += sub.leafSquads * mult;
@@ -1044,6 +1245,12 @@
       });
       Object.entries(sub.slotsByCat).forEach(([k, v]) => {
         res.slotsByCat[k] = (res.slotsByCat[k] || 0) + v * mult;
+      });
+      Object.entries(sub.modelsByCat).forEach(([cat, models]) => {
+        res.modelsByCat[cat] = res.modelsByCat[cat] || {};
+        Object.entries(models).forEach(([m, v]) => {
+          res.modelsByCat[cat][m] = (res.modelsByCat[cat][m] || 0) + v * mult;
+        });
       });
     });
     return res;
@@ -1119,19 +1326,12 @@
         const tot = computeRecursiveTotals(country, t.id);
         const badgeColor = LEVEL_BADGE_COLOR[t.level] || "#95a5a6";
         return `
-        <div onclick="window.__toeSelectTemplate('${t.id}', false)"
-             style="padding:7px 9px;border-radius:4px;cursor:pointer;border:1px solid ${isSel ? "var(--accent-cyan)" : "var(--border)"};background:${isSel ? "rgba(42,195,222,0.12)" : "var(--bg-2)"};display:flex;justify-content:space-between;align-items:center;gap:6px;">
+        <div onclick="window.__toeSelectTemplate('${t.id}', false)" class="toe-item ${isSel ? "active" : ""}">
           <div style="min-width:0;">
-            <div style="font-size:12px;font-weight:600;color:${isSel ? "var(--accent-cyan)" : "var(--text-0)"};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">
-              ${t.name}
-            </div>
-            <div style="font-size:10.5px;color:var(--text-2);font-family:var(--font-mono);">
-              ${t.id} · ${tot.men}人 · ${tot.leafSquads}班
-            </div>
+            <div style="font-size:12px;font-weight:600;color:${isSel ? "var(--accent-cyan)" : "var(--text-0)"};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div>
+            <div style="font-size:10.5px;color:var(--text-2);font-family:var(--font-mono);">${tot.men.toLocaleString()} 人 · ${tot.leafSquads} 班</div>
           </div>
-          <span style="font-size:10px;padding:2px 6px;border-radius:3px;background:${badgeColor}22;color:${badgeColor};border:1px solid ${badgeColor}66;white-space:nowrap;">
-            ${LEVEL_LABEL_ZH[t.level]?.split(" ")[0] || t.level}
-          </span>
+          <span class="lvl-chip" style="background:${badgeColor}1f;color:${badgeColor};border:1px solid ${badgeColor}55;">${LEVEL_LABEL_ZH[t.level]?.split(" ")[0] || t.level}</span>
         </div>`;
       })
       .join("");
@@ -1408,7 +1608,7 @@
     // DC-005 Reorg organization cost: Δorg = -0.60 * changedFraction, 0 weapon skill loss
     const changedRatio = presetMen > 0 ? Math.min(1.0, Math.abs(diffMen) / presetMen) : 0;
     const orgPenaltyPct = (0.60 * changedRatio * 100).toFixed(1);
-    setText("toe-reorg-cost", `-${orgPenaltyPct}% 组织度`);
+    setText("toe-reorg-cost", orgPenaltyPct === "0.0" ? "0%" : `−${orgPenaltyPct}%`);
 
     // 1. Automated Checks (RunChecks F3)
     const checks = [];
@@ -1492,31 +1692,30 @@
       }
     }
 
-    // 3. Rolled-up Equipment Slots & Default Model Bindings
+    // 3. Rolled-up equipment by category, with models resolved through the binding chain
     const slotsEl = document.getElementById("toe-slots-summary");
     if (slotsEl) {
-      const bindings = t.default_bindings || {};
+      const catalog = BUNDLE.equipment_catalog || {};
       const entries = Object.entries(tot.slotsByCat).sort((a, b) => b[1] - a[1]);
-      slotsEl.innerHTML = `
+            slotsEl.innerHTML = `
         <table class="data-table">
-          <thead>
-            <tr>
-              <th>装备类别 (` + "`Category`" + `)</th>
-              <th>默认绑定型号 (` + "`Binding`" + `)</th>
-              <th class="num">递归展开总数</th>
-            </tr>
-          </thead>
+          <thead><tr><th>装备类别</th><th>型号（按绑定链解析）</th><th class="num">总数</th></tr></thead>
           <tbody>
             ${entries
               .map(([cat, cnt]) => {
-                const boundModelId = bindings[cat] || "继承上级/国家默认";
-                const modelInfo = (BUNDLE.equipment_catalog || {})[boundModelId];
-                const modelLabel = modelInfo ? `${modelInfo.name} (${boundModelId})` : boundModelId;
+                const models = Object.entries(tot.modelsByCat[cat] || {}).sort((a, b) => b[1] - a[1]);
+                const modelHtml = models
+                  .map(([m, n]) => {
+                    if (m === "—") return `<span style="color:var(--text-2);">未绑定·用国家默认${models.length > 1 ? ` ×${n}` : ""}</span>`;
+                    const nm = catalog[m] ? catalog[m].name : m;
+                    return `<span style="color:var(--accent-cyan);">${nm}</span>${models.length > 1 ? `<span style="color:var(--text-2);"> ×${n}</span>` : ""}`;
+                  })
+                  .join("<br/>");
                 return `
                   <tr>
-                    <td><strong>${SLOT_NAMES_ZH[cat] || cat}</strong></td>
-                    <td style="color:var(--accent-cyan);font-family:var(--font-mono);font-size:11px;">${modelLabel}</td>
-                    <td class="num" style="font-weight:700;">${cnt}</td>
+                    <td style="white-space:nowrap;">${(SLOT_NAMES_ZH[cat] || cat).split(" (")[0]}</td>
+                    <td style="font-size:11px;">${modelHtml}</td>
+                    <td class="num" style="font-weight:700;">${cnt.toLocaleString()}</td>
                   </tr>`;
               })
               .join("")}
@@ -1582,6 +1781,8 @@
         .join("");
     }
 
+    renderCutoffChart(cutoff.t6_daily_curve || []);
+
     // KeyNodeReport Tables
     const armBody = document.querySelector("#tbl-v3-keynodes-arm tbody");
     if (armBody && keyNodes.arm_top5_key_nodes) {
@@ -1591,8 +1792,8 @@
           <tr>
             <td>#${n.rank}</td>
             <td><code>${n.id}</code></td>
-            <td class="num" style="color:var(--accent-red);font-weight:700;">-${(n.drop_nk_direction * 100).toFixed(0)}%</td>
-            <td class="num">-${(n.drop_total_national * 100).toFixed(0)}%</td>
+            <td class="num"><div class="bar-cell" style="color:var(--accent-red);"><span style="font-weight:700;">−${(n.drop_nk_direction * 100).toFixed(0)}%</span><span class="bar-bg"><span class="bar" style="width:${(n.drop_nk_direction * 100).toFixed(0)}%;"></span></span></div></td>
+            <td class="num" style="color:var(--text-1);">−${(n.drop_total_national * 100).toFixed(0)}%</td>
           </tr>`
         )
         .join("");
@@ -1606,12 +1807,49 @@
           <tr>
             <td>#${n.rank}</td>
             <td><code>${n.id}</code></td>
-            <td class="num" style="color:var(--accent-cyan);">-${(n.drop_total_national * 100).toFixed(0)}%</td>
+            <td class="num"><div class="bar-cell" style="color:var(--accent-cyan);"><span style="font-weight:700;">−${(n.drop_total_national * 100).toFixed(0)}%</span><span class="bar-bg"><span class="bar" style="width:${(n.drop_total_national * 100).toFixed(0)}%;"></span></span></div></td>
             <td class="num">${n.affected_formations} 个军</td>
           </tr>`
         )
         .join("");
     }
+  }
+
+  function renderCutoffChart(rows) {
+    const svg = document.getElementById("chart-v3-cutoff");
+    if (!svg || !rows.length) return;
+    const W = 560, H = 230, L = 44, Rp = 48, T = 26, B = 26;
+    const pw = W - L - Rp, ph = H - T - B;
+    const maxDay = Math.max(...rows.map((r) => r.day));
+    const maxAmmo = Math.max(1, ...rows.map((r) => r.ammo_remaining_t));
+    const maxCas = Math.max(1, ...rows.map((r) => r.cum_starvation_casualties_per_bn));
+    const x = (d) => L + ((d - 1) / Math.max(1, maxDay - 1)) * pw;
+    const yA = (v) => T + ph - (v / maxAmmo) * ph;
+    const yC = (v) => T + ph - (v / maxCas) * ph;
+    let h = `<defs><linearGradient id="g-ammo" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3cc8e4" stop-opacity="0.45"/><stop offset="1" stop-color="#3cc8e4" stop-opacity="0.02"/></linearGradient></defs>`;
+    for (let i = 0; i <= 4; i++) {
+      const yy = T + (ph * i) / 4;
+      h += `<line x1="${L}" x2="${W - Rp}" y1="${yy}" y2="${yy}" stroke="rgba(255,255,255,0.06)"/>`;
+      h += `<text x="${L - 6}" y="${yy + 3}" text-anchor="end">${(maxAmmo * (1 - i / 4)).toFixed(0)}</text>`;
+      h += `<text x="${W - Rp + 6}" y="${yy + 3}">${(maxCas * (1 - i / 4)).toFixed(1)}</text>`;
+    }
+    rows.forEach((r) => { h += `<text x="${x(r.day)}" y="${H - 10}" text-anchor="middle">D${r.day}</text>`; });
+    const area = `M${x(rows[0].day)},${T + ph} ` + rows.map((r) => `L${x(r.day).toFixed(1)},${yA(r.ammo_remaining_t).toFixed(1)}`).join(" ") + ` L${x(rows[rows.length - 1].day)},${T + ph} Z`;
+    h += `<path d="${area}" fill="url(#g-ammo)"/>`;
+    h += `<polyline points="${rows.map((r) => `${x(r.day).toFixed(1)},${yA(r.ammo_remaining_t).toFixed(1)}`).join(" ")}" fill="none" stroke="#3cc8e4" stroke-width="2"/>`;
+    h += `<polyline points="${rows.map((r) => `${x(r.day).toFixed(1)},${(T + ph - r.fatigue_floor * ph).toFixed(1)}`).join(" ")}" fill="none" stroke="#f2a93b" stroke-width="1.5" stroke-dasharray="4,3"/>`;
+    h += `<polyline points="${rows.map((r) => `${x(r.day).toFixed(1)},${yC(r.cum_starvation_casualties_per_bn).toFixed(1)}`).join(" ")}" fill="none" stroke="#f0604d" stroke-width="2.2"/>`;
+    rows.forEach((r) => { h += `<circle cx="${x(r.day).toFixed(1)}" cy="${yC(r.cum_starvation_casualties_per_bn).toFixed(1)}" r="2.6" fill="#f0604d"/>`; });
+    const firstHungry = rows.find((r) => r.days_without_general > 0);
+    if (firstHungry) {
+      const xx = x(firstHungry.day);
+      h += `<line x1="${xx}" x2="${xx}" y1="${T}" y2="${T + ph}" stroke="rgba(240,96,77,0.5)" stroke-dasharray="2,3"/>`;
+      h += `<text x="${xx + 4}" y="${T + 10}" style="fill:#ff8f80;">断粮开始 D${firstHungry.day}</text>`;
+    }
+    h += `<text x="${L - 6}" y="${T - 12}" text-anchor="end" style="fill:#3cc8e4;">弹药 t</text>`;
+    h += `<text x="${W - Rp + 6}" y="${T - 12}" style="fill:#f0604d;">人/营</text>`;
+    svg.innerHTML = h;
   }
 
   // =========================================================================
@@ -1651,7 +1889,7 @@
         code: "V5",
         name: "反无脑流派 (Anti-Cheese) 搜索 (03)",
         target: "无模板全地形胜率 >90%、纯坦克巷战 <50%、单武器性价比 <3x、未压制夺占 <10%、RPS 克制环成立",
-        metric: "最高胜率 57.9% · 纯坦克巷战 0.8% · 邪道最高 15.2% · 武器极值比 1.30x · 未压制夺占 1.36%",
+        metric: `最高胜率 57.9% · 纯坦克巷战 0.8% · 邪道最高 15.2% · 武器性价比极值 ${(((VAL.v5 || {}).criteria_checks || {}).C2_weapon_cost_ratio_under_3x || {}).max_ratio_overall ?? "?"}x（判据 <3x）· 未压制夺占 1.36%`,
         pass: true,
       },
       {
@@ -1677,15 +1915,31 @@
       },
     ];
 
+    const SHORT = { V1: "编制层级涌现", V2: "2020 战争校准", V3: "后勤与切断", V4: "十年战役可玩性", V5: "反无脑流派", V6: "性能基准", V7: "决策密度", V8: "网页试玩原型" };
+    // Status is read from the bundled tools/validation/vN_results.json flags, not hard-coded.
+    rows.forEach((r) => {
+      const res = VAL[r.code.toLowerCase()];
+      const flag = res ? (res.all_pass !== undefined ? res.all_pass : res.pass) : undefined;
+      if (r.code === "V8") r.status = "manual";
+      else if (flag === true) r.status = "pass";
+      else if (flag === false) r.status = "fail";
+      else r.status = "missing";
+    });
+    const badgeFor = (st) =>
+      st === "pass" ? `<span class="badge-pass">✓ PASS</span>`
+      : st === "fail" ? `<span class="badge-fail">✗ FAIL</span>`
+      : st === "manual" ? `<span class="badge-info">人工评估</span>`
+      : `<span class="badge-warn">无结果文件</span>`;
+
     const summaryEl = document.getElementById("val-summary-cards");
     if (summaryEl) {
       summaryEl.innerHTML = rows
         .map(
           (r) => `
-          <div class="kpi-card">
-            <div class="kpi-label">${r.code} · ${r.name.split(" ")[0]}</div>
-            <div class="kpi-val" style="color:var(--accent-green);">PASS ✓</div>
-            <div class="kpi-sub">100% 判据达标</div>
+          <div class="kpi-card val-card">
+            <div class="kpi-label">${r.code}</div>
+            <div class="val-name">${SHORT[r.code] || r.name}</div>
+            <div style="margin-top:6px;">${badgeFor(r.status)}</div>
           </div>`
         )
         .join("");
@@ -1697,15 +1951,52 @@
         .map(
           (r) => `
           <tr>
-            <td><strong>${r.code}</strong></td>
-            <td>${r.name}</td>
+            <td><strong style="font-family:var(--font-mono);color:var(--accent-amber);">${r.code}</strong></td>
+            <td style="min-width:160px;">${r.name}</td>
             <td style="color:var(--text-1);">${r.target}</td>
-            <td style="font-family:var(--font-mono);color:var(--accent-cyan);">${r.metric}</td>
-            <td><span class="badge-pass">PASS</span></td>
+            <td style="font-family:var(--font-mono);font-size:11.5px;color:var(--accent-cyan);">${r.metric}</td>
+            <td>${badgeFor(r.status)}</td>
           </tr>`
         )
         .join("");
     }
+  }
+
+  // Runs both presets through the in-browser war model and shows the actual outcomes.
+  function runSelfCheck() {
+    const OUTCOME_ZH = {
+      B_SUCCESSFUL_DEFENSE: ["结局 B · 守住舒沙与纳卡", "badge-pass"],
+      C_LIMITED_DEFEAT: ["结局 C · 保住舒沙，局部失利", "badge-warn"],
+      D_HISTORICAL_DEFEAT: ["结局 D · 舒沙失守，11 月 10 日停火", "badge-fail"],
+      PENDING: ["未分出结局", "badge-warn"],
+    };
+    const runOne = (preset) => {
+      applyBuildPreset(preset);
+      stepWarDays(60);
+      const w = state.war;
+      return { preset, outcome: w.outcomeCode, day: w.day, armKia: w.armKia, azeKia: w.azeKia, core: w.coreTilesHeld, win: calcBuildMetrics().winProb };
+    };
+    const hist = runOne("historical");
+    const opt = runOne("optimal");
+    const expectOk = hist.outcome === "D_HISTORICAL_DEFEAT" && opt.outcome !== "D_HISTORICAL_DEFEAT";
+    const card = (title, r) => {
+      const [txt, cls] = OUTCOME_ZH[r.outcome] || [r.outcome, "badge-warn"];
+      return `<div class="kpi-card">
+        <div class="kpi-label">${title}</div>
+        <div style="margin:6px 0;"><span class="${cls}">${txt}</span></div>
+        <div class="kpi-sub">停火于 Day ${r.day} · 核心地块 ${r.core}/26 · 阵亡 亚 ${r.armKia.toLocaleString()} / 阿 ${r.azeKia.toLocaleString()} · 模型守住率 ${(r.win * 100).toFixed(1)}%</div>
+      </div>`;
+    };
+    const box = document.getElementById("selfcheck-box");
+    if (box) {
+      box.innerHTML = `
+        <div class="control-title" style="margin-bottom:8px;"><span>网页自检结果（本次在浏览器中实际推演）</span>
+          ${expectOk ? `<span class="badge-pass">✓ 符合预期</span>` : `<span class="badge-fail">✗ 与预期不符</span>`}</div>
+        <div class="kpi-grid" style="grid-template-columns:1fr 1fr;">${card("史实路线", hist)}${card("V4 最优综合防御", opt)}</div>
+        <div class="kpi-sub">预期：史实路线应得到结局 D，最优路线不应得到结局 D。自检后战局停留在“最优路线”的终局，可回到 Tab 1 查看地图。</div>`;
+      box.classList.add("show");
+    }
+    toast(expectOk ? "自检完成：结果符合预期" : "自检完成：结果与预期不符，请查看详情", expectOk ? "good" : "warn");
   }
 
   // =========================================================================
@@ -1786,12 +2077,17 @@
         btn.classList.add("active");
         const targetId = btn.getAttribute("data-tab");
         document.getElementById(targetId)?.classList.add("active");
+        history.replaceState(null, "", `#${targetId}`);
+        window.scrollTo({ top: 0, behavior: "smooth" });
       });
     });
 
     // Preset buttons
     document.querySelectorAll("[data-preset]").forEach((btn) => {
-      btn.addEventListener("click", () => applyBuildPreset(btn.getAttribute("data-preset")));
+      btn.addEventListener("click", () => {
+        applyBuildPreset(btn.getAttribute("data-preset"));
+        toast(`已套用建军路线：<strong>${btn.textContent.trim().split("\n")[0]}</strong>，战局已重置到 Day 0`);
+      });
     });
 
     // Left column build radio groups
@@ -1914,20 +2210,7 @@
     });
 
     // Tab 4 Self-Check button
-    document.getElementById("btn-run-v8-selfcheck")?.addEventListener("click", () => {
-      applyBuildPreset("historical");
-      stepWarDays(60);
-      const histOutcome = state.war.outcomeCode;
-      applyBuildPreset("optimal");
-      stepWarDays(60);
-      const optOutcome = state.war.outcomeCode;
-      alert(
-        `V8 网页原型自动对比验证完成：\n` +
-          `1. 史实默认方案：${histOutcome} (舒沙失守，触发 11月10日停火声明)\n` +
-          `2. V4 最优综合防御方案：${optOutcome} (成功保住舒沙与纳卡核心区)\n` +
-          `全部交互控件与 V1-V7 数据绑定自检 100% 通过！`
-      );
-    });
+    document.getElementById("btn-run-v8-selfcheck")?.addEventListener("click", runSelfCheck);
   }
 
   // Boot
@@ -1938,5 +2221,18 @@
     initProvingGround();
     renderLogisticsLab();
     renderValidationSuite();
+    // Deep link: index.html#tab-proving-ground opens that tab directly
+    const hashTab = (location.hash || "").slice(1);
+    if (hashTab) document.querySelector(`.nav-tab[data-tab="${hashTab}"]`)?.click();
+    window.scrollTo(0, 0);
+
+    // Render `identifiers` as <code>, now and after every re-render
+    enhanceCodeTicks(document.body);
+    let pending = false;
+    new MutationObserver(() => {
+      if (pending) return;
+      pending = true;
+      requestAnimationFrame(() => { pending = false; enhanceCodeTicks(document.body); });
+    }).observe(document.body, { childList: true, subtree: true, characterData: true });
   });
 })();
