@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>战争部长 · 司令模式 — 2020 纳卡战争试玩</title>
+  <link rel="stylesheet" href="commander.css" />
+</head>
+<body>
+  <!-- ================= HUD ================= -->
+  <header class="hud">
+    <div class="brand">
+      <div class="brand-mark"><svg viewBox="0 0 24 24"><path d="M12 2l8.66 5v10L12 22l-8.66-5V7z" fill="none" stroke="#1b1105" stroke-width="2"/><path d="M12 7l2 4h-4zM8 15h8" stroke="#1b1105" stroke-width="2" fill="#1b1105"/></svg></div>
+      <div>
+        <div class="brand-title">战争部长 · 司令模式<span class="pill">试玩 P2</span></div>
+        <div class="brand-sub">2020 年纳卡战争 · 你指挥亚美尼亚 / 阿尔察赫部队</div>
+      </div>
+    </div>
+
+    <div class="clock">
+      <div class="clock-date" id="hud-date">2020-09-27 06:00</div>
+      <div class="clock-sub" id="hud-day">第 0 天 · 白昼</div>
+    </div>
+
+    <div class="speed" id="speed">
+      <button data-speed="0" title="暂停（空格）">❚❚</button>
+      <button data-speed="1" title="1 小时 / 1.2 秒">▶</button>
+      <button data-speed="2" title="1 小时 / 0.35 秒">▶▶</button>
+      <button data-speed="3" title="1 小时 / 0.08 秒">▶▶▶</button>
+    </div>
+
+    <div class="hud-stats">
+      <div class="stat"><span>纳卡核心格</span><b id="hud-core">—</b></div>
+      <div class="stat"><span>舒沙</span><b id="hud-shusha">—</b></div>
+      <div class="stat"><span>亚方阵亡</span><b id="hud-kia">—</b></div>
+      <div class="stat"><span>阿方 TB2</span><b id="hud-tb2">—</b></div>
+      <div class="stat"><span>补给车队</span>
+        <select id="hud-convoy" title="夜间车队：卡车损失约 −77%，运量约 −35%">
+          <option value="continuous">全天候</option>
+          <option value="night_only">仅夜间</option>
+        </select>
+      </div>
+    </div>
+    <button class="btn ghost" id="btn-help" title="操作说明">?</button>
+  </header>
+
+  <!-- ================= MAIN ================= -->
+  <main class="layout">
+    <!-- OOB -->
+    <aside class="panel side" id="oob-panel">
+      <div class="panel-h"><span>战斗序列</span><span class="tag" id="oob-count">—</span></div>
+      <div class="oob-tools">
+        <input id="oob-search" type="text" placeholder="搜索部队…" />
+        <label class="chk"><input type="checkbox" id="oob-onlymap" checked /> 只看在场</label>
+      </div>
+      <div class="oob-list" id="oob-list"></div>
+    </aside>
+
+    <!-- MAP -->
+    <section class="map-wrap">
+      <div class="map-toolbar">
+        <div class="legend">
+          <span><i class="sw arm"></i>亚方控制</span>
+          <span><i class="sw aze"></i>阿方控制</span>
+          <span><i class="sw lost"></i>战时易手</span>
+          <span><i class="ln front"></i>接触线</span>
+          <span><i class="ln road"></i>道路</span>
+        </div>
+        <div class="map-tools">
+          <label class="chk"><input type="checkbox" id="lyr-terrain" checked /> 地形</label>
+          <label class="chk"><input type="checkbox" id="lyr-supply" /> 补给</label>
+          <label class="chk"><input type="checkbox" id="lyr-ad" /> 防空覆盖</label>
+          <button class="btn ghost sm" id="btn-zoom-in">＋</button>
+          <button class="btn ghost sm" id="btn-zoom-out">－</button>
+          <button class="btn ghost sm" id="btn-zoom-fit">适配</button>
+        </div>
+      </div>
+      <div class="map-stage" id="map-stage">
+        <svg id="map" xmlns="http://www.w3.org/2000/svg">
+          <g id="vp">
+            <g id="lyr-hex"></g>
+            <g id="lyr-overlay"></g>
+            <g id="lyr-roads"></g>
+            <g id="lyr-front"></g>
+            <g id="lyr-labels"></g>
+            <g id="lyr-eng"></g>
+            <g id="lyr-paths"></g>
+            <g id="lyr-units"></g>
+          </g>
+        </svg>
+        <div class="tip" id="tip"></div>
+        <div class="map-hint" id="map-hint">左键选择部队 · 右键下达移动/进攻 · 滚轮缩放 · 拖动平移</div>
+      </div>
+      <div class="feed" id="feed"></div>
+    </section>
+
+    <!-- SELECTION / ORDERS -->
+    <aside class="panel side" id="sel-panel">
+      <div class="panel-h"><span id="sel-title">未选择</span><span class="tag" id="sel-tag">—</span></div>
+      <div class="sel-body" id="sel-body">
+        <div class="empty">
+          <p>在地图或左侧战斗序列中选择一个营或旅。</p>
+          <p class="muted">选旅（编组）下令更快：命令经旅部传达约 1 小时；越级直接指挥单个营约 3 小时（DC-010）。</p>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <!-- ================= START ================= -->
+  <div class="modal show" id="start-modal">
+    <div class="modal-card wide">
+      <div class="modal-h">
+        <div>
+          <div class="kicker">司令模式 · 试玩</div>
+          <h1>2020 年 9 月 27 日，阿塞拜疆发起全面进攻</h1>
+        </div>
+      </div>
+      <div class="modal-b">
+        <p class="lead">你是亚美尼亚 / 阿尔察赫方的战区司令。部队、装备与开局部署来自剧本数据（战斗序列 × 编制模板 × 库存）。阿方由 AI 指挥。守住<strong>舒沙</strong>与<strong>拉钦走廊</strong>，并尽量保住纳卡核心地块。</p>
+        <div class="grid3">
+          <div class="field">
+            <label>阿方 AI</label>
+            <div class="seg" id="opt-tier">
+              <button data-v="H" class="on">H · 史实</button><button data-v="P">P · 自适应</button><button data-v="B">B · 强化</button>
+            </div>
+            <small>H：按史实主攻南线；P：寻找你的薄弱点；B：再加 35% 无人机与巡飞弹。</small>
+          </div>
+          <div class="field">
+            <label>亚方部队</label>
+            <div class="seg" id="opt-force">
+              <button data-v="historical" class="on">史实部队</button><button data-v="improved">改进部队（演示）</button>
+            </div>
+            <small>改进部队：+16 套“道尔”、+12 套中程防空、+120 具重型反坦克导弹、工事加深。十年建军（P3）完成后由你的决策产生。</small>
+          </div>
+          <div class="field">
+            <label>指挥方式</label>
+            <div class="seg" id="opt-ai">
+              <button data-v="player" class="on">我来指挥</button><button data-v="spectate">AI 指挥（观战）</button>
+            </div>
+            <small>指挥过程中也可以把任意旅交给 AI 托管。</small>
+          </div>
+        </div>
+        <div class="note">
+          <b>和历史不同的地方都可以试：</b>雷达开机与伏击、夜间车队、预备队调度、提前加固舒沙—拉钦方向、主动后撤保存兵力……战后报告会把你的结果与“同一支部队由 AI 指挥”的结果分布放在一起比较。
+        </div>
+      </div>
+      <div class="modal-f">
+        <span class="muted" id="start-hint">地图与国界为人工近似，非精确地理。</span>
+        <button class="btn primary lg" id="btn-start">开始指挥 ▶</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= HELP ================= -->
+  <div class="modal" id="help-modal">
+    <div class="modal-card">
+      <div class="modal-h"><h2>操作说明</h2><button class="btn ghost" data-close>✕</button></div>
+      <div class="modal-b help">
+        <table>
+          <tr><td>左键</td><td>选择部队；同一格多支部队时再次点击轮换</td></tr>
+          <tr><td>右键</td><td>对选中部队下达移动；目标为相邻敌方格时即为进攻</td></tr>
+          <tr><td>空格</td><td>暂停 / 继续</td></tr>
+          <tr><td>1 / 2 / 3</td><td>速度</td></tr>
+          <tr><td>D / R</td><td>固守 / 转为预备队（疏散隐蔽，减少无人机发现）</td></tr>
+          <tr><td>Esc</td><td>取消选择</td></tr>
+          <tr><td>滚轮 / 拖动</td><td>缩放 / 平移地图</td></tr>
+        </table>
+        <h3>需要知道的规则</h3>
+        <ul>
+          <li><b>命令延迟（DC-010）：</b>给旅下令经旅部传达约 1 小时；越级直接指挥单个营约 3 小时；夜间与组织度低时更慢。命令生效前部队仍执行旧命令。</li>
+          <li><b>防空纪律：</b>“开机”能击落无人机，但雷达会被反辐射打击；“伏击”折中；“静默”保住雷达，但无人机会自由猎杀装甲与火炮。</li>
+          <li><b>白天移动</b>的部队最容易被无人机发现；“预备队”姿态疏散隐蔽。</li>
+          <li><b>补给：</b>部队必须经己方地块连回亚美尼亚。舒沙和拉钦失守会切断 M12 走廊。</li>
+          <li><b>停火：</b>舒沙失守后很快按“11·10”模式停火；阿方攻势长期停滞也会就地停火。</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= AAR ================= -->
+  <div class="modal" id="aar-modal">
+    <div class="modal-card wide">
+      <div class="modal-h"><div><div class="kicker">战后报告</div><h1 id="aar-title">—</h1></div><button class="btn ghost" data-close>✕</button></div>
+      <div class="modal-b" id="aar-body"></div>
+      <div class="modal-f"><span class="muted">导出的 JSON 可用于试玩分析。</span><div><button class="btn" id="btn-aar-export">导出试玩记录</button> <button class="btn primary" id="btn-restart">再来一局</button></div></div>
+    </div>
+  </div>
+
+  <div class="toasts" id="toasts"></div>
+
+  <script src="sim_data.js"></script>
+  <script src="sim_core.js"></script>
+  <script src="ui.js"></script>
+</body>
+</html>
