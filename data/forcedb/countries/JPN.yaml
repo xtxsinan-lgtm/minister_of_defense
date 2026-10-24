@@ -1,0 +1,73 @@
+# 日本（JPN）。战斗机/舰艇/潜艇数量来自作者工作簿；陆上装备为公开常识量级（防卫白皮书/IISS 量级），标 estimated。
+country: JPN
+as_of: "2025-08-31"
+default_source: research_2026
+meta:
+  summary: "空自 F-15J 约 200 架为主力，F-35A 39 + F-35B 8，F-2 85；海自水面舰艇与潜艇规模大且质量高（工作簿海军总量约 13% 美国）；陆自重装备少、轻型机动旅为主。"
+annotations:
+  - {eq: cv_izumo, src: sheet_cn_us_live, specs: {article.power_vls: 106.2, article.qty: 1.0}}
+equipment:
+  - {id: jpn_hyuga, name: 日向级直升机驱逐舰, category: amphibious_carrier, origin: JPN, unit: {value: 343.94},
+     unit_source: "工作簿 海军!H32/E32（687.87/2 艘）"}
+  - {id: jpn_osumi, name: 大隅级运输舰, category: amphibious_dock, origin: JPN, analog: {of: sealift_whidbey_island, scale: 1.0, why: "14000t 级，载 2 气垫登陆艇 + 10 辆 90 式"}}
+  - {id: art_type99, name: 99 式 155mm 自行榴弹炮, category: howitzer_heavy_sp, origin: JPN, analog: {of: art_m109a6, scale: 1.1, why: "52 倍径，自动装填，射程 30km"}}
+  - {id: art_type75, name: 75 式 155mm 自行榴弹炮, category: howitzer_heavy_sp, origin: JPN, analog: {of: art_m109a6, scale: 0.6, why: "30 倍径老型"}}
+  - {id: art_type19, name: 19 式轮式 155mm 自行榴弹炮, category: howitzer_heavy_truck, origin: JPN, analog: {of: art_caesar, scale: 1.1, why: "52 倍径 8x8"}}
+inventory:
+  # ---- 空中 ----
+  - {eq: f_35a, service: airforce, qty: 39, src: sheet_cn_us_live, confidence: estimated, note: "工作簿 战斗机!AR34"}
+  - {eq: f_35b, service: airforce, qty: 8, src: sheet_cn_us_live, confidence: estimated, note: "工作簿 战斗机!AR45（空自 F-35B；已交付约 8）"}
+  - {eq: f_15c_d, service: airforce, qty: 199, src: sheet_cn_us_live, confidence: stated, note: "F-15J/DJ"}
+  - {eq: f2_jp, service: airforce, qty: 85, src: sheet_cn_us_live, confidence: stated}
+  - {eq: e767, service: airforce, qty: 4, confidence: stated}
+  - {eq: e_2c, service: airforce, qty: 13, confidence: stated}
+  - {eq: e_2d, service: airforce, qty: 5, confidence: estimated, note: "订购 13 架，截至 2025 年已交付一部分"}
+  - {eq: kc767, service: airforce, qty: 4, confidence: stated, note: "KC-767J"}
+  - {eq: kc_46, service: airforce, qty: 3, confidence: estimated, note: "KC-46A 陆续交付中"}
+  - {eq: p1_asw, service: navy, qty: 33, confidence: estimated, note: "海自 P-1"}
+  - {eq: p3c_asw, service: navy, qty: 20, confidence: estimated, note: "海自仍有 P-3C 约 20 架"}
+  - {eq: rq_4b, service: airforce, qty: 3, confidence: stated}
+  - {eq: airlift_c2_jp, service: airforce, qty: 14, confidence: estimated}
+  - {eq: airlift_c_130, service: airforce, qty: 14, confidence: stated, note: "C-130H"}
+  # ---- 海上 ----
+  - {eq: jpn_hyuga, service: navy, qty: 2, src: sheet_cn_us_live, confidence: estimated}
+  - {eq: jpn_osumi, service: navy, qty: 3, confidence: stated}
+  # ---- 炮兵 ----
+  - {eq: art_type99, service: army, qty: 100, confidence: estimated}
+  - {eq: art_type75, service: army, qty: 100, confidence: estimated}
+  - {eq: art_type19, service: army, qty: 30, confidence: estimated}
+  - {eq: art_fh70, service: army, qty: 280, confidence: estimated, note: "FH-70"}
+  - {eq: art_kmlrs, service: army, qty: 30, confidence: estimated, note: "M270 MLRS 余存"}
+  # ---- 防空 ----
+  - {eq: ad_patriot_pac3, service: airforce, qty: 16, confidence: estimated, note: "空自 PAC-3 火力单元"}
+  - {eq: ad_patriot_pac2, service: airforce, qty: 8, confidence: estimated, note: "PAC-2 GEM"}
+  - {eq: ad_type03, service: army, qty: 20, confidence: estimated, note: "03 式中 SAM 等"}
+  - {eq: ad_stinger_spg, service: army, qty: 15, confidence: estimated, note: "87 式自行高炮、93 式近 SAM 等点防空"}
+  # ---- 直升机 ----
+  - {eq: ah64e, service: army, qty: 12, confidence: estimated, note: "AH-64DJP"}
+  - {eq: ah1s_cobra, service: army, qty: 50, confidence: estimated}
+  - {eq: uh60, service: army, qty: 40, confidence: estimated, note: "UH-60JA"}
+  - {eq: ch47f, service: army, qty: 55, confidence: estimated, note: "CH-47J/JA"}
+  - {eq: bell412_209, service: army, qty: 100, confidence: estimated, note: "UH-1J"}
+  - {eq: sh60_navy, service: navy, qty: 80, confidence: estimated, note: "SH-60J/K 与 MCH-101 等"}
+special_forces: {army: 0.5}
+special_forces_note: "特殊作战群 + 水陆机动团（约 3000 人）"
+brigades:
+  - id: jpn_force_modern
+    label: 陆自新型装甲/机动战斗部队（10 式 + 16 式 MCV + 89 式）
+    service: army
+    force: {tank3: 150, veh3: 318, veh2: 300}
+    quality: {equip: 2.6, mech: 1.15, info: 1.1, log: 1.0, ready: 1.0}
+    why: "10 式约 150；16 式机动战斗车约 250；89 式约 68；96 式装甲车约 300"
+  - id: jpn_force_type90
+    label: 陆自 90 式 / 74 式坦克部队
+    service: army
+    force: {tank3: 300, veh2: 200}
+    quality: {equip: 2.1, mech: 1.1, info: 1.0, log: 1.0, ready: 1.0}
+    why: "90 式约 250 + 74 式约 100（半折）；73 式装甲车约 200"
+  - id: jpn_force_infantry
+    label: 陆自步兵
+    service: army
+    force: {squads: 996}
+    quality: {equip: 1.1, mech: 1.0, info: 1.0, log: 1.0, ready: 1.0}
+    why: "现役 15 万 + 预备役 5.6 万的 10% ≈ 15.6 万 × 0.0064 班/人"

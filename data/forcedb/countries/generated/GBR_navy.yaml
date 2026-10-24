@@ -1,0 +1,45 @@
+# 由 tools/import_world_navy.py 从作者工作簿生成（GBR 水面舰艇与潜艇）。
+country: GBR
+as_of: '2025-08-31'
+default_source: sheet_cn_us_live
+equipment:
+- id: ship_gbr_r76
+  name: 45型
+  category: destroyer
+  origin: GBR
+  unit:
+    value: 51.775
+  unit_source: 工作簿 驱护舰!Z76（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A76；火力 39.1 + 雷达折算 VLS
+- id: ship_gbr_r77
+  name: 23型
+  category: frigate
+  origin: GBR
+  unit:
+    value: 16.5
+  unit_source: 工作簿 驱护舰!Z77（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A77；火力 16.5 + 雷达折算 VLS
+- id: sub_gbr_r36
+  name: 机敏（潜艇）
+  category: ssn
+  origin: GBR
+  unit:
+    vls: 120.729
+  unit_source: 工作簿 海军!T36/J36（成本×6.0×折算系数，等效 VLS）
+  notes: 工作簿 海军!I36；单艇造价 2.52 十亿美元
+inventory:
+- eq: ship_gbr_r76
+  service: navy
+  qty: 6
+  confidence: estimated
+  note: 工作簿 驱护舰!B76
+- eq: ship_gbr_r77
+  service: navy
+  qty: 7
+  confidence: estimated
+  note: 工作簿 驱护舰!B77
+- eq: sub_gbr_r36
+  service: navy
+  qty: 6
+  confidence: estimated
+  note: 工作簿 海军!J36

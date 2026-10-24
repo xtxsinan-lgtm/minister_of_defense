@@ -45,7 +45,7 @@ def cmd_rollup(args):
 def cmd_score(args):
     from .quant import Engine
     eq, toe = _open()
-    e = Engine(eq, toe, mode=args.mode, article_compat=False if args.no_compat else None, reference=args.ref, carrier_model=args.carrier_model)
+    e = Engine(eq, toe, mode=args.mode, article_compat=False if args.no_compat else None, reference=args.ref, carrier_model=args.carrier_model, scenario=args.scenario)
     r = e.run(args.countries)
     print(r.render())
     for n in e.notes:
@@ -147,6 +147,8 @@ def main(argv=None):
     p.add_argument("--ref", default="USA", help="基准国（归一为 100/200）")
     p.add_argument("--carrier-model", choices=["article", "airwing"], default="article",
                    help="航母口径：文章的出动架次折算 / 作者航母空中联队复合模型")
+    p.add_argument("--scenario", choices=["mid", "low", "high"], default="mid",
+                   help="不确定性情景：非基准国数量按置信度整体下调/上调")
     p.add_argument("--no-compat", action="store_true", help="不加回表格硬编码总计的差额（逐行自洽口径）")
     p.add_argument("--deviations", action="store_true")
     p.add_argument("--top", type=int, default=10)

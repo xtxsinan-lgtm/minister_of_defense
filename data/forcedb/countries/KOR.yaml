@@ -1,0 +1,75 @@
+# 韩国（KOR）。空中/水面/潜艇数量来自作者工作簿；陆军、炮兵、防空、直升机来自 Wikipedia
+# “List of equipment of the Republic of Korea Army”（2025 年页面）；其余为公开常识量级。
+country: KOR
+as_of: "2025-08-31"
+default_source: research_2026
+meta:
+  summary: "陆军规模大（K1/K2 约 1800 辆坦克、K9 约 1240 门）且装备较新；空军 F-35A 40 + F-15K 59 + KF-16 177；海军 3 艘世宗大王级宙斯盾舰为核心。"
+  quality_tiers: "T1 K2/K21 (equip 2.6)；T2/T3 K1A2/K1E1 + K200 (equip 2.0)"
+equipment:
+  - {id: kor_dokdo, name: 独岛级两栖攻击舰, category: amphibious_carrier, origin: KOR, unit: {value: 113.8},
+     unit_source: "工作簿 海军!H49/E49（227.61/2 艘）"}
+  - {id: hyunmoo2, name: 玄武-2 弹道导弹, category: srbm, origin: KOR, analog: {of: df11a, scale: 0.9, why: "300-800km，弹头 500kg 级；CEP 30-50m 略差于东风-11A"}}
+  - {id: hyunmoo3, name: 玄武-3 巡航导弹, category: cruise_missile_land, origin: KOR, analog: {of: cj10, scale: 0.7, why: "1000-1500km 对陆巡航，数量少"}}
+  - {id: sealift_kor_lst, name: 天王峰级 / 高峻峰级登陆舰, category: amphibious_dock, origin: KOR, analog: {of: sealift_whidbey_island, scale: 0.35, why: "约 4500t，载货约 350t（惠德贝岛级 1044t）"}}
+inventory:
+  # ---- 空中（工作簿 战斗机!AS 列）----
+  - {eq: f_35a, service: airforce, qty: 40, src: sheet_cn_us_live, confidence: stated}
+  - {eq: f_15e, service: airforce, qty: 59, src: sheet_cn_us_live, confidence: stated, note: "F-15K"}
+  - {eq: f_16c_d, service: airforce, qty: 177, src: sheet_cn_us_live, confidence: stated, note: "KF-16；工作簿按非 AESA 估"}
+  - {eq: fa50, service: airforce, qty: 60, src: sheet_cn_us_live, confidence: stated}
+  - {eq: f5_tiger, service: airforce, qty: 61, src: sheet_cn_us_live, confidence: stated}
+  - {eq: e7_wedgetail, service: airforce, qty: 4, confidence: stated, note: "E-737 Peace Eye"}
+  - {eq: a330mrtt, service: airforce, qty: 4, confidence: stated, note: "KC-330 Cygnus"}
+  - {eq: p3c_asw, service: navy, qty: 16, confidence: estimated, note: "P-3C/CK；P-8A 订购中，未计"}
+  - {eq: rq_4b, service: airforce, qty: 4, confidence: estimated, note: "RQ-4B Block 30，2023-24 交付"}
+  - {eq: airlift_c_130, service: airforce, qty: 12, confidence: estimated, note: "C-130H/H-30"}
+  - {eq: airlift_c295, service: airforce, qty: 20, confidence: estimated, note: "CN-235/C-295"}
+  # ---- 海上 ----
+  - {eq: kor_dokdo, service: navy, qty: 2, src: sheet_cn_us_live, confidence: estimated}
+  - {eq: sealift_kor_lst, service: navy, qty: 8, confidence: estimated}
+  # ---- 陆军炮兵 / 火箭炮（wikipedia: List of equipment of the Republic of Korea Army）----
+  - {eq: art_k9, service: army, qty: 1240, confidence: stated}
+  - {eq: art_k55, service: army, qty: 1040, confidence: stated}
+  - {eq: art_fh70, service: army, qty: 1400, confidence: estimated, note: "KH179；库存口径含预备役，战斗力打折按 article_equivalent 记入"}
+  - {eq: art_kmlrs, service: army, qty: 58, confidence: estimated}
+  - {eq: art_chunmoo, service: army, qty: 110, confidence: estimated}
+  - {eq: art_k136, service: army, qty: 200, confidence: estimated}
+  # ---- 防空 ----
+  - {eq: ad_patriot_pac3, service: army, qty: 4, confidence: estimated, note: "PAC-3 营"}
+  - {eq: ad_patriot_pac2, service: army, qty: 4, confidence: estimated, note: "PAC-2 GEM+ 营（韩国共约 8 个爱国者营）"}
+  - {eq: ad_hq16, service: army, qty: 5, confidence: estimated, note: "KM-SAM Cheongung 营；用 HQ-16 作类比"}
+  - {eq: ad_crotale_vl, service: army, qty: 30, confidence: estimated, note: "Chunma K-SAM 120 辆"}
+  - {eq: ad_gepard_skyranger, service: army, qty: 47, confidence: estimated, note: "K30 Biho 176 + K263A1 200 辆，每连 8 车"}
+  # ---- 直升机（陆航）----
+  - {eq: ah64e, service: army, qty: 72, confidence: stated}
+  - {eq: ah1s_cobra, service: army, qty: 40, confidence: estimated, note: "AH-1F/S 75 架中尚在役的部分"}
+  - {eq: uh60, service: army, qty: 200, confidence: stated, note: "UH-60P"}
+  - {eq: kuh1, service: army, qty: 218, confidence: stated}
+  - {eq: ch47f, service: army, qty: 55, confidence: stated}
+  - {eq: mh6m, service: army, qty: 250, confidence: estimated, note: "MD-500 Defender"}
+  - {eq: lynx_wildcat, service: navy, qty: 45, confidence: estimated, note: "海军 Lynx/AW159，shipborne"}
+  # ---- 战术导弹 ----
+  - {eq: hyunmoo2, service: rocket, qty: 120, confidence: uncertain, note: "发射车数估计"}
+  - {eq: hyunmoo3, service: rocket, qty: 40, confidence: uncertain}
+special_forces: {army: 1.5}
+special_forces_note: "特种战司令部 8 个旅级单位；按美军陆军特战 10.0 的 15% 估"
+brigades:
+  - id: kor_force_k2_k21
+    label: 韩国陆军新型装甲机械化部队（K2 + K21 + K808）
+    service: army
+    force: {tank3: 260, veh3: 466, veh2: 500}
+    quality: {equip: 2.6, mech: 1.21, info: 1.1, log: 1.0, ready: 1.0}
+    why: "K2 260 辆（Wikipedia），K21 466 辆，K808 500 辆；装备乘数取 99A/M1A2 之间"
+  - id: kor_force_k1
+    label: 韩国陆军 K1 系坦克 + K200 部队
+    service: army
+    force: {tank3: 1511, veh2: 1700}
+    quality: {equip: 2.0, mech: 1.1, info: 1.0, log: 1.0, ready: 1.0}
+    why: "K1/K1E1 1027 + K1A2 484 辆（Wikipedia）；K200 1700 辆；约相当 96A/M1A1 档"
+  - id: kor_force_infantry
+    label: 韩国陆军步兵（含动员）
+    service: army
+    force: {squads: 4320}
+    quality: {equip: 1.1, mech: 1.0, info: 1.0, log: 1.0, ready: 0.8}
+    why: "现役 36.5 万 + 预备役 310 万的 10% ≈ 67.5 万 × 0.0064 班/人；预备役战备度折 0.8"

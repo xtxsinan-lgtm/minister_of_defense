@@ -1,0 +1,175 @@
+# 由 tools/import_world_navy.py 从作者工作簿生成（KOR 水面舰艇与潜艇）。
+country: KOR
+as_of: '2025-08-31'
+default_source: sheet_cn_us_live
+equipment:
+- id: ship_kor_r108
+  name: 正祖大王
+  category: destroyer
+  origin: KOR
+  unit:
+    value: 86.641
+  unit_source: 工作簿 驱护舰!Z108（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A108；火力 65.1 + 雷达折算 VLS
+- id: ship_kor_r109
+  name: 世宗大王
+  category: cruiser
+  origin: KOR
+  unit:
+    value: 149.513
+  unit_source: 工作簿 驱护舰!Z109（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A109；火力 127.9 + 雷达折算 VLS
+- id: ship_kor_r110
+  name: 世宗大王二批次
+  category: cruiser
+  origin: KOR
+  unit:
+    value: 110.641
+  unit_source: 工作簿 驱护舰!Z110（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A110；火力 89.1 + 雷达折算 VLS
+- id: ship_kor_r111
+  name: 忠武公李舜臣
+  category: destroyer
+  origin: KOR
+  unit:
+    value: 72.912
+  unit_source: 工作簿 驱护舰!Z111（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A111；火力 61.6 + 雷达折算 VLS
+- id: ship_kor_r112
+  name: 广开土大王
+  category: frigate
+  origin: KOR
+  unit:
+    value: 24.789
+  unit_source: 工作簿 驱护舰!Z112（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A112；火力 13.5 + 雷达折算 VLS
+- id: ship_kor_r113
+  name: 忠南级
+  category: destroyer
+  origin: KOR
+  unit:
+    value: 46.609
+  unit_source: 工作簿 驱护舰!Z113（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A113；火力 25.5 + 雷达折算 VLS
+- id: ship_kor_r114
+  name: 大邱级
+  category: destroyer
+  origin: KOR
+  unit:
+    value: 40.125
+  unit_source: 工作簿 驱护舰!Z114（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A114；火力 25.5 + 雷达折算 VLS
+- id: ship_kor_r115
+  name: 仁川
+  category: frigate
+  origin: KOR
+  unit:
+    value: 29.375
+  unit_source: 工作簿 驱护舰!Z115（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A115；火力 14.8 + 雷达折算 VLS
+- id: ship_kor_r116
+  name: 蔚山
+  category: frigate
+  origin: KOR
+  unit:
+    value: 12.866
+  unit_source: 工作簿 驱护舰!Z116（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A116；火力 9.5 + 雷达折算 VLS
+- id: ship_kor_r117
+  name: 浦项
+  category: corvette
+  origin: KOR
+  unit:
+    value: 7.938
+  unit_source: 工作簿 驱护舰!Z117（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A117；火力 5.5 + 雷达折算 VLS
+- id: sub_kor_r49
+  name: 209.0（潜艇）
+  category: ssk
+  origin: KOR
+  unit:
+    vls: 8.623
+  unit_source: 工作簿 海军!T49/J49（成本×9.0×折算系数，等效 VLS）
+  notes: 工作簿 海军!I49；单艇造价 0.18 十亿美元
+- id: sub_kor_r50
+  name: 214.0（潜艇）
+  category: ssk
+  origin: KOR
+  unit:
+    vls: 15.81
+  unit_source: 工作簿 海军!T50/J50（成本×9.0×折算系数，等效 VLS）
+  notes: 工作簿 海军!I50；单艇造价 0.33 十亿美元
+- id: sub_kor_r51
+  name: 岛山安昌浩（潜艇）
+  category: ssk
+  origin: KOR
+  unit:
+    vls: 43.117
+  unit_source: 工作簿 海军!T51/J51（成本×3.0×折算系数，等效 VLS）
+  notes: 工作簿 海军!I51；单艇造价 0.9 十亿美元
+inventory:
+- eq: ship_kor_r108
+  service: navy
+  qty: 1
+  confidence: estimated
+  note: 工作簿 驱护舰!B108
+- eq: ship_kor_r109
+  service: navy
+  qty: 3
+  confidence: estimated
+  note: 工作簿 驱护舰!B109
+- eq: ship_kor_r110
+  service: navy
+  qty: 1
+  confidence: estimated
+  note: 工作簿 驱护舰!B110
+- eq: ship_kor_r111
+  service: navy
+  qty: 6
+  confidence: estimated
+  note: 工作簿 驱护舰!B111
+- eq: ship_kor_r112
+  service: navy
+  qty: 3
+  confidence: estimated
+  note: 工作簿 驱护舰!B112
+- eq: ship_kor_r113
+  service: navy
+  qty: 1
+  confidence: estimated
+  note: 工作簿 驱护舰!B113
+- eq: ship_kor_r114
+  service: navy
+  qty: 8
+  confidence: estimated
+  note: 工作簿 驱护舰!B114
+- eq: ship_kor_r115
+  service: navy
+  qty: 6
+  confidence: estimated
+  note: 工作簿 驱护舰!B115
+- eq: ship_kor_r116
+  service: navy
+  qty: 2
+  confidence: estimated
+  note: 工作簿 驱护舰!B116
+- eq: ship_kor_r117
+  service: navy
+  qty: 2
+  confidence: estimated
+  note: 工作簿 驱护舰!B117
+- eq: sub_kor_r49
+  service: navy
+  qty: 9
+  confidence: estimated
+  note: 工作簿 海军!J49
+- eq: sub_kor_r50
+  service: navy
+  qty: 9
+  confidence: estimated
+  note: 工作簿 海军!J50
+- eq: sub_kor_r51
+  service: navy
+  qty: 3
+  confidence: estimated
+  note: 工作簿 海军!J51

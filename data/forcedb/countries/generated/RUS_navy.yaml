@@ -1,0 +1,396 @@
+# 由 tools/import_world_navy.py 从作者工作簿生成（RUS 水面舰艇与潜艇）。
+country: RUS
+as_of: '2025-08-31'
+default_source: sheet_cn_us_live
+equipment:
+- id: ship_rus_r42
+  name: 基洛夫
+  category: cruiser
+  origin: RUS
+  unit:
+    value: 122.383
+  unit_source: 工作簿 驱护舰!Z42（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A42；火力 106.6 + 雷达折算 VLS
+- id: ship_rus_r43
+  name: 基洛夫4号舰
+  category: cruiser
+  origin: RUS
+  unit:
+    value: 122.891
+  unit_source: 工作簿 驱护舰!Z43（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A43；火力 112.6 + 雷达折算 VLS
+- id: ship_rus_r44
+  name: 光荣
+  category: cruiser
+  origin: RUS
+  unit:
+    value: 90.519
+  unit_source: 工作簿 驱护舰!Z44（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A44；火力 80.2 + 雷达折算 VLS
+- id: ship_rus_r45
+  name: 无畏2
+  category: destroyer
+  origin: RUS
+  unit:
+    value: 34.799
+  unit_source: 工作簿 驱护舰!Z45（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A45；火力 31 + 雷达折算 VLS
+- id: ship_rus_r46
+  name: 无畏
+  category: destroyer
+  origin: RUS
+  unit:
+    value: 35.799
+  unit_source: 工作簿 驱护舰!Z46（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A46；火力 32 + 雷达折算 VLS
+- id: ship_rus_r47
+  name: 现代
+  category: destroyer
+  origin: RUS
+  unit:
+    value: 36.985
+  unit_source: 工作簿 驱护舰!Z47（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A47；火力 33.2 + 雷达折算 VLS
+- id: ship_rus_r48
+  name: 风暴海燕
+  category: frigate
+  origin: RUS
+  unit:
+    value: 25.29
+  unit_source: 工作簿 驱护舰!Z48（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A48；火力 22 + 雷达折算 VLS
+- id: ship_rus_r49
+  name: 不惧
+  category: frigate
+  origin: RUS
+  unit:
+    value: 24.299
+  unit_source: 工作簿 驱护舰!Z49（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A49；火力 20.5 + 雷达折算 VLS
+- id: ship_rus_r50
+  name: '11356.0'
+  category: frigate
+  origin: RUS
+  unit:
+    value: 25.419
+  unit_source: 工作簿 驱护舰!Z50（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A50；火力 23.1 + 雷达折算 VLS
+- id: ship_rus_r51
+  name: 11661k
+  category: frigate
+  origin: RUS
+  unit:
+    value: 29.623
+  unit_source: 工作簿 驱护舰!Z51（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A51；火力 27.3 + 雷达折算 VLS
+- id: ship_rus_r52
+  name: '22350.0'
+  category: destroyer
+  origin: RUS
+  unit:
+    value: 53.965
+  unit_source: 工作簿 驱护舰!Z52（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A52；火力 39.6 + 雷达折算 VLS
+- id: ship_rus_r53
+  name: '1124.0'
+  category: corvette
+  origin: RUS
+  unit:
+    value: 9
+  unit_source: 工作簿 驱护舰!Z53（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A53；火力 9 + 雷达折算 VLS
+- id: ship_rus_r54
+  name: '12341.0'
+  category: frigate
+  origin: RUS
+  unit:
+    value: 21
+  unit_source: 工作簿 驱护舰!Z54（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A54；火力 21 + 雷达折算 VLS
+- id: ship_rus_r55
+  name: '12411.0'
+  category: frigate
+  origin: RUS
+  unit:
+    value: 17
+  unit_source: 工作簿 驱护舰!Z55（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A55；火力 17 + 雷达折算 VLS
+- id: ship_rus_r56
+  name: 1331m
+  category: corvette
+  origin: RUS
+  unit:
+    value: 3.5
+  unit_source: 工作簿 驱护舰!Z56（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A56；火力 3.5 + 雷达折算 VLS
+- id: ship_rus_r57
+  name: '1239.0'
+  category: frigate
+  origin: RUS
+  unit:
+    value: 13
+  unit_source: 工作簿 驱护舰!Z57（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A57；火力 13 + 雷达折算 VLS
+- id: ship_rus_r58
+  name: '21630.0'
+  category: corvette
+  origin: RUS
+  unit:
+    value: 3.327
+  unit_source: 工作簿 驱护舰!Z58（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A58；火力 1 + 雷达折算 VLS
+- id: ship_rus_r59
+  name: '21631.0'
+  category: frigate
+  origin: RUS
+  unit:
+    value: 12.327
+  unit_source: 工作簿 驱护舰!Z59（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A59；火力 10 + 雷达折算 VLS
+- id: ship_rus_r60
+  name: '20380.0'
+  category: frigate
+  origin: RUS
+  unit:
+    value: 16.327
+  unit_source: 工作簿 驱护舰!Z60（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A60；火力 14 + 雷达折算 VLS
+- id: ship_rus_r61
+  name: '20385.0'
+  category: destroyer
+  origin: RUS
+  unit:
+    value: 32.908
+  unit_source: 工作簿 驱护舰!Z61（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A61；火力 26 + 雷达折算 VLS
+- id: ship_rus_r62
+  name: 22800早期
+  category: frigate
+  origin: RUS
+  unit:
+    value: 13.486
+  unit_source: 工作簿 驱护舰!Z62（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A62；火力 8.5 + 雷达折算 VLS
+- id: ship_rus_r63
+  name: 22800后期
+  category: frigate
+  origin: RUS
+  unit:
+    value: 14.986
+  unit_source: 工作簿 驱护舰!Z63（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A63；火力 10 + 雷达折算 VLS
+- id: sub_rus_r23
+  name: 亚森（潜艇）
+  category: ssn
+  origin: RUS
+  unit:
+    vls: 129.352
+  unit_source: 工作簿 海军!T23/J23（成本×5.0×折算系数，等效 VLS）
+  notes: 工作簿 海军!I23；单艇造价 2.7 十亿美元
+- id: sub_rus_r24
+  name: 阿库拉（潜艇）
+  category: ssn
+  origin: RUS
+  unit:
+    vls: 86.235
+  unit_source: 工作簿 海军!T24/J24（成本×8.0×折算系数，等效 VLS）
+  notes: 工作簿 海军!I24；单艇造价 1.8 十亿美元
+- id: sub_rus_r25
+  name: 塞拉（潜艇）
+  category: ssn
+  origin: RUS
+  unit:
+    vls: 81.444
+  unit_source: 工作簿 海军!T25/J25（成本×2.0×折算系数，等效 VLS）
+  notes: 工作簿 海军!I25；单艇造价 1.7 十亿美元
+- id: sub_rus_r26
+  name: 奥斯卡（潜艇）
+  category: ssn
+  origin: RUS
+  unit:
+    vls: 81.444
+  unit_source: 工作簿 海军!T26/J26（成本×6.0×折算系数，等效 VLS）
+  notes: 工作簿 海军!I26；单艇造价 1.7 十亿美元
+- id: sub_rus_r27
+  name: 维克多级（潜艇）
+  category: ssn
+  origin: RUS
+  unit:
+    vls: 57.49
+  unit_source: 工作簿 海军!T27/J27（成本×2.0×折算系数，等效 VLS）
+  notes: 工作簿 海军!I27；单艇造价 1.2 十亿美元
+- id: sub_rus_r28
+  name: 基洛（潜艇）
+  category: ssk
+  origin: RUS
+  unit:
+    vls: 23.742
+  unit_source: 工作簿 海军!T28/J28（成本×5.0×折算系数，等效 VLS）
+  notes: 工作簿 海军!I28；单艇造价 0.4955703768 十亿美元
+- id: sub_rus_r29
+  name: 基洛改进（潜艇）
+  category: ssk
+  origin: RUS
+  unit:
+    vls: 28.49
+  unit_source: 工作簿 海军!T29/J29（成本×12.0×折算系数，等效 VLS）
+  notes: 工作簿 海军!I29；单艇造价 0.5946844521 十亿美元
+- id: sub_rus_r30
+  name: 拉达（潜艇）
+  category: ssk
+  origin: RUS
+  unit:
+    vls: 14.472
+  unit_source: 工作簿 海军!T30/J30（成本×1.0×折算系数，等效 VLS）
+  notes: 工作簿 海军!I30；单艇造价 0.302078822 十亿美元
+inventory:
+- eq: ship_rus_r42
+  service: navy
+  qty: 1
+  confidence: estimated
+  note: 工作簿 驱护舰!B42
+- eq: ship_rus_r43
+  service: navy
+  qty: 1
+  confidence: estimated
+  note: 工作簿 驱护舰!B43
+- eq: ship_rus_r44
+  service: navy
+  qty: 2
+  confidence: estimated
+  note: 工作簿 驱护舰!B44
+- eq: ship_rus_r45
+  service: navy
+  qty: 1
+  confidence: estimated
+  note: 工作簿 驱护舰!B45
+- eq: ship_rus_r46
+  service: navy
+  qty: 7
+  confidence: estimated
+  note: 工作簿 驱护舰!B46
+- eq: ship_rus_r47
+  service: navy
+  qty: 1
+  confidence: estimated
+  note: 工作簿 驱护舰!B47
+- eq: ship_rus_r48
+  service: navy
+  qty: 2
+  confidence: estimated
+  note: 工作簿 驱护舰!B48
+- eq: ship_rus_r49
+  service: navy
+  qty: 2
+  confidence: estimated
+  note: 工作簿 驱护舰!B49
+- eq: ship_rus_r50
+  service: navy
+  qty: 5
+  confidence: estimated
+  note: 工作簿 驱护舰!B50
+- eq: ship_rus_r51
+  service: navy
+  qty: 2
+  confidence: estimated
+  note: 工作簿 驱护舰!B51
+- eq: ship_rus_r52
+  service: navy
+  qty: 3
+  confidence: estimated
+  note: 工作簿 驱护舰!B52
+- eq: ship_rus_r53
+  service: navy
+  qty: 16
+  confidence: estimated
+  note: 工作簿 驱护舰!B53
+- eq: ship_rus_r54
+  service: navy
+  qty: 8
+  confidence: estimated
+  note: 工作簿 驱护舰!B54
+- eq: ship_rus_r55
+  service: navy
+  qty: 16
+  confidence: estimated
+  note: 工作簿 驱护舰!B55
+- eq: ship_rus_r56
+  service: navy
+  qty: 6
+  confidence: estimated
+  note: 工作簿 驱护舰!B56
+- eq: ship_rus_r57
+  service: navy
+  qty: 2
+  confidence: estimated
+  note: 工作簿 驱护舰!B57
+- eq: ship_rus_r58
+  service: navy
+  qty: 3
+  confidence: estimated
+  note: 工作簿 驱护舰!B58
+- eq: ship_rus_r59
+  service: navy
+  qty: 12
+  confidence: estimated
+  note: 工作簿 驱护舰!B59
+- eq: ship_rus_r60
+  service: navy
+  qty: 9
+  confidence: estimated
+  note: 工作簿 驱护舰!B60
+- eq: ship_rus_r61
+  service: navy
+  qty: 1
+  confidence: estimated
+  note: 工作簿 驱护舰!B61
+- eq: ship_rus_r62
+  service: navy
+  qty: 2
+  confidence: estimated
+  note: 工作簿 驱护舰!B62
+- eq: ship_rus_r63
+  service: navy
+  qty: 5
+  confidence: estimated
+  note: 工作簿 驱护舰!B63
+- eq: sub_rus_r23
+  service: navy
+  qty: 5
+  confidence: estimated
+  note: 工作簿 海军!J23
+- eq: sub_rus_r24
+  service: navy
+  qty: 8
+  confidence: estimated
+  note: 工作簿 海军!J24
+- eq: sub_rus_r25
+  service: navy
+  qty: 2
+  confidence: estimated
+  note: 工作簿 海军!J25
+- eq: sub_rus_r26
+  service: navy
+  qty: 6
+  confidence: estimated
+  note: 工作簿 海军!J26
+- eq: sub_rus_r27
+  service: navy
+  qty: 2
+  confidence: estimated
+  note: 工作簿 海军!J27
+- eq: sub_rus_r28
+  service: navy
+  qty: 5
+  confidence: estimated
+  note: 工作簿 海军!J28
+- eq: sub_rus_r29
+  service: navy
+  qty: 12
+  confidence: estimated
+  note: 工作簿 海军!J29
+- eq: sub_rus_r30
+  service: navy
+  qty: 1
+  confidence: estimated
+  note: 工作簿 海军!J30
