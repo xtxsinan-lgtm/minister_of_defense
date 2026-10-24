@@ -162,3 +162,60 @@ def transport_helicopter_power(cabin_volume_m3: float, mean_payload_kg: float, f
 def attack_helicopter_power(weapon_load_kg: float, ferry_range_km: float, max_speed_kph: float) -> float:
     """攻击直升机总战力（武装直升机!12 行）：武器载重^0.5 × 转场航程^0.25 × 最大速度^0.25。"""
     return weapon_load_kg ** 0.5 * ferry_range_km ** 0.25 * max_speed_kph ** 0.25
+
+
+# --------------------------------------------------------------------- 更好的模型：物理航程（作者“性能计算”sheet / 知乎《全球四/五代机作战半径…》）
+SOUND_KMH_AT_ALTITUDE = 1062.0     # 高空音速 km/h，表格里 M 列的常数
+
+
+def tsfc_from_efficiency(mach: float, total_efficiency: float) -> float:
+    """比油耗 tsfc[kg/(kgf·h)] = Mach / 总效率 × 0.242（性能计算!H 列）。"""
+    return mach / total_efficiency * 0.242
+
+
+def breguet_radius_km(mach: float, lift_to_drag: float, tsfc: float, empty_kg: float, fuel_kg: float,
+                      payload_kg: float) -> float:
+    """布雷盖作战半径（性能计算!M 列）：到达目标后立即抛掉载荷，往返对称。
+
+    R = a·M·(L/D)/c · ln r，其中 r = ( sqrt(P² + 4·We·(Wf+We+P)) − P ) / (2·We)
+    （We 空重，Wf 内油，P 载荷）。对应文章公式 R = V/c·L/D·ln((We+Wf1)/We)。
+    """
+    inner = math.sqrt(payload_kg ** 2 + 4 * empty_kg * (fuel_kg + empty_kg + payload_kg))
+    return SOUND_KMH_AT_ALTITUDE * mach * lift_to_drag / tsfc * math.log((inner - payload_kg) / (2 * empty_kg))
+
+
+def payload_for_radius_kg(target_km: float, mach: float, lift_to_drag: float, tsfc: float, empty_kg: float,
+                          fuel_kg: float) -> float:
+    """给定作战半径下可带的最大载荷（二分法反解 breguet_radius_km）。
+
+    这正是对地战力公式缺的“1000km 半径挂载量”的物理版本，可取代按文章结果反推的估计值。
+    """
+    if breguet_radius_km(mach, lift_to_drag, tsfc, empty_kg, fuel_kg, 0.0) < target_km:
+        return 0.0
+    lo, hi = 0.0, 5.0 * (empty_kg + fuel_kg)
+    for _ in range(80):
+        mid = (lo + hi) / 2
+        if breguet_radius_km(mach, lift_to_drag, tsfc, empty_kg, fuel_kg, mid) >= target_km:
+            lo = mid
+        else:
+            hi = mid
+    return lo
+
+
+# --------------------------------------------------------------------- 更好的模型：导弹外形反推（作者“导弹”sheet）
+def missile_volume_m3(length_m: float, diameter_m: float, nose_calibers: float = 4.0) -> float:
+    """外形体积：头部锥（长 nose_calibers×直径）+ 圆柱段（导弹!F 列）。"""
+    r2 = (diameter_m / 2) ** 2
+    nose = diameter_m * nose_calibers
+    return nose * math.pi * r2 / 3 + (length_m - nose) * math.pi * r2
+
+
+def missile_mass_kg(volume_m3: float, ref_volume_m3: float = 0.177, ref_mass_kg: float = 350.0) -> float:
+    """重量 ∝ 体积，以 ~0.177 m³ ≈ 350 kg 的现役导弹为标尺（导弹!G 列）。"""
+    return volume_m3 / ref_volume_m3 * ref_mass_kg
+
+
+def missile_warhead_kg(volume_m3: float, ref_volume_m3: float = 0.44, ref_warhead_kg: float = 90.0,
+                       exponent: float = 0.6) -> float:
+    """战斗部 ∝ 体积^0.6（陆/海基用 0.44→90 kg；空基用 0.177→66 kg，见导弹!X 列）。"""
+    return (volume_m3 / ref_volume_m3) ** exponent * ref_warhead_kg

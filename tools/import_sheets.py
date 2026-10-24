@@ -5,7 +5,7 @@
   python3 tools/import_sheets.py --xlsx 分层级火力.xlsx
 输出（可重复生成、纳入版本管理）：
   data/forcedb/equipment/{air,naval,missile_ad,transport}.yaml
-  data/forcedb/inventory_cn_us.csv
+  data/forcedb/inventory_seed.csv
 约定：
   * 物理/技术参数放 specs（键名带单位后缀）。
   * 表格里已经算出来的“文章结果”放 specs 的 article.* 键（快照），引擎可在 snapshot 模式下直接使用；
@@ -518,6 +518,67 @@ def special_forces_snapshot(S: Sheets):
             "USA": {"total": g("G21"), "army": g("H21"), "marines": g("I21"), "navy": g("J21"), "airforce": g("K21")}}
 
 
+# ------------------------------------------------------------------ 航母空中联队模型（“航母战斗机”工作簿 / 航母战力 sheet）
+# 表格行名 → (装备 id, 国家, 类别, 中文名, 状态, 在役数量；None = 不写库存)
+CARRIER_ROWS = {
+    "尼米兹": ("cv_nimitz", "USA", None, None, None, None),
+    "福特": ("cv_ford", "USA", None, None, None, None),
+    "福建": ("cv_fujian", "CHN", None, None, None, None),
+    "山东": ("cv_liaoning_shandong", "CHN", None, None, None, None),
+    "黄蜂": ("cv_wasp", "USA", None, None, None, None),
+    "004": ("cv_004", "CHN", "aircraft_carrier", "004 型核动力航母", "planned", None),
+    "076": ("cv_076", "CHN", "amphibious_carrier", "076 型两栖攻击舰", "sea_trials", None),
+    "布干维尔": ("cv_america_lha8", "USA", "amphibious_carrier", "美国级 LHA-8 布干维尔（无坞舱改型）", "building", None),
+    "女王": ("cv_queen_elizabeth", "GBR", "aircraft_carrier", "伊丽莎白女王级", None, 2),
+    "戴高乐": ("cv_charles_de_gaulle", "FRA", "aircraft_carrier", "戴高乐号", None, 1),
+    "维克兰特": ("cv_vikrant", "IND", "aircraft_carrier", "维克兰特号", None, 1),
+    "超日王": ("cv_vikramaditya", "IND", "aircraft_carrier", "超日王号（前戈尔什科夫海军上将）", None, 1),
+    "出云": ("cv_izumo", "JPN", "amphibious_carrier", "出云级（F-35B 改装）", None, 2),
+    "第里雅斯特": ("cv_trieste", "ITA", "amphibious_carrier", "第里雅斯特号", None, 1),
+    "加富尔": ("cv_cavour", "ITA", "aircraft_carrier", "加富尔号", None, 1),
+    "胡安卡洛斯一世": ("cv_juan_carlos_i", "ESP", "amphibious_carrier", "胡安·卡洛斯一世号", None, 1),
+}
+AIRWING_OUT = {"composite_nonstealth": "B", "cap_search": "C", "cap_counter": "D", "intercept": "E", "air_combat": "F",
+               "anti_ship": "G", "strike_land": "H", "composite_stealth": "I", "stealth_eval": "P", "total": "Q"}
+AIRWING_IN = {"launch_points_light_sorties": "Z", "launch_points_heavy_sorties": "AA", "recovery_sorties": "AB",
+              "aircraft_light": "AC", "aircraft_heavy": "AD", "range_internal_km": "AE", "range_tank_heavy_km": "AF",
+              "range_tank_light_km": "AG", "cap_stations_fixed": "AJ"}
+
+
+def import_carrier_airwing(path, o: Out):
+    wb = openpyxl.load_workbook(path, data_only=True)
+    ws = wb["航母战力"]
+    rows, ann = [], []
+    for r in range(2, 19):
+        name = ws[f"A{r}"].value
+        if name not in CARRIER_ROWS:
+            continue
+        eid, country, cat, zh, status, qty = CARRIER_ROWS[name]
+        specs = {f"airwing.{k}": ws[f"{c}{r}"].value for k, c in AIRWING_OUT.items()}
+        specs.update({f"airwing.in.{k}": ws[f"{c}{r}"].value for k, c in AIRWING_IN.items()})
+        specs = {k: clean(v) for k, v in specs.items() if isinstance(v, (int, float))}
+        rows.append(dict(equipment_id=eid, country=country, sheet_name=name, **{k.split(".", 1)[1]: v for k, v in specs.items()}))
+        if cat is None:
+            ann.append({"equipment_id": eid, "specs": specs})
+        else:
+            extra = {"status": status} if status else {}
+            o.add(zh, cat, country, specs, country=country, service="navy", qty=None, eid=eid, extra=extra,
+                  notes="航母空中联队复合模型（作者“航母战力”sheet）：以尼米兹非隐身空联 = 10 为尺度。")
+            if qty:
+                o.inv.append(dict(country=country, service="navy", equipment_id=eid, kind="active", role="all",
+                                  quantity=qty, as_of="2025-08-31", source_id="manual_general_knowledge",
+                                  confidence="estimated",
+                                  notes="常识性数量，非作者表格；待爬虫/人工核实"))
+    cols = sorted({k for r in rows for k in r}, key=lambda k: (k not in ("equipment_id", "country", "sheet_name"), k))
+    (OUT / "models").mkdir(parents=True, exist_ok=True)
+    with open(OUT / "models" / "carrier_airwing.csv", "w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=cols)
+        w.writeheader()
+        for r in rows:
+            w.writerow(r)
+    return ann
+
+
 # ------------------------------------------------------------------ 输出
 def write(o: Out, name: str, filt):
     path = OUT / "equipment" / f"{name}.yaml"
@@ -533,6 +594,7 @@ def write(o: Out, name: str, filt):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--xlsx", required=True, help="分层级火力 工作簿（xlsx 导出）")
+    ap.add_argument("--xlsx-carrier", help="航母战斗机 工作簿（xlsx 导出）；提供则同时导入航母空中联队模型")
     args = ap.parse_args()
     S = Sheets(args.xlsx)
     o = Out()
@@ -542,6 +604,8 @@ def main():
     import_missile_ad(S, o)
     n_brig = import_brigades(S)
     heli_ann = import_helicopters(S, o)
+    if args.xlsx_carrier:
+        heli_ann += import_carrier_airwing(args.xlsx_carrier, o)
     with open(OUT / "spec_annotations.yaml", "w", encoding="utf-8") as f:
         f.write("# 为既有装备（仓库 data/equipment）追加量化引擎需要的规格/文章快照。由 tools/import_sheets.py 生成。\n")
         yaml.safe_dump({"annotations": heli_ann}, f, allow_unicode=True, sort_keys=False)
@@ -556,15 +620,17 @@ def main():
     domain_of = {"fighter": "air", "bomber": "air", "awacs": "air", "tanker_aircraft": "air", "ew_aircraft": "air",
                  "asw_aircraft": "air", "large_uav": "air"}
     n_air = write(o, "air", lambda m: m["category"] in domain_of)
-    n_sea = write(o, "naval", lambda m: m["category"] in ("destroyer", "cruiser", "corvette", "frigate", "ssn", "ssg_n",
-                                                          "ssk", "aircraft_carrier", "amphibious_carrier",
-                                                          "coastal_missile_battery", "naval_sam"))
+    new_carriers = {v[0] for v in CARRIER_ROWS.values() if v[2]}
+    n_sea = write(o, "naval", lambda m: m["id"] not in new_carriers and m["category"] in (
+        "destroyer", "cruiser", "corvette", "frigate", "ssn", "ssg_n", "ssk", "aircraft_carrier", "amphibious_carrier",
+        "coastal_missile_battery", "naval_sam"))
+    n_sea += write(o, "carriers_world", lambda m: m["id"] in new_carriers)
     n_tr = write(o, "transport", lambda m: m["category"] in ("transport_aircraft", "amphibious_dock", "logistics_ship"))
     n_ms = write(o, "missile_ad", lambda m: m["category"] in ("srbm", "mrbm", "irbm", "icbm", "cruise_missile_land",
                                                             "howitzer_heavy_towed", "howitzer_heavy_sp",
                                                             "howitzer_heavy_truck", "mrl_long_range", "sam_long",
                                                             "sam_medium", "sam_short", "spaag"))
-    inv_path = OUT / "inventory_cn_us.csv"
+    inv_path = OUT / "inventory_seed.csv"
     cols = ["country", "service", "equipment_id", "kind", "role", "quantity", "as_of", "source_id", "confidence", "notes"]
     with open(inv_path, "w", encoding="utf-8", newline="") as f:
         w = csv.DictWriter(f, fieldnames=cols)

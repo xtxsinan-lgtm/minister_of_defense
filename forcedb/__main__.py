@@ -45,12 +45,12 @@ def cmd_rollup(args):
 def cmd_score(args):
     from .quant import Engine
     eq, toe = _open()
-    e = Engine(eq, toe, mode=args.mode, article_compat=False if args.no_compat else None, reference=args.ref)
+    e = Engine(eq, toe, mode=args.mode, article_compat=False if args.no_compat else None, reference=args.ref, carrier_model=args.carrier_model)
     r = e.run(args.countries)
     print(r.render())
     for n in e.notes:
         print("·", n)
-    if args.mode == "recompute" or args.deviations:
+    if args.mode == "recompute" or args.deviations or args.carrier_model != "article":
         import collections
         by = collections.defaultdict(list)
         for d in r.deviations:
@@ -58,10 +58,10 @@ def cmd_score(args):
         print("\n重算 vs 文章快照（比值 = 重算/快照；偏离大者多为文章里人工调整过）：")
         for k, v in by.items():
             rs = [x["ratio"] for x in v]
-            print(f"  {k:<28}n={len(v):<3} min={min(rs):.3f} max={max(rs):.3f}")
+            print(f"  {k:<30}n={len(v):<3} min={min(rs):.3f} max={max(rs):.3f}")
         worst = sorted(r.deviations, key=lambda d: -abs(d["ratio"] - 1))[:args.top]
         for d in worst:
-            print(f"    {d['item']:<26}{d['equipment']:<24}重算 {d['recomputed']:.3f}  快照 {d['snapshot']:.3f}  比值 {d['ratio']:.2f}")
+            print(f"    {d['item']:<30}{d['equipment']:<24}重算 {d['recomputed']:.3f}  快照 {d['snapshot']:.3f}  比值 {d['ratio']:.2f}")
     return 0
 
 
@@ -145,6 +145,8 @@ def main(argv=None):
     p.add_argument("--mode", choices=["snapshot", "recompute"], default="snapshot")
     p.add_argument("--countries", nargs="+", default=["CHN", "USA"])
     p.add_argument("--ref", default="USA", help="基准国（归一为 100/200）")
+    p.add_argument("--carrier-model", choices=["article", "airwing"], default="article",
+                   help="航母口径：文章的出动架次折算 / 作者航母空中联队复合模型")
     p.add_argument("--no-compat", action="store_true", help="不加回表格硬编码总计的差额（逐行自洽口径）")
     p.add_argument("--deviations", action="store_true")
     p.add_argument("--top", type=int, default=10)

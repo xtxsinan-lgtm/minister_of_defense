@@ -45,3 +45,8 @@ sources:
     url: https://en.wikipedia.org/
     reliability: low
     notes: 众包、引用质量参差，只用于交叉验证与发现新增条目；写库时置信度记 estimated，并保留页面版本号。
+  - id: manual_general_knowledge
+    kind: manual
+    title: 助手依据公开常识录入的数量（待核实）
+    reliability: low
+    notes: 仅用于让跨国对比能跑起来的占位；任何高可靠度来源（表格、爬虫 high）都会覆盖它。

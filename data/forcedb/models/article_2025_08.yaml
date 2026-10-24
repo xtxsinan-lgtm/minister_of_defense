@@ -26,6 +26,9 @@ service_structure:
 sea:
   carve_outs:                       # 从该国海上总量中划给其他军种的“对海力量”（总计!E20/E21）
     USA: {army: 32.0, marines: 64.0}
+  carrier_airwing:                  # carrier_model="airwing" 时：复合指标 × 锚点（尼米兹每艘 VLS ÷ 其复合指标）
+    metric: composite_nonstealth    # 非隐身空联复合指标（尼米兹=10）；composite_stealth/total 含隐身空联假设
+    anchor_equipment: cv_nimitz
   submarine_to_vls: 3.9234          # 潜艇!L19/L18 两国一致（成本折算：弗吉尼亚/伯克）
 
 ground:

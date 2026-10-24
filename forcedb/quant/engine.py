@@ -28,7 +28,7 @@ def _num(v):
 
 class Engine:
     def __init__(self, eq=None, toe=None, mode: str = "snapshot", preset: str = "article_2025_08",
-                 reference: str = "USA", article_compat: Optional[bool] = None):
+                 reference: str = "USA", article_compat: Optional[bool] = None, carrier_model: str = "article"):
         if mode not in ("snapshot", "recompute"):
             raise ValueError("mode 应为 snapshot 或 recompute")
         self.eq = eq or connect(DB_DIR / "equipment.sqlite")
@@ -37,6 +37,10 @@ class Engine:
         self.ref = reference
         # 默认：snapshot 模式复现文章（加回表格硬编码总计与逐行加总的差额）；recompute 模式用自洽口径
         self.article_compat = (mode == "snapshot") if article_compat is None else article_compat
+        # 航母口径：article = 文章的“日出动架次×成本换算”；airwing = 作者“航母战力”空中联队复合模型（见 docs/forcedb.md）
+        if carrier_model not in ("article", "airwing"):
+            raise ValueError("carrier_model 应为 article 或 airwing")
+        self.carrier_model = carrier_model
         self.preset = load_yaml(PRESET_DIR / f"{preset}.yaml")
         self.sf_snapshot = load_yaml(DATA / "forcedb" / "special_forces_snapshot.yaml")
         self._specs: Dict[str, Dict[str, object]] = {}
@@ -229,7 +233,19 @@ class Engine:
                     unit = per
             surface += unit * qty
         for r in self.inventory(country, ["aircraft_carrier", "amphibious_carrier"]):
-            unit = self._snapshot_unit(r["equipment_id"], "article.power_vls", "article.qty")
+            eid = r["equipment_id"]
+            unit = self._snapshot_unit(eid, "article.power_vls", "article.qty")
+            if self.carrier_model == "airwing":
+                a = p["carrier_airwing"]
+                comp = self.spec(eid, "airwing." + a["metric"])
+                if comp is not None:
+                    anchor = (self._snapshot_unit(a["anchor_equipment"], "article.power_vls", "article.qty")
+                              / self.spec(a["anchor_equipment"], "airwing." + a["metric"]))
+                    new_unit = comp * anchor
+                    self._compare(eid, "carrier_airwing_vs_article", new_unit, unit)
+                    unit = new_unit
+                elif unit is None:
+                    self.notes.append(f"航母 {eid} 缺空中联队模型数据且无文章快照，按 0 计")
             carriers += (unit or 0.0) * r["quantity"]
         for r in self.inventory(country, ["ssn", "ssg_n", "ssk"]):
             eid, qty = r["equipment_id"], r["quantity"]

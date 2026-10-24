@@ -81,3 +81,34 @@ def test_other_country_pair_runs_with_empty_data(dbs):
     eq, toe = dbs
     r = Engine(eq, toe, mode="snapshot").run(["CHN", "USA", "JPN"])
     assert r["JPN"]["total"] == pytest.approx(0.0, abs=1e-9)
+
+
+def test_independent_carrier_airwing_model_agrees_with_article(dbs):
+    """作者的“航母战力”空中联队模型（独立方法）与文章里的出动架次折算，在福特/黄蜂/福建上相差 ≤10%，山东 ≤15%。"""
+    eq, toe = dbs
+    e = Engine(eq, toe, mode="snapshot", carrier_model="airwing")
+    r = e.run()
+    dev = {d["equipment"]: d["ratio"] for d in r.deviations if d["item"] == "carrier_airwing_vs_article"}
+    assert dev["cv_nimitz"] == pytest.approx(1.0)                      # 锚点
+    for k in ("cv_ford", "cv_wasp", "cv_fujian"):
+        assert dev[k] == pytest.approx(1.0, abs=0.10), k
+    assert dev["cv_liaoning_shandong"] == pytest.approx(1.0, abs=0.15)
+    assert 0.795 < r["CHN"]["ratio_to_ref"] < 0.81                      # 换口径后总比值几乎不变
+
+
+def test_carrier_model_validates_argument(dbs):
+    eq, toe = dbs
+    with pytest.raises(ValueError):
+        Engine(eq, toe, carrier_model="bogus")
+
+
+def test_foreign_carriers_are_loaded_for_global_comparison(dbs):
+    eq, _ = dbs
+    rows = {r["equipment_id"]: r for r in eq.execute(
+        "SELECT i.country, i.equipment_id, i.quantity, i.source_id FROM v_inventory_latest i "
+        "WHERE i.country NOT IN ('CHN','USA') AND i.equipment_id LIKE 'cv_%'")}
+    assert {"cv_queen_elizabeth", "cv_charles_de_gaulle", "cv_vikrant", "cv_izumo"} <= set(rows)
+    assert all(r["source_id"] == "manual_general_knowledge" for r in rows.values())   # 来源可追溯、低可靠度
+    spec = eq.execute("SELECT num FROM spec WHERE equipment_id='cv_charles_de_gaulle' "
+                      "AND key='airwing.composite_nonstealth'").fetchone()
+    assert spec and 4 < spec[0] < 7

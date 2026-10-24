@@ -74,3 +74,25 @@ def test_ship_firepower_burke_iia():
 
 def test_transport_throughput():
     assert F.transport_throughput_24h(19, 13.4, 427) == pytest.approx(14530, rel=0.01)
+
+
+def test_breguet_radius_matches_f22_row_of_sheet():
+    # 性能计算!第 3 行：M=1.76，L/D=3.63，总效率 0.391，空重 19700，内油 8200，载荷 1000 → 作战半径 1063 km
+    tsfc = F.tsfc_from_efficiency(1.76, 0.391)
+    assert tsfc == pytest.approx(1.0893, rel=1e-3)
+    assert F.breguet_radius_km(1.76, 3.63, tsfc, 19700, 8200, 1000) == pytest.approx(1062.97, rel=1e-3)
+
+
+def test_payload_for_radius_inverts_the_range_equation():
+    tsfc = F.tsfc_from_efficiency(0.8, 0.191)
+    p = F.payload_for_radius_kg(1000.0, 0.8, 6.91, tsfc, 19700, 8200)
+    assert F.breguet_radius_km(0.8, 6.91, tsfc, 19700, 8200, p) == pytest.approx(1000.0, rel=1e-6)
+    assert F.payload_for_radius_kg(1e6, 0.8, 6.91, tsfc, 19700, 8200) == 0.0     # 够不着
+
+
+def test_missile_geometry_estimates_match_sheet_row_for_300mm_rocket():
+    # 导弹!第 2 行：300 远火 长 7.3 m 径 0.3 m → 体积 0.4595，重 908.5，战斗部 92.4
+    v = F.missile_volume_m3(7.3, 0.3)
+    assert v == pytest.approx(0.4595, rel=1e-3)
+    assert F.missile_mass_kg(v) == pytest.approx(908.5, rel=1e-3)
+    assert F.missile_warhead_kg(v) == pytest.approx(92.37, rel=1e-3)

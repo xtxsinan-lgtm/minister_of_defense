@@ -22,7 +22,7 @@ def ingest_extra_equipment(con) -> int:
 
 
 def ingest_inventory(con, path=None) -> int:
-    path = path or FORCEDB / "inventory_cn_us.csv"
+    path = path or FORCEDB / "inventory_seed.csv"
     n = 0
     with open(path, encoding="utf-8", newline="") as f:
         for r in csv.DictReader(f):

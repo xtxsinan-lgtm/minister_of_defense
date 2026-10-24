@@ -325,3 +325,11 @@ USA,army,ah64e,reserve,national_guard,312.0,2025-08-31,sheet_cn_us,stated,
 USA,marines,ah1z,active,marines,108.0,2025-08-31,sheet_cn_us,stated,
 USA,marines,ah1z,reserve,marines_reserve,36.0,2025-08-31,sheet_cn_us,stated,
 USA,army,mh6m,active,sof,47.0,2025-08-31,sheet_cn_us,stated,
+GBR,navy,cv_queen_elizabeth,active,all,2,2025-08-31,manual_general_knowledge,estimated,常识性数量，非作者表格；待爬虫/人工核实
+FRA,navy,cv_charles_de_gaulle,active,all,1,2025-08-31,manual_general_knowledge,estimated,常识性数量，非作者表格；待爬虫/人工核实
+IND,navy,cv_vikrant,active,all,1,2025-08-31,manual_general_knowledge,estimated,常识性数量，非作者表格；待爬虫/人工核实
+JPN,navy,cv_izumo,active,all,2,2025-08-31,manual_general_knowledge,estimated,常识性数量，非作者表格；待爬虫/人工核实
+ITA,navy,cv_trieste,active,all,1,2025-08-31,manual_general_knowledge,estimated,常识性数量，非作者表格；待爬虫/人工核实
+ITA,navy,cv_cavour,active,all,1,2025-08-31,manual_general_knowledge,estimated,常识性数量，非作者表格；待爬虫/人工核实
+IND,navy,cv_vikramaditya,active,all,1,2025-08-31,manual_general_knowledge,estimated,常识性数量，非作者表格；待爬虫/人工核实
+ESP,navy,cv_juan_carlos_i,active,all,1,2025-08-31,manual_general_knowledge,estimated,常识性数量，非作者表格；待爬虫/人工核实
