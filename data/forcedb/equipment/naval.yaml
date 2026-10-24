@@ -1,10 +1,10 @@
 # 由 tools/import_sheets.py 从作者的 Google Sheets 导出生成（来源 sheet_cn_us）。
 # 物理/技术参数在 specs；article.* 为表格中已算好的文章结果（快照）。
 models:
-- id: burkei_ii
+- id: ship_burke_i_ii
   name: 伯克I/II
   category: destroyer
-  family: burkei
+  family: ship
   origin: USA
   specs:
     radar_height_m: 3.5
@@ -17,13 +17,15 @@ models:
     article.radar_vls: 22.0
     article.firepower_vls: 100.0
     article.power_per_ship: 121.0
+    article.power_total: 3390.0
     weapons.cell_mk41: 90.0
     weapons.antiship_missiles: 8.0
     weapons.torpedoes: 6.0
-- id: burkeiia
+    article.qty: 28.0
+- id: ship_burke_iia
   name: 伯克IIA
   category: destroyer
-  family: burkeiia
+  family: ship
   origin: USA
   specs:
     radar_height_m: 3.5
@@ -36,13 +38,15 @@ models:
     article.radar_vls: 22.0
     article.firepower_vls: 106.0
     article.power_per_ship: 127.0
+    article.power_total: 5719.0
     weapons.cell_mk41: 96.0
     weapons.antiship_missiles: 8.0
     weapons.torpedoes: 6.0
-- id: burkeiii
+    article.qty: 45.0
+- id: ship_burke_iii
   name: 伯克III
   category: destroyer
-  family: burkeiii
+  family: ship
   origin: USA
   specs:
     radar_height_m: 3.5
@@ -55,22 +59,26 @@ models:
     article.radar_vls: 53.0
     article.firepower_vls: 106.0
     article.power_per_ship: 159.0
+    article.power_total: 159.0
     weapons.cell_mk41: 96.0
     weapons.antiship_missiles: 8.0
     weapons.torpedoes: 6.0
-- id: burkeextra_searam
+    article.qty: 1.0
+- id: ship_burke_extra_searam
   name: 伯克额外SeaRAM
   category: naval_sam
-  family: burkeextra
+  family: ship
   origin: USA
   specs:
     article.firepower_vls: 3.0
     article.power_per_ship: 3.0
+    article.power_total: 22.0
     weapons.point_defense: 11.0
-- id: ticonderoga
+    article.qty: 8.0
+- id: ship_ticonderoga
   name: 提康德罗加级
   category: cruiser
-  family: ticonderoga
+  family: ship
   origin: USA
   specs:
     radar_height_m: 3.5
@@ -83,13 +91,15 @@ models:
     article.radar_vls: 22.0
     article.firepower_vls: 132.0
     article.power_per_ship: 153.0
+    article.power_total: 1378.0
     weapons.cell_mk41: 122.0
     weapons.antiship_missiles: 8.0
     weapons.torpedoes: 6.0
-- id: zumwalt
+    article.qty: 9.0
+- id: ship_zumwalt
   name: 朱姆沃尔特级
   category: destroyer
-  family: zumwalt
+  family: ship
   origin: USA
   specs:
     radar_height_m: 2.72
@@ -102,11 +112,13 @@ models:
     article.radar_vls: 17.0
     article.firepower_vls: 80.0
     article.power_per_ship: 97.0
+    article.power_total: 195.0
     weapons.cell_mk41: 80.0
-- id: independence
+    article.qty: 2.0
+- id: ship_independence
   name: 独立级
   category: corvette
-  family: independence
+  family: ship
   origin: USA
   specs:
     radar_height_m: 2.5
@@ -119,12 +131,14 @@ models:
     article.radar_vls: 4.0
     article.firepower_vls: 11.0
     article.power_per_ship: 15.0
+    article.power_total: 234.0
     weapons.antiship_missiles: 8.0
     weapons.point_defense: 11.0
-- id: freedom15_early
+    article.qty: 16.0
+- id: ship_freedom_15_early
   name: 自由级15号舰以前
   category: corvette
-  family: freedom15
+  family: ship
   origin: USA
   specs:
     radar_height_m: 2.8
@@ -137,11 +151,13 @@ models:
     article.radar_vls: 9.0
     article.firepower_vls: 5.0
     article.power_per_ship: 15.0
+    article.power_total: 44.0
     weapons.point_defense: 21.0
-- id: freedom17_late
+    article.qty: 3.0
+- id: ship_freedom_17_late
   name: 自由级17号舰以后
   category: corvette
-  family: freedom17
+  family: ship
   origin: USA
   specs:
     radar_height_m: 2.8
@@ -154,29 +170,35 @@ models:
     article.radar_vls: 16.0
     article.firepower_vls: 5.0
     article.power_per_ship: 21.0
+    article.power_total: 150.0
     weapons.point_defense: 21.0
-- id: coastal_typhon
+    article.qty: 7.0
+- id: ship_coastal_typhon
   name: 岸基堤丰系统
   category: coastal_missile_battery
-  family: coastal
+  family: ship
   origin: USA
   specs:
     article.firepower_vls: 4.0
     article.power_per_ship: 4.0
+    article.power_total: 32.0
     weapons.cell_mk41: 4.0
-- id: coastal_nmesis
+    article.qty: 8.0
+- id: ship_coastal_nmesis
   name: 岸基NMESIS系统
   category: coastal_missile_battery
-  family: coastal
+  family: ship
   origin: USA
   specs:
     article.firepower_vls: 4.0
     article.power_per_ship: 4.0
+    article.power_total: 64.0
     weapons.antiship_missiles: 4.0
-- id: '052'
+    article.qty: 16.0
+- id: ship_052
   name: '052'
   category: destroyer
-  family: '052'
+  family: ship052
   origin: CHN
   specs:
     radar_height_m: 2.5
@@ -189,14 +211,16 @@ models:
     article.radar_vls: 4.0
     article.firepower_vls: 15.0
     article.power_per_ship: 18.0
+    article.power_total: 37.0
     weapons.antiship_missiles: 8.0
     weapons.point_defense: 8.0
     weapons.asw_rocket: 12.0
     weapons.torpedoes: 6.0
-- id: 051b
+    article.qty: 2.0
+- id: ship_051b
   name: 051B
   category: destroyer
-  family: 051b
+  family: ship051
   origin: CHN
   specs:
     radar_height_m: 2.5
@@ -209,13 +233,15 @@ models:
     article.radar_vls: 4.0
     article.firepower_vls: 33.0
     article.power_per_ship: 37.0
+    article.power_total: 37.0
     weapons.cell_hq16: 32.0
     weapons.antiship_missiles: 16.0
     weapons.torpedoes: 6.0
-- id: 052b
+    article.qty: 1.0
+- id: ship_052b
   name: 052B
   category: destroyer
-  family: 052b
+  family: ship052
   origin: CHN
   specs:
     radar_height_m: 3.0
@@ -228,13 +254,15 @@ models:
     article.radar_vls: 5.0
     article.firepower_vls: 33.0
     article.power_per_ship: 38.0
+    article.power_total: 76.0
     weapons.cell_hq16: 32.0
     weapons.antiship_missiles: 16.0
     weapons.torpedoes: 6.0
-- id: 051c
+    article.qty: 2.0
+- id: ship_051c
   name: 051C
   category: destroyer
-  family: 051c
+  family: ship051
   origin: CHN
   specs:
     radar_height_m: 3.2
@@ -247,13 +275,15 @@ models:
     article.radar_vls: 11.0
     article.firepower_vls: 44.0
     article.power_per_ship: 55.0
+    article.power_total: 109.0
     weapons.cell_sea_ram_riff: 48.0
     weapons.antiship_missiles: 8.0
     weapons.torpedoes: 6.0
-- id: 052c
+    article.qty: 2.0
+- id: ship_052c
   name: 052C
   category: destroyer
-  family: 052c
+  family: ship052
   origin: CHN
   specs:
     radar_height_m: 4.0
@@ -266,13 +296,15 @@ models:
     article.radar_vls: 34.0
     article.firepower_vls: 40.0
     article.power_per_ship: 74.0
+    article.power_total: 444.0
     weapons.cell_hq9: 48.0
     weapons.antiship_missiles: 8.0
     weapons.torpedoes: 6.0
-- id: 052d_b34
+    article.qty: 6.0
+- id: ship_052d_b34
   name: 052D三四批次
   category: destroyer
-  family: 052d
+  family: ship052
   origin: CHN
   specs:
     radar_height_m: 4.3
@@ -285,14 +317,16 @@ models:
     article.radar_vls: 36.0
     article.firepower_vls: 114.0
     article.power_per_ship: 150.0
+    article.power_total: 4644.0
     weapons.cell_htk1_deep: 16.0
     weapons.cell_htk1: 48.0
     weapons.point_defense: 32.0
     weapons.torpedoes: 6.0
-- id: 052d_b4extra_antistealth_radar
+    article.qty: 31.0
+- id: ship_052d_b4_extra_antistealth_radar
   name: 052D四批次额外反隐雷达
   category: destroyer
-  family: 052d
+  family: ship052
   origin: CHN
   specs:
     radar_height_m: 2.0
@@ -304,10 +338,12 @@ models:
     detect_rcs3_km: 2979.0
     article.radar_vls: 25.0
     article.power_per_ship: 25.0
-- id: sovremenny
+    article.power_total: 149.0
+    article.qty: 6.0
+- id: ship_sovremenny
   name: 现代级
   category: destroyer
-  family: sovremenny
+  family: ship
   origin: RUS
   specs:
     radar_height_m: 3.2
@@ -320,15 +356,17 @@ models:
     article.radar_vls: 11.0
     article.firepower_vls: 44.0
     article.power_per_ship: 54.0
+    article.power_total: 109.0
     weapons.cell_hq16: 32.0
     weapons.antiship_missiles: 8.0
     weapons.point_defense: 64.0
     weapons.asw_rocket: 12.0
     weapons.torpedoes: 4.0
-- id: sovremenny_mod
+    article.qty: 2.0
+- id: ship_sovremenny_mod
   name: 现代级改装
   category: destroyer
-  family: sovremenny
+  family: ship
   origin: RUS
   specs:
     radar_height_m: 3.2
@@ -341,15 +379,17 @@ models:
     article.radar_vls: 11.0
     article.firepower_vls: 29.0
     article.power_per_ship: 40.0
+    article.power_total: 79.0
     weapons.cell_shtkili: 2.0
     weapons.antiship_missiles: 8.0
     weapons.point_defense: 64.0
     weapons.asw_rocket: 12.0
     weapons.torpedoes: 4.0
-- id: 053h3
+    article.qty: 2.0
+- id: ship_053h3
   name: 053H3
   category: frigate
-  family: 053h3
+  family: ship053
   origin: CHN
   specs:
     radar_height_m: 2.5
@@ -362,13 +402,15 @@ models:
     article.radar_vls: 4.0
     article.firepower_vls: 13.0
     article.power_per_ship: 17.0
+    article.power_total: 118.0
     weapons.antiship_missiles: 8.0
     weapons.point_defense: 8.0
     weapons.asw_rocket: 12.0
-- id: '054'
+    article.qty: 7.0
+- id: ship_054
   name: '054'
   category: frigate
-  family: '054'
+  family: ship054
   origin: CHN
   specs:
     radar_height_m: 3.0
@@ -381,14 +423,16 @@ models:
     article.radar_vls: 5.0
     article.firepower_vls: 19.0
     article.power_per_ship: 23.0
+    article.power_total: 47.0
     weapons.antiship_missiles: 8.0
     weapons.point_defense: 24.0
     weapons.asw_rocket: 12.0
     weapons.torpedoes: 6.0
-- id: 054a
+    article.qty: 2.0
+- id: ship_054a
   name: 054A
   category: frigate
-  family: 054a
+  family: ship054
   origin: CHN
   specs:
     radar_height_m: 3.0
@@ -401,14 +445,16 @@ models:
     article.radar_vls: 5.0
     article.firepower_vls: 28.0
     article.power_per_ship: 33.0
+    article.power_total: 1320.0
     weapons.cell_hq16: 32.0
     weapons.antiship_missiles: 8.0
     weapons.asw_rocket: 12.0
     weapons.torpedoes: 6.0
-- id: 054b
+    article.qty: 40.0
+- id: ship_054b
   name: 054B
   category: frigate
-  family: 054b
+  family: ship054
   origin: CHN
   specs:
     radar_height_m: 3.0
@@ -421,15 +467,17 @@ models:
     article.radar_vls: 18.0
     article.firepower_vls: 34.0
     article.power_per_ship: 52.0
+    article.power_total: 103.0
     weapons.cell_hq16: 32.0
     weapons.antiship_missiles: 8.0
     weapons.point_defense: 24.0
     weapons.asw_rocket: 12.0
     weapons.torpedoes: 6.0
-- id: '055'
+    article.qty: 2.0
+- id: ship_055
   name: '055'
   category: cruiser
-  family: '055'
+  family: ship055
   origin: CHN
   specs:
     radar_height_m: 4.5
@@ -442,13 +490,15 @@ models:
     article.radar_vls: 65.0
     article.firepower_vls: 206.0
     article.power_per_ship: 271.0
+    article.power_total: 2165.0
     weapons.cell_htk1_deep: 64.0
     weapons.cell_htk1: 48.0
     weapons.point_defense: 24.0
-- id: 056a
+    article.qty: 8.0
+- id: ship_056a
   name: 056A
   category: corvette
-  family: 056a
+  family: ship056
   origin: CHN
   specs:
     radar_height_m: 2.0
@@ -461,13 +511,15 @@ models:
     article.radar_vls: 3.0
     article.firepower_vls: 8.0
     article.power_per_ship: 11.0
+    article.power_total: 552.0
     weapons.antiship_missiles: 4.0
     weapons.point_defense: 8.0
     weapons.torpedoes: 6.0
-- id: '022'
+    article.qty: 52.0
+- id: ship_022
   name: '022'
   category: corvette
-  family: '022'
+  family: ship022
   origin: CHN
   specs:
     radar_height_m: 1.5
@@ -480,23 +532,29 @@ models:
     article.radar_vls: 2.0
     article.firepower_vls: 4.0
     article.power_per_ship: 6.0
+    article.power_total: 388.0
     weapons.antiship_missiles: 4.0
-- id: coastal_yj12b
+    article.qty: 60.0
+- id: ship_coastal_yj12b
   name: 岸基鹰击12B
   category: coastal_missile_battery
-  family: coastal
+  family: ship
   origin: CHN
   specs:
     article.firepower_vls: 4.0
+    article.power_total: 128.0
     weapons.antiship_missiles: 4.0
-- id: coastal_yj62
+    article.qty: 32.0
+- id: ship_coastal_yj62
   name: 岸基鹰击62
   category: coastal_missile_battery
-  family: coastal
+  family: ship
   origin: CHN
   specs:
     article.firepower_vls: 3.0
+    article.power_total: 48.0
     weapons.antiship_missiles: 3.0
+    article.qty: 16.0
 - id: sub_la
   name: 洛杉矶级
   category: ssn
@@ -513,6 +571,8 @@ models:
     weapons_loaded: 37.0
     article.power_per_boat: 18.672804
     article.power_total: 373.5
+    payload_factor: 1.0
+    article.qty: 20.0
 - id: sub_seawolf
   name: 海狼级
   category: ssn
@@ -529,6 +589,8 @@ models:
     weapons_loaded: 50.0
     article.power_per_boat: 38.38138
     article.power_total: 115.1
+    payload_factor: 1.0
+    article.qty: 3.0
 - id: sub_virginia
   name: 弗吉尼亚级
   category: ssn
@@ -545,6 +607,8 @@ models:
     weapons_loaded: 37.0
     article.power_per_boat: 34.314685
     article.power_total: 823.6
+    payload_factor: 1.0
+    article.qty: 24.0
 - id: sub_ohio
   name: 俄亥俄级
   category: ssg_n
@@ -561,6 +625,8 @@ models:
     weapons_loaded: 154.0
     article.power_per_boat: 39.505113
     article.power_total: 158.0
+    payload_factor: 1.0
+    article.qty: 4.0
 - id: sub_093
   name: 093
   category: ssn
@@ -577,6 +643,8 @@ models:
     weapons_loaded: 18.0
     article.power_per_boat: 12.822614
     article.power_total: 25.6
+    payload_factor: 1.5
+    article.qty: 2.0
 - id: sub_093a
   name: 093A
   category: ssn
@@ -593,6 +661,8 @@ models:
     weapons_loaded: 18.0
     article.power_per_boat: 19.745884
     article.power_total: 79.0
+    payload_factor: 1.5
+    article.qty: 4.0
 - id: sub_093b
   name: 093B
   category: ssn
@@ -609,6 +679,8 @@ models:
     weapons_loaded: 48.0
     article.power_per_boat: 29.49
     article.power_total: 88.5
+    payload_factor: 1.5
+    article.qty: 3.0
 - id: sub_039
   name: 039
   category: ssk
@@ -625,6 +697,8 @@ models:
     weapons_loaded: 18.0
     article.power_per_boat: 3.803124
     article.power_total: 49.4
+    payload_factor: 1.5
+    article.qty: 13.0
 - id: sub_039a
   name: 039A
   category: ssk
@@ -641,6 +715,8 @@ models:
     weapons_loaded: 18.0
     article.power_per_boat: 10.648693
     article.power_total: 42.6
+    payload_factor: 1.5
+    article.qty: 4.0
 - id: sub_039b
   name: 039B
   category: ssk
@@ -657,6 +733,8 @@ models:
     weapons_loaded: 18.0
     article.power_per_boat: 11.60904
     article.power_total: 162.5
+    payload_factor: 1.5
+    article.qty: 14.0
 - id: sub_039c
   name: 039C
   category: ssk
@@ -673,6 +751,8 @@ models:
     weapons_loaded: 18.0
     article.power_per_boat: 12.296919
     article.power_total: 98.4
+    payload_factor: 1.5
+    article.qty: 8.0
 - id: sub_kilo
   name: 基洛级
   category: ssk
@@ -689,6 +769,8 @@ models:
     weapons_loaded: 18.0
     article.power_per_boat: 4.748883
     article.power_total: 47.5
+    payload_factor: 1.5
+    article.qty: 10.0
 - id: sub_035b
   name: 035B
   category: ssk
@@ -705,64 +787,72 @@ models:
     weapons_loaded: 14.0
     article.power_per_boat: 3.044984
     article.power_total: 12.2
-- id: ford
+    payload_factor: 1.5
+    article.qty: 4.0
+- id: cv_ford
   name: 福特级
   category: aircraft_carrier
-  family: ford
+  family: cv
   origin: USA
   specs:
     sorties_fixed_wing_day: 60.5675
     sorties_heli_day: 11.0
     article.sorties_eq: 64.757976
     article.power_vls: 858.0
-- id: nimitz
+    article.qty: 1.0
+- id: cv_nimitz
   name: 尼米兹级
   category: aircraft_carrier
-  family: nimitz
+  family: cv
   origin: USA
   specs:
     sorties_fixed_wing_day: 98.0
     sorties_heli_day: 11.0
     article.sorties_eq: 102.190476
     article.power_vls: 10152.0
-- id: america
+    article.qty: 10.0
+- id: cv_america
   name: 美国级
   category: amphibious_carrier
-  family: america
+  family: cv
   origin: USA
   specs:
     sorties_fixed_wing_day: 30.0
     article.sorties_eq: 30.0
     article.power_vls: 640.0
-- id: wasp
+    article.qty: 2.0
+- id: cv_wasp
   name: 黄蜂级
   category: amphibious_carrier
-  family: wasp
+  family: cv
   origin: USA
   specs:
     sorties_fixed_wing_day: 24.0
     article.sorties_eq: 24.0
     article.power_vls: 2238.0
-- id: liaoning_shandong
+    article.qty: 7.0
+- id: cv_liaoning_shandong
   name: 辽宁/山东
   category: aircraft_carrier
-  family: liaoning
+  family: cv
   origin: CHN
   specs:
     sorties_fixed_wing_day: 43.555556
     sorties_heli_day: 12.0
     article.sorties_eq: 48.126984
     article.power_vls: 1249.0
-- id: fujian
+    article.qty: 2.0
+- id: cv_fujian
   name: 福建
   category: aircraft_carrier
-  family: fujian
+  family: cv
   origin: CHN
   specs:
     sorties_fixed_wing_day: 93.644444
     sorties_heli_day: 12.0
     article.sorties_eq: 98.215873
     article.power_vls: 801.0
+    article.qty: 1.0
 - id: cv_075
   name: '075'
   category: amphibious_carrier
@@ -772,3 +862,4 @@ models:
     sorties_heli_day: 30.0
     article.sorties_eq: 6.531
     article.power_vls: 853.0
+    article.qty: 4.0

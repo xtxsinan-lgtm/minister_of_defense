@@ -17,6 +17,7 @@ models:
     article.power: 4.361112
     brigades: 2.0
     launchers_per_brigade: 36.0
+    article.qty: 72.0
   notes: 库存口径为发射车数 = 旅数 × 每旅发射车数（表格“火箭军”）。
 - id: df15a
   name: 东风15A
@@ -34,6 +35,7 @@ models:
     article.power: 4.21056
     brigades: 1.0
     launchers_per_brigade: 36.0
+    article.qty: 36.0
   notes: 库存口径为发射车数 = 旅数 × 每旅发射车数（表格“火箭军”）。
 - id: df15b
   name: 东风15B
@@ -51,6 +53,7 @@ models:
     article.power: 7.3566
     brigades: 1.0
     launchers_per_brigade: 36.0
+    article.qty: 36.0
   notes: 库存口径为发射车数 = 旅数 × 每旅发射车数（表格“火箭军”）。
 - id: df15c
   name: 东风15C
@@ -68,6 +71,7 @@ models:
     article.power: 5.584752
     brigades: 1.0
     launchers_per_brigade: 36.0
+    article.qty: 36.0
   notes: 库存口径为发射车数 = 旅数 × 每旅发射车数（表格“火箭军”）。
 - id: cj10
   name: 长剑10
@@ -85,6 +89,7 @@ models:
     article.power: 9.771912
     brigades: 2.0
     launchers_per_brigade: 12.0
+    article.qty: 24.0
   notes: 库存口径为发射车数 = 旅数 × 每旅发射车数（表格“火箭军”）。
 - id: cj10a
   name: 长剑10A
@@ -102,6 +107,7 @@ models:
     article.power: 11.58588
     brigades: 3.0
     launchers_per_brigade: 12.0
+    article.qty: 36.0
   notes: 库存口径为发射车数 = 旅数 × 每旅发射车数（表格“火箭军”）。
 - id: cj100
   name: 长剑100
@@ -119,6 +125,7 @@ models:
     article.power: 13.550904
     brigades: 2.0
     launchers_per_brigade: 12.0
+    article.qty: 24.0
   notes: 库存口径为发射车数 = 旅数 × 每旅发射车数（表格“火箭军”）。
 - id: df16
   name: 东风16
@@ -136,6 +143,7 @@ models:
     article.power: 5.71464
     brigades: 4.0
     launchers_per_brigade: 24.0
+    article.qty: 96.0
   notes: 库存口径为发射车数 = 旅数 × 每旅发射车数（表格“火箭军”）。
 - id: df17
   name: 东风17
@@ -153,6 +161,7 @@ models:
     article.power: 9.771912
     brigades: 1.0
     launchers_per_brigade: 24.0
+    article.qty: 24.0
   notes: 库存口径为发射车数 = 旅数 × 每旅发射车数（表格“火箭军”）。
 - id: df21
   name: 东风21
@@ -170,6 +179,7 @@ models:
     article.power: 2.448576
     brigades: 1.0
     launchers_per_brigade: 24.0
+    article.qty: 24.0
   notes: 库存口径为发射车数 = 旅数 × 每旅发射车数（表格“火箭军”）。
 - id: df21c
   name: 东风21C
@@ -187,6 +197,7 @@ models:
     article.power: 5.36328
     brigades: 4.0
     launchers_per_brigade: 24.0
+    article.qty: 96.0
   notes: 库存口径为发射车数 = 旅数 × 每旅发射车数（表格“火箭军”）。
 - id: df21d
   name: 东风21D
@@ -204,6 +215,7 @@ models:
     article.power: 5.100768
     brigades: 2.0
     launchers_per_brigade: 24.0
+    article.qty: 48.0
   notes: 库存口径为发射车数 = 旅数 × 每旅发射车数（表格“火箭军”）。
 - id: df26
   name: 东风26
@@ -221,6 +233,7 @@ models:
     article.power: 7.2
     brigades: 5.0
     launchers_per_brigade: 24.0
+    article.qty: 120.0
   notes: 库存口径为发射车数 = 旅数 × 每旅发射车数（表格“火箭军”）。
 - id: art_m777
   name: M777
@@ -239,6 +252,8 @@ models:
     mobility: 1.0
     reload: 1.0
     article.power_per_gun: 0.47
+    article.total_power: 29.0
+    article.qty.article_equivalent: 63.0
 - id: art_m109a6
   name: M109A6
   category: howitzer_heavy_sp
@@ -256,6 +271,8 @@ models:
     mobility: 1.0
     reload: 1.0
     article.power_per_gun: 1.0
+    article.total_power: 72.0
+    article.qty.article_equivalent: 72.0
 - id: art_plz_05
   name: PLZ-05
   category: howitzer_heavy_sp
@@ -273,6 +290,8 @@ models:
     mobility: 1.0
     reload: 1.111111
     article.power_per_gun: 2.2
+    article.total_power: 793.0
+    article.qty.article_equivalent: 360.0
 - id: art_pcl_181
   name: PCL-181
   category: howitzer_heavy_truck
@@ -290,6 +309,8 @@ models:
     mobility: 1.1
     reload: 1.0
     article.power_per_gun: 1.76
+    article.total_power: 1110.0
+    article.qty.article_equivalent: 630.0
 - id: art_m270_227mm
   name: M270+227mm
   category: mrl_long_range
@@ -409,6 +430,8 @@ models:
     mobility: 1.1
     reload: 0.648
     article.power_per_gun: 4.86
+    article.total_power: 876.0
+    article.qty.article_equivalent: 180.0
 - id: art_phl_191_300mm
   name: PHL-191+300mm
   category: mrl_long_range
@@ -467,6 +490,8 @@ models:
   origin: USA
   specs:
     article.power_per_gun: 6.0
+    article.total_power: 1516.0
+    article.qty.article_equivalent: 252.0
   notes: 系统级条目：各弹种配置见 art_<系统>_<弹种>；战力/门取自“炮兵旅”表。
 - id: art_m270
   name: M270
@@ -475,6 +500,8 @@ models:
   origin: USA
   specs:
     article.power_per_gun: 6.8
+    article.total_power: 859.0
+    article.qty.article_equivalent: 126.0
   notes: 系统级条目：各弹种配置见 art_<系统>_<弹种>；战力/门取自“炮兵旅”表。
 - id: art_phl_191
   name: PHL-191
@@ -483,6 +510,8 @@ models:
   origin: CHN
   specs:
     article.power_per_gun: 6.8
+    article.total_power: 1860.0
+    article.qty.article_equivalent: 272.0
   notes: 系统级条目：各弹种配置见 art_<系统>_<弹种>；战力/门取自“炮兵旅”表。
 - id: ad_hq19
   name: 红旗19
@@ -501,6 +530,7 @@ models:
     article.battery_power: 43.2
     article.brigade_equiv: 0.165
     vehicles_per_unit: 8.0
+    article.qty: 1.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
 - id: ad_s400
   name: S400
@@ -519,6 +549,7 @@ models:
     article.battery_power: 31.5
     article.brigade_equiv: 0.1204
     vehicles_per_unit: 8.0
+    article.qty: 6.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
 - id: ad_s300pmu2
   name: S300PMU2
@@ -537,6 +568,7 @@ models:
     article.battery_power: 20.3
     article.brigade_equiv: 0.0776
     vehicles_per_unit: 8.0
+    article.qty: 8.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
 - id: ad_s300pmu1
   name: S300PMU1
@@ -555,6 +587,7 @@ models:
     article.battery_power: 19.25877
     article.brigade_equiv: 0.0736
     vehicles_per_unit: 8.0
+    article.qty: 8.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
 - id: ad_s300pmu
   name: S300PMU
@@ -573,6 +606,7 @@ models:
     article.battery_power: 16.9
     article.brigade_equiv: 0.0648
     vehicles_per_unit: 8.0
+    article.qty: 4.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
 - id: ad_hq9b
   name: 红旗9B
@@ -591,6 +625,7 @@ models:
     article.battery_power: 26.9
     article.brigade_equiv: 0.103
     vehicles_per_unit: 8.0
+    article.qty: 25.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
 - id: ad_hq9
   name: 红旗9
@@ -609,6 +644,7 @@ models:
     article.battery_power: 17.3
     article.brigade_equiv: 0.066
     vehicles_per_unit: 8.0
+    article.qty: 28.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
 - id: ad_hq22a
   name: 红旗22A
@@ -627,6 +663,7 @@ models:
     article.battery_power: 20.0
     article.brigade_equiv: 0.0766
     vehicles_per_unit: 8.0
+    article.qty: 18.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
 - id: ad_hq22
   name: 红旗22
@@ -645,6 +682,7 @@ models:
     article.battery_power: 17.6
     article.brigade_equiv: 0.0671
     vehicles_per_unit: 8.0
+    article.qty: 4.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
 - id: ad_hq12a
   name: 红旗12A
@@ -663,6 +701,7 @@ models:
     article.battery_power: 12.0
     article.brigade_equiv: 0.0457
     vehicles_per_unit: 8.0
+    article.qty: 6.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
 - id: ad_hq12
   name: 红旗12
@@ -681,6 +720,7 @@ models:
     article.battery_power: 10.5
     article.brigade_equiv: 0.0403
     vehicles_per_unit: 8.0
+    article.qty: 9.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
 - id: ad_hq6d
   name: 红旗6D
@@ -699,6 +739,7 @@ models:
     article.battery_power: 6.5
     article.brigade_equiv: 0.0248
     vehicles_per_unit: 8.0
+    article.qty: 12.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
 - id: ad_hq16f
   name: 红旗16F
@@ -717,6 +758,7 @@ models:
     article.battery_power: 16.2
     article.brigade_equiv: 0.062
     vehicles_per_unit: 12.0
+    article.qty: 4.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
 - id: ad_hq16b
   name: 红旗16B
@@ -735,6 +777,7 @@ models:
     article.battery_power: 13.2
     article.brigade_equiv: 0.0504
     vehicles_per_unit: 12.0
+    article.qty: 8.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
 - id: ad_hq16
   name: 红旗16
@@ -753,6 +796,7 @@ models:
     article.battery_power: 11.5
     article.brigade_equiv: 0.0438
     vehicles_per_unit: 12.0
+    article.qty: 12.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
 - id: ad_hq17
   name: 红旗17
@@ -771,8 +815,9 @@ models:
     article.battery_power: 10.1
     article.brigade_equiv: 0.0385
     vehicles_per_unit: 12.0
+    article.qty: 0.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
-- id: ad_torm1
+- id: ad_tor_m1
   name: 道尔M1
   category: sam_short
   family: ad
@@ -789,6 +834,7 @@ models:
     article.battery_power: 7.5
     article.brigade_equiv: 0.0285
     vehicles_per_unit: 12.0
+    article.qty: 4.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
 - id: ad_hq7
   name: 红旗7
@@ -807,8 +853,9 @@ models:
     article.battery_power: 5.2
     article.brigade_equiv: 0.0199
     vehicles_per_unit: 12.0
+    article.qty: 20.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
-- id: ad_pgl_625veh_hongying_6b
+- id: ad_pgl_625_veh_hongying_6b
   name: PGL-625车载红缨-6B
   category: sam_short
   family: ad
@@ -825,6 +872,7 @@ models:
     article.battery_power: 5.1
     article.brigade_equiv: 0.0193
     vehicles_per_unit: 18.0
+    article.qty: 4.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
 - id: ad_pgl_625
   name: PGL-625
@@ -841,8 +889,9 @@ models:
     article.battery_power: 22.9
     article.brigade_equiv: 0.0181
     vehicles_per_unit: 18.0
+    article.qty: 4.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
-- id: ad_ludun2000
+- id: ad_ludun_2000
   name: 陆盾2000
   category: spaag
   family: ad
@@ -857,6 +906,7 @@ models:
     article.battery_power: 16.0
     article.brigade_equiv: 0.0127
     vehicles_per_unit: 8.0
+    article.qty: 12.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
 - id: ad_pg_99
   name: PG-99
@@ -873,6 +923,7 @@ models:
     article.battery_power: 11.8
     article.brigade_equiv: 0.0093
     vehicles_per_unit: 18.0
+    article.qty: 20.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
 - id: ad_thaad
   name: 萨德
@@ -891,8 +942,9 @@ models:
     article.battery_power: 37.5
     article.brigade_equiv: 0.1434
     vehicles_per_unit: 6.0
+    article.qty: 8.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
-- id: ad_patriotpac3_mse
+- id: ad_patriot_pac3_mse
   name: 爱国者pac3 mse
   category: sam_long
   family: ad
@@ -909,8 +961,9 @@ models:
     article.battery_power: 18.8
     article.brigade_equiv: 0.0717
     vehicles_per_unit: 6.0
+    article.qty: 20.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
-- id: ad_patriotpac3
+- id: ad_patriot_pac3
   name: 爱国者pac3
   category: sam_medium
   family: ad
@@ -927,8 +980,9 @@ models:
     article.battery_power: 16.5
     article.brigade_equiv: 0.0629
     vehicles_per_unit: 6.0
+    article.qty: 30.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
-- id: ad_patriotpac2
+- id: ad_patriot_pac2
   name: 爱国者pac2
   category: sam_long
   family: ad
@@ -945,6 +999,7 @@ models:
     article.battery_power: 16.4
     article.brigade_equiv: 0.0626
     vehicles_per_unit: 6.0
+    article.qty: 10.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
 - id: ad_nasams
   name: NASAMS
@@ -963,6 +1018,7 @@ models:
     article.battery_power: 15.1
     article.brigade_equiv: 0.0576
     vehicles_per_unit: 4.0
+    article.qty: 4.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
 - id: ad_avenger
   name: 复仇者
@@ -981,8 +1037,9 @@ models:
     article.battery_power: 5.2
     article.brigade_equiv: 0.0198
     vehicles_per_unit: 12.0
+    article.qty: 60.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
-- id: ad_m_shoradveh_stinger
+- id: ad_m_shorad_veh_stinger
   name: M-Shorad车载毒刺
   category: sam_short
   family: ad
@@ -999,6 +1056,7 @@ models:
     article.battery_power: 4.4
     article.brigade_equiv: 0.0167
     vehicles_per_unit: 8.0
+    article.qty: 18.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
 - id: ad_m_shorad
   name: M-Shorad
@@ -1015,6 +1073,7 @@ models:
     article.battery_power: 13.6
     article.brigade_equiv: 0.0108
     vehicles_per_unit: 8.0
+    article.qty: 18.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
 - id: ad_c_ram
   name: C-RAM
@@ -1031,4 +1090,5 @@ models:
     article.battery_power: 7.5
     article.brigade_equiv: 0.0059
     vehicles_per_unit: 1.0
+    article.qty: 3.0
   notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。

@@ -1,0 +1,60 @@
+# 量化模型参数预设：《2025 中美军事实力对比分析》（截至 2025-08），取自作者的“分层级火力”表（总计 / 空军 / 陆军 / 海军 / 投送距离 sheet）。
+# 引擎所有“不是由库里装备参数推出来的”常数都在这里，且每个都标出表格出处，便于以后改版或换国家。
+id: article_2025_08
+title: 2025 中美军事实力对比（文章版）
+source_id: sheet_cn_us
+
+# 以美军为 100 的统一尺度：军种间不可直接比较，用美军各军种预算的投入产出大致相当来锚定（文章第六章）
+reference_scale:           # 总计!C6/C12/C18/C23
+  ground: 100.0
+  projection: 100.0
+  air: 200.0
+  sea: 100.0
+
+projection:
+  bonus_countries: [USA]            # 只有美国有“超前部署 / 海外基地”加成（总计!C10/C11）
+  us_airsea_share: 0.3333333333   # 总计!C8/C9 = (E8/E12*C12)/3
+  us_forward_deployment_bonus: 0.3333333333   # 总计!C10 陆军超前部署加成 = C12/3
+  us_base_bonus: 0.3333333333                 # 总计!C11 军事基地加成 = C12/3
+  distance_notes: 中国本土—周边平均 6169.5 km；美国本土—海外主要基地平均 8629 km，海外基地—周边 2818 km（投送距离 sheet）
+
+# 军种结构：中国海军陆战队隶属海军（表格里中国没有单列陆战队行），美国陆战队单列且有自己的预算
+service_structure:
+  CHN: {marines_in: navy}
+  USA: {marines_in: self}
+
+sea:
+  carve_outs:                       # 从该国海上总量中划给其他军种的“对海力量”（总计!E20/E21）
+    USA: {army: 32.0, marines: 64.0}
+  submarine_to_vls: 3.9234          # 潜艇!L19/L18 两国一致（成本折算：弗吉尼亚/伯克）
+
+ground:
+  # 火箭军按陆军炮兵折算：占美国地面力量的比例（总计!D25）。recompute 模式用 rocket_equivalence 重算。
+  rocket_force_us_ground_fraction: 0.158649072
+  rocket_force_reference_power: 4373.9171   # 上式对应的火箭军合计战力（火箭军!L15，M109 炮等效），用于按库存数量缩放
+  us_artillery_brigade_equivalents: 33.3        # 炮兵旅!E7，也见 orbat army.field_artillery_battalions.article_brigade_equivalents
+  reserve_weights: {army: 0.5, marines: 0.3333333333}   # 直升机表：国民警卫队 ×0.5，陆战队预备役 ×1/3
+
+air:
+  fa18_reference_id: f_a_18e_f
+  special_function_buckets:        # 特种机!K18.. 的职能分类（决定计入“空优/其他”）
+    command_relay: [指挥, 通信中继]
+    electronic_warfare: [电子干扰, 电子战]
+    psychological: [心理战]
+    reconnaissance: [侦察, 电子侦察, 气象侦察, 遥测]
+    anti_submarine: [反潜]
+
+space:
+  # 太空军按预算比例折算：战力 = 空军总战力 / 空军预算 × 太空军预算（总计!C32 = C30/C42*C43）
+  budgets_busd:                     # FY2025，美国部分取自 toe 库 orbat：budget_fy2025_busd
+    USA: {air_force: 233.1, space_force: 30.0}
+
+# 文章兼容调整：表格里个别“总计”是硬编码的旧值，与逐行加总对不上。为复现文章发表的数字，snapshot 模式默认把差额加回；
+# Engine(article_compat=False) 则完全按库里逐行数据（自洽口径）计算。每条都写明差额来源，便于日后在表格里核对修正。
+article_compat_adjustments:
+  - {country: CHN, domain: projection, field: sea, add: 263.9788,
+     reason: "运输舰!O19 中国合计硬编码 1894.6，而 O8:O18 逐行加总为 1631.0（071 型等行后来改过，合计未更新）"}
+  - {country: USA, domain: air, service: airforce, bucket: awacs, add: 86.0,
+     reason: "预警机!N15 美国合计 648（空军 375 + 海军 273），逐行 E-3 仅 289，E-2C/E-2D 合计 273 与表一致，空军差 86"}
+  - {country: CHN, domain: ground, service: airforce, component: air_defense, add: -0.256,
+     reason: "总计!I14 空军防空 75.8504，防空!O25 逐行加总 76.1064（旧值）"}

@@ -48,7 +48,7 @@ TOKENS = [
     ("额外", "extra_"), ("改装", "_mod"), ("三四批次", "_b34"), ("四批次", "_b4"), ("反隐雷达", "antistealth_radar"),
     ("以前", "_early"), ("以后", "_late"), ("号舰", ""), ("中国总计", "total_cn"), ("美国总计", "total_us"),
     ("铁拳", "fist"), ("爱国者", "patriot"), ("萨德", "thaad"), ("复仇者", "avenger"), ("陆盾", "ludun"),
-    ("车载红缨", "veh_hongying"), ("道尔", "tor"), ("红缨", "hongying"), ("复仇", "avenger"),
+    ("车载红缨", "veh_hongying"), ("道尔", "tor_"), ("红缨", "hongying"), ("复仇", "avenger"),
     ("弹炮合一", "gun_missile"), ("牵引", "towed"), ("自行", "sp"), ("旅", ""), ("团", ""),
     ("直升机", "heli"), ("陆战队", "usmc"), ("陆军", "army"), ("空军", "af"), ("海军", "navy"),
     ("白板", "base"), ("氮化镓", "gan"), ("涡扇", "ws"), ("野兽", "beast"), ("美军", "us"),
@@ -61,7 +61,7 @@ _unresolved = set()
 def slug(name: str) -> str:
     s = str(name).strip()
     for zh, en in _TOK:
-        s = s.replace(zh, en)
+        s = s.replace(zh, f"_{en}_" if len(en.strip("_")) >= 4 else en)
     if re.search(r"[一-鿿]", s):
         _unresolved.add(name)
     s = re.sub(r"[^A-Za-z0-9]+", "_", s).strip("_").lower()
@@ -126,6 +126,8 @@ class Out:
         if notes:
             rec["notes"] = notes
         if qty is not None:
+            qkey = "article.qty" if role == "all" else f"article.qty.{role}"
+            rec["specs"][qkey] = clean(qty)
             self.inv.append(dict(country=country, service=service, equipment_id=eid, kind=kind, role=role,
                                  quantity=clean(qty), as_of=AS_OF, source_id=SRC, confidence=confidence, notes=""))
         return eid
@@ -167,8 +169,13 @@ def import_air(S: Sheets, o: Out):
             specs.update(sp(wsG, r, ground))
             specs["ground_cruise_mach"] = wsG[f"D{r}"].value
             specs["ground_rcs_m2"] = wsG[f"G{r}"].value
+            # 对地战力公式还需要“1000km 半径挂载量”，“分层级火力”表没有这一列：按文章里的对地战力反推（estimated）
+            gp, gh, gr, gw, gm = (wsG[f"{c}{r}"].value for c in "IHEFD")
+            if all(isinstance(x, (int, float)) and x for x in (gp, gh, gr, gw, gm)):
+                specs["payload_1000km_kg"] = round(1000.0 * (gp / ((1 / gh) ** 0.75 * gm ** 0.25)) ** 2 / (gr * gw), 1)
             o.add(name, "fighter", origin, specs, country=country, service=svc, qty=wsA[f"C{r}"].value,
                   role="air_superiority", eid=eid)
+            o.models[[m["id"] for m in o.models].index(eid)]["specs"]["article.qty.ground_attack"] = clean(wsG[f"C{r}"].value)
             o.inv.append(dict(country=country, service=svc, equipment_id=eid, kind="active", role="ground_attack",
                               quantity=clean(wsG[f"C{r}"].value), as_of=AS_OF, source_id=SRC, confidence="stated",
                               notes=""))
@@ -247,11 +254,9 @@ def ship_category(name):
 
 def import_naval(S: Sheets, o: Out):
     ws = S.wb["驱护舰"]
-    coef = {k: ws[f"{c}2"].value for k, c in WEAPON_COLS.items()}
-    o.meta = {"ship_weapon_coefficients": coef}
     ship_m = {"radar_height_m": "O", "radar_width_m": "P", "radar_faces": "Q", "radar_area_m2": "R",
               "radar_type": "S", "radar_range_mult": "T", "detect_rcs3_km": "U", "article.radar_vls": "V",
-              "article.firepower_vls": "N", "article.power_per_ship": "W"}
+              "article.firepower_vls": "N", "article.power_per_ship": "W", "article.power_total": "X"}
     for rr, country in ((list(range(3, 14)), "USA"), (list(range(16, 34)), "CHN")):
         for r in rr:
             name = ws[f"A{r}"].value
@@ -262,7 +267,7 @@ def import_naval(S: Sheets, o: Out):
             specs = sp(ws, r, ship_m)
             for k, c in WEAPON_COLS.items():
                 specs["weapons." + k] = ws[f"{c}{r}"].value
-            eid = slug(name)
+            eid = "ship_" + slug(name)
             if name == "伯克额外SeaRAM":
                 cat = "naval_sam"
             origin = "RUS" if name.startswith("现代级") else country
@@ -280,7 +285,9 @@ def import_naval(S: Sheets, o: Out):
             cat = sub_cat.get(name, "ssk")
             origin = "RUS" if name in ("基洛级",) else country
             eid = "sub_" + slug(name)
-            o.add(name, cat, origin, sp(ws, r, sm), country=country, service="navy", qty=ws[f"B{r}"].value, eid=eid)
+            specs = sp(ws, r, sm)
+            specs["payload_factor"] = 1.5 if country == "CHN" else 1.0   # 表格“海军”：中国潜艇装载量项乘 1.5，美国不乘
+            o.add(name, cat, origin, specs, country=country, service="navy", qty=ws[f"B{r}"].value, eid=eid)
     # 航母 / 两栖攻击舰
     ws = S.wb["航母"]
     cm = {"sorties_fixed_wing_day": "C", "sorties_heli_day": "D", "article.sorties_eq": "E", "article.power_vls": "G"}
@@ -290,7 +297,7 @@ def import_naval(S: Sheets, o: Out):
     for rr, country in ((range(2, 6), "USA"), (range(9, 12), "CHN")):
         for r in rr:
             name = ws[f"A{r}"].value
-            eid = "cv_" + slug(name) if re.match(r"^\d", slug(name)) else slug(name)
+            eid = "cv_" + slug(name)
             o.add(name, carrier_cat[name], country, sp(ws, r, cm), country=country, service="navy",
                   qty=ws[f"B{r}"].value, eid=eid)
 
@@ -368,6 +375,8 @@ def import_missile_ad(S: Sheets, o: Out):
             o.add(name, "mrl_long_range", country, {"article.power_per_gun": ws[f"D{r}"].value},
                   country=country, service="army", eid=eid,
                   extra={"notes": "系统级条目：各弹种配置见 art_<系统>_<弹种>；战力/门取自“炮兵旅”表。"})
+        [m for m in o.models if m["id"] == eid][0]["specs"].update({
+            "article.total_power": clean(ws[f"E{r}"].value), "article.qty.article_equivalent": clean(battalions * per_bn)})
         o.inv.append(dict(country=country, service="army", equipment_id=eid, kind="in_toe", role="article_equivalent",
                           quantity=battalions * per_bn, as_of=AS_OF, source_id=SRC, confidence="estimated",
                           notes="等效营数×每营门数（国民警卫队对半折算，见 orbat）"))
@@ -540,9 +549,6 @@ def main():
         for r in o.inv:
             if r["quantity"] is not None:
                 w.writerow(r)
-    meta = OUT / "naval_coefficients.yaml"
-    with open(meta, "w", encoding="utf-8") as f:
-        yaml.safe_dump(o.meta, f, allow_unicode=True, sort_keys=False)
     print(f"旅级单位 {n_brig}；air {n_air}, naval {n_sea}, transport {n_tr}, missile/ad/artillery {n_ms}; 库存行 {len(o.inv)}")
 
 

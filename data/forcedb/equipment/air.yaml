@@ -30,6 +30,9 @@ models:
     article.ground_total: 230.61
     ground_cruise_mach: 1.8
     ground_rcs_m2: 2.005
+    payload_1000km_kg: 8448.2
+    article.qty.air_superiority: 80.0
+    article.qty.ground_attack: 80.0
 - id: j20ws10c
   name: 歼20涡扇10C
   category: fighter
@@ -59,6 +62,9 @@ models:
     article.ground_total: 627.95
     ground_cruise_mach: 1.5
     ground_rcs_m2: 2.005
+    payload_1000km_kg: 8445.8
+    article.qty.air_superiority: 228.0
+    article.qty.ground_attack: 228.0
 - id: j20
   name: 歼20
   category: fighter
@@ -88,6 +94,9 @@ models:
     article.ground_total: 275.18
     ground_cruise_mach: 0.95
     ground_rcs_m2: 2.005
+    payload_1000km_kg: 8454.4
+    article.qty.air_superiority: 112.0
+    article.qty.ground_attack: 112.0
 - id: j35a
   name: 歼35A
   category: fighter
@@ -117,6 +126,9 @@ models:
     article.ground_total: 19.81
     ground_cruise_mach: 1.5
     ground_rcs_m2: 2.006
+    payload_1000km_kg: 6236.2
+    article.qty.air_superiority: 10.0
+    article.qty.ground_attack: 10.0
 - id: j16gan
   name: 歼16氮化镓
   category: fighter
@@ -146,6 +158,9 @@ models:
     article.ground_total: 78.89
     ground_cruise_mach: 0.95
     ground_rcs_m2: 5.5
+    payload_1000km_kg: 9256.0
+    article.qty.air_superiority: 60.0
+    article.qty.ground_attack: 60.0
 - id: j16
   name: 歼16
   category: fighter
@@ -175,6 +190,9 @@ models:
     article.ground_total: 529.86
     ground_cruise_mach: 0.95
     ground_rcs_m2: 5.5
+    payload_1000km_kg: 9256.0
+    article.qty.air_superiority: 403.0
+    article.qty.ground_attack: 403.0
 - id: j11bg
   name: 歼11BG
   category: fighter
@@ -204,6 +222,9 @@ models:
     article.ground_total: 38.83
     ground_cruise_mach: 0.95
     ground_rcs_m2: 6.5
+    payload_1000km_kg: 4467.1
+    article.qty.air_superiority: 64.0
+    article.qty.ground_attack: 64.0
 - id: j11b
   name: 歼11B
   category: fighter
@@ -233,6 +254,9 @@ models:
     article.ground_total: 85.56
     ground_cruise_mach: 0.95
     ground_rcs_m2: 6.5
+    payload_1000km_kg: 4467.1
+    article.qty.air_superiority: 141.0
+    article.qty.ground_attack: 141.0
 - id: j11bsg
   name: 歼11BSG
   category: fighter
@@ -262,6 +286,9 @@ models:
     article.ground_total: 19.42
     ground_cruise_mach: 0.95
     ground_rcs_m2: 6.5
+    payload_1000km_kg: 4467.1
+    article.qty.air_superiority: 32.0
+    article.qty.ground_attack: 32.0
 - id: j11bs_bh
   name: 歼11BS/BH
   category: fighter
@@ -291,6 +318,9 @@ models:
     article.ground_total: 44.3
     ground_cruise_mach: 0.95
     ground_rcs_m2: 6.5
+    payload_1000km_kg: 4467.1
+    article.qty.air_superiority: 73.0
+    article.qty.ground_attack: 73.0
 - id: j11a
   name: 歼11A
   category: fighter
@@ -320,6 +350,9 @@ models:
     article.ground_total: 46.22
     ground_cruise_mach: 0.95
     ground_rcs_m2: 17.5
+    payload_1000km_kg: 4630.2
+    article.qty.air_superiority: 96.0
+    article.qty.ground_attack: 96.0
 - id: su35
   name: 苏35
   category: fighter
@@ -349,6 +382,9 @@ models:
     article.ground_total: 32.46
     ground_cruise_mach: 0.95
     ground_rcs_m2: 3.5
+    payload_1000km_kg: 9354.4
+    article.qty.air_superiority: 24.0
+    article.qty.ground_attack: 24.0
 - id: su30mk2
   name: 苏30MK2
   category: fighter
@@ -378,6 +414,9 @@ models:
     article.ground_total: 25.96
     ground_cruise_mach: 0.95
     ground_rcs_m2: 7.5
+    payload_1000km_kg: 12336.2
+    article.qty.air_superiority: 24.0
+    article.qty.ground_attack: 24.0
 - id: su30mkk
   name: 苏30MKK
   category: fighter
@@ -407,6 +446,9 @@ models:
     article.ground_total: 77.88
     ground_cruise_mach: 0.95
     ground_rcs_m2: 7.5
+    payload_1000km_kg: 12336.2
+    article.qty.air_superiority: 72.0
+    article.qty.ground_attack: 72.0
 - id: su27
   name: 苏27
   category: fighter
@@ -436,6 +478,9 @@ models:
     article.ground_total: 9.63
     ground_cruise_mach: 0.95
     ground_rcs_m2: 17.5
+    payload_1000km_kg: 4630.2
+    article.qty.air_superiority: 20.0
+    article.qty.ground_attack: 20.0
 - id: j10c
   name: 歼10C
   category: fighter
@@ -465,6 +510,9 @@ models:
     article.ground_total: 161.61
     ground_cruise_mach: 0.95
     ground_rcs_m2: 3.366667
+    payload_1000km_kg: 3345.7
+    article.qty.air_superiority: 286.0
+    article.qty.ground_attack: 286.0
 - id: j10b
   name: 歼10B
   category: fighter
@@ -494,6 +542,9 @@ models:
     article.ground_total: 30.63
     ground_cruise_mach: 0.95
     ground_rcs_m2: 5.5
+    payload_1000km_kg: 3492.6
+    article.qty.air_superiority: 58.0
+    article.qty.ground_attack: 58.0
 - id: j10a
   name: 歼10A
   category: fighter
@@ -523,6 +574,9 @@ models:
     article.ground_total: 106.28
     ground_cruise_mach: 0.95
     ground_rcs_m2: 6.5
+    payload_1000km_kg: 3869.8
+    article.qty.air_superiority: 210.0
+    article.qty.ground_attack: 210.0
 - id: j10s
   name: 歼10S
   category: fighter
@@ -552,6 +606,9 @@ models:
     article.ground_total: 60.73
     ground_cruise_mach: 0.95
     ground_rcs_m2: 6.5
+    payload_1000km_kg: 3869.8
+    article.qty.air_superiority: 120.0
+    article.qty.ground_attack: 120.0
 - id: jz_8f
   name: 歼侦-8F
   category: fighter
@@ -581,6 +638,9 @@ models:
     article.ground_total: 3.44
     ground_cruise_mach: 0.95
     ground_rcs_m2: 10.5
+    payload_1000km_kg: 1216.6
+    article.qty.air_superiority: 24.0
+    article.qty.ground_attack: 24.0
 - id: j_7l_g
   name: 歼-7L/G
   category: fighter
@@ -610,6 +670,9 @@ models:
     article.ground_total: 14.59
     ground_cruise_mach: 0.79
     ground_rcs_m2: 5.5
+    payload_1000km_kg: 614.7
+    article.qty.air_superiority: 200.0
+    article.qty.ground_attack: 200.0
 - id: jh_7
   name: 歼轰-7
   category: fighter
@@ -639,6 +702,9 @@ models:
     article.ground_total: 46.7
     ground_cruise_mach: 0.85
     ground_rcs_m2: 12.5
+    payload_1000km_kg: 8232.6
+    article.qty.air_superiority: 48.0
+    article.qty.ground_attack: 48.0
 - id: jh_7a
   name: 歼轰-7A
   category: fighter
@@ -668,6 +734,9 @@ models:
     article.ground_total: 201.41
     ground_cruise_mach: 0.85
     ground_rcs_m2: 12.5
+    payload_1000km_kg: 8232.6
+    article.qty.air_superiority: 207.0
+    article.qty.ground_attack: 207.0
 - id: j35
   name: 歼35
   category: fighter
@@ -697,6 +766,9 @@ models:
     article.ground_total: 17.9
     ground_cruise_mach: 1.2
     ground_rcs_m2: 2.008
+    payload_1000km_kg: 788.6
+    article.qty.air_superiority: 10.0
+    article.qty.ground_attack: 10.0
 - id: j15t
   name: 歼15T
   category: fighter
@@ -726,6 +798,9 @@ models:
     article.ground_total: 82.63
     ground_cruise_mach: 0.95
     ground_rcs_m2: 4.5
+    payload_1000km_kg: 10076.9
+    article.qty.air_superiority: 60.0
+    article.qty.ground_attack: 60.0
 - id: j15
   name: 歼15
   category: fighter
@@ -755,6 +830,9 @@ models:
     article.ground_total: 53.74
     ground_cruise_mach: 0.95
     ground_rcs_m2: 7.0
+    payload_1000km_kg: 9851.0
+    article.qty.air_superiority: 70.0
+    article.qty.ground_attack: 70.0
 - id: j15s
   name: 歼15S
   category: fighter
@@ -784,6 +862,9 @@ models:
     article.ground_total: 3.07
     ground_cruise_mach: 0.95
     ground_rcs_m2: 7.0
+    payload_1000km_kg: 9851.0
+    article.qty.air_superiority: 4.0
+    article.qty.ground_attack: 4.0
 - id: f_22
   name: F-22
   category: fighter
@@ -813,6 +894,9 @@ models:
     article.ground_total: 369.66
     ground_cruise_mach: 1.76
     ground_rcs_m2: 2.0001
+    payload_1000km_kg: 398.7
+    article.qty.air_superiority: 183.0
+    article.qty.ground_attack: 183.0
 - id: f_35a
   name: F-35A
   category: fighter
@@ -842,6 +926,9 @@ models:
     article.ground_total: 1115.13
     ground_cruise_mach: 1.2
     ground_rcs_m2: 2.0015
+    payload_1000km_kg: 886.1
+    article.qty.air_superiority: 557.0
+    article.qty.ground_attack: 443.0
 - id: f_15ex_ii
   name: F-15EX II
   category: fighter
@@ -871,6 +958,9 @@ models:
     article.ground_total: 16.8
     ground_cruise_mach: 0.95
     ground_rcs_m2: 3.5
+    payload_1000km_kg: 9648.6
+    article.qty.air_superiority: 8.0
+    article.qty.ground_attack: 8.0
 - id: f_15e_aesa
   name: F-15E AESA
   category: fighter
@@ -900,6 +990,9 @@ models:
     article.ground_total: 120.34
     ground_cruise_mach: 0.95
     ground_rcs_m2: 27.5
+    payload_1000km_kg: 8494.0
+    article.qty.air_superiority: 145.0
+    article.qty.ground_attack: 145.0
 - id: f_15e
   name: F-15E
   category: fighter
@@ -929,6 +1022,9 @@ models:
     article.ground_total: 60.58
     ground_cruise_mach: 0.95
     ground_rcs_m2: 27.5
+    payload_1000km_kg: 8494.0
+    article.qty.air_superiority: 73.0
+    article.qty.ground_attack: 73.0
 - id: f_15c_d_aesa
   name: F-15C/D AESA
   category: fighter
@@ -958,6 +1054,9 @@ models:
     article.ground_total: 46.15
     ground_cruise_mach: 0.95
     ground_rcs_m2: 27.5
+    payload_1000km_kg: 5454.4
+    article.qty.air_superiority: 84.0
+    article.qty.ground_attack: 84.0
 - id: f_15c_d
   name: F-15C/D
   category: fighter
@@ -987,6 +1086,9 @@ models:
     article.ground_total: 13.18
     ground_cruise_mach: 0.95
     ground_rcs_m2: 27.5
+    payload_1000km_kg: 5454.4
+    article.qty.air_superiority: 24.0
+    article.qty.ground_attack: 24.0
 - id: f_16c_d_aesa
   name: F-16C/D AESA
   category: fighter
@@ -1016,6 +1118,9 @@ models:
     article.ground_total: 155.7
     ground_cruise_mach: 0.95
     ground_rcs_m2: 3.7
+    payload_1000km_kg: 5090.7
+    article.qty.air_superiority: 158.0
+    article.qty.ground_attack: 158.0
 - id: f_16c_d
   name: F-16C/D
   category: fighter
@@ -1045,6 +1150,9 @@ models:
     article.ground_total: 595.21
     ground_cruise_mach: 0.95
     ground_rcs_m2: 3.7
+    payload_1000km_kg: 8692.2
+    article.qty.air_superiority: 604.0
+    article.qty.ground_attack: 382.0
 - id: f35c
   name: F-35C
   category: fighter
@@ -1074,6 +1182,9 @@ models:
     article.ground_total: 157.52
     ground_cruise_mach: 1.2
     ground_rcs_m2: 2.001
+    payload_1000km_kg: 884.8
+    article.qty.air_superiority: 77.0
+    article.qty.ground_attack: 45.0
 - id: f_a_18e_f
   name: F/A-18E/F
   category: fighter
@@ -1103,6 +1214,9 @@ models:
     article.ground_total: 541.0
     ground_cruise_mach: 0.95
     ground_rcs_m2: 3.375
+    payload_1000km_kg: 4754.6
+    article.qty.air_superiority: 541.0
+    article.qty.ground_attack: 541.0
 - id: f35c_usmc
   name: F-35C
   category: fighter
@@ -1132,6 +1246,9 @@ models:
     article.ground_total: 106.37
     ground_cruise_mach: 1.2
     ground_rcs_m2: 2.0015
+    payload_1000km_kg: 884.8
+    article.qty.air_superiority: 52.0
+    article.qty.ground_attack: 35.0
 - id: f_35b
   name: F-35B
   category: fighter
@@ -1161,6 +1278,9 @@ models:
     article.ground_total: 291.01
     ground_cruise_mach: 1.2
     ground_rcs_m2: 2.0015
+    payload_1000km_kg: 567.9
+    article.qty.air_superiority: 202.0
+    article.qty.ground_attack: 140.0
 - id: f_a_18c_dgan
   name: F/A-18C/D氮化镓
   category: fighter
@@ -1190,6 +1310,9 @@ models:
     article.ground_total: 40.2
     ground_cruise_mach: 0.95
     ground_rcs_m2: 4.5
+    payload_1000km_kg: 7108.5
+    article.qty.air_superiority: 51.0
+    article.qty.ground_attack: 51.0
 - id: f_a_18c_d
   name: F/A-18C/D
   category: fighter
@@ -1219,6 +1342,9 @@ models:
     article.ground_total: 106.4
     ground_cruise_mach: 0.95
     ground_rcs_m2: 4.5
+    payload_1000km_kg: 7108.5
+    article.qty.air_superiority: 135.0
+    article.qty.ground_attack: 135.0
 - id: av_8b
   name: AV-8B
   category: fighter
@@ -1248,6 +1374,9 @@ models:
     article.ground_total: 33.88
     ground_cruise_mach: 0.83
     ground_rcs_m2: 7.5
+    payload_1000km_kg: 3266.6
+    article.qty.air_superiority: 87.0
+    article.qty.ground_attack: 87.0
 - id: h6
   name: 轰6
   category: bomber
@@ -1262,6 +1391,7 @@ models:
     article.ground_power: 4.74
     article.ground_power_eq_fa18: 0.981862
     article.ground_total: 39.0
+    article.qty.ground_attack: 40.0
 - id: h6k_n
   name: 轰6K/N
   category: bomber
@@ -1276,6 +1406,7 @@ models:
     article.ground_power: 7.9
     article.ground_power_eq_fa18: 1.636437
     article.ground_total: 295.0
+    article.qty.ground_attack: 180.0
 - id: b_52
   name: B-52
   category: bomber
@@ -1290,6 +1421,7 @@ models:
     article.ground_power: 23.07
     article.ground_power_eq_fa18: 4.780551
     article.ground_total: 354.0
+    article.qty.ground_attack: 74.0
 - id: b_1b
   name: B-1B
   category: bomber
@@ -1304,6 +1436,7 @@ models:
     article.ground_power: 66.39
     article.ground_power_eq_fa18: 13.756866
     article.ground_total: 206.0
+    article.qty.ground_attack: 15.0
 - id: b_2
   name: B-2
   category: bomber
@@ -1318,6 +1451,7 @@ models:
     article.ground_power: 147.83
     article.ground_power_eq_fa18: 30.630304
     article.ground_total: 582.0
+    article.qty.ground_attack: 19.0
 - id: a_10
   name: A-10
   category: bomber
@@ -1332,6 +1466,7 @@ models:
     article.ground_power: 1.79
     article.ground_power_eq_fa18: 0.37011
     article.ground_total: 97.0
+    article.qty.ground_attack: 261.0
 - id: ac_130j
   name: AC-130J
   category: bomber
@@ -1346,6 +1481,7 @@ models:
     article.ground_power: 3.63
     article.ground_power_eq_fa18: 0.752933
     article.ground_total: 23.0
+    article.qty.ground_attack: 31.0
 - id: kj_600
   name: 空警-600
   category: awacs
@@ -1364,6 +1500,7 @@ models:
     article.composite: 3059.0
     article.power_eq_fa18: 8.8
     article.power_total: 18.0
+    article.qty: 2.0
 - id: kj_200
   name: 空警-200
   category: awacs
@@ -1382,6 +1519,7 @@ models:
     article.composite: 4490.0
     article.power_eq_fa18: 12.9
     article.power_total: 142.0
+    article.qty: 11.0
 - id: kj_500
   name: 空警-500
   category: awacs
@@ -1400,6 +1538,7 @@ models:
     article.composite: 9718.0
     article.power_eq_fa18: 28.0
     article.power_total: 1175.0
+    article.qty: 42.0
 - id: kj_500a
   name: 空警-500A
   category: awacs
@@ -1418,6 +1557,7 @@ models:
     article.composite: 16520.0
     article.power_eq_fa18: 47.6
     article.power_total: 761.0
+    article.qty: 16.0
 - id: kj_700
   name: 空警-700
   category: awacs
@@ -1436,6 +1576,7 @@ models:
     article.composite: 14494.0
     article.power_eq_fa18: 41.7
     article.power_total: 167.0
+    article.qty: 4.0
 - id: kj_2000
   name: 空警-2000
   category: awacs
@@ -1454,6 +1595,7 @@ models:
     article.composite: 18216.0
     article.power_eq_fa18: 52.5
     article.power_total: 262.0
+    article.qty: 5.0
 - id: e_3
   name: E-3
   category: awacs
@@ -1472,6 +1614,7 @@ models:
     article.composite: 6695.0
     article.power_eq_fa18: 19.3
     article.power_total: 289.0
+    article.qty: 15.0
 - id: e_2c
   name: E-2C
   category: awacs
@@ -1490,6 +1633,7 @@ models:
     article.composite: 859.0
     article.power_eq_fa18: 2.5
     article.power_total: 143.0
+    article.qty: 58.0
 - id: e_2d
   name: E-2D
   category: awacs
@@ -1508,6 +1652,7 @@ models:
     article.composite: 1799.0
     article.power_eq_fa18: 5.2
     article.power_total: 130.0
+    article.qty: 25.0
 - id: yy_20
   name: 运油-20
   category: tanker_aircraft
@@ -1519,6 +1664,7 @@ models:
     article.composite: 86.60254
     article.power_eq_fa18: 4.444383
     article.power_total: 53.332595
+    article.qty: 12.0
 - id: hy6
   name: 轰油6
   category: tanker_aircraft
@@ -1530,6 +1676,7 @@ models:
     article.composite: 25.806976
     article.power_eq_fa18: 1.324396
     article.power_total: 31.785511
+    article.qty: 24.0
 - id: il78
   name: 伊尔78
   category: tanker_aircraft
@@ -1541,6 +1688,7 @@ models:
     article.composite: 76.485293
     article.power_eq_fa18: 3.925173
     article.power_total: 11.775518
+    article.qty: 3.0
 - id: kc_135
   name: KC-135
   category: tanker_aircraft
@@ -1552,6 +1700,7 @@ models:
     article.composite: 78.534069
     article.power_eq_fa18: 4.030314
     article.power_total: 1515.398247
+    article.qty: 376.0
 - id: kc_46
   name: KC-46
   category: tanker_aircraft
@@ -1563,6 +1712,7 @@ models:
     article.composite: 95.095741
     article.power_eq_fa18: 4.880248
     article.power_total: 375.779106
+    article.qty: 77.0
 - id: kc_130j
   name: KC-130J
   category: tanker_aircraft
@@ -1574,6 +1724,7 @@ models:
     article.composite: 25.651511
     article.power_eq_fa18: 1.316418
     article.power_total: 90.832836
+    article.qty: 69.0
 - id: kc_130t
   name: KC-130T
   category: tanker_aircraft
@@ -1585,7 +1736,8 @@ models:
     article.composite: 25.651511
     article.power_eq_fa18: 1.316418
     article.power_total: 14.480597
-- id: yzhi8_gx4
+    article.qty: 11.0
+- id: yzhi_8_gx4
   name: 运指8-高新4号
   category: ew_aircraft
   family: yzhi8
@@ -1598,6 +1750,7 @@ models:
     article.conv_factor: 0.005
     article.power_eq_fa18: 1.25
     article.power_total: 10.0
+    article.qty: 8.0
 - id: yzh8cb_gx1
   name: 运侦8CB-高新1号
   category: ew_aircraft
@@ -1611,6 +1764,7 @@ models:
     article.conv_factor: 0.005
     article.power_eq_fa18: 1.41
     article.power_total: 33.9
+    article.qty: 24.0
 - id: yzh9dz_gx12
   name: 运侦9DZ-高新12号
   category: ew_aircraft
@@ -1624,6 +1778,7 @@ models:
     article.conv_factor: 0.014
     article.power_eq_fa18: 3.77
     article.power_total: 22.6
+    article.qty: 6.0
 - id: yg8g_gx3
   name: 运干8G-高新3号
   category: ew_aircraft
@@ -1637,6 +1792,7 @@ models:
     article.conv_factor: 0.016
     article.power_eq_fa18: 4.29
     article.power_total: 128.8
+    article.qty: 30.0
 - id: yg9g_gx11
   name: 运干9G-高新11号
   category: ew_aircraft
@@ -1650,6 +1806,7 @@ models:
     article.conv_factor: 0.031
     article.power_eq_fa18: 8.1
     article.power_total: 64.8
+    article.qty: 8.0
 - id: yg9lg_gx13
   name: 运干9LG-高新13号
   category: ew_aircraft
@@ -1663,6 +1820,7 @@ models:
     article.conv_factor: 0.037
     article.power_eq_fa18: 9.64
     article.power_total: 77.1
+    article.qty: 8.0
 - id: yx8xz_gx7
   name: 运心8XZ-高新7号
   category: ew_aircraft
@@ -1676,6 +1834,7 @@ models:
     article.conv_factor: 0.008
     article.power_eq_fa18: 2.15
     article.power_total: 8.6
+    article.qty: 4.0
 - id: yx9xz_gx9
   name: 运心9XZ-高新9号
   category: ew_aircraft
@@ -1689,6 +1848,7 @@ models:
     article.conv_factor: 0.012
     article.power_eq_fa18: 3.23
     article.power_total: 12.9
+    article.qty: 4.0
 - id: j_16d
   name: J-16D
   category: ew_aircraft
@@ -1700,6 +1860,7 @@ models:
     range_km: 3700.0
     article.power_eq_fa18: 3.6
     article.power_total: 187.1
+    article.qty: 52.0
 - id: yq8_gx6
   name: 运潜8-高新6号
   category: asw_aircraft
@@ -1713,6 +1874,7 @@ models:
     article.conv_factor: 0.014
     article.power_eq_fa18: 3.78
     article.power_total: 121.1
+    article.qty: 32.0
 - id: yq9_gx14
   name: 运潜9-高新14号
   category: asw_aircraft
@@ -1726,6 +1888,7 @@ models:
     article.conv_factor: 0.023
     article.power_eq_fa18: 6.01
     article.power_total: 96.1
+    article.qty: 16.0
 - id: yzh8jb_gx2
   name: 运侦8JB-高新2号
   category: ew_aircraft
@@ -1739,6 +1902,7 @@ models:
     article.conv_factor: 0.006
     article.power_eq_fa18: 1.68
     article.power_total: 33.6
+    article.qty: 20.0
 - id: yzh9jz_gx8
   name: 运侦9JZ-高新8号
   category: ew_aircraft
@@ -1752,6 +1916,7 @@ models:
     article.conv_factor: 0.011
     article.power_eq_fa18: 2.99
     article.power_total: 29.9
+    article.qty: 10.0
 - id: j_15dh
   name: J-15DH
   category: ew_aircraft
@@ -1761,6 +1926,7 @@ models:
     function: 电子战
     article.power_eq_fa18: 1.21
     article.power_total: 9.7
+    article.qty: 8.0
 - id: j_15dt
   name: J-15DT
   category: ew_aircraft
@@ -1770,6 +1936,7 @@ models:
     function: 电子战
     article.power_eq_fa18: 3.61
     article.power_total: 14.4
+    article.qty: 4.0
 - id: e_4b
   name: E-4B
   category: ew_aircraft
@@ -1784,6 +1951,7 @@ models:
     article.conv_factor: 0.0063
     article.power_eq_fa18: 7.11
     article.power_total: 0.0
+    article.qty: 4.0
 - id: e_11a
   name: E-11A
   category: ew_aircraft
@@ -1798,6 +1966,7 @@ models:
     article.conv_factor: 0.012
     article.power_eq_fa18: 4.3
     article.power_total: 21.5
+    article.qty: 5.0
 - id: wc_130
   name: WC-130
   category: ew_aircraft
@@ -1812,6 +1981,7 @@ models:
     article.conv_factor: 0.0135
     article.power_eq_fa18: 3.21
     article.power_total: 32.1
+    article.qty: 10.0
 - id: wc_135
   name: WC-135
   category: ew_aircraft
@@ -1826,6 +1996,7 @@ models:
     article.conv_factor: 0.0135
     article.power_eq_fa18: 6.6
     article.power_total: 19.8
+    article.qty: 3.0
 - id: rc_135
   name: RC-135
   category: ew_aircraft
@@ -1840,6 +2011,7 @@ models:
     article.conv_factor: 0.0077
     article.power_eq_fa18: 11.15
     article.power_total: 278.8
+    article.qty: 25.0
 - id: u_2s
   name: U-2S
   category: ew_aircraft
@@ -1854,6 +2026,7 @@ models:
     article.conv_factor: 0.0089
     article.power_eq_fa18: 1.43
     article.power_total: 38.7
+    article.qty: 27.0
 - id: e_9a
   name: E-9A
   category: ew_aircraft
@@ -1868,6 +2041,7 @@ models:
     article.conv_factor: 0.0079
     article.power_eq_fa18: 0.64
     article.power_total: 1.3
+    article.qty: 2.0
 - id: ec_130h
   name: EC-130H
   category: ew_aircraft
@@ -1882,6 +2056,7 @@ models:
     article.conv_factor: 0.0185
     article.power_eq_fa18: 5.26
     article.power_total: 26.3
+    article.qty: 5.0
 - id: ec_37b
   name: EC-37B
   category: ew_aircraft
@@ -1896,6 +2071,7 @@ models:
     article.conv_factor: 0.0329
     article.power_eq_fa18: 8.76
     article.power_total: 8.8
+    article.qty: 1.0
 - id: ec_130j
   name: EC-130J
   category: ew_aircraft
@@ -1910,6 +2086,7 @@ models:
     article.conv_factor: 0.0123
     article.power_eq_fa18: 3.51
     article.power_total: 17.5
+    article.qty: 5.0
 - id: e_6b
   name: E-6B
   category: ew_aircraft
@@ -1924,6 +2101,7 @@ models:
     article.conv_factor: 0.0063
     article.power_eq_fa18: 4.52
     article.power_total: 0.0
+    article.qty: 16.0
 - id: p_8
   name: P-8
   category: asw_aircraft
@@ -1938,6 +2116,7 @@ models:
     article.conv_factor: 0.0194
     article.power_eq_fa18: 5.1
     article.power_total: 601.7
+    article.qty: 118.0
 - id: ep_3e
   name: EP-3E
   category: ew_aircraft
@@ -1952,6 +2131,7 @@ models:
     article.conv_factor: 0.006
     article.power_eq_fa18: 1.15
     article.power_total: 10.3
+    article.qty: 9.0
 - id: ea_18g
   name: EA-18G
   category: ew_aircraft
@@ -1962,6 +2142,7 @@ models:
     unit_cost_musd: 0.79
     article.power_eq_fa18: 2.36
     article.power_total: 360.8
+    article.qty: 153.0
 - id: ch_4_kvd_002
   name: 彩虹-4/KVD-002
   category: large_uav
@@ -1977,6 +2158,7 @@ models:
     article.composite: 5031.37
     article.power_eq_fa18: 0.6
     article.power_total: 104.4
+    article.qty: 180.0
 - id: bzk_005_wz_6
   name: BZK-005/无侦-6
   category: large_uav
@@ -1992,6 +2174,7 @@ models:
     article.composite: 4011.44
     article.power_eq_fa18: 0.5
     article.power_total: 38.8
+    article.qty: 84.0
 - id: wz_7
   name: 无侦-7
   category: large_uav
@@ -2007,6 +2190,7 @@ models:
     article.composite: 8616.62
     article.power_eq_fa18: 1.0
     article.power_total: 9.9
+    article.qty: 10.0
 - id: wz_8
   name: 无侦-8
   category: large_uav
@@ -2022,6 +2206,7 @@ models:
     article.composite: 42142.62
     article.power_eq_fa18: 4.9
     article.power_total: 38.9
+    article.qty: 8.0
 - id: sd_wz_9
   name: 神雕/无侦-9
   category: large_uav
@@ -2037,6 +2222,7 @@ models:
     article.composite: 2624.67
     article.power_eq_fa18: 0.3
     article.power_total: 3.6
+    article.qty: 12.0
 - id: yl_wz_10
   name: 翼龙/无侦-10
   category: large_uav
@@ -2052,7 +2238,8 @@ models:
     article.composite: 6320.96
     article.power_eq_fa18: 0.7
     article.power_total: 8.7
-- id: tb_001twin_scorpion_wz_11
+    article.qty: 12.0
+- id: tb_001_twin_scorpion_wz_11
   name: TB-001双尾蝎/无侦-11
   category: large_uav
   family: tb001
@@ -2067,6 +2254,7 @@ models:
     article.composite: 15799.23
     article.power_eq_fa18: 1.8
     article.power_total: 54.6
+    article.qty: 30.0
 - id: yl_gj_1
   name: 翼龙/攻击-1
   category: large_uav
@@ -2082,6 +2270,7 @@ models:
     article.composite: 3241.38
     article.power_eq_fa18: 0.4
     article.power_total: 22.4
+    article.qty: 60.0
 - id: yl_gj_2
   name: 翼龙/攻击-2
   category: large_uav
@@ -2097,6 +2286,7 @@ models:
     article.composite: 10043.25
     article.power_eq_fa18: 1.2
     article.power_total: 69.4
+    article.qty: 60.0
 - id: gj11
   name: 攻击11
   category: large_uav
@@ -2112,6 +2302,7 @@ models:
     article.composite: 39037.65
     article.power_eq_fa18: 4.5
     article.power_total: 36.0
+    article.qty: 8.0
 - id: mq_1c
   name: MQ-1C
   category: large_uav
@@ -2127,6 +2318,7 @@ models:
     article.composite: 2719.74
     article.power_eq_fa18: 0.3
     article.power_total: 56.7
+    article.qty: 181.0
 - id: mq_9
   name: MQ-9
   category: large_uav
@@ -2142,6 +2334,7 @@ models:
     article.composite: 15083.33
     article.power_eq_fa18: 1.7
     article.power_total: 191.2
+    article.qty: 110.0
 - id: mq_8b
   name: MQ-8B
   category: large_uav
@@ -2157,6 +2350,7 @@ models:
     article.composite: 480.14
     article.power_eq_fa18: 0.1
     article.power_total: 1.5
+    article.qty: 27.0
 - id: mq_8c
   name: MQ-8C
   category: large_uav
@@ -2172,6 +2366,7 @@ models:
     article.composite: 1009.35
     article.power_eq_fa18: 0.1
     article.power_total: 1.2
+    article.qty: 10.0
 - id: mq_4c
   name: MQ-4C
   category: large_uav
@@ -2187,6 +2382,7 @@ models:
     article.composite: 36989.21
     article.power_eq_fa18: 4.3
     article.power_total: 127.9
+    article.qty: 30.0
 - id: rq_4b
   name: RQ-4B
   category: large_uav
@@ -2202,6 +2398,7 @@ models:
     article.composite: 46612.8
     article.power_eq_fa18: 5.4
     article.power_total: 48.3
+    article.qty: 9.0
 - id: rq_170
   name: RQ-170
   category: large_uav
@@ -2217,6 +2414,7 @@ models:
     article.composite: 8691.43
     article.power_eq_fa18: 1.0
     article.power_total: 24.0
+    article.qty: 24.0
 - id: rq_180
   name: RQ-180
   category: large_uav
@@ -2232,3 +2430,4 @@ models:
     article.composite: 173509.25
     article.power_eq_fa18: 20.0
     article.power_total: 240.0
+    article.qty: 12.0
