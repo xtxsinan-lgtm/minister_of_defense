@@ -1,0 +1,38 @@
+name: forcedb-crawl
+# 手动触发：重新抓取公开数据源，重建数据库，并把新增观测提交到一个新分支（不直接动 main）。
+# 想定期自动刷新：取消下面 schedule 的注释即可。
+on:
+  workflow_dispatch:
+    inputs:
+      connectors:
+        description: "要运行的连接器，空格分隔（默认 worldbank）"
+        default: "worldbank"
+  # schedule:
+  #   - cron: "0 3 1 * *"      # 每月 1 日 03:00 UTC
+
+jobs:
+  crawl:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install pyyaml pytest
+      - run: python -m forcedb build
+      - name: Crawl
+        run: |
+          for c in ${{ github.event.inputs.connectors || 'worldbank' }}; do
+            python -m forcedb crawl "$c" --apply
+          done
+      - run: python -m forcedb build && python -m pytest -q
+      - name: Commit observations to a branch
+        run: |
+          git config user.name "forcedb-bot"
+          git config user.email "forcedb-bot@users.noreply.github.com"
+          git checkout -b "forcedb/crawl-$(date +%Y%m%d)"
+          git add data/forcedb/observations db
+          git commit -m "chore(forcedb): crawl $(date +%F)" || echo "no changes"
+          git push -u origin HEAD || true

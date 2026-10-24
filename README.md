@@ -39,3 +39,13 @@
   - [`report_v4.md`](docs/validation/report_v4.md) — V4 2010–2020 十年建军策略搜索与平衡性证明
   - [`report_v8_web_playtest.md`](docs/validation/report_v8_web_playtest.md) — V8 交互式网页推演原型验证报告
 - [数据目录 (`data/`)](data/README.md)：中美编制与装备参数（YAML）及纳卡 MVP 剧本数据（`data/equipment/`、`data/templates/`、`data/scenarios/`）。
+
+## 🧮 军力量化数据库（forcedb）
+
+把《2025 中美军事实力对比分析》的量化方法做成代码，并沉淀成两个数据库：**装备库**（全域，含库存时间序列、多来源、置信度）与**陆军编制库**（复用本仓库的编制模板），
+两库经“编制内装备需求”打通；爬取框架可持续追加公开数据（世界银行军费/兵力、Wikipedia 装备清单），为实时量化与全球国家推广打底。
+
+- 设计、方法对照、局限：[`docs/forcedb.md`](docs/forcedb.md)
+- 代码：[`forcedb/`](forcedb/)；构建产物：[`db/equipment.sqlite`](db/)、[`db/toe.sqlite`](db/)
+- `python3 -m forcedb build && python3 -m forcedb score`：复现文章（中国 418.8 / 美国 522.2 = 80.2%）
+
