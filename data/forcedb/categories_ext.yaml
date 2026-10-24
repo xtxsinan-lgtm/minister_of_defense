@@ -35,3 +35,5 @@ categories:
   # ---- 太空 ----
   - {id: satellite,           name: 军用卫星,                 group: space,        domain: space}
   - {id: launcher,            name: 运载火箭,                 group: space,        domain: space}
+  # ---- 岸基反舰/防空系统（表格“驱护舰”里与舰艇同表统计的岸基单元） ----
+  - {id: coastal_missile_battery, name: 岸基反舰/防空导弹系统, group: coastal, domain: sea}

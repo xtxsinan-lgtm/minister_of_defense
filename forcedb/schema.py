@@ -74,12 +74,13 @@ CREATE TABLE inventory (
   equipment_id TEXT NOT NULL REFERENCES equipment(id),
   kind TEXT NOT NULL DEFAULT 'active'
        CHECK (kind IN ('active','reserve','storage','on_order','production_per_year','in_toe','total')),
+  role TEXT NOT NULL DEFAULT 'all',            -- 同一装备参与不同量化口径时的数量，如 air_superiority / ground_attack
   quantity REAL NOT NULL,
   as_of TEXT NOT NULL,                         -- ISO 日期
   source_id TEXT REFERENCES source(id),
   confidence TEXT CHECK (confidence IN ('stated','estimated','uncertain') OR confidence IS NULL),
   notes TEXT,
-  UNIQUE (country, service, equipment_id, kind, as_of, source_id)
+  UNIQUE (country, service, equipment_id, kind, role, as_of, source_id)
 );
 CREATE INDEX ix_inventory_country ON inventory(country, equipment_id);
 
@@ -104,7 +105,7 @@ CREATE VIEW v_inventory_latest AS
 SELECT i.* FROM inventory i
 WHERE i.as_of = (SELECT MAX(j.as_of) FROM inventory j
                  WHERE j.country=i.country AND j.service=i.service
-                   AND j.equipment_id=i.equipment_id AND j.kind=i.kind);
+                   AND j.equipment_id=i.equipment_id AND j.kind=i.kind AND j.role=i.role);
 """
 
 TOE_DDL = """
@@ -196,6 +197,19 @@ CREATE TABLE orbat_entry (
   as_of TEXT, source_id TEXT, confidence TEXT, notes TEXT
 );
 CREATE INDEX ix_orbat_country ON orbat_entry(country, path);
+
+-- 旅/团级“战力等级”：数量 × 每旅战力，每旅战力 = 基础火力规模 × 装备 × 机械化 × 信息化 × 后勤 × 准备度
+-- （表格“乘数”）。snapshot_* 为文章结果快照，引擎 recompute 模式用乘数重算并与之对照。
+CREATE TABLE brigade_class (
+  id TEXT PRIMARY KEY, country TEXT NOT NULL, label TEXT NOT NULL,
+  service TEXT NOT NULL,                 -- army/marines/airforce（决定计入哪个军种的地面力量）
+  template_id TEXT REFERENCES unit_template(id),
+  count REAL NOT NULL,
+  base_fire_scale REAL, equip_mult REAL, mech_mult REAL, info_mult REAL, logistics_mult REAL, readiness_mult REAL,
+  apply_logistics INTEGER NOT NULL DEFAULT 1,
+  snapshot_power REAL, snapshot_total REAL,
+  source_id TEXT, as_of TEXT, notes TEXT
+);
 
 -- 现实世界的某个具体单位（番号）及其采用的模板 —— 后续爬取/填充用，现在为空表
 CREATE TABLE formation (

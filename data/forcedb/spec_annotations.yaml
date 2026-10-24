@@ -1,0 +1,66 @@
+# 为既有装备（仓库 data/equipment）追加量化引擎需要的规格/文章快照。由 tools/import_sheets.py 生成。
+annotations:
+- equipment_id: z9
+  specs:
+    article.power_factor: 0.6603216464697759
+    article.brigade_equiv_per_airframe: 0.0252
+- equipment_id: ka28
+  specs:
+    article.power_factor: 0.8115341334325656
+    article.brigade_equiv_per_airframe: 0.031
+- equipment_id: z20
+  specs:
+    article.power_factor: 1.0
+    article.brigade_equiv_per_airframe: 0.0382
+- equipment_id: mi171
+  specs:
+    article.power_factor: 1.1842749358739497
+    article.brigade_equiv_per_airframe: 0.0452
+- equipment_id: z8
+  specs:
+    article.power_factor: 1.264174914941374
+    article.brigade_equiv_per_airframe: 0.0483
+- equipment_id: z8l
+  specs:
+    article.power_factor: 1.6060843510551397
+    article.brigade_equiv_per_airframe: 0.0614
+- equipment_id: z10
+  specs:
+    article.power_factor: 0.7241423301426706
+    article.brigade_equiv_per_airframe: 0.0429
+- equipment_id: z19
+  specs:
+    article.power_factor: 0.5471197443579735
+    article.brigade_equiv_per_airframe: 0.0324
+- equipment_id: uh1y
+  specs:
+    article.power_factor: 0.705246053785913
+    article.brigade_equiv_per_airframe: 0.0269
+- equipment_id: uh60
+  specs:
+    article.power_factor: 1.0
+    article.brigade_equiv_per_airframe: 0.0382
+- equipment_id: mv22
+  specs:
+    article.power_factor: 2.144673683208077
+    article.brigade_equiv_per_airframe: 0.0819
+- equipment_id: ch47f
+  specs:
+    article.power_factor: 2.2515996168832486
+    article.brigade_equiv_per_airframe: 0.086
+- equipment_id: ch53e
+  specs:
+    article.power_factor: 2.1628007112610423
+    article.brigade_equiv_per_airframe: 0.0826
+- equipment_id: ah64e
+  specs:
+    article.power_factor: 1.0
+    article.brigade_equiv_per_airframe: 0.0592
+- equipment_id: ah1z
+  specs:
+    article.power_factor: 0.8889934456215519
+    article.brigade_equiv_per_airframe: 0.0526
+- equipment_id: mh6m
+  specs:
+    article.power_factor: 0.4058758469371706
+    article.brigade_equiv_per_airframe: 0.024

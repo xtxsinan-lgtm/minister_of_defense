@@ -1,0 +1,1034 @@
+# 由 tools/import_sheets.py 从作者的 Google Sheets 导出生成（来源 sheet_cn_us）。
+# 物理/技术参数在 specs；article.* 为表格中已算好的文章结果（快照）。
+models:
+- id: df11a
+  name: 东风11A
+  category: srbm
+  family: df11
+  origin: CHN
+  specs:
+    warhead_kg: 300.0
+    missiles_per_launcher: 1.0
+    range_km: 800.0
+    cep_m: 20.0
+    article.base_param: 6.0571
+    article.mobility: 1.111111
+    article.reload: 0.648
+    article.power: 4.361112
+    brigades: 2.0
+    launchers_per_brigade: 36.0
+  notes: 库存口径为发射车数 = 旅数 × 每旅发射车数（表格“火箭军”）。
+- id: df15a
+  name: 东风15A
+  category: srbm
+  family: df15
+  origin: CHN
+  specs:
+    warhead_kg: 360.0
+    missiles_per_launcher: 1.0
+    range_km: 900.0
+    cep_m: 30.0
+    article.base_param: 5.848
+    article.mobility: 1.111111
+    article.reload: 0.648
+    article.power: 4.21056
+    brigades: 1.0
+    launchers_per_brigade: 36.0
+  notes: 库存口径为发射车数 = 旅数 × 每旅发射车数（表格“火箭军”）。
+- id: df15b
+  name: 东风15B
+  category: srbm
+  family: df15
+  origin: CHN
+  specs:
+    warhead_kg: 360.0
+    missiles_per_launcher: 1.0
+    range_km: 800.0
+    cep_m: 5.0
+    article.base_param: 10.2175
+    article.mobility: 1.111111
+    article.reload: 0.648
+    article.power: 7.3566
+    brigades: 1.0
+    launchers_per_brigade: 36.0
+  notes: 库存口径为发射车数 = 旅数 × 每旅发射车数（表格“火箭军”）。
+- id: df15c
+  name: 东风15C
+  category: srbm
+  family: df15
+  origin: CHN
+  specs:
+    warhead_kg: 540.0
+    missiles_per_launcher: 1.0
+    range_km: 700.0
+    cep_m: 15.0
+    article.base_param: 7.7566
+    article.mobility: 1.111111
+    article.reload: 0.648
+    article.power: 5.584752
+    brigades: 1.0
+    launchers_per_brigade: 36.0
+  notes: 库存口径为发射车数 = 旅数 × 每旅发射车数（表格“火箭军”）。
+- id: cj10
+  name: 长剑10
+  category: cruise_missile_land
+  family: cj10
+  origin: CHN
+  specs:
+    warhead_kg: 300.0
+    missiles_per_launcher: 3.0
+    range_km: 1500.0
+    cep_m: 10.0
+    article.base_param: 13.5721
+    article.mobility: 1.111111
+    article.reload: 0.648
+    article.power: 9.771912
+    brigades: 2.0
+    launchers_per_brigade: 12.0
+  notes: 库存口径为发射车数 = 旅数 × 每旅发射车数（表格“火箭军”）。
+- id: cj10a
+  name: 长剑10A
+  category: cruise_missile_land
+  family: cj10
+  origin: CHN
+  specs:
+    warhead_kg: 300.0
+    missiles_per_launcher: 3.0
+    range_km: 2500.0
+    cep_m: 10.0
+    article.base_param: 16.0915
+    article.mobility: 1.111111
+    article.reload: 0.648
+    article.power: 11.58588
+    brigades: 3.0
+    launchers_per_brigade: 12.0
+  notes: 库存口径为发射车数 = 旅数 × 每旅发射车数（表格“火箭军”）。
+- id: cj100
+  name: 长剑100
+  category: cruise_missile_land
+  family: cj100
+  origin: CHN
+  specs:
+    warhead_kg: 300.0
+    missiles_per_launcher: 3.0
+    range_km: 4000.0
+    cep_m: 10.0
+    article.base_param: 18.8207
+    article.mobility: 1.111111
+    article.reload: 0.648
+    article.power: 13.550904
+    brigades: 2.0
+    launchers_per_brigade: 12.0
+  notes: 库存口径为发射车数 = 旅数 × 每旅发射车数（表格“火箭军”）。
+- id: df16
+  name: 东风16
+  category: mrbm
+  family: df16
+  origin: CHN
+  specs:
+    warhead_kg: 900.0
+    missiles_per_launcher: 1.0
+    range_km: 1500.0
+    cep_m: 50.0
+    article.base_param: 7.937
+    article.mobility: 1.111111
+    article.reload: 0.648
+    article.power: 5.71464
+    brigades: 4.0
+    launchers_per_brigade: 24.0
+  notes: 库存口径为发射车数 = 旅数 × 每旅发射车数（表格“火箭军”）。
+- id: df17
+  name: 东风17
+  category: mrbm
+  family: df17
+  origin: CHN
+  specs:
+    warhead_kg: 900.0
+    missiles_per_launcher: 1.0
+    range_km: 1500.0
+    cep_m: 10.0
+    article.base_param: 13.5721
+    article.mobility: 1.111111
+    article.reload: 0.648
+    article.power: 9.771912
+    brigades: 1.0
+    launchers_per_brigade: 24.0
+  notes: 库存口径为发射车数 = 旅数 × 每旅发射车数（表格“火箭军”）。
+- id: df21
+  name: 东风21
+  category: mrbm
+  family: df21
+  origin: CHN
+  specs:
+    warhead_kg: 360.0
+    missiles_per_launcher: 1.0
+    range_km: 1770.0
+    cep_m: 300.0
+    article.base_param: 3.4008
+    article.mobility: 1.111111
+    article.reload: 0.648
+    article.power: 2.448576
+    brigades: 1.0
+    launchers_per_brigade: 24.0
+  notes: 库存口径为发射车数 = 旅数 × 每旅发射车数（表格“火箭军”）。
+- id: df21c
+  name: 东风21C
+  category: irbm
+  family: df21
+  origin: CHN
+  specs:
+    warhead_kg: 360.0
+    missiles_per_launcher: 1.0
+    range_km: 3100.0
+    cep_m: 50.0
+    article.base_param: 7.449
+    article.mobility: 1.111111
+    article.reload: 0.648
+    article.power: 5.36328
+    brigades: 4.0
+    launchers_per_brigade: 24.0
+  notes: 库存口径为发射车数 = 旅数 × 每旅发射车数（表格“火箭军”）。
+- id: df21d
+  name: 东风21D
+  category: mrbm
+  family: df21
+  origin: CHN
+  specs:
+    warhead_kg: 384.0
+    missiles_per_launcher: 1.0
+    range_km: 2500.0
+    cep_m: 50.0
+    article.base_param: 7.0844
+    article.mobility: 1.111111
+    article.reload: 0.648
+    article.power: 5.100768
+    brigades: 2.0
+    launchers_per_brigade: 24.0
+  notes: 库存口径为发射车数 = 旅数 × 每旅发射车数（表格“火箭军”）。
+- id: df26
+  name: 东风26
+  category: irbm
+  family: df26
+  origin: CHN
+  specs:
+    warhead_kg: 1080.0
+    missiles_per_launcher: 1.0
+    range_km: 5000.0
+    cep_m: 100.0
+    article.base_param: 10.0
+    article.mobility: 1.111111
+    article.reload: 0.648
+    article.power: 7.2
+    brigades: 5.0
+    launchers_per_brigade: 24.0
+  notes: 库存口径为发射车数 = 旅数 × 每旅发射车数（表格“火箭军”）。
+- id: art_m777
+  name: M777
+  category: howitzer_heavy_towed
+  family: art
+  origin: USA
+  specs:
+    barrels: 1.0
+    guided_warhead_kg: 5.4
+    guided_range_km: 40.0
+    cep_m: 4.0
+    article.base_param: 1.0
+    deploy_speed: 0.64
+    traverse: 0.9
+    aiming: 0.9
+    mobility: 1.0
+    reload: 1.0
+    article.power_per_gun: 0.47
+- id: art_m109a6
+  name: M109A6
+  category: howitzer_heavy_sp
+  family: art
+  origin: USA
+  specs:
+    barrels: 1.0
+    guided_warhead_kg: 5.4
+    guided_range_km: 40.0
+    cep_m: 4.0
+    article.base_param: 1.0
+    deploy_speed: 1.0
+    traverse: 1.0
+    aiming: 1.0
+    mobility: 1.0
+    reload: 1.0
+    article.power_per_gun: 1.0
+- id: art_plz_05
+  name: PLZ-05
+  category: howitzer_heavy_sp
+  family: art
+  origin: CHN
+  specs:
+    barrels: 1.0
+    guided_warhead_kg: 6.0
+    guided_range_km: 70.0
+    cep_m: 1.0
+    article.base_param: 1.98
+    deploy_speed: 1.0
+    traverse: 1.0
+    aiming: 1.0
+    mobility: 1.0
+    reload: 1.111111
+    article.power_per_gun: 2.2
+- id: art_pcl_181
+  name: PCL-181
+  category: howitzer_heavy_truck
+  family: art
+  origin: CHN
+  specs:
+    barrels: 1.0
+    guided_warhead_kg: 6.0
+    guided_range_km: 70.0
+    cep_m: 1.0
+    article.base_param: 1.98
+    deploy_speed: 0.8
+    traverse: 1.0
+    aiming: 1.0
+    mobility: 1.1
+    reload: 1.0
+    article.power_per_gun: 1.76
+- id: art_m270_227mm
+  name: M270+227mm
+  category: mrl_long_range
+  family: art
+  origin: USA
+  specs:
+    barrels: 12.0
+    guided_warhead_kg: 23.0
+    guided_range_km: 92.0
+    cep_m: 2.0
+    article.base_param: 6.17
+    deploy_speed: 1.0
+    traverse: 1.0
+    aiming: 1.0
+    mobility: 1.0
+    reload: 0.8
+    article.power_per_gun: 4.94
+- id: art_m270_atacms
+  name: M270+ATACMS
+  category: mrl_long_range
+  family: art
+  origin: USA
+  specs:
+    barrels: 2.0
+    guided_warhead_kg: 123.0
+    guided_range_km: 300.0
+    cep_m: 10.0
+    article.base_param: 5.15
+    deploy_speed: 1.0
+    traverse: 1.0
+    aiming: 1.0
+    mobility: 1.0
+    reload: 0.8
+    article.power_per_gun: 4.12
+- id: art_m270_prsm
+  name: M270+PrSM
+  category: mrl_long_range
+  family: art
+  origin: USA
+  specs:
+    barrels: 4.0
+    guided_warhead_kg: 23.0
+    guided_range_km: 499.0
+    cep_m: 1.0
+    article.base_param: 9.47
+    deploy_speed: 1.0
+    traverse: 1.0
+    aiming: 1.0
+    mobility: 1.0
+    reload: 0.8
+    article.power_per_gun: 7.58
+- id: art_himars_227mm
+  name: HIMARS+227mm
+  category: mrl_long_range
+  family: art
+  origin: USA
+  specs:
+    barrels: 6.0
+    guided_warhead_kg: 23.0
+    guided_range_km: 92.0
+    cep_m: 2.0
+    article.base_param: 5.07
+    deploy_speed: 1.0
+    traverse: 1.0
+    aiming: 1.0
+    mobility: 1.1
+    reload: 0.8
+    article.power_per_gun: 4.06
+- id: art_himars_atacms
+  name: HIMARS+ATACMS
+  category: mrl_long_range
+  family: art
+  origin: USA
+  specs:
+    barrels: 1.0
+    guided_warhead_kg: 50.0
+    guided_range_km: 300.0
+    cep_m: 10.0
+    article.base_param: 3.03
+    deploy_speed: 1.0
+    traverse: 1.0
+    aiming: 1.0
+    mobility: 1.1
+    reload: 0.8
+    article.power_per_gun: 2.42
+- id: art_himars_prsm
+  name: HIMARS+PrSM
+  category: mrl_long_range
+  family: art
+  origin: USA
+  specs:
+    barrels: 2.0
+    guided_warhead_kg: 23.0
+    guided_range_km: 499.0
+    cep_m: 1.0
+    article.base_param: 7.52
+    deploy_speed: 1.0
+    traverse: 1.0
+    aiming: 1.0
+    mobility: 1.1
+    reload: 0.8
+    article.power_per_gun: 6.02
+- id: art_phl_03
+  name: PHL-03
+  category: mrl_long_range
+  family: art
+  origin: CHN
+  specs:
+    barrels: 12.0
+    guided_warhead_kg: 92.5
+    guided_range_km: 150.0
+    cep_m: 10.0
+    article.base_param: 6.76
+    deploy_speed: 1.0
+    traverse: 1.0
+    aiming: 1.0
+    mobility: 1.1
+    reload: 0.648
+    article.power_per_gun: 4.86
+- id: art_phl_191_300mm
+  name: PHL-191+300mm
+  category: mrl_long_range
+  family: art
+  origin: CHN
+  specs:
+    barrels: 10.0
+    guided_warhead_kg: 92.5
+    guided_range_km: 150.0
+    cep_m: 10.0
+    article.base_param: 6.36
+    deploy_speed: 1.0
+    traverse: 1.0
+    aiming: 1.0
+    mobility: 1.1
+    reload: 0.8
+    article.power_per_gun: 5.09
+- id: art_phl_191_370mm
+  name: PHL-191+370mm
+  category: mrl_long_range
+  family: art
+  origin: CHN
+  specs:
+    barrels: 8.0
+    guided_warhead_kg: 140.6
+    guided_range_km: 300.0
+    cep_m: 30.0
+    article.base_param: 5.93
+    deploy_speed: 1.0
+    traverse: 1.0
+    aiming: 1.0
+    mobility: 1.1
+    reload: 0.8
+    article.power_per_gun: 4.74
+- id: art_phl_191_750mm
+  name: PHL-191+750mm
+  category: mrl_long_range
+  family: art
+  origin: CHN
+  specs:
+    barrels: 2.0
+    guided_warhead_kg: 168.72
+    guided_range_km: 500.0
+    cep_m: 5.0
+    article.base_param: 8.55
+    deploy_speed: 1.0
+    traverse: 1.0
+    aiming: 1.0
+    mobility: 1.1
+    reload: 0.8
+    article.power_per_gun: 6.84
+- id: art_himars
+  name: HIMARS
+  category: mrl_long_range
+  family: art
+  origin: USA
+  specs:
+    article.power_per_gun: 6.0
+  notes: 系统级条目：各弹种配置见 art_<系统>_<弹种>；战力/门取自“炮兵旅”表。
+- id: art_m270
+  name: M270
+  category: mrl_long_range
+  family: art
+  origin: USA
+  specs:
+    article.power_per_gun: 6.8
+  notes: 系统级条目：各弹种配置见 art_<系统>_<弹种>；战力/门取自“炮兵旅”表。
+- id: art_phl_191
+  name: PHL-191
+  category: mrl_long_range
+  family: art
+  origin: CHN
+  specs:
+    article.power_per_gun: 6.8
+  notes: 系统级条目：各弹种配置见 art_<系统>_<弹种>；战力/门取自“炮兵旅”表。
+- id: ad_hq19
+  name: 红旗19
+  category: sam_long
+  family: ad
+  origin: CHN
+  specs:
+    range_km: 500.0
+    ceiling_km: 150.0
+    missile_speed_mach: 7.9
+    guidance: 指令制导+主动雷达寻的
+    guidance_factor: 1.21
+    deploy_min: 15.0
+    deploy_factor: 0.91
+    launchers: 4.0
+    article.battery_power: 43.2
+    article.brigade_equiv: 0.165
+    vehicles_per_unit: 8.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_s400
+  name: S400
+  category: sam_long
+  family: ad
+  origin: RUS
+  specs:
+    range_km: 400.0
+    ceiling_km: 30.0
+    missile_speed_mach: 14.0
+    guidance: 指令制导+主动雷达寻的
+    guidance_factor: 1.21
+    deploy_min: 10.0
+    deploy_factor: 0.91
+    launchers: 4.0
+    article.battery_power: 31.5
+    article.brigade_equiv: 0.1204
+    vehicles_per_unit: 8.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_s300pmu2
+  name: S300PMU2
+  category: sam_long
+  family: ad
+  origin: RUS
+  specs:
+    range_km: 195.0
+    ceiling_km: 27.0
+    missile_speed_mach: 5.5
+    guidance: 指令制导+半主动雷达寻的
+    guidance_factor: 1.1
+    deploy_min: 6.0
+    deploy_factor: 1.0
+    launchers: 4.0
+    article.battery_power: 20.3
+    article.brigade_equiv: 0.0776
+    vehicles_per_unit: 8.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_s300pmu1
+  name: S300PMU1
+  category: sam_long
+  family: ad
+  origin: RUS
+  specs:
+    range_km: 150.0
+    ceiling_km: 27.0
+    missile_speed_mach: 5.8
+    guidance: 指令制导+半主动雷达寻的
+    guidance_factor: 1.1
+    deploy_min: 6.0
+    deploy_factor: 1.0
+    launchers: 4.0
+    article.battery_power: 19.25877
+    article.brigade_equiv: 0.0736
+    vehicles_per_unit: 8.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_s300pmu
+  name: S300PMU
+  category: sam_medium
+  family: ad
+  origin: RUS
+  specs:
+    range_km: 90.0
+    ceiling_km: 27.0
+    missile_speed_mach: 5.8
+    guidance: 指令制导+半主动雷达寻的
+    guidance_factor: 1.1
+    deploy_min: 6.0
+    deploy_factor: 1.0
+    launchers: 4.0
+    article.battery_power: 16.9
+    article.brigade_equiv: 0.0648
+    vehicles_per_unit: 8.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_hq9b
+  name: 红旗9B
+  category: sam_long
+  family: ad
+  origin: CHN
+  specs:
+    range_km: 300.0
+    ceiling_km: 50.0
+    missile_speed_mach: 6.0
+    guidance: 指令制导+半主动雷达寻的
+    guidance_factor: 1.1
+    deploy_min: 6.0
+    deploy_factor: 1.0
+    launchers: 4.0
+    article.battery_power: 26.9
+    article.brigade_equiv: 0.103
+    vehicles_per_unit: 8.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_hq9
+  name: 红旗9
+  category: sam_long
+  family: ad
+  origin: CHN
+  specs:
+    range_km: 120.0
+    ceiling_km: 30.0
+    missile_speed_mach: 4.2
+    guidance: 指令制导+半主动雷达寻的
+    guidance_factor: 1.1
+    deploy_min: 6.0
+    deploy_factor: 1.0
+    launchers: 4.0
+    article.battery_power: 17.3
+    article.brigade_equiv: 0.066
+    vehicles_per_unit: 8.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_hq22a
+  name: 红旗22A
+  category: sam_long
+  family: ad
+  origin: CHN
+  specs:
+    range_km: 170.0
+    ceiling_km: 27.0
+    missile_speed_mach: 6.0
+    guidance: 指令制导+半主动雷达寻的
+    guidance_factor: 1.1
+    deploy_min: 6.0
+    deploy_factor: 1.0
+    launchers: 4.0
+    article.battery_power: 20.0
+    article.brigade_equiv: 0.0766
+    vehicles_per_unit: 8.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_hq22
+  name: 红旗22
+  category: sam_long
+  family: ad
+  origin: CHN
+  specs:
+    range_km: 100.0
+    ceiling_km: 27.0
+    missile_speed_mach: 6.0
+    guidance: 指令制导+半主动雷达寻的
+    guidance_factor: 1.1
+    deploy_min: 6.0
+    deploy_factor: 1.0
+    launchers: 4.0
+    article.battery_power: 17.6
+    article.brigade_equiv: 0.0671
+    vehicles_per_unit: 8.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_hq12a
+  name: 红旗12A
+  category: sam_medium
+  family: ad
+  origin: CHN
+  specs:
+    range_km: 70.0
+    ceiling_km: 25.0
+    missile_speed_mach: 4.0
+    guidance: 指令制导+半主动雷达寻的
+    guidance_factor: 1.1
+    deploy_min: 5.0
+    deploy_factor: 1.0
+    launchers: 2.0
+    article.battery_power: 12.0
+    article.brigade_equiv: 0.0457
+    vehicles_per_unit: 8.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_hq12
+  name: 红旗12
+  category: sam_medium
+  family: ad
+  origin: CHN
+  specs:
+    range_km: 42.0
+    ceiling_km: 25.0
+    missile_speed_mach: 4.0
+    guidance: 指令制导+半主动雷达寻的
+    guidance_factor: 1.1
+    deploy_min: 5.0
+    deploy_factor: 1.0
+    launchers: 2.0
+    article.battery_power: 10.5
+    article.brigade_equiv: 0.0403
+    vehicles_per_unit: 8.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_hq6d
+  name: 红旗6D
+  category: sam_short
+  family: ad
+  origin: CHN
+  specs:
+    range_km: 18.0
+    ceiling_km: 12.0
+    missile_speed_mach: 3.0
+    guidance: 半主动雷达制导
+    guidance_factor: 1.0
+    deploy_min: 12.0
+    deploy_factor: 0.91
+    launchers: 4.0
+    article.battery_power: 6.5
+    article.brigade_equiv: 0.0248
+    vehicles_per_unit: 8.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_hq16f
+  name: 红旗16F
+  category: sam_long
+  family: ad
+  origin: CHN
+  specs:
+    range_km: 160.0
+    ceiling_km: 18.0
+    missile_speed_mach: 4.0
+    guidance: 指令制导+半主动雷达寻的
+    guidance_factor: 1.1
+    deploy_min: 12.0
+    deploy_factor: 0.91
+    launchers: 6.0
+    article.battery_power: 16.2
+    article.brigade_equiv: 0.062
+    vehicles_per_unit: 12.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_hq16b
+  name: 红旗16B
+  category: sam_medium
+  family: ad
+  origin: CHN
+  specs:
+    range_km: 70.0
+    ceiling_km: 18.0
+    missile_speed_mach: 4.0
+    guidance: 指令制导+半主动雷达寻的
+    guidance_factor: 1.1
+    deploy_min: 12.0
+    deploy_factor: 0.91
+    launchers: 6.0
+    article.battery_power: 13.2
+    article.brigade_equiv: 0.0504
+    vehicles_per_unit: 12.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_hq16
+  name: 红旗16
+  category: sam_medium
+  family: ad
+  origin: CHN
+  specs:
+    range_km: 40.0
+    ceiling_km: 18.0
+    missile_speed_mach: 4.0
+    guidance: 指令制导+半主动雷达寻的
+    guidance_factor: 1.1
+    deploy_min: 12.0
+    deploy_factor: 0.91
+    launchers: 6.0
+    article.battery_power: 11.5
+    article.brigade_equiv: 0.0438
+    vehicles_per_unit: 12.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_hq17
+  name: 红旗17
+  category: sam_medium
+  family: ad
+  origin: CHN
+  specs:
+    range_km: 20.0
+    ceiling_km: 10.0
+    missile_speed_mach: 3.0
+    guidance: 半主动雷达制导
+    guidance_factor: 1.0
+    deploy_min: 0.07
+    deploy_factor: 1.21
+    launchers: 8.0
+    article.battery_power: 10.1
+    article.brigade_equiv: 0.0385
+    vehicles_per_unit: 12.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_torm1
+  name: 道尔M1
+  category: sam_short
+  family: ad
+  origin: RUS
+  specs:
+    range_km: 12.0
+    ceiling_km: 6.0
+    missile_speed_mach: 2.5
+    guidance: 指令制导+半主动雷达寻的
+    guidance_factor: 1.1
+    deploy_min: 3.0
+    deploy_factor: 1.1
+    launchers: 8.0
+    article.battery_power: 7.5
+    article.brigade_equiv: 0.0285
+    vehicles_per_unit: 12.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_hq7
+  name: 红旗7
+  category: sam_short
+  family: ad
+  origin: CHN
+  specs:
+    range_km: 8.0
+    ceiling_km: 6.0
+    missile_speed_mach: 2.6
+    guidance: 指令制导+红外寻的
+    guidance_factor: 1.1
+    deploy_min: 5.0
+    deploy_factor: 1.0
+    launchers: 4.0
+    article.battery_power: 5.2
+    article.brigade_equiv: 0.0199
+    vehicles_per_unit: 12.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_pgl_625veh_hongying_6b
+  name: PGL-625车载红缨-6B
+  category: sam_short
+  family: ad
+  origin: CHN
+  specs:
+    range_km: 6.0
+    ceiling_km: 3.5
+    missile_speed_mach: 1.81
+    guidance: 被动红外制导
+    guidance_factor: 0.909091
+    deploy_min: 0.0
+    deploy_factor: 1.33
+    launchers: 8.0
+    article.battery_power: 5.1
+    article.brigade_equiv: 0.0193
+    vehicles_per_unit: 18.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_pgl_625
+  name: PGL-625
+  category: spaag
+  family: ad
+  origin: CHN
+  specs:
+    range_km: 5.0
+    ceiling_km: 3.5
+    gun_rof: 5000.0
+    guidance: 雷达+光电制导
+    deploy_min: 0.0
+    deploy_factor: 1.33
+    article.battery_power: 22.9
+    article.brigade_equiv: 0.0181
+    vehicles_per_unit: 18.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_ludun2000
+  name: 陆盾2000
+  category: spaag
+  family: ad
+  origin: CHN
+  specs:
+    range_km: 3.0
+    ceiling_km: 8.0
+    gun_rof: 4000.0
+    guidance: 雷达+光电制导
+    deploy_min: 12.0
+    deploy_factor: 0.91
+    article.battery_power: 16.0
+    article.brigade_equiv: 0.0127
+    vehicles_per_unit: 8.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_pg_99
+  name: PG-99
+  category: spaag
+  family: ad
+  origin: CHN
+  specs:
+    range_km: 4.0
+    ceiling_km: 3.0
+    gun_rof: 1100.0
+    guidance: 雷达+光电制导
+    deploy_min: 3.0
+    deploy_factor: 1.1
+    article.battery_power: 11.8
+    article.brigade_equiv: 0.0093
+    vehicles_per_unit: 18.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_thaad
+  name: 萨德
+  category: sam_long
+  family: ad
+  origin: USA
+  specs:
+    range_km: 200.0
+    ceiling_km: 150.0
+    missile_speed_mach: 8.2
+    guidance: 指令制导+红外寻的
+    guidance_factor: 1.1
+    deploy_min: 10.0
+    deploy_factor: 0.91
+    launchers: 8.0
+    article.battery_power: 37.5
+    article.brigade_equiv: 0.1434
+    vehicles_per_unit: 6.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_patriotpac3_mse
+  name: 爱国者pac3 mse
+  category: sam_long
+  family: ad
+  origin: USA
+  specs:
+    range_km: 120.0
+    ceiling_km: 36.0
+    missile_speed_mach: 3.5
+    guidance: 指令制导+主动雷达寻的
+    guidance_factor: 1.2
+    deploy_min: 50.0
+    deploy_factor: 0.75
+    launchers: 12.0
+    article.battery_power: 18.8
+    article.brigade_equiv: 0.0717
+    vehicles_per_unit: 6.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_patriotpac3
+  name: 爱国者pac3
+  category: sam_medium
+  family: ad
+  origin: USA
+  specs:
+    range_km: 80.0
+    ceiling_km: 24.0
+    missile_speed_mach: 3.5
+    guidance: 指令制导+主动雷达寻的
+    guidance_factor: 1.2
+    deploy_min: 50.0
+    deploy_factor: 0.75
+    launchers: 16.0
+    article.battery_power: 16.5
+    article.brigade_equiv: 0.0629
+    vehicles_per_unit: 6.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_patriotpac2
+  name: 爱国者pac2
+  category: sam_long
+  family: ad
+  origin: USA
+  specs:
+    range_km: 160.0
+    ceiling_km: 32.0
+    missile_speed_mach: 3.5
+    guidance: 指令制导+主动雷达寻的
+    guidance_factor: 1.2
+    deploy_min: 30.0
+    deploy_factor: 0.83
+    launchers: 4.0
+    article.battery_power: 16.4
+    article.brigade_equiv: 0.0626
+    vehicles_per_unit: 6.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_nasams
+  name: NASAMS
+  category: sam_medium
+  family: ad
+  origin: USA
+  specs:
+    range_km: 60.0
+    ceiling_km: 35.7
+    missile_speed_mach: 4.0
+    guidance: 指令制导+主动雷达寻的
+    guidance_factor: 1.2
+    deploy_min: 30.0
+    deploy_factor: 0.83
+    launchers: 6.0
+    article.battery_power: 15.1
+    article.brigade_equiv: 0.0576
+    vehicles_per_unit: 4.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_avenger
+  name: 复仇者
+  category: sam_short
+  family: ad
+  origin: USA
+  specs:
+    range_km: 8.05
+    ceiling_km: 3.5
+    missile_speed_mach: 2.2
+    guidance: 被动红外制导
+    guidance_factor: 0.9
+    deploy_min: 0.17
+    deploy_factor: 1.21
+    launchers: 8.0
+    article.battery_power: 5.2
+    article.brigade_equiv: 0.0198
+    vehicles_per_unit: 12.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_m_shoradveh_stinger
+  name: M-Shorad车载毒刺
+  category: sam_short
+  family: ad
+  origin: USA
+  specs:
+    range_km: 8.05
+    ceiling_km: 3.5
+    missile_speed_mach: 2.2
+    guidance: 被动红外制导
+    guidance_factor: 0.9
+    deploy_min: 0.17
+    deploy_factor: 1.21
+    launchers: 4.0
+    article.battery_power: 4.4
+    article.brigade_equiv: 0.0167
+    vehicles_per_unit: 8.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_m_shorad
+  name: M-Shorad
+  category: spaag
+  family: ad
+  origin: USA
+  specs:
+    range_km: 5.0
+    ceiling_km: 3.5
+    gun_rof: 625.0
+    guidance: 雷达+光电制导
+    deploy_min: 0.0
+    deploy_factor: 1.33
+    article.battery_power: 13.6
+    article.brigade_equiv: 0.0108
+    vehicles_per_unit: 8.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
+- id: ad_c_ram
+  name: C-RAM
+  category: spaag
+  family: ad
+  origin: USA
+  specs:
+    range_km: 1.5
+    ceiling_km: 1.0
+    gun_rof: 4500.0
+    guidance: 雷达+光电制导
+    deploy_min: 30.0
+    deploy_factor: 0.83
+    article.battery_power: 7.5
+    article.brigade_equiv: 0.0059
+    vehicles_per_unit: 1.0
+  notes: 库存口径 = 营/连数（表格“防空”M 列）；每单位发射车数见 vehicles_per_unit。
