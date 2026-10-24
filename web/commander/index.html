@@ -3,212 +3,283 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>战争部长 · 司令模式 — 2020 纳卡战争试玩（H3 r4 真实底图版）</title>
+  <title>战争部长 · 司令模式 — 2020 纳卡战争</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 16 16%22%3E%3Crect width=%2216%22 height=%2216%22 fill=%22%23F4EEE1%22/%3E%3Cpath d=%22M8 1.5l5.6 3.25v6.5L8 14.5l-5.6-3.25v-6.5z%22 fill=%22none%22 stroke=%22%231E1C1A%22/%3E%3Crect x=%224.5%22 y=%226%22 width=%227%22 height=%224.5%22 fill=%22none%22 stroke=%22%231F4E9E%22/%3E%3C/svg%3E" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
   <link rel="stylesheet" href="commander.css" />
 </head>
 <body>
-  <!-- ================= HUD ================= -->
-  <header class="hud">
-    <div class="brand">
-      <div class="brand-mark"><svg viewBox="0 0 24 24"><path d="M12 2l8.66 5v10L12 22l-8.66-5V7z" fill="none" stroke="#1b1105" stroke-width="2"/><path d="M12 7l2 4h-4zM8 15h8" stroke="#1b1105" stroke-width="2" fill="#1b1105"/></svg></div>
-      <div>
-        <div class="brand-title">战争部长 · 司令模式<span class="pill">旅/团级 · 亚阿全境 72 格</span></div>
-        <div class="brand-sub">2020 年纳卡战争 · 对边 42 km 战役六角格 · 默认以旅/团（X / III）为指挥单位</div>
+<div class="app" id="app">
+
+  <!-- ================= 顶部状态栏 ================= -->
+  <header class="topbar grain" id="topbar">
+    <div class="tb-brand">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2l12 7v14l-12 7-12-7V9z" fill="none" stroke="#1E1C1A" stroke-width="1.6"/><path d="M16 5.5l9 5.25v10.5L16 26.5l-9-5.25v-10.5z" fill="none" stroke="#1E1C1A" stroke-width=".8"/><rect x="9.5" y="12" width="13" height="8.5" fill="#D9E3F3" stroke="#1F4E9E" stroke-width="1.3"/><path d="M9.5 12l13 8.5M22.5 12l-13 8.5" stroke="#1F4E9E" stroke-width="1.1"/></svg>
+      <div><div class="t1">战争部长</div><div class="t2">司令模式 · 2020 纳卡战争</div></div>
+    </div>
+    <div class="tb-clock" title="战役时间（当地时间 UTC+4）">
+      <div class="d" id="hud-date">2020-09-27 06:00</div>
+      <div class="s" id="hud-day">第 0 天 · 白昼</div>
+    </div>
+    <div class="tb-speed">
+      <div class="seg" id="speed">
+        <button data-speed="0" title="暂停（空格）">❚❚</button>
+        <button data-speed="1" title="慢速：1 小时 / 1.2 秒（1）">▶</button>
+        <button data-speed="2" title="中速：1 小时 / 0.35 秒（2）">▶▶</button>
+        <button data-speed="3" title="快速：1 小时 / 0.08 秒（3）">▶▶▶</button>
       </div>
     </div>
-
-    <div class="clock">
-      <div class="clock-date" id="hud-date">2020-09-27 06:00</div>
-      <div class="clock-sub" id="hud-day">第 0 天 · 白昼</div>
+    <div class="tb-kpis" id="tb-kpis">
+      <div class="kpi" data-open="goals" title="纳卡及周边七区 12 个核心战区格中仍由我方控制的数量 · 点击查看作战目标"><span class="kl">纳卡核心格</span><span class="kv" id="hud-core">—</span></div>
+      <div class="kpi" data-open="goals" title="舒沙失守将触发“11·10”式停火 · 点击查看作战目标"><span class="kl">舒沙</span><span class="kv" id="hud-shusha">—</span></div>
+      <div class="kpi" data-open="logistics" title="拉钦走廊是纳卡与亚美尼亚本土之间唯一的补给干线 · 点击查看后勤"><span class="kl">拉钦走廊</span><span class="kv" id="hud-lachin">—</span></div>
+      <div class="kpi" data-open="losses" title="我方累计阵亡 · 点击查看战损"><span class="kl">我方阵亡</span><span class="kv" id="hud-kia">—</span></div>
+      <div class="kpi" data-open="air" title="阿方 TB2 现存数量（括号内为已击落）· 点击查看防空"><span class="kl">敌 TB2</span><span class="kv" id="hud-tb2">—</span></div>
+      <div class="kpi" data-open="logistics" title="补给车队运行方式 · 点击在后勤菜单中调整"><span class="kl">补给车队</span><span class="kv" id="hud-convoy">—</span></div>
     </div>
-
-    <div class="speed" id="speed">
-      <button data-speed="0" title="暂停（空格）">❚❚</button>
-      <button data-speed="1" title="1 小时 / 1.2 秒">▶</button>
-      <button data-speed="2" title="1 小时 / 0.35 秒">▶▶</button>
-      <button data-speed="3" title="1 小时 / 0.08 秒">▶▶▶</button>
-    </div>
-
-    <div class="hud-stats">
-      <div class="stat"><span>纳卡核心格</span><b id="hud-core">—</b></div>
-      <div class="stat"><span>舒沙</span><b id="hud-shusha">—</b></div>
-      <div class="stat"><span>亚方阵亡</span><b id="hud-kia">—</b></div>
-      <div class="stat"><span>阿方 TB2</span><b id="hud-tb2">—</b></div>
-      <div class="stat"><span>补给车队</span>
-        <select id="hud-convoy" title="夜间车队：卡车损失约 −77%，运量约 −35%">
-          <option value="continuous">全天候</option>
-          <option value="night_only">仅夜间</option>
-        </select>
+    <div class="tb-menu">
+      <button class="btn sm" id="btn-help" title="操作说明（H）">？ 说明</button>
+      <button class="btn sm" id="btn-menu" title="系统菜单">☰ 菜单</button>
+      <div class="menu-pop" id="menu-pop">
+        <button data-menu="help"><span>操作说明</span><span>H</span></button>
+        <button data-menu="tour"><span>新手引导</span><span>重新播放</span></button>
+        <button data-menu="layers"><span>地图图层与底图</span><span>M</span></button>
+        <button data-menu="export"><span>导出试玩记录</span><span>JSON</span></button>
+        <button data-menu="restart"><span>重新部署</span><span>返回作战命令</span></button>
+        <button data-menu="home"><span>返回原型首页</span><span>↩</span></button>
       </div>
     </div>
-    <button class="btn ghost" id="btn-help" title="操作说明">?</button>
   </header>
 
-  <!-- ================= MAIN ================= -->
-  <main class="layout">
-    <!-- OOB -->
-    <aside class="panel side" id="oob-panel">
-      <div class="panel-h"><span>战斗序列</span><span class="tag" id="oob-count">—</span></div>
-      <div class="oob-tools">
-        <input id="oob-search" type="text" placeholder="搜索部队…" />
-        <label class="chk"><input type="checkbox" id="oob-onlymap" checked /> 只看在场</label>
-      </div>
-      <div class="oob-list" id="oob-list"></div>
-    </aside>
+  <!-- ================= 地图 ================= -->
+  <section class="mapwrap">
+    <div class="map-stage" id="map-stage">
+      <svg id="basemap" xmlns="http://www.w3.org/2000/svg"><g id="bvp"></g></svg>
+      <div id="leaflet-map" class="leaflet-underlay bm-paper"></div>
+      <svg id="map" xmlns="http://www.w3.org/2000/svg">
+        <g id="vp">
+          <g id="lyr-hex"></g>
+          <g id="lyr-overlay"></g>
+          <g id="lyr-geoborders"></g>
+          <g id="lyr-roads"></g>
+          <g id="lyr-front"></g>
+          <g id="lyr-labels"></g>
+          <g id="lyr-eng"></g>
+          <g id="lyr-paths"></g>
+          <g id="lyr-units"></g>
+        </g>
+      </svg>
+      <div class="map-vignette"></div>
+      <div id="grat-lbls"></div>
 
-    <!-- MAP -->
-    <section class="map-wrap">
-      <div class="map-toolbar">
-        <div class="legend">
-          <span><i class="sw arm"></i>亚方控制</span>
-          <span><i class="sw aze"></i>阿方控制</span>
-          <span><i class="sw lost"></i>战时易手</span>
-          <span><i class="ln front"></i>接触线</span>
-          <span><i class="ln loc"></i>1994 实控边界</span>
-          <span><i class="ln border"></i>真实国界</span>
-        </div>
-        <div class="map-tools">
-          <label class="chk">底图
-            <select id="basemap-sel" class="toolbar-sel" title="切换真实地理底图">
-              <option value="topo" selected>真实地形 (Esri Topo)</option>
-              <option value="sat">卫星影像 (Esri Imagery)</option>
-              <option value="opentopo">等高线图 (OpenTopo)</option>
-              <option value="dark">深色战术 (Carto Dark)</option>
-              <option value="none">纯六角格 (无底图)</option>
+      <div class="cartouche" id="cartouche">
+        <div class="c1">纳卡战区态势图<span id="cart-year">2020</span></div>
+        <div class="c2">TABULA BELLI · CAUCASUS MERIDIONALIS</div>
+        <div class="c3" id="cart-sub">阿尔察赫国防军司令部 · 战役六角格 对边 42 km</div>
+      </div>
+      <svg class="compass" viewBox="-50 -50 100 100" aria-hidden="true">
+        <circle r="34" fill="none" stroke="#1E1C1A" stroke-width=".8"/><circle r="30" fill="none" stroke="#1E1C1A" stroke-width=".4"/>
+        <g stroke="#1E1C1A" stroke-width=".5"><path d="M0-30V-26M0 30V26M-30 0H-26M30 0H26"/></g>
+        <path d="M0-40L5 0 0 6-5 0z" fill="#1E1C1A"/><path d="M0 40L5 0 0-6-5 0z" fill="#F4EEE1" stroke="#1E1C1A" stroke-width=".8"/>
+        <path d="M-26 0L0 4 6 0 0-4z" fill="#F4EEE1" stroke="#1E1C1A" stroke-width=".7"/><path d="M26 0L0 4-6 0 0-4z" fill="#1E1C1A"/>
+        <text y="-42" text-anchor="middle" font-size="10" font-family="Georgia,serif" fill="#1E1C1A">N</text>
+      </svg>
+      <div class="scalebar" id="scalebar"><div class="sb-bar" id="sb-bar" style="width:100px"></div><div class="sb-l"><span>0</span><span id="sb-txt">50 km</span></div></div>
+      <div class="map-attrib" id="map-attrib">底图：Natural Earth 10m · 晕渲 © Esri</div>
+
+      <div class="map-ctrls">
+        <button class="btn" id="btn-zoom-in" title="放大">＋</button>
+        <button class="btn" id="btn-zoom-out" title="缩小">－</button>
+        <button class="btn" id="btn-zoom-nk" title="聚焦纳卡核心战场（F）">聚焦纳卡</button>
+        <button class="btn" id="btn-zoom-all" title="亚美尼亚、阿塞拜疆全境 72 格">全境</button>
+        <button class="btn" id="btn-layers" title="地图图层与底图（M）">图层 ▾</button>
+      </div>
+      <div class="layers-pop" id="layers-pop">
+        <div class="lp-h">地图图层 <button class="btn ghost sm" data-close-pop>✕</button></div>
+        <div class="lp-b">
+          <label class="row">底图
+            <select id="basemap-sel">
+              <option value="paper" selected>参谋纸图（晕渲地形）</option>
+              <option value="topo">真实地形图（Esri Topo）</option>
+              <option value="sat">卫星影像（Esri Imagery）</option>
+              <option value="none">纯纸面（离线）</option>
             </select>
           </label>
-          <label class="chk" title="调节六边形填色透明度，方便观察底图真实国界、山脉与河流">填色
-            <input type="range" id="hex-opacity" min="0.04" max="0.75" step="0.04" value="0.22" class="toolbar-rng" />
+          <label class="row" title="调节六边形控制区填色深浅">填色深浅
+            <input type="range" id="hex-opacity" min="0.04" max="0.75" step="0.02" value="0.24" />
           </label>
-          <label class="chk"><input type="checkbox" id="lyr-borders" checked /> 国界/国家全貌</label>
-          <label class="chk"><input type="checkbox" id="lyr-terrain" /> 地形纹样</label>
-          <label class="chk"><input type="checkbox" id="lyr-supply" /> 补给</label>
-          <label class="chk"><input type="checkbox" id="lyr-ad" /> 防空覆盖</label>
-          <button class="btn ghost sm" id="btn-zoom-all" title="查看亚美尼亚、阿塞拜疆及周边邻国（格鲁吉亚/土耳其/伊朗）全貌">亚阿全貌(72格)</button>
-          <button class="btn ghost sm" id="btn-zoom-nk" title="聚焦纳卡核心战场（12 格）">聚焦纳卡前线</button>
-          <button class="btn ghost sm" id="btn-zoom-in">＋</button>
-          <button class="btn ghost sm" id="btn-zoom-out">－</button>
-        </div>
-      </div>
-      <div class="map-stage" id="map-stage">
-        <div id="leaflet-map" class="leaflet-underlay"></div>
-        <svg id="map" xmlns="http://www.w3.org/2000/svg">
-          <g id="vp">
-            <g id="lyr-hex"></g>
-            <g id="lyr-overlay"></g>
-            <g id="lyr-geoborders"></g>
-            <g id="lyr-roads"></g>
-            <g id="lyr-front"></g>
-            <g id="lyr-labels"></g>
-            <g id="lyr-eng"></g>
-            <g id="lyr-paths"></g>
-            <g id="lyr-units"></g>
-          </g>
-        </svg>
-        <div class="tip" id="tip"></div>
-        <div class="map-scale-badge" id="map-scale-badge">H3 r4 尺度 · 对边 42 km · 亚美尼亚(17格) + 纳卡及七区(12格) + 纳希切万(3格) + 阿塞拜疆本部(40格) · 默认旅/团级兵牌</div>
-        <div class="map-hint" id="map-hint">左键选择旅/团 · 右键地图下达移动/进攻 · 滚轮缩放 · 拖动平移 · 顶部可切换“亚阿全貌”或“聚焦纳卡前线”</div>
-      </div>
-      <div class="feed" id="feed"></div>
-    </section>
-
-    <!-- SELECTION / ORDERS -->
-    <aside class="panel side" id="sel-panel">
-      <div class="panel-h"><span id="sel-title">未选择</span><span class="tag" id="sel-tag">—</span></div>
-      <div class="sel-body" id="sel-body">
-        <div class="empty">
-          <p>在地图或左侧战斗序列中选择一个<strong>旅 / 团</strong>。</p>
-          <p class="muted">默认以<strong>旅（X）/ 团（III）</strong>为战役机动与指挥单位：下达命令经旅/团部传达约 1 小时（DC-010），右侧可查看下辖各建制营与装备明细。</p>
-        </div>
-      </div>
-    </aside>
-  </main>
-
-  <!-- ================= START ================= -->
-  <div class="modal show" id="start-modal">
-    <div class="modal-card wide">
-      <div class="modal-h">
-        <div>
-          <div class="kicker">司令模式 · H3 r4 真实底图版</div>
-          <h1>2020 年 9 月 27 日，阿塞拜疆发起全面进攻</h1>
-        </div>
-      </div>
-      <div class="modal-b">
-        <p class="lead">你是亚美尼亚 / 阿尔察赫方的战区司令。地图严格采用设计文档商定的 <strong>H3 Resolution 4 战役尺度（对边 42 km、边长 24.2 km、全战区 72 格，其中纳卡及周边七区 12 格）</strong>，并直接叠加在真实高加索地形与卫星底图上。守住<strong>舒沙</strong>与<strong>拉钦走廊</strong>，尽量保住纳卡核心战区格。</p>
-        <div class="grid3">
-          <div class="field">
-            <label>阿方 AI</label>
-            <div class="seg" id="opt-tier">
-              <button data-v="H" class="on">H · 史实</button><button data-v="P">P · 自适应</button><button data-v="B">B · 强化</button>
-            </div>
-            <small>H：按史实主攻南线（杰布拉伊尔→哈德鲁特/菲祖利→赞格兰→库巴德利→舒沙）；P：寻找薄弱点；B：+35% 无人机与巡飞弹。</small>
+          <div class="grid2">
+            <label class="chk"><input type="checkbox" id="lyr-borders" checked /> 国界与接触线</label>
+            <label class="chk"><input type="checkbox" id="lyr-labels-t" checked /> 地名</label>
+            <label class="chk"><input type="checkbox" id="lyr-roads-t" checked /> 道路</label>
+            <label class="chk"><input type="checkbox" id="lyr-terrain" /> 地形纹样</label>
+            <label class="chk"><input type="checkbox" id="lyr-supply" /> 补给网络</label>
+            <label class="chk"><input type="checkbox" id="lyr-ad" /> 防空覆盖</label>
           </div>
-          <div class="field">
-            <label>亚方部队</label>
-            <div class="seg" id="opt-force">
-              <button data-v="historical" class="on">史实部队</button><button data-v="improved">改进部队（演示）</button>
-            </div>
-            <small>改进部队：+16 套“道尔”、+12 套中程防空、+120 具重型反坦克导弹、工事加深。十年建军（P3）完成后由你的决策产生。</small>
-          </div>
-          <div class="field">
-            <label>指挥方式</label>
-            <div class="seg" id="opt-ai">
-              <button data-v="player" class="on">我来指挥</button><button data-v="spectate">AI 指挥（观战）</button>
-            </div>
-            <small>指挥过程中也可以把任意旅交给 AI 托管。</small>
+          <div class="legend">
+            <span><i class="sw arm"></i>我方控制</span><span><i class="sw aze"></i>敌方控制</span>
+            <span><i class="sw lost"></i>战时失陷</span><span><i class="ln front"></i>接触线</span>
+            <span><i class="ln loc"></i>1994 实控线</span><span><i class="ln border"></i>国界</span>
           </div>
         </div>
-        <div class="note">
-          <b>真实地图叠加说明：</b>六边形网格通过 Web Mercator 投影与真实高加索地形图（Esri World Topographic / 卫星图 / 等高线图）像素级锁定对齐；同时绘制了 Natural Earth 10m 亚阿国际国界、1994–2020 实际接触线与原纳卡自治州边界。可在顶部工具栏随时切换底图或调节六边形透明度。
-        </div>
       </div>
-      <div class="modal-f">
-        <span class="muted" id="start-hint">H3 r4 尺度（42 km 六角格 · 全战区 72 格）· 叠加真实地形与 Natural Earth 国界</span>
-        <button class="btn primary lg" id="btn-start">开始指挥 ▶</button>
-      </div>
-    </div>
-  </div>
 
-  <!-- ================= HELP ================= -->
-  <div class="modal" id="help-modal">
-    <div class="modal-card">
-      <div class="modal-h"><h2>操作说明</h2><button class="btn ghost" data-close>✕</button></div>
-      <div class="modal-b help">
-        <table>
-          <tr><td>左键</td><td>选择部队；同一格多支部队时再次点击轮换</td></tr>
-          <tr><td>右键</td><td>对选中部队下达移动；目标为相邻敌方格时即为进攻</td></tr>
-          <tr><td>空格</td><td>暂停 / 继续</td></tr>
-          <tr><td>1 / 2 / 3</td><td>速度</td></tr>
-          <tr><td>D / R</td><td>固守 / 转为预备队（疏散隐蔽，减少无人机发现）</td></tr>
-          <tr><td>Esc</td><td>取消选择</td></tr>
-          <tr><td>滚轮 / 拖动</td><td>缩放 / 平移地图（真实底图与六角格同步锁定）</td></tr>
-        </table>
-        <h3>需要知道的规则</h3>
-        <ul>
-          <li><b>战役六角格尺度（H3 r4）：</b>每格对边 42 km（面积约 1,528 km²）。全战区共 72 格（亚美尼亚本土 17 格、纳卡及周边七区 12 格、纳希切万 3 格、阿塞拜疆本部 40 格）。</li>
-          <li><b>命令延迟（DC-010）：</b>给旅下令经旅部传达约 1 小时；越级直接指挥单个营约 3 小时；夜间与组织度低时更慢。</li>
-          <li><b>防空纪律：</b>“开机”能击落无人机，但雷达会被反辐射打击；“伏击”折中；“静默”保住雷达，但无人机会自由猎杀装甲与火炮。</li>
-          <li><b>补给：</b>部队必须经己方地块连回亚美尼亚。舒沙和拉钦失守会切断 M12 走廊。</li>
-        </ul>
+      <div class="tip" id="tip"></div>
+
+      <!-- 抽屉菜单 -->
+      <div class="drawer" id="drawer">
+        <div class="dr-tabs" id="dr-tabs"></div>
+        <div class="dr-head"><div class="dr-title" id="dr-title">—</div><div class="dr-hint" id="dr-hint"></div><button class="btn sm dr-close" id="dr-close" title="收起（Esc）">✕ 收起</button></div>
+        <div class="dr-tools" id="dr-tools"></div>
+        <div class="dr-body" id="dr-body"></div>
+      </div>
+
+      <!-- 选中部队卡 -->
+      <div class="inspector" id="inspector">
+        <div class="ins-h" id="ins-h"></div>
+        <div class="ins-b" id="ins-b"></div>
       </div>
     </div>
-  </div>
+  </section>
 
-  <!-- ================= AAR ================= -->
-  <div class="modal" id="aar-modal">
-    <div class="modal-card wide">
-      <div class="modal-h"><div><div class="kicker">战后报告</div><h1 id="aar-title">—</h1></div><button class="btn ghost" data-close>✕</button></div>
-      <div class="modal-b" id="aar-body"></div>
-      <div class="modal-f"><span class="muted">导出的 JSON 可用于试玩分析。</span><div><button class="btn" id="btn-aar-export">导出试玩记录</button> <button class="btn primary" id="btn-restart">再来一局</button></div></div>
+  <!-- ================= 右侧：预警 + 战况通报 ================= -->
+  <aside class="outliner grain" id="outliner">
+    <div class="ol-sec-h">预　警 <small id="alert-count">—</small></div>
+    <div class="alerts" id="alerts"><div class="none">暂无激活预警</div></div>
+    <div class="ol-sec-h">战况通报 <small>点击条目定位</small></div>
+    <div class="feed-tools" id="feed-tools">
+      <button data-f="all" class="on">全部</button><button data-f="crit">紧急</button><button data-f="good">战果</button>
+    </div>
+    <div class="feed" id="feed"></div>
+  </aside>
+
+  <!-- ================= 底部桌面道具栏 ================= -->
+  <nav class="props grain" id="props">
+    <button class="prop" data-drawer="oob" title="战斗序列与部队命令（B）">
+      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="5" y="13" width="22" height="14" rx="1.5"/><path d="M8 13c0-5 3-8 8-8s8 3 8 8"/><path d="M6.5 9.5c1.5-2.5 3-3.5 5-3.5M25.5 9.5c-1.5-2.5-3-3.5-5-3.5"/><circle cx="16" cy="20" r="4"/><circle cx="16" cy="20" r="1"/><path d="M8 17h2M22 17h2M8 23h2M22 23h2"/></svg>
+      <span class="pt"><span class="pn">野战电话</span><span class="pa">战斗序列 · <kbd>B</kbd></span></span><span class="badge" id="badge-oob"></span>
+    </button>
+    <button class="prop" data-drawer="air" title="防空纪律与空情（A）">
+      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="16" cy="16" r="11"/><circle cx="16" cy="16" r="7" stroke-width=".9"/><circle cx="16" cy="16" r="3" stroke-width=".9"/><path d="M16 16L24 8"/><path d="M16 5v22M5 16h22" stroke-width=".6"/><circle cx="21" cy="12" r="1.2" fill="currentColor"/><circle cx="11" cy="20" r="1" fill="currentColor"/></svg>
+      <span class="pt"><span class="pn">雷达屏</span><span class="pa">防空与空情 · <kbd>A</kbd></span></span><span class="badge" id="badge-air"></span>
+    </button>
+    <button class="prop" data-drawer="logistics" title="后勤补给与车队（L）">
+      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M3 9h16v13H3z"/><path d="M19 13h6l4 5v4H19z"/><circle cx="8" cy="24" r="2.6"/><circle cx="24" cy="24" r="2.6"/><path d="M6 13h10M6 17h10" stroke-width=".9"/></svg>
+      <span class="pt"><span class="pn">军用卡车</span><span class="pa">后勤补给 · <kbd>L</kbd></span></span><span class="badge" id="badge-log"></span>
+    </button>
+    <button class="prop" data-drawer="intel" title="敌情研判与交战态势（I）">
+      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><circle cx="9" cy="21" r="5.5"/><circle cx="23" cy="21" r="5.5"/><path d="M5 17l3-9h4l1 7M27 17l-3-9h-4l-1 7"/><path d="M13 15h6"/><circle cx="9" cy="21" r="2.4" stroke-width=".8"/><circle cx="23" cy="21" r="2.4" stroke-width=".8"/></svg>
+      <span class="pt"><span class="pn">望远镜</span><span class="pa">敌情研判 · <kbd>I</kbd></span></span><span class="badge" id="badge-intel"></span>
+    </button>
+    <button class="prop" data-drawer="losses" title="战损统计与战报（C）">
+      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><rect x="6" y="6" width="20" height="23" rx="1"/><rect x="11" y="3" width="10" height="5" rx="1"/><path d="M10 13h12M10 17h12M10 21h8M10 25h5" stroke-width="1"/></svg>
+      <span class="pt"><span class="pn">战报夹</span><span class="pa">战损与战报 · <kbd>C</kbd></span></span><span class="badge" id="badge-loss"></span>
+    </button>
+    <button class="prop" data-drawer="goals" title="作战目标与停火条件（G）">
+      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M3 7l8-3 10 3 8-3v21l-8 3-10-3-8 3z"/><path d="M11 4v21M21 7v21" stroke-width=".9"/><path d="M15 13v9" /><path d="M15 13l6 2-6 2" fill="currentColor"/></svg>
+      <span class="pt"><span class="pn">作战地图</span><span class="pa">作战目标 · <kbd>G</kbd></span></span><span class="badge" id="badge-goal"></span>
+    </button>
+    <button class="prop" id="prop-watch" title="暂停 / 继续（空格），数字键 1–3 调速">
+      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="16" cy="18" r="10"/><path d="M14 5h4M16 5v3"/><path d="M16 18V12M16 18l4 3" stroke-linecap="round"/><path d="M25 9l2-2"/></svg>
+      <span class="pt"><span class="pn">怀表</span><span class="pa" id="watch-txt">暂停中 · <kbd>空格</kbd></span></span>
+    </button>
+  </nav>
+</div>
+
+<!-- ================= 作战命令（开局） ================= -->
+<div class="modal desk show" id="start-modal">
+  <div class="doc grain">
+    <div class="doc-head">
+      <div>
+        <div class="doc-org">阿尔察赫共和国国防军 · 亚美尼亚共和国武装力量总参谋部</div>
+        <div class="doc-title">第 1 号作战命令</div>
+        <div class="doc-meta">2020-09-27 06:00（UTC+4）· 斯捷潘纳克特 · 战区司令部</div>
+      </div>
+      <div class="stamp">绝 密</div>
+    </div>
+    <h3>一、敌情</h3>
+    <p class="lead">今晨，阿塞拜疆军队沿全线接触线发起进攻。敌以 TB2 无人机与巡飞弹开路，重点打击我防空阵地与炮兵，主攻方向判断为南线：杰布拉伊尔—哈德鲁特 / 菲祖利—赞格兰—库巴德利，最终目标<b>舒沙</b>。</p>
+    <h3>二、任务</h3>
+    <p class="lead">你任战区司令。以旅 / 团（X / III）为指挥单位，<b>守住舒沙与拉钦走廊</b>，尽量保住纳卡及周边七区 12 个核心战区格。地图采用 H3 r4 战役六角格（对边 42 km），叠加真实地形。</p>
+    <h3>三、作战设定</h3>
+    <div class="opt-group">
+      <label>阿方指挥（AI 档位）</label>
+      <div class="choice-cards" id="opt-tier">
+        <button class="choice on" data-v="H"><b>H · 史实</b>按 2020 年史实主攻南线，逐步推向舒沙。</button>
+        <button class="choice" data-v="P"><b>P · 自适应</b>寻找我方薄弱点，北线、东线同样可能成为主攻。</button>
+        <button class="choice" data-v="B"><b>B · 强化</b>无人机与巡飞弹 +35%，攻势门槛更低。</button>
+      </div>
+    </div>
+    <div class="opt-group">
+      <label>我方部队</label>
+      <div class="choice-cards" id="opt-force">
+        <button class="choice on" data-v="historical"><b>史实部队</b>2020 年 9 月的实际库存、编制与工事。</button>
+        <button class="choice" data-v="improved"><b>改进部队（演示）</b>+16 套“道尔”、+12 套中程防空、+120 具重型反坦克导弹、工事加深 —— 十年建军的可能结果。</button>
+      </div>
+    </div>
+    <div class="opt-group">
+      <label>指挥方式</label>
+      <div class="choice-cards" id="opt-ai">
+        <button class="choice on" data-v="player"><b>我来指挥</b>游戏开局暂停；随时可把任意旅交给 AI 托管。</button>
+        <button class="choice" data-v="spectate"><b>AI 指挥（观战）</b>由 AI 司令指挥同一支部队，自动推进。</button>
+      </div>
+    </div>
+    <div class="doc-foot">
+      <span class="muted">战役六角格对边 42 km，全战区 72 格（纳卡及周边七区 12 格）· 国界取自 Natural Earth 10m，地形晕渲来自 Esri。<br/>命令经旅部传达约 1 小时生效（DC-010）· 战后与“同一支部队由 AI 指挥”的结果分布对照。</span>
+      <button class="btn primary lg" id="btn-start">接受命令 · 开始指挥 ▶</button>
     </div>
   </div>
+</div>
 
-  <div class="toasts" id="toasts"></div>
+<!-- ================= 操作说明 ================= -->
+<div class="modal" id="help-modal">
+  <div class="doc narrow grain">
+    <div class="doc-head"><div><div class="doc-org">司令部参谋处</div><div class="doc-title" style="font-size:24px">操作说明</div></div><button class="btn sm" data-close>✕ 关闭</button></div>
+    <table class="help-t">
+      <tr><td>左键</td><td>选择旅 / 团；同一格多支部队时再次点击轮换</td></tr>
+      <tr><td>右键</td><td>对选中部队下达机动；目标为相邻敌方格时即为进攻（悬停可预览路线）</td></tr>
+      <tr><td>滚轮 / 拖动</td><td>缩放 / 平移地图</td></tr>
+      <tr><td><kbd>空格</kbd> · <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd></td><td>暂停 / 继续 · 调速</td></tr>
+      <tr><td><kbd>D</kbd> · <kbd>R</kbd></td><td>选中部队固守 / 转为预备队（疏散隐蔽，减少无人机发现）</td></tr>
+      <tr><td><kbd>B</kbd><kbd>A</kbd><kbd>L</kbd><kbd>I</kbd><kbd>C</kbd><kbd>G</kbd></td><td>打开菜单：战斗序列 / 防空 / 后勤 / 敌情 / 战损 / 目标</td></tr>
+      <tr><td><kbd>M</kbd> · <kbd>F</kbd></td><td>地图图层 · 聚焦纳卡前线</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>收起菜单 / 取消选择</td></tr>
+    </table>
+    <h3>需要知道的规则</h3>
+    <ul>
+      <li><b>战役六角格：</b>每格对边 42 km（约 1,528 km²）。全战区 72 格：亚美尼亚本土 17、纳卡及周边七区 12、纳希切万 3、阿塞拜疆本部 40。</li>
+      <li><b>命令延迟（DC-010）：</b>给旅下令经旅部约 1 小时；越级直接指挥单个营约 3 小时；夜间与组织度低时更慢。</li>
+      <li><b>防空纪律：</b>“开机”能击落无人机，但雷达会被反辐射打击；“伏击”折中；“静默”保住雷达，但无人机会自由猎杀装甲与火炮。</li>
+      <li><b>补给：</b>部队必须经己方地块连回亚美尼亚。舒沙和拉钦失守会切断 M12 走廊。夜间车队损失少但运量低。</li>
+      <li><b>停火：</b>舒沙失守 → “11·10”式停火；阿方攻入亚美尼亚本土 → 俄方红线停火；第 43 天起攻势停滞可能就地停火；最长 60 天。</li>
+    </ul>
+  </div>
+</div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
-  <script src="sim_data.js"></script>
-  <script src="sim_core.js"></script>
-  <script src="ui.js"></script>
+<!-- ================= 战后总结报告 ================= -->
+<div class="modal" id="aar-modal">
+  <div class="doc grain">
+    <div class="doc-head">
+      <div><div class="doc-org">战区司令部 · 作战处</div><div class="doc-title" style="font-size:26px">战后总结报告</div><div class="doc-meta" id="aar-meta">—</div></div>
+      <div class="stamp big" id="aar-stamp">—</div>
+    </div>
+    <div id="aar-body"></div>
+    <div class="doc-foot">
+      <span class="muted">导出的 JSON 包含设定、全部命令与战报，可用于试玩分析。</span>
+      <div><button class="btn" id="btn-aar-close">查看战场</button> <button class="btn" id="btn-aar-export">导出试玩记录</button> <button class="btn primary" id="btn-restart">再来一局</button></div>
+    </div>
+  </div>
+</div>
+
+<div class="toasts" id="toasts"></div>
+<div class="tour-spot" id="tour-spot"></div>
+<div class="tour-box" id="tour-box"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="sim_data.js"></script>
+<script src="sim_core.js"></script>
+<script src="ui_map.js"></script>
+<script src="ui_panels.js"></script>
+<script src="ui_app.js"></script>
 </body>
 </html>
