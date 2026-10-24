@@ -9,7 +9,6 @@ equipment:
   - {id: ship_pol_perry, name: 佩里级护卫舰（波兰）, category: frigate, origin: USA, unit: {value: 22.0}, unit_source: "估算：Mk13 SM-1×40(0.4)+鱼叉×4+鱼雷，雷达≈3"}
   - {id: ship_pol_gawron, name: 盖夫龙号（MEKO A100PL）, category: corvette, origin: POL, unit: {value: 30.0}, unit_source: "估算：RAM×21(14.9)+NSM×8+雷达≈5"}
   - {id: ship_pol_small, name: 卡舒布/奥尔坎等小型舰艇, category: corvette, origin: POL, unit: {value: 6.0}, unit_source: "估算"}
-  - {id: sub_pol_kilo, name: 基洛级（鹰号）, category: ssk, origin: RUS, unit: {vls: 23.7}, unit_source: "工作簿 海军!T28/J28（基洛 0.4956×47.9）"}
   - {id: sealift_pol_lublin, name: 卢布林级布雷/登陆舰, category: amphibious_dock, origin: POL, analog: {of: sealift_whidbey_island, scale: 0.15, why: "1745t，载货约 135t"}}
 inventory:
   - {eq: f_16c_d, service: airforce, qty: 47, confidence: stated}
@@ -23,7 +22,7 @@ inventory:
   - {eq: ship_pol_perry, service: navy, qty: 2, confidence: stated}
   - {eq: ship_pol_gawron, service: navy, qty: 1, confidence: stated}
   - {eq: ship_pol_small, service: navy, qty: 4, confidence: stated}
-  - {eq: sub_pol_kilo, service: navy, qty: 1, confidence: stated}
+  - {eq: sub_kilo_export, service: navy, qty: 1, confidence: stated}
   - {eq: sealift_pol_lublin, service: navy, qty: 5, confidence: stated}
   - {eq: art_k9, service: army, qty: 218, confidence: stated}
   - {eq: art_2s1, service: army, qty: 206, confidence: stated}

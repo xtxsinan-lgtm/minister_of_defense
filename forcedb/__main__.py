@@ -128,6 +128,25 @@ def cmd_demand(args):
     return 0
 
 
+WORLD12 = ["RUS", "JPN", "KOR", "PRK", "IRN", "TUR", "GBR", "FRA", "DEU", "GRC", "POL", "ISR"]
+
+
+def cmd_world(args):
+    """十二国（或指定国家）军力估算：中/低/高 + 与美、中的比值。"""
+    from .quant.report import world_table
+    eq, toe = _open()
+    countries = args.countries or WORLD12
+    tab = world_table(eq, toe, countries + ["CHN"], carrier_model=args.carrier_model)
+    rows = sorted(countries, key=lambda c: -tab[c]["mid"]["total"])
+    print(f"{'国家':<6}{'总分':>8}{'低':>8}{'高':>8}{'占美%':>8}   地面  投送  空中  海上  空天   （美=522.2，中={tab['CHN']['mid']['total']:.1f}）")
+    for c in rows:
+        t = tab[c]
+        m = t["mid"]
+        print(f"{c:<6}{m['total']:>8.1f}{t['low']:>8.1f}{t['high']:>8.1f}{t['ratio']['mid'] * 100:>8.1f}"
+              f"{m['ground']:>7.1f}{m['projection']:>6.1f}{m['air']:>6.1f}{m['sea']:>6.1f}{m['aerospace']:>6.1f}")
+    return 0
+
+
 def cmd_crawl(args):
     from .crawl import runner
     return runner.main(args)
@@ -160,6 +179,10 @@ def main(argv=None):
     p.add_argument("--tol", type=float, default=0.15)
     p.add_argument("--top", type=int, default=30)
     p.set_defaults(fn=cmd_crosscheck)
+    p = sub.add_parser("world", help="十二国军力估算（中/低/高）")
+    p.add_argument("--countries", nargs="*")
+    p.add_argument("--carrier-model", choices=["article", "airwing"], default="article")
+    p.set_defaults(fn=cmd_world)
     p = sub.add_parser("demand", help="编制内装备需求（编制库 × 旅级单位数）")
     p.add_argument("--countries", nargs="+", default=["CHN", "USA"])
     p.add_argument("--top", type=int, default=15)

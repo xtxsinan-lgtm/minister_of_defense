@@ -52,8 +52,8 @@ equipment:
   - {id: e7_wedgetail, name: E-7 楔尾预警机, category: awacs, origin: USA, analog: {of: kj_500, scale: 1.2, why: "MESA 多功能电扫雷达，探测距离/多目标能力类似 KJ-500 并略强（波音 737 平台，滞空更长）"}}
   - {id: g550_caew, name: G550 CAEW（以色列“鹰眼”）, category: awacs, origin: ISR, analog: {of: kj_500, scale: 0.6, why: "IAI 共形 AESA，探测半径和滞空逊于大型平台"}}
   - {id: emb145_aewc, name: EMB-145 预警机（希腊 Erieye）, category: awacs, origin: SWE, analog: {of: kj_200, scale: 0.5, why: "Erieye 侧视 AESA，平台小、载荷小"}}
-  - {id: a50_ru, name: A-50 预警机, category: awacs, origin: RUS, analog: {of: e_3, scale: 0.6, why: "机械扫描 Shmel 雷达，工作簿 特种机!R38 与 E-3 之比约 0.52"}}
-  - {id: a50u_ru, name: A-50U, category: awacs, origin: RUS, analog: {of: e_3, scale: 0.8, why: "工作簿 R39/E-3 = 0.78"}}
+  - {id: a50_ru, name: A-50 预警机, category: awacs, origin: RUS, analog: {of: e_3, scale: 0.22, why: "机械扫描 Shmel 雷达；工作簿 特种机 俄罗斯预警机合计 42.3，按 4+5 架反推约 0.2-0.3 倍 E-3（a 表口径）"}}
+  - {id: a50u_ru, name: A-50U, category: awacs, origin: RUS, analog: {of: e_3, scale: 0.33, why: "A-50U 改进雷达/航电，约 1.5 倍 A-50"}}
   - {id: crownest, name: 梅林 HM2 预警直升机, category: awacs, origin: GBR, analog: {of: e_2c, scale: 0.42, why: "工作簿 特种机 Q27/E-2C = 0.42"}}
   - {id: kc767, name: KC-767 加油机, category: tanker_aircraft, origin: USA, analog: {of: kc_135, scale: 1.0, why: "载油量/转移油量与 KC-135 同级"}}
   - {id: a330mrtt, name: A330 MRTT 加油机, category: tanker_aircraft, origin: FRA, analog: {of: kc_46, scale: 1.1, why: "载油 111t 级，略大于 KC-46"}}
@@ -103,9 +103,9 @@ equipment:
   # 防空（brigade_equiv × 发射车数；库内 pac3 L=0.0629，每营 6 车）
   - {id: ad_s300v4, name: S-300V4（俄）, category: sam_long, origin: RUS, analog: {of: ad_s300pmu2, scale: 0.95, why: "陆军型，反导能力，机动"}}
   - {id: ad_s300ps, name: S-300PS/PM, category: sam_long, origin: RUS, analog: {of: ad_s300pmu1, scale: 1.0, why: "同型"}}
-  - {id: ad_buk, name: 山毛榉 Buk-M1/M2/M3, category: sam_medium, origin: RUS, analog: {of: ad_hq16, scale: 0.9, why: "40-70km 中程，对低空/巡航弹较好"}}
+  - {id: ad_buk, name: 山毛榉 Buk-M1/M2/M3, category: sam_medium, origin: RUS, analog: {of: ad_hq16, scale: 0.9, why: "40-70km 中程，对低空/巡航弹较好"}, specs: {vehicles_per_unit: 8}}
   - {id: ad_tor_ru, name: Tor-M2 道尔, category: sam_short, origin: RUS, analog: {of: ad_tor_m1, scale: 1.2, why: "改进型"}}
-  - {id: ad_pantsir, name: 铠甲-S1, category: spaag, origin: RUS, analog: {of: ad_pgl_625, scale: 1.3, why: "弹炮合一，射程 20km"}}
+  - {id: ad_pantsir, name: 铠甲-S1, category: spaag, origin: RUS, analog: {of: ad_pgl_625, scale: 1.3, why: "弹炮合一，射程 20km"}, specs: {vehicles_per_unit: 6}}
   - {id: ad_iris_t, name: IRIS-T SLM, category: sam_medium, origin: DEU, analog: {of: ad_nasams, scale: 1.0, why: "40km 级中程，主动红外"}}
   - {id: ad_samp_t, name: SAMP/T Aster 30, category: sam_long, origin: FRA, analog: {of: ad_patriot_pac3, scale: 1.0, why: "100km 级，反导能力"}}
   - {id: ad_crotale_vl, name: 响尾蛇/MICA VL 近程, category: sam_short, origin: FRA, analog: {of: ad_tor_m1, scale: 0.9, why: "近程自行/车载"}}
@@ -146,3 +146,26 @@ equipment:
   - {id: ad_osa, name: 9K33 Osa 黄蜂, category: sam_short, origin: RUS, analog: {of: ad_tor_m1, scale: 0.6, why: "近程老式，1970s"}}
   - {id: ad_kub, name: 2K12 Kub, category: sam_medium, origin: RUS, analog: {of: ad_hq7, scale: 1.5, why: "中近程老式，射程 24km"}}
   - {id: ad_hisar_o, name: HİSAR-O/O+ 中程防空, category: sam_medium, origin: TUR, analog: {of: ad_hq16, scale: 0.8, why: "25-35km，性能资料有限"}}
+  # ---------------- 俄/伊/朝 共用或专用 ----------------
+  - {id: mi26, name: 米-26 重型直升机, category: heavy_helicopter, origin: RUS, analog: {of: ch47f, scale: 1.3, why: "载重 20t，大于 CH-47F"}}
+  - {id: ka27, name: 卡-27/29 舰载直升机, category: utility_helicopter, origin: RUS, analog: {of: uh60, scale: 0.9, why: "舰载反潜/运输，同级略小"}}
+  - {id: mi24_ru, name: 米-24/35 攻击直升机, category: attack_helicopter, origin: RUS, analog: {of: ah1z, scale: 0.8, why: "老式但载员/载荷大，航电落后"}}
+  - {id: shahed129, name: 沙希德-129, category: large_uav, origin: IRN, unit: {value: 0.27}, unit_source: "uav_composite(0.4t,1.2t,200km/h,24h,1700km)/8691.43"}
+  - {id: mohajer6, name: 穆哈杰尔-6, category: large_uav, origin: IRN, unit: {value: 0.10}, unit_source: "uav_composite(0.15t,0.7t,200km/h,12h,1000km)/8691.43"}
+  - {id: sub_ghadir, name: 加迪尔级微型潜艇（含朝鲜约诺级）, category: ssk, origin: IRN, unit: {vls: 1.5}, unit_source: "估算：两具鱼雷管，近岸伏击；对照工作簿 209 型 8.6 的 1/6"}
+  - {id: sub_romeo_sango, name: 罗密欧/桑奥级老式潜艇, category: ssk, origin: PRK, unit: {vls: 3.0}, unit_source: "估算：噪音大、续航短，对照工作簿 阿库拉/基洛 之下"}
+  - {id: j7_mig21, name: 歼-7/米格-21 系, category: fighter, origin: CHN, analog: {of: j_7l_g, scale: 0.8, why: "同代老式截击机"}}
+  - {id: mig23_ru, name: 米格-23, category: fighter, origin: RUS, unit: {air: 0.05, ground: 0.2}, unit_source: "估算：低于米格-29（0.10/0.21）"}
+  - {id: j6_mig19, name: 歼-6/米格-19, category: fighter, origin: CHN, unit: {air: 0.01, ground: 0.05}, unit_source: "估算：1950s 老式机"}
+  - {id: il28_h5, name: 伊尔-28/轰-5 轻型轰炸机, category: bomber, origin: RUS, analog: {of: su24, scale: 0.3, why: "亚音速老式轰炸机"}}
+  - {id: an2_colt, name: 安-2 运输机, category: transport_aircraft, origin: RUS, analog: {of: airlift_c295, scale: 0.15, why: "载重 1.5t，活塞"}}
+  - {id: f14a_tomcat, name: F-14A 雄猫（伊朗）, category: fighter, origin: USA, unit: {air: 0.30, ground: 0.25}, unit_source: "工作簿 战斗机 F-14 行 air≈0.16（旧雷达）；伊朗机队缺备件，按 0.30 估上限"}
+  - {id: shahab3, name: 流星-3/卡德尔/伊马德 中程弹道导弹, category: mrbm, origin: IRN, analog: {of: df21, scale: 0.7, why: "1300-1700km，弹头 750-1000kg，CEP 数百米至 1km"}}
+  - {id: khorramshahr, name: 霍拉姆沙赫尔/塞吉尔/海巴尔·沙卡, category: mrbm, origin: IRN, analog: {of: df21c, scale: 0.8, why: "2000km 级，机动弹头，CEP 数十米"}}
+  - {id: fateh110, name: 法塔赫-110/佐勒法卡尔 近程弹道导弹, category: srbm, origin: IRN, analog: {of: df11a, scale: 0.8, why: "300-700km，固体，CEP 10-30m"}}
+  - {id: scud_prk, name: 飞毛腿-B/C 系（朝鲜）, category: srbm, origin: PRK, analog: {of: df11a, scale: 0.5, why: "300-700km，液体，CEP 1km 级"}}
+  - {id: kn23_prk, name: KN-23/24/25（火星-11 系）, category: srbm, origin: PRK, analog: {of: df15a, scale: 0.9, why: "固体，机动弹道，CEP 数十米"}}
+  - {id: rodong_prk, name: 劳动/火星-7 中程弹道导弹, category: mrbm, origin: PRK, analog: {of: df21, scale: 0.4, why: "1300km，液体，CEP 2km 级"}}
+  - {id: sub_kilo_export, name: 基洛级潜艇（877EKM 等出口/旧型）, category: ssk, origin: RUS, unit: {vls: 23.7},
+     unit_source: "工作簿 海军!T28/J28（基洛 造价 0.4956×47.9）"}
+  - {id: art_koksan, name: 170mm 科克山自行加农炮, category: howitzer_heavy_sp, origin: PRK, analog: {of: art_m109a6, scale: 0.8, why: "射程 40-60km，但精度差、寿命短"}}
