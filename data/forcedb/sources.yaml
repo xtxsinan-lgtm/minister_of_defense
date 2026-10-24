@@ -33,3 +33,15 @@ sources:
     title: 军事规划（Google Sheets，作者本人）
     url: https://docs.google.com/spreadsheets/d/1sV3r1W4eU1AfPVbcyJ1QD2tFXfOCZaLHtnqczddCvqQ
     reliability: medium
+  - id: worldbank_wdi
+    kind: crawler
+    title: World Bank World Development Indicators（军费、武装力量人数）
+    url: https://api.worldbank.org/v2/
+    reliability: high
+    notes: 指标 MS.MIL.XPND.CD / MS.MIL.XPND.GD.ZS / MS.MIL.TOTL.P1 / MS.MIL.XPND.ZS，数据来自 SIPRI 与 IISS，按年发布。
+  - id: wikipedia_lists
+    kind: crawler
+    title: Wikipedia 现役装备清单（List of active ... 系列页面）
+    url: https://en.wikipedia.org/
+    reliability: low
+    notes: 众包、引用质量参差，只用于交叉验证与发现新增条目；写库时置信度记 estimated，并保留页面版本号。

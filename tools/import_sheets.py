@@ -421,6 +421,28 @@ BRIG_ID = {
     "空突山猫旅": "cn_air_assault_lynx_bde", "空突摩步旅": "cn_air_assault_motor_bde", "海防旅": "cn_coastal_bde",
     "边防团": "cn_border_regt", "边防旅": "cn_border_bde", "驻港合成旅": "cn_hk_garrison_bde",
 }
+# 旅级单位 → 仓库编制模板。中国各“xx+yy旅”只是型号搭配不同，编制模板相同（装备差异体现在乘数里）。
+# 没有对应模板的（如摩步团）留空。
+BRIG_TEMPLATE = {
+    "us_abct": "us_abct", "us_abct_ng": "us_abct", "us_2cr_sbct": "us_sbct", "us_2id_2bct_sbct": "us_sbct",
+    "us_sbct_other": "us_sbct", "us_sbct_ng": "us_sbct", "us_ibct": "us_ibct", "us_air_assault_ibct": "us_mbct",
+    "us_airborne_ibct": "us_mbct", "us_ibct_ng": "us_ibct", "us_marine_meu": "usmc_meu",
+    "us_marine_meu_reserve": "usmc_meu",
+    **{k: "pla_heavy_cab_brigade" for k in ("cn_99a_04a_bde", "cn_99_04a_bde", "cn_99_86a_bde", "cn_15_04a_bde",
+                                              "cn_15_86a_bde", "cn_96a_04a_bde", "cn_96a_04_bde", "cn_96a_86a_bde",
+                                              "cn_96_86a_bde", "cn_96_86_bde", "cn_96_89_bde", "cn_88b_89a_bde")},
+    "cn_amphibious_bde": "pla_amphib_cab_brigade", "cn_191_family_bde": "pla_medium_cab_brigade",
+    "cn_11_08_bde": "pla_medium_cab_brigade", "cn_11_92_bde": "pla_medium_cab_brigade_92",
+    "cn_hmv3_bde": "pla_light_cab_brigade", "cn_hmv2_bde": "pla_light_cab_brigade",
+    "cn_mountain_bde": "pla_mountain_cab_brigade", "cn_motor_bde": "pla_motor_cab_brigade",
+    "cn_96a_86a_regt": "pla_xj_heavy_regiment", "cn_11_08_regt": "pla_xj_medium_regiment",
+    "cn_hmv3_regt": "pla_xj_light_regiment",
+    "cn_abn_tracked_bde": "pla_abn_tracked_brigade", "cn_abn_wheeled_bde": "pla_abn_wheeled_brigade",
+    "cn_abn_lynx_bde": "pla_abn_lynx_brigade", "cn_abn_motor_bde": "pla_abn_motor_brigade",
+    "cn_air_assault_lynx_bde": "pla_army_air_assault_brigade", "cn_air_assault_motor_bde": "pla_army_air_assault_brigade",
+    "cn_coastal_bde": "pla_coastal_brigade", "cn_border_regt": "pla_border_regiment", "cn_border_bde": "pla_border_brigade",
+    "cn_hk_garrison_bde": "pla_hk_brigade", "cn_marine_brigade": "pla_marine_brigade",
+}
 AIRFORCE_CN_ROWS = {40, 41, 42, 43, 45}     # 表格“陆军!B4”只合计这五行（空突山猫旅第 44 行并入陆军，原样保留）
 
 
@@ -435,7 +457,8 @@ def import_brigades(S: Sheets):
                 continue
             b = ws[f"B{r}"].value
             if label == "陆战队合成旅":   # 表格里该行只有汇总战力（由两栖旅/空突/11+08 旅平均估算）
-                rows.append(dict(id="cn_marine_brigade", country=country, label=label, service="marines", count=b,
+                rows.append(dict(id="cn_marine_brigade", country=country, label=label, service="marines",
+                                 template_id=BRIG_TEMPLATE["cn_marine_brigade"], count=b,
                                  base_fire_scale="", equip_mult="", mech_mult="", info_mult="", logistics_mult="",
                                  readiness_mult="", apply_logistics="", snapshot_power=ws[f"I{r}"].value,
                                  snapshot_total=ws[f"J{r}"].value))
@@ -445,7 +468,7 @@ def import_brigades(S: Sheets):
             is_regiment = country == "CHN" and r in (36, 37, 38, 39)   # 表格中团级行的 I 列不乘后勤乘数
             rows.append(dict(
                 id=BRIG_ID[label], country=country, label=label, service=svc,
-                count=b, base_fire_scale=ws[f"C{r}"].value, equip_mult=ws[f"D{r}"].value,
+                template_id=BRIG_TEMPLATE.get(BRIG_ID[label], ""), count=b, base_fire_scale=ws[f"C{r}"].value, equip_mult=ws[f"D{r}"].value,
                 mech_mult=ws[f"E{r}"].value, info_mult=ws[f"F{r}"].value, logistics_mult=ws[f"G{r}"].value,
                 readiness_mult=ws[f"H{r}"].value, apply_logistics=("0" if is_regiment or country == "USA" else "1"),
                 snapshot_power=ws[f"I{r}"].value, snapshot_total=ws[f"J{r}"].value))

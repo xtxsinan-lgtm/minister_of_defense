@@ -84,6 +84,25 @@ CREATE TABLE inventory (
 );
 CREATE INDEX ix_inventory_country ON inventory(country, equipment_id);
 
+-- 国家层面的宏观指标（军费、兵力、占 GDP 比例……），用于跨国归一与预算折算；同一指标按年累积
+CREATE TABLE country_indicator (
+  country TEXT NOT NULL REFERENCES country(iso3),
+  indicator TEXT NOT NULL,                      -- 如 military_expenditure_usd / armed_forces_personnel
+  year INTEGER NOT NULL,
+  value REAL NOT NULL, unit TEXT,
+  source_id TEXT NOT NULL REFERENCES source(id),
+  observed_at TEXT,
+  PRIMARY KEY (country, indicator, year, source_id)
+);
+
+-- 爬取时无法匹配到库内装备的条目：不自动建装备，先放暂存区等人工/规则确认
+CREATE TABLE crawl_staging (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  connector TEXT NOT NULL, key TEXT NOT NULL, payload_json TEXT NOT NULL,
+  observed_at TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','accepted','rejected')),
+  UNIQUE (connector, key, observed_at)
+);
+
 -- 量化引擎输出缓存：每个 (装备, 模型版本, 指标) 一条
 CREATE TABLE score (
   equipment_id TEXT NOT NULL REFERENCES equipment(id) ON DELETE CASCADE,
@@ -100,12 +119,21 @@ CREATE TABLE crawl_run (
   rows_seen INTEGER, rows_changed INTEGER, message TEXT
 );
 
--- 最新库存视图：每个 (国家,军种,装备,口径) 取 as_of 最新的一条
+-- 取值视图：同一个 (国家,装备,口径,role) 可能被多个来源、多个日期观测。
+-- 先选“获胜来源”= 可靠度最高（high>medium>low>未标注），同级取 as_of 最新；
+-- 再取该来源在每个军种上的最新一行。这样众包来源（如 Wikipedia）即使日期更新、军种归属不同，
+-- 也不会与作者表格叠加或覆盖它；它只用于 crosscheck。
 CREATE VIEW v_inventory_latest AS
 SELECT i.* FROM inventory i
-WHERE i.as_of = (SELECT MAX(j.as_of) FROM inventory j
-                 WHERE j.country=i.country AND j.service=i.service
-                   AND j.equipment_id=i.equipment_id AND j.kind=i.kind AND j.role=i.role);
+WHERE i.source_id IS (
+        SELECT j.source_id FROM inventory j LEFT JOIN source sj ON sj.id = j.source_id
+        WHERE j.country=i.country AND j.equipment_id=i.equipment_id AND j.kind=i.kind AND j.role=i.role
+        ORDER BY CASE sj.reliability WHEN 'high' THEN 3 WHEN 'medium' THEN 2 WHEN 'low' THEN 1 ELSE 0 END DESC,
+                 j.as_of DESC, j.id DESC LIMIT 1)
+  AND i.as_of = (
+        SELECT MAX(k.as_of) FROM inventory k
+        WHERE k.country=i.country AND k.service=i.service AND k.equipment_id=i.equipment_id
+          AND k.kind=i.kind AND k.role=i.role AND k.source_id IS i.source_id);
 """
 
 TOE_DDL = """
@@ -209,6 +237,17 @@ CREATE TABLE brigade_class (
   apply_logistics INTEGER NOT NULL DEFAULT 1,
   snapshot_power REAL, snapshot_total REAL,
   source_id TEXT, as_of TEXT, notes TEXT
+);
+
+-- 编制内装备需求：Σ（旅级单位数量 × 该旅模板每旅的装备汇总）。按“类别”，是把编制库和装备库打通的桥：
+-- 例如 美军 ABCT 11 个现役 + 5 个国民警卫队，每旅 87 辆 mbt。含义是“按编制应有多少”，不是实际库存。
+CREATE TABLE toe_demand (
+  country TEXT NOT NULL, category TEXT NOT NULL, count REAL NOT NULL, classes INTEGER NOT NULL,
+  PRIMARY KEY (country, category)
+);
+CREATE TABLE toe_demand_class (
+  brigade_class TEXT NOT NULL REFERENCES brigade_class(id), category TEXT NOT NULL, count REAL NOT NULL,
+  PRIMARY KEY (brigade_class, category)
 );
 
 -- 现实世界的某个具体单位（番号）及其采用的模板 —— 后续爬取/填充用，现在为空表

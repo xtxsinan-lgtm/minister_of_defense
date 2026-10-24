@@ -63,3 +63,17 @@ def test_brigade_classes_loaded(dbs):
     _, toe = dbs
     n = toe.execute("SELECT COUNT(*) FROM brigade_class").fetchone()[0]
     assert n == 47
+
+
+def test_toe_demand_bridges_toe_and_brigade_counts(dbs):
+    _, toe = dbs
+    q = lambda c, cat: toe.execute("SELECT count FROM toe_demand WHERE country=? AND category=?", (c, cat)).fetchone()[0]
+    # 美军：16 个 ABCT（11 现役 + 5 国民警卫队）× 87 辆 M1 = 1392；另有 27 个 MEU × 4 辆（陆战队坦克排）
+    abct = toe.execute("SELECT SUM(count) FROM toe_demand_class WHERE category='mbt' AND "
+                       "brigade_class IN ('us_abct','us_abct_ng')").fetchone()[0]
+    assert abct == 16 * 87
+    assert q("USA", "mbt") == 16 * 87 + 27 * 4
+    assert q("CHN", "mbt") > 1000          # 重型旅 112 辆/旅 × 数十个旅
+    cats = {r[0] for r in toe.execute("SELECT DISTINCT category FROM toe_demand")}
+    eq_cats = {r[0] for r in dbs[0].execute("SELECT id FROM category")}
+    assert cats <= eq_cats

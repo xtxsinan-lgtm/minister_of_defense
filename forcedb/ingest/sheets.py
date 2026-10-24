@@ -57,12 +57,25 @@ def ingest_brigade_classes(toe, as_of="2025-08-31") -> int:
     with open(path, encoding="utf-8", newline="") as f:
         for r in csv.DictReader(f):
             toe.execute(
-                "INSERT INTO brigade_class (id,country,label,service,count,base_fire_scale,equip_mult,mech_mult,info_mult,"
-                "logistics_mult,readiness_mult,apply_logistics,snapshot_power,snapshot_total,source_id,as_of)"
-                " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                (r["id"], r["country"], r["label"], r["service"], f_(r["count"]), f_(r["base_fire_scale"]),
+                "INSERT INTO brigade_class (id,country,label,service,template_id,count,base_fire_scale,equip_mult,mech_mult,"
+                "info_mult,logistics_mult,readiness_mult,apply_logistics,snapshot_power,snapshot_total,source_id,as_of)"
+                " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (r["id"], r["country"], r["label"], r["service"], r.get("template_id") or None, f_(r["count"]), f_(r["base_fire_scale"]),
                  f_(r["equip_mult"]), f_(r["mech_mult"]), f_(r["info_mult"]), f_(r["logistics_mult"]),
                  f_(r["readiness_mult"]), int(r["apply_logistics"] or 0), f_(r["snapshot_power"]),
                  f_(r["snapshot_total"]), "sheet_cn_us", as_of))
             n += 1
     return n
+
+
+def compute_toe_demand(toe) -> int:
+    """编制内装备需求（见 schema.toe_demand）。只统计已映射到模板的旅级单位。"""
+    toe.execute("DELETE FROM toe_demand_class")
+    toe.execute("DELETE FROM toe_demand")
+    for b in toe.execute("SELECT id, count FROM brigade_class WHERE template_id IS NOT NULL").fetchall():
+        for e in toe.execute("SELECT category, count FROM rollup_equipment WHERE template=(SELECT template_id FROM "
+                             "brigade_class WHERE id=?)", (b["id"],)).fetchall():
+            toe.execute("INSERT INTO toe_demand_class VALUES (?,?,?)", (b["id"], e["category"], e["count"] * b["count"]))
+    toe.execute("INSERT INTO toe_demand SELECT bc.country, d.category, SUM(d.count), COUNT(*) FROM toe_demand_class d "
+                "JOIN brigade_class bc ON bc.id=d.brigade_class GROUP BY bc.country, d.category")
+    return toe.execute("SELECT COUNT(*) FROM toe_demand").fetchone()[0]
