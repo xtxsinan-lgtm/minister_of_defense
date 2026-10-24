@@ -1,0 +1,94 @@
+# 土耳其（TUR）。战斗机数量取自作者工作簿；陆军装备数量取自 Wikipedia “List of equipment of the Turkish Land Forces”（2026 年页面）；
+# 舰艇/潜艇取自 “List of active Turkish Navy ships”；单位战力用类比法。
+country: TUR
+as_of: "2026-10-24"
+default_source: research_2026
+meta:
+  summary: "以 F-16（约 237 架）、庞大的陆军（约 26 万）、14 艘潜艇和 17 艘护卫舰为基础，无人机体系（TB2/Akıncı/Anka）是特色；F-35 项目被取消，S-400 与北约体系并存。"
+equipment:
+  - {id: tur_anadolu, name: 安纳托利亚号（无人机/直升机两栖攻击舰）, category: amphibious_carrier, origin: TUR,
+     analog: {of: cv_juan_carlos_i, scale: 0.6, why: "胡安·卡洛斯一世衍生，目前不运作固定翼战斗机，空联以直升机/无人机为主"}}
+  - {id: ship_tur_yavuz, name: 亚武兹级（MEKO 200TN-I）, category: frigate, origin: TUR, unit: {value: 22.0},
+     unit_source: "估算：Mk41×8+鱼叉×8+鱼雷×6×0.25(1.5)=17.5 + 雷达折算≈4.5"}
+  - {id: ship_tur_barbaros, name: 巴巴罗斯级（MEKO 200TN-II，升级中）, category: frigate, origin: TUR, unit: {value: 38.0},
+     unit_source: "估算：升级后 Mk41×32 + 反舰×8 + 鱼雷，雷达折算≈6"}
+  - {id: ship_tur_gabya, name: 加比亚级（改进型佩里）, category: frigate, origin: TUR, unit: {value: 30.0},
+     unit_source: "估算：Mk13 单臂 SM-1/鱼叉 40 发×0.4(16)+鱼叉×8+ESSM/RAM(约5)+鱼雷×6×0.25(1.5)=30"}
+  - {id: ship_tur_istif, name: 伊斯坦布尔级（I 级护卫舰）, category: destroyer, origin: TUR, unit: {value: 52.0},
+     unit_source: "估算：Mk41×32(32)+阿特马卡反舰×8+鱼雷，雷达折算≈10"}
+  - {id: ship_tur_ada, name: 阿达级轻护, category: corvette, origin: TUR, unit: {value: 27.0},
+     unit_source: "估算：RAM×21(14.9)+鱼叉×8+鱼雷(1.5)+雷达折算≈3"}
+  - {id: ship_tur_burak, name: 布拉克级（旧法制轻护）, category: corvette, origin: TUR, unit: {value: 8.0}, unit_source: "估算"}
+  - {id: ship_tur_fac, name: 导弹艇（基利奇/多安等）, category: corvette, origin: TUR, unit: {value: 5.0}, unit_source: "估算：鱼叉×8 + 76mm"}
+  - {id: sub_tur_209_old, name: 阿提莱级（209/1200）, category: ssk, origin: TUR, unit: {vls: 8.6},
+     unit_source: "对照工作簿 海军!T50/J50（209 型 0.18×47.9）"}
+  - {id: sub_tur_209_1400, name: 普雷韦泽/古尔级（209/1400，已现代化）, category: ssk, origin: TUR, unit: {vls: 15.8},
+     unit_source: "对照工作簿 海军!T46/J46（212A 同量级）"}
+  - {id: sub_tur_214, name: 雷斯级（214 型 AIP）, category: ssk, origin: TUR, unit: {vls: 15.8}, unit_source: "工作簿 海军!T50/J50（214 型：142.29/9）"}
+  - {id: sealift_tur_lst, name: 土耳其登陆舰（奥斯曼加齐/萨鲁卡贝等）, category: amphibious_dock, origin: TUR,
+     analog: {of: sealift_whidbey_island, scale: 0.4, why: "约 7000-9000t，载货约 400t"}}
+  - {id: bora_tur, name: 布拉战术弹道导弹, category: srbm, origin: TUR, analog: {of: df11a, scale: 0.35, why: "280km，弹头 450kg，精度较好，数量少"}}
+inventory:
+  - {eq: f_16c_d, service: airforce, qty: 237, src: sheet_cn_us_live, confidence: stated, note: "工作簿 战斗机!BC41"}
+  - {eq: f4_phantom, service: airforce, qty: 0, src: sheet_cn_us_live, confidence: estimated, note: "工作簿为 19；F-4E-2020 已陆续退役，不计"}
+  - {eq: e7_wedgetail, service: airforce, qty: 4, confidence: stated, note: "E-7T Peace Eagle"}
+  - {eq: kc_135, service: airforce, qty: 7, confidence: stated, note: "KC-135R"}
+  - {eq: airlift_a400m, service: airforce, qty: 10, confidence: stated}
+  - {eq: airlift_c_130, service: airforce, qty: 18, confidence: estimated, note: "C-130B/E/H"}
+  - {eq: airlift_c295, service: airforce, qty: 40, confidence: estimated, note: "CN-235 + C-160"}
+  - {eq: p3c_asw, service: navy, qty: 6, confidence: estimated, note: "P-3T/CN-235 MPA 折算"}
+  - {eq: tb2, service: army, qty: 200, confidence: stated, note: "Wikipedia：200+"}
+  - {eq: akinci, service: army, qty: 20, confidence: estimated}
+  - {eq: anka, service: army, qty: 30, confidence: estimated}
+  - {eq: tur_anadolu, service: navy, qty: 1, confidence: stated}
+  - {eq: ship_tur_yavuz, service: navy, qty: 4, confidence: stated}
+  - {eq: ship_tur_barbaros, service: navy, qty: 4, confidence: stated}
+  - {eq: ship_tur_gabya, service: navy, qty: 8, confidence: stated}
+  - {eq: ship_tur_istif, service: navy, qty: 2, confidence: estimated, note: "已服役 1-2 艘（页面：17 艘护卫舰在役）"}
+  - {eq: ship_tur_ada, service: navy, qty: 4, confidence: stated}
+  - {eq: ship_tur_burak, service: navy, qty: 6, confidence: estimated}
+  - {eq: ship_tur_fac, service: navy, qty: 19, confidence: estimated}
+  - {eq: sub_tur_209_old, service: navy, qty: 4, confidence: stated}
+  - {eq: sub_tur_209_1400, service: navy, qty: 8, confidence: stated}
+  - {eq: sub_tur_214, service: navy, qty: 2, confidence: stated, note: "已服役 Piri Reis、Hızır Reis；另 4 艘订单"}
+  - {eq: sealift_tur_lst, service: navy, qty: 6, confidence: estimated}
+  - {eq: art_firtina, service: army, qty: 310, confidence: stated, note: "Fırtına I 280+ / II 30"}
+  - {eq: art_m110, service: army, qty: 219, confidence: stated}
+  - {eq: art_k55, service: army, qty: 300, confidence: estimated, note: "M109A1/A2/A4 等老式 155mm 自行炮"}
+  - {eq: art_caesar, service: army, qty: 40, confidence: stated, note: "T-155 TTA 8x8"}
+  - {eq: art_t300, service: army, qty: 54, confidence: stated, note: "TRG-300 54+"}
+  - {eq: art_k136, service: army, qty: 100, confidence: stated, note: "T-107 100+"}
+  - {eq: art_kmlrs, service: army, qty: 12, confidence: estimated, note: "M270 + ATACMS 少量"}
+  - {eq: ad_hawk, service: airforce, qty: 12, confidence: estimated, note: "MIM-23 Hawk 营"}
+  - {eq: ad_s400, service: airforce, qty: 2, confidence: estimated, note: "S-400 两个营（2019 年购入，运作受限）"}
+  - {eq: ad_hisar_o, service: airforce, qty: 6, confidence: estimated}
+  - {eq: ad_gepard_skyranger, service: army, qty: 14, confidence: stated, note: "Korkut 14 个连"}
+  - {eq: ad_stinger_spg, service: army, qty: 13, confidence: stated, note: "Atılgan 70 + Zıpkın 35 辆，每连 8 车"}
+  - {eq: t129, service: army, qty: 60, confidence: estimated, note: "Wikipedia 页只列 9，实际已交付更多（订购 ~100），取 60"}
+  - {eq: uh60, service: army, qty: 48, confidence: stated, note: "S-70A"}
+  - {eq: bell412_209, service: army, qty: 90, confidence: estimated, note: "UH-1H/AB-205"}
+  - {eq: cougar_puma, service: army, qty: 28, confidence: estimated}
+  - {eq: ch47f, service: army, qty: 12, confidence: stated}
+  - {eq: sh60_navy, service: navy, qty: 18, confidence: estimated, note: "S-70B"}
+  - {eq: bora_tur, service: rocket, qty: 40, confidence: uncertain}
+special_forces: {army: 1.0, navy: 0.2}
+special_forces_note: "特种部队司令部 + 海军 SAT/SAS"
+brigades:
+  - id: tur_force_leo2
+    label: 土耳其陆军豹 2 + ACV-15 部队
+    service: army
+    force: {tank3: 640, veh3: 700, veh2: 1500}
+    quality: {equip: 1.95, mech: 1.1, info: 0.95, log: 1.0, ready: 1.0}
+    why: "豹 2A4 310 + 豹 1 171 + M60T/TM 165 = 646；ACV-15 645 + Pars 等；M113 约 3000 半折"
+  - id: tur_force_old
+    label: 土耳其陆军 M60A3 / M48A5 老式部队
+    service: army
+    force: {tank3: 1025, veh2: 3000}
+    quality: {equip: 1.3, mech: 1.0, info: 0.75, log: 1.0, ready: 0.9}
+    why: "M60A3 TTS 650 + M48A5T2 750 的一半；M113 等"
+  - id: tur_force_infantry
+    label: 土耳其陆军步兵
+    service: army
+    force: {squads: 1900}
+    quality: {equip: 1.0, mech: 1.0, info: 0.9, log: 1.0, ready: 0.9}
+    why: "现役约 26 万（含义务兵）+ 预备役 10% ≈ 30 万 × 0.0064 班/人"

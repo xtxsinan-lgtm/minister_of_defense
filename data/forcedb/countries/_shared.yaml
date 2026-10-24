@@ -118,3 +118,31 @@ equipment:
   - {id: ad_gepard_skyranger, name: 猎豹/天空游侠 近程防空, category: spaag, origin: DEU, analog: {of: ad_m_shorad, scale: 1.0, why: "35mm 炮系统"}}
   - {id: ad_khordad, name: 3 Khordad / Bavar-373, category: sam_long, origin: IRN, analog: {of: ad_hq16, scale: 0.8, why: "国产中远程，性能资料不足"}}
   - {id: ad_hq2_sa2, name: SA-2/SA-3/SA-5 老式 SAM, category: sam_medium, origin: RUS, analog: {of: ad_hq6d, scale: 0.7, why: "60 年代系统，易被压制"}}
+  # ---------------- 无人机（公式 uav_composite / RQ-170 综合战力 8691.43；输入为公开参数，写在 notes）----------------
+  - {id: tb2, name: 拜拉克塔尔 TB2, category: large_uav, origin: TUR, unit: {value: 0.273},
+     unit_source: "uav_composite(载重0.15t,起飞0.65t,222km/h,27h,里程3000km)/8691.43"}
+  - {id: akinci, name: 拜拉克塔尔 Akıncı, category: large_uav, origin: TUR, unit: {value: 1.369},
+     unit_source: "uav_composite(1.35t,5.5t,361km/h,24h,6000km)/8691.43"}
+  - {id: anka, name: ANKA, category: large_uav, origin: TUR, unit: {value: 0.342},
+     unit_source: "uav_composite(0.2t,1.6t,217km/h,24h,3000km)/8691.43"}
+  - {id: hermes900, name: 赫尔墨斯 900, category: large_uav, origin: ISR, unit: {value: 0.612},
+     unit_source: "uav_composite(0.3t,1.18t,220km/h,36h,6000km)/8691.43"}
+  - {id: herontp, name: 苍鹭 TP（Eitan）, category: large_uav, origin: ISR, unit: {value: 1.98},
+     unit_source: "uav_composite(1.0t,5.4t,350km/h,52h,7000km)/8691.43"}
+  - {id: heron1_il, name: 苍鹭 1, category: large_uav, origin: ISR, unit: {value: 0.481},
+     unit_source: "uav_composite(0.25t,1.15t,207km/h,45h,3500km)/8691.43"}
+  # ---------------- 其他共用 ----------------
+  - {id: t129, name: T129 ATAK, category: attack_helicopter, origin: TUR, analog: {of: ah64e, scale: 0.55, why: "A129 衍生，武器载荷与航程小于 AH-64"}}
+  - {id: art_firtina, name: T-155 Fırtına, category: howitzer_heavy_sp, origin: TUR, analog: {of: art_m109a6, scale: 1.2, why: "K9 衍生，52 倍径"}}
+  - {id: art_t300, name: T-300 Kasırga 火箭炮, category: mrl_long_range, origin: TUR, analog: {of: art_phl_03, scale: 0.8, why: "WS-1B 衍生，300mm，射程 100km+"}}
+  - {id: art_2s1, name: 2S1 Goździk/Gvozdika 122mm, category: howitzer_heavy_sp, origin: RUS, analog: {of: art_m109a6, scale: 0.5, why: "122mm 射程 15-22km"}}
+  - {id: art_krab, name: AHS Krab 155mm, category: howitzer_heavy_sp, origin: POL, analog: {of: art_m109a6, scale: 1.0, why: "52 倍径，射程 40km，数字化"}}
+  - {id: art_wr40, name: WR-40 Langusta 122mm 火箭炮, category: mrl_long_range, origin: POL, analog: {of: art_phl_03, scale: 0.15, why: "BM-21 级"}}
+  - {id: art_m110, name: M110A2 203mm 自行榴弹炮, category: howitzer_heavy_sp, origin: USA, analog: {of: art_m109a6, scale: 0.6, why: "射程 30km，装填慢"}}
+  - {id: art_sigma, name: Sigma 155mm（以色列）, category: howitzer_heavy_sp, origin: ISR, analog: {of: art_m109a6, scale: 1.4, why: "ATMOS 底盘新型 155/52，全自动"}}
+  - {id: ew_israel_sigint, name: G550 SEMA / Shavit 电子侦察机, category: ew_aircraft, origin: ISR, analog: {of: rc_135, scale: 0.15, why: "公务机平台 SIGINT"}}
+  - {id: phalcon707, name: 波音 707 “费尔康”预警机, category: awacs, origin: ISR, analog: {of: e_3, scale: 0.6, why: "EL/M-2075 共形 AESA，707 平台"}}
+  - {id: tanker_707, name: 波音 707 加油/运输机, category: tanker_aircraft, origin: USA, analog: {of: kc_135, scale: 0.7, why: "707 平台 KC-135 同族，转移油量略小"}}
+  - {id: ad_osa, name: 9K33 Osa 黄蜂, category: sam_short, origin: RUS, analog: {of: ad_tor_m1, scale: 0.6, why: "近程老式，1970s"}}
+  - {id: ad_kub, name: 2K12 Kub, category: sam_medium, origin: RUS, analog: {of: ad_hq7, scale: 1.5, why: "中近程老式，射程 24km"}}
+  - {id: ad_hisar_o, name: HİSAR-O/O+ 中程防空, category: sam_medium, origin: TUR, analog: {of: ad_hq16, scale: 0.8, why: "25-35km，性能资料有限"}}

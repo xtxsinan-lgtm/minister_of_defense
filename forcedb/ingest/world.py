@@ -226,6 +226,7 @@ def ingest_world(eq, toe) -> Dict[str, int]:
     files += sorted(p for p in COUNTRIES.glob("*.yaml") if p.name != "_shared.yaml")
     files += sorted((COUNTRIES / "generated").glob("*.yaml"))
     n = {"equipment": 0, "inventory": 0, "brigades": 0, "countries": 0}
+    derive_carrier_snapshots(eq)        # 先给库里已有的外国航母派生快照，方便其他装备拿它们作类比
     for path in files:
         d = load_yaml(path)
         country = d.get("country")

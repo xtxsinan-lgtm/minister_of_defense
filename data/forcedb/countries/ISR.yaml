@@ -1,0 +1,59 @@
+# 以色列（ISR）。战斗机取自 Wikipedia “Israeli Air Force”（2026）并与作者工作簿比较；陆军取自 “List of equipment of the Israel Defense Forces”；
+# 海军取自 “List of ships of the Israeli Navy”。核力量（杰里科、核潜艇装载）不计入。
+country: ISR
+as_of: "2026-10-24"
+default_source: research_2026
+meta:
+  summary: "空军高度先进（F-35I 48 + F-15 + F-16 共约 310 架）；多层防空（铁穹/大卫投石索/箭）是特色；陆军现役 12.6 万 + 预备役 40 万，动员后装甲规模大；潜艇 5 艘（海豚级）。"
+equipment:
+  - {id: ship_isr_saar6, name: 萨尔-6 级护卫舰, category: frigate, origin: ISR, unit: {value: 38.0},
+     unit_source: "估算：巴拉克-8×32(15.3)+铁穹海基+加布里埃尔 V×8+鱼雷，EL/M-2248 AESA 雷达折算≈8"}
+  - {id: ship_isr_saar5, name: 萨尔-5 级护卫舰, category: frigate, origin: ISR, unit: {value: 30.0},
+     unit_source: "估算：巴拉克-8×32(15.3)+鱼叉×8+雷达折算≈6"}
+  - {id: ship_isr_saar45, name: 萨尔-4.5 级导弹艇, category: corvette, origin: ISR, unit: {value: 12.0}, unit_source: "估算：鱼叉/加布里埃尔×8"}
+  - {id: sub_isr_dolphin, name: 海豚级（含 AIP）潜艇, category: ssk, origin: DEU, unit: {vls: 31.1},
+     unit_source: "估算：造价约 0.65 十亿美元 × 47.9（工作簿 海军 成本折算）"}
+inventory:
+  - {eq: f_35a, service: airforce, qty: 48, confidence: stated, note: "F-35I；订购另 52"}
+  - {eq: f_15c_d, service: airforce, qty: 66, confidence: stated, note: "Wikipedia：F-15A/C 66（工作簿 41）"}
+  - {eq: f_15e, service: airforce, qty: 25, confidence: estimated, note: "F-15I，工作簿 战斗机!AQ37"}
+  - {eq: f_16c_d, service: airforce, qty: 173, confidence: stated}
+  - {eq: phalcon707, service: airforce, qty: 2, confidence: stated}
+  - {eq: g550_caew, service: airforce, qty: 2, confidence: stated}
+  - {eq: ew_israel_sigint, service: airforce, qty: 5, confidence: estimated, note: "G550 SEMA 4 + Shavit"}
+  - {eq: tanker_707, service: airforce, qty: 6, confidence: stated, note: "KC-707 7 架（1 架运输）"}
+  - {eq: kc_46, service: airforce, qty: 2, confidence: stated}
+  - {eq: kc_130t, service: airforce, qty: 7, confidence: stated, note: "KC-130H"}
+  - {eq: airlift_c_130, service: airforce, qty: 15, confidence: stated, note: "C-130E/H 8 + C-130J-30 7"}
+  - {eq: hermes900, service: airforce, qty: 25, confidence: estimated}
+  - {eq: herontp, service: airforce, qty: 10, confidence: estimated}
+  - {eq: heron1_il, service: airforce, qty: 20, confidence: estimated}
+  - {eq: ship_isr_saar6, service: navy, qty: 4, confidence: stated}
+  - {eq: ship_isr_saar5, service: navy, qty: 3, confidence: stated}
+  - {eq: ship_isr_saar45, service: navy, qty: 6, confidence: stated}
+  - {eq: sub_isr_dolphin, service: navy, qty: 5, confidence: stated, note: "海豚 I ×3 + 海豚 II ×2（Drakon 第 6 艘交付中）"}
+  - {eq: art_k55, service: army, qty: 250, confidence: stated, note: "M109 Doher"}
+  - {eq: art_sigma, service: army, qty: 20, confidence: estimated}
+  - {eq: art_kmlrs, service: army, qty: 30, confidence: stated, note: "M270 Menatetz"}
+  - {eq: art_pulsar, service: army, qty: 20, confidence: estimated}
+  - {eq: ad_iron_dome, service: airforce, qty: 10, confidence: stated, note: "9+ 个连"}
+  - {eq: ad_davids_sling, service: airforce, qty: 2, confidence: estimated}
+  - {eq: ad_arrow3, service: airforce, qty: 3, confidence: estimated, note: "箭-2 / 箭-3 连"}
+  - {eq: ah64e, service: army, qty: 48, confidence: estimated, note: "AH-64A/D"}
+  - {eq: uh60, service: airforce, qty: 40, confidence: estimated, note: "UH-60A/L/M Yanshuf"}
+  - {eq: ch47f, service: airforce, qty: 22, confidence: estimated, note: "CH-53D Yasur"}
+special_forces: {army: 2.0, navy: 0.3, airforce: 0.1}
+special_forces_note: "总参侦察营、第 13 突击队、空军 669 部队等（质量极高，数量小）"
+brigades:
+  - id: isr_force_merkava
+    label: 以色列陆军梅卡瓦部队（现役 + 动员）
+    service: army
+    force: {tank3: 1100, veh3: 390, veh2: 250}
+    quality: {equip: 2.9, mech: 1.21, info: 1.2, log: 1.0, ready: 0.85}
+    why: "梅卡瓦 4 约 400（另 200 封存）+ 梅卡瓦 3 约 700（封存，可动员）半折；纳梅尔约 290 + 阿奇扎里特约 100；M113 500 半折；战备度 0.85（动员折减）"
+  - id: isr_force_infantry
+    label: 以色列陆军步兵（现役 + 预备役动员）
+    service: army
+    force: {squads: 2086}
+    quality: {equip: 1.5, mech: 1.1, info: 1.2, log: 1.0, ready: 0.9}
+    why: "现役 12.6 万 + 预备役 40 万按 50% 动员 ≈ 32.6 万 × 0.0064 班/人"
