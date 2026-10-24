@@ -1,0 +1,65 @@
+# 朝鲜（PRK）。公开信息最少，数量主要来自 Wikipedia “List of active ships of the Korean People's Navy”、“Korean People's Army Air Force”
+# 和开源估计（IISS/韩国国防白皮书量级）；全部 uncertain，并按可用率折算。核力量（含洲际导弹）不计入。
+country: PRK
+as_of: "2026-10-24"
+default_source: research_2026
+meta:
+  summary: "兵力最庞大（现役约 128 万）、炮兵/多管火箭炮数量极大，但装备老旧、油料弹药与可用率存疑；战术/中程导弹发射车是主要的现代化打击力量；海军以大量小型潜艇/快艇为主，新下水的崔贤级驱逐舰（2 艘）是转折点。"
+  caveat: "最不确定的一个国家：数量、可用率、后勤与训练都缺乏独立核实。"
+equipment:
+  - {id: art_prk_240, name: 240mm 多管火箭炮（朝鲜）, category: mrl_long_range, origin: PRK, analog: {of: art_phl_03, scale: 0.25, why: "12 管 240mm，射程 43km，无制导"}}
+  - {id: ship_prk_choehyon, name: 崔贤级驱逐舰, category: destroyer, origin: PRK, unit: {value: 45.0},
+     unit_source: "估算：74 个垂发单元×0.5（国产导弹按低系数）+ 反舰×8 + 雷达折算≈5；2025 年 4 月首舰服役"}
+  - {id: ship_prk_frigate, name: 罗津/江陵/阿姆诺克/南浦级护卫舰与轻护, category: frigate, origin: PRK, unit: {value: 9.0}, unit_source: "估算：反舰×4-8 + 舰空×6；老旧"}
+  - {id: ship_prk_fac, name: 导弹艇（农口/蒲口/黄蜂等）, category: corvette, origin: PRK, unit: {value: 3.5}, unit_source: "估算：反舰×2-4"}
+  - {id: ship_prk_tb, name: 鱼雷艇/巡逻艇, category: corvette, origin: PRK, unit: {value: 0.5}, unit_source: "估算"}
+  - {id: sub_prk_sinpo, name: 新浦/高丽级（试验性弹道导弹潜艇，常规口径）, category: ssk, origin: PRK, unit: {vls: 8.0}, unit_source: "估算：对照工作簿 209 型 8.6"}
+inventory:
+  # ---- 空军（可用率折算约 0.45；老旧机型）----
+  - {eq: mig29_ru, service: airforce, qty: 10, confidence: uncertain, note: "名义约 18-20"}
+  - {eq: mig23_ru, service: airforce, qty: 20, confidence: uncertain, note: "名义约 46"}
+  - {eq: j7_mig21, service: airforce, qty: 50, confidence: uncertain, note: "米格-21/歼-7 名义约 120"}
+  - {eq: j6_mig19, service: airforce, qty: 80, confidence: uncertain, note: "米格-19/17 系名义约 300+"}
+  - {eq: su25_ru, service: airforce, qty: 15, confidence: uncertain, note: "名义约 34"}
+  - {eq: il28_h5, service: airforce, qty: 35, confidence: uncertain, note: "名义约 80"}
+  - {eq: an2_colt, service: airforce, qty: 150, confidence: uncertain, note: "安-2 名义约 300（特种部队渗透）"}
+  - {eq: airlift_il76, service: airforce, qty: 3, confidence: uncertain}
+  # ---- 防空 ----
+  - {eq: ad_hq2_sa2, service: airforce, qty: 60, confidence: uncertain, note: "SA-2/SA-3 老式营（数百个发射阵地的折算）"}
+  - {eq: ad_hq16, service: airforce, qty: 3, confidence: uncertain, note: "KN-06/Pongae-5 等国产中程 SAM（折算）"}
+  # ---- 导弹（战术/中程）----
+  - {eq: scud_prk, service: rocket, qty: 80, confidence: uncertain, note: "火星-5/6（飞毛腿 B/C）发射车"}
+  - {eq: kn23_prk, service: rocket, qty: 40, confidence: uncertain, note: "KN-23/24/25 发射车"}
+  - {eq: rodong_prk, service: rocket, qty: 30, confidence: uncertain, note: "劳动/火星-7 发射车"}
+  # ---- 海军（Wikipedia：潜艇 Sang-O 40 / Yono 36 / Type-033 20 / Sinpo 2；护卫舰与轻护；导弹艇）----
+  - {eq: ship_prk_choehyon, service: navy, qty: 2, confidence: uncertain, note: "崔贤号 2025-04 服役，次舰刚下水"}
+  - {eq: ship_prk_frigate, service: navy, qty: 11, confidence: estimated, note: "Najin 2 + Amnok 2 + Nampo 2 + Sariwon 5"}
+  - {eq: ship_prk_fac, service: navy, qty: 27, confidence: estimated, note: "Nongo 7 + Soju 10 + Huangfeng 4 + Komar 6"}
+  - {eq: ship_prk_tb, service: navy, qty: 84, confidence: uncertain}
+  - {eq: sub_romeo_sango, service: navy, qty: 60, confidence: uncertain, note: "Type-033 约 20（逐步退出）+ Sang-O/II 约 40"}
+  - {eq: sub_ghadir, service: navy, qty: 36, confidence: uncertain, note: "Yono 级微型潜艇 36（与伊朗 Ghadir 同源）"}
+  - {eq: sub_prk_sinpo, service: navy, qty: 2, confidence: uncertain}
+  # ---- 陆军炮兵 / 多管火箭炮（数量巨大、质量低）----
+  - {eq: art_koksan, service: army, qty: 100, confidence: uncertain, note: "170mm 科克山炮"}
+  - {eq: art_2s1, service: army, qty: 300, confidence: uncertain, note: "M-1978/M-1991 152/122mm 自行炮；名义 ~600，按弹药/油料可用 50% 折算"}
+  - {eq: art_d30_ru, service: army, qty: 1500, confidence: uncertain, note: "牵引榴弹炮/加农炮；名义 ~3000，按可用 50% 折算"}
+  - {eq: art_bm21, service: army, qty: 1750, confidence: uncertain, note: "107/122mm 多管火箭炮；名义 ~3500，按可用 50% 折算"}
+  - {eq: art_prk_240, service: army, qty: 300, confidence: uncertain, note: "240mm 多管火箭炮（名义 ~600，按可用 50%）；300mm KN-09 未单列"}
+  # ---- 直升机 ----
+  - {eq: mi8_ru, service: army, qty: 30, confidence: uncertain}
+  - {eq: mh6m, service: army, qty: 80, confidence: uncertain, note: "MD-500 系"}
+special_forces: {army: 2.0}
+special_forces_note: "特种作战军约 18-20 万（轻步兵），按 2.0 折算（美军陆军特战 10.0）"
+brigades:
+  - id: prk_force_armour
+    label: 朝鲜人民军装甲/机械化（天马虎、T-62、T-55、59 式 + M-1973/VTT-323）
+    service: army
+    force: {tank3: 3500, veh3: 600, veh2: 4500}
+    quality: {equip: 1.1, mech: 1.0, info: 0.6, log: 0.6, ready: 0.7}
+    why: "坦克约 3500（T-34 淘汰后的 T-54/55/62/59/天马虎）；M-1973 约 2500、VTT-323 等；油料与备件受限(后勤 0.6)"
+  - id: prk_force_infantry
+    label: 朝鲜人民军步兵（含特种部队轻步兵）
+    service: army
+    force: {squads: 8200}
+    quality: {equip: 0.8, mech: 1.0, info: 0.5, log: 0.6, ready: 0.85}
+    why: "现役约 128 万 × 0.0064 班/人；装备/通信/后勤薄弱"

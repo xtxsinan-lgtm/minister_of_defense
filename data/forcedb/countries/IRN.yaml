@@ -1,0 +1,68 @@
+# 伊朗（IRN）。航空取自 Wikipedia “List of aircraft of the Iranian Air Force”（页面标注“受冲突影响信息可能过时”），按可用率折算；
+# 导弹/无人机是伊朗力量的核心，但本文口径不计巡飞弹/自杀无人机数量，故低估其廉价非对称能力。置信度整体 uncertain。
+country: IRN
+as_of: "2026-10-24"
+default_source: research_2026
+meta:
+  summary: "空军老旧（F-14/F-4/F-5/米格-29 等名义约 300 架，可用率约 40-60%）；防空以 S-300PMU2、巴瓦尔-373/3 Khordad 与老式霍克为主，2025 年冲突后受损；弹道导弹发射车数百是主要打击力量。"
+  caveat: "2025 年 6 月冲突造成的防空/导弹/空军损失无权威统计；这里按战前名义数量 × 经验可用率折算，区间宽。"
+inventory:
+  # ---- 空军（可用率折算：F-14 0.4、F-4 0.5、F-5 0.5、米格-29 0.6、苏-24 0.6、J-7 0.5、幻影 F1 0.5）----
+  - {eq: f14a_tomcat, service: airforce, qty: 13, confidence: uncertain, note: "名义 32，可用率 0.4"}
+  - {eq: mig29_ru, service: airforce, qty: 17, confidence: uncertain, note: "名义 29，可用率 0.6"}
+  - {eq: f4_phantom, service: airforce, qty: 30, confidence: uncertain, note: "名义 60，可用率 0.5"}
+  - {eq: f5_tiger, service: airforce, qty: 30, confidence: uncertain, note: "F-5E/F + Saeqeh/Kowsar/Azarakhsh 名义 63，可用率 0.5"}
+  - {eq: j7_mig21, service: airforce, qty: 6, confidence: uncertain, note: "名义 12"}
+  - {eq: su24, service: airforce, qty: 11, confidence: uncertain, note: "名义 18，可用率 0.6"}
+  - {eq: airlift_c_130, service: airforce, qty: 14, confidence: uncertain, note: "名义 27，可用率 0.5"}
+  - {eq: airlift_il76, service: airforce, qty: 4, confidence: uncertain, note: "名义 7"}
+  - {eq: p3c_asw, service: navy, qty: 1, confidence: uncertain, note: "P-3F 名义 3"}
+  - {eq: shahed129, service: army, qty: 20, confidence: uncertain}
+  - {eq: mohajer6, service: army, qty: 50, confidence: uncertain}
+  # ---- 防空 ----
+  - {eq: ad_s300pmu2, service: airforce, qty: 2, confidence: uncertain, note: "S-300PMU2（2016 年交付）"}
+  - {eq: ad_khordad, service: airforce, qty: 6, confidence: uncertain, note: "3 Khordad / Bavar-373 / Khordad-15"}
+  - {eq: ad_tor_m1, service: airforce, qty: 7, confidence: estimated, note: "29 辆 Tor-M1 / 每营 4"}
+  - {eq: ad_hawk, service: airforce, qty: 6, confidence: uncertain, note: "I-Hawk 及国产改型"}
+  - {eq: ad_hq2_sa2, service: airforce, qty: 15, confidence: uncertain, note: "SA-2/SA-5 / Sayyad 等老式营"}
+  # ---- 弹道导弹 ----
+  - {eq: fateh110, service: rocket, qty: 150, confidence: uncertain, note: "法塔赫-110/佐勒法卡尔等近程弹道发射车"}
+  - {eq: shahab3, service: rocket, qty: 60, confidence: uncertain, note: "流星-3/卡德尔/伊马德发射车（部分固定设施）"}
+  - {eq: khorramshahr, service: rocket, qty: 40, confidence: uncertain, note: "霍拉姆沙赫尔/塞吉尔/海巴尔·沙卡"}
+  # ---- 海军 ----
+  - {eq: ship_irn_frigate, service: navy, qty: 10, confidence: estimated, note: "Alvand ×3 + Moudge/Jamaran 等"}
+  - {eq: ship_irn_fac, service: navy, qty: 150, confidence: uncertain, note: "伊斯兰革命卫队海军快艇（群）+ 海军导弹艇，数量估算"}
+  - {eq: sub_kilo_export, service: navy, qty: 2, confidence: estimated, note: "基洛级（Wikipedia：2 艘可用 + 2 艘非可用）"}
+  - {eq: sub_ghadir, service: navy, qty: 16, confidence: estimated}
+  - {eq: coast_irn_asm, service: navy, qty: 30, confidence: uncertain, note: "岸基反舰导弹连"}
+  - {eq: sealift_irn_hengam, service: navy, qty: 4, confidence: estimated}
+  # ---- 陆军炮兵 ----
+  - {eq: art_k55, service: army, qty: 150, confidence: uncertain, note: "M109 系自行炮"}
+  - {eq: art_2s1, service: army, qty: 300, confidence: uncertain}
+  - {eq: art_fh70, service: army, qty: 1200, confidence: uncertain, note: "M101/M46/D-30 等牵引炮可用部分"}
+  - {eq: art_bm21, service: army, qty: 800, confidence: uncertain, note: "107/122mm 多管火箭炮及法吉尔-3/5"}
+  # ---- 直升机 ----
+  - {eq: ah1s_cobra, service: army, qty: 25, confidence: uncertain, note: "AH-1J 名义 50"}
+  - {eq: mi8_ru, service: army, qty: 50, confidence: uncertain}
+  - {eq: ch47f, service: army, qty: 12, confidence: uncertain, note: "CH-47C"}
+  - {eq: bell412_209, service: army, qty: 100, confidence: uncertain, note: "Bell 205/206/214"}
+equipment:
+  - {id: ship_irn_frigate, name: 阿尔万德/穆杰级护卫舰, category: frigate, origin: IRN, unit: {value: 11.0}, unit_source: "估算：C-802 反舰×4-8 + 少量舰空 + 76mm；雷达折算≈2"}
+  - {id: ship_irn_fac, name: 革命卫队快艇（C-802/C-704 小艇）, category: corvette, origin: IRN, unit: {value: 1.2}, unit_source: "估算：反舰导弹×2-4"}
+  - {id: coast_irn_asm, name: 伊朗岸基反舰导弹连, category: coastal_missile_battery, origin: IRN, unit: {value: 4.0}, unit_source: "估算：对照工作簿 岸基鹰击-12B 连（4/连）"}
+  - {id: sealift_irn_hengam, name: 亨加姆级登陆舰, category: amphibious_dock, origin: IRN, analog: {of: sealift_whidbey_island, scale: 0.12, why: "约 2000t，载货约 120t"}}
+special_forces: {army: 1.0}
+special_forces_note: "圣城旅 + 陆军第 65 空降特战旅 + 海军特战"
+brigades:
+  - id: irn_force_armour
+    label: 伊朗陆军/革命卫队装甲（T-72S / 佐勒法卡尔 / M60 / 老式坦克）
+    service: army
+    force: {tank3: 750, veh3: 300, veh2: 700}
+    quality: {equip: 1.35, mech: 1.0, info: 0.7, log: 0.8, ready: 0.7}
+    why: "T-72S 约 480 + 佐勒法卡尔约 100 + M60/Chieftain/Type 59/T-54 约 700 的一半；BMP-1/2 约 600 半折；BTR/Boragh 等；可用率 0.7"
+  - id: irn_force_infantry
+    label: 伊朗陆军 / 革命卫队 / 巴斯基步兵
+    service: army
+    force: {squads: 3200}
+    quality: {equip: 0.9, mech: 1.0, info: 0.65, log: 0.8, ready: 0.8}
+    why: "陆军 35 万 + 革命卫队地面 15 万 + 巴斯基按 10% ≈ 50 万 × 0.0064 班/人"

@@ -61,8 +61,8 @@ def test_bindings_reference_known_equipment(dbs):
 
 def test_brigade_classes_loaded(dbs):
     _, toe = dbs
-    n = toe.execute("SELECT COUNT(*) FROM brigade_class").fetchone()[0]
-    assert n == 47
+    n = toe.execute("SELECT COUNT(*) FROM brigade_class WHERE source_id='sheet_cn_us'").fetchone()[0]
+    assert n == 47                      # 中美（作者表格）；其余国家的估算单位来自 research_2026
 
 
 def test_toe_demand_bridges_toe_and_brigade_counts(dbs):

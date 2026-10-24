@@ -1,0 +1,175 @@
+# 由 tools/import_world_navy.py 从作者工作簿生成（JPN 水面舰艇与潜艇）。
+country: JPN
+as_of: '2025-08-31'
+default_source: sheet_cn_us_live
+equipment:
+- id: ship_jpn_r65
+  name: 摩耶
+  category: cruiser
+  origin: JPN
+  unit:
+    value: 127.083
+  unit_source: 工作簿 驱护舰!Z65（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A65；火力 105.5 + 雷达折算 VLS
+- id: ship_jpn_r66
+  name: 爱宕
+  category: cruiser
+  origin: JPN
+  unit:
+    value: 127.083
+  unit_source: 工作簿 驱护舰!Z66（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A66；火力 105.5 + 雷达折算 VLS
+- id: ship_jpn_r67
+  name: 金刚
+  category: cruiser
+  origin: JPN
+  unit:
+    value: 121.083
+  unit_source: 工作簿 驱护舰!Z67（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A67；火力 99.5 + 雷达折算 VLS
+- id: ship_jpn_r68
+  name: 朝日
+  category: destroyer
+  origin: JPN
+  unit:
+    value: 64.467
+  unit_source: 工作簿 驱护舰!Z68（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A68；火力 41.5 + 雷达折算 VLS
+- id: ship_jpn_r69
+  name: 秋月
+  category: destroyer
+  origin: JPN
+  unit:
+    value: 55.01
+  unit_source: 工作簿 驱护舰!Z69（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A69；火力 41.5 + 雷达折算 VLS
+- id: ship_jpn_r70
+  name: 高波
+  category: destroyer
+  origin: JPN
+  unit:
+    value: 51.841
+  unit_source: 工作簿 驱护舰!Z70（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A70；火力 41.5 + 雷达折算 VLS
+- id: ship_jpn_r71
+  name: 村雨
+  category: frigate
+  origin: JPN
+  unit:
+    value: 27.841
+  unit_source: 工作簿 驱护舰!Z71（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A71；火力 17.5 + 雷达折算 VLS
+- id: ship_jpn_r72
+  name: 朝雾
+  category: frigate
+  origin: JPN
+  unit:
+    value: 20.903
+  unit_source: 工作簿 驱护舰!Z72（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A72；火力 13.5 + 雷达折算 VLS
+- id: ship_jpn_r73
+  name: 最上
+  category: destroyer
+  origin: JPN
+  unit:
+    value: 35.172
+  unit_source: 工作簿 驱护舰!Z73（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A73；火力 25.5 + 雷达折算 VLS
+- id: ship_jpn_r74
+  name: 阿武偎
+  category: frigate
+  origin: JPN
+  unit:
+    value: 17.153
+  unit_source: 工作簿 驱护舰!Z74（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A74；火力 9.8 + 雷达折算 VLS
+- id: sub_jpn_r32
+  name: 大鲸（潜艇）
+  category: ssk
+  origin: JPN
+  unit:
+    vls: 28.49
+  unit_source: 工作簿 海军!T32/J32（成本×3.0×折算系数，等效 VLS）
+  notes: 工作簿 海军!I32；单艇造价 0.5946844521 十亿美元
+- id: sub_jpn_r33
+  name: 苍龙（潜艇）
+  category: ssk
+  origin: JPN
+  unit:
+    vls: 37.048
+  unit_source: 工作簿 海军!T33/J33（成本×12.0×折算系数，等效 VLS）
+  notes: 工作簿 海军!I33；单艇造价 0.7733217843 十亿美元
+- id: sub_jpn_r34
+  name: 亲潮（潜艇）
+  category: ssk
+  origin: JPN
+  unit:
+    vls: 23.742
+  unit_source: 工作簿 海军!T34/J34（成本×8.0×折算系数，等效 VLS）
+  notes: 工作簿 海军!I34；单艇造价 0.4955703768 十亿美元
+inventory:
+- eq: ship_jpn_r65
+  service: navy
+  qty: 2
+  confidence: estimated
+  note: 工作簿 驱护舰!B65
+- eq: ship_jpn_r66
+  service: navy
+  qty: 2
+  confidence: estimated
+  note: 工作簿 驱护舰!B66
+- eq: ship_jpn_r67
+  service: navy
+  qty: 4
+  confidence: estimated
+  note: 工作簿 驱护舰!B67
+- eq: ship_jpn_r68
+  service: navy
+  qty: 2
+  confidence: estimated
+  note: 工作簿 驱护舰!B68
+- eq: ship_jpn_r69
+  service: navy
+  qty: 4
+  confidence: estimated
+  note: 工作簿 驱护舰!B69
+- eq: ship_jpn_r70
+  service: navy
+  qty: 5
+  confidence: estimated
+  note: 工作簿 驱护舰!B70
+- eq: ship_jpn_r71
+  service: navy
+  qty: 9
+  confidence: estimated
+  note: 工作簿 驱护舰!B71
+- eq: ship_jpn_r72
+  service: navy
+  qty: 8
+  confidence: estimated
+  note: 工作簿 驱护舰!B72
+- eq: ship_jpn_r73
+  service: navy
+  qty: 8
+  confidence: estimated
+  note: 工作簿 驱护舰!B73
+- eq: ship_jpn_r74
+  service: navy
+  qty: 6
+  confidence: estimated
+  note: 工作簿 驱护舰!B74
+- eq: sub_jpn_r32
+  service: navy
+  qty: 3
+  confidence: estimated
+  note: 工作簿 海军!J32
+- eq: sub_jpn_r33
+  service: navy
+  qty: 12
+  confidence: estimated
+  note: 工作簿 海军!J33
+- eq: sub_jpn_r34
+  service: navy
+  qty: 8
+  confidence: estimated
+  note: 工作簿 海军!J34

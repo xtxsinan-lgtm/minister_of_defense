@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from . import db
 from .crawl import store
-from .ingest import seed, sheets, yaml_repo
+from .ingest import seed, sheets, world, yaml_repo
 
 
 def build(db_dir=None, verbose=True):
@@ -32,8 +32,9 @@ def build(db_dir=None, verbose=True):
     n_b = sheets.ingest_brigade_classes(toe)
     n_d = sheets.compute_toe_demand(toe)
 
+    n_w = world.ingest_world(eq, toe)
     for con in (eq, toe):
         con.commit()
     if verbose:
-        print(f"equipment.sqlite: 装备 {n_eq}，库存行 {n_inv}，回放观测 {n_obs}；toe.sqlite: 模板 {n_t}，orbat 条目 {n_o}，旅级单位 {n_b}，编制需求条目 {n_d}")
+        print(f"equipment.sqlite: 装备 {n_eq}，库存行 {n_inv}，回放观测 {n_obs}；toe.sqlite: 模板 {n_t}，orbat 条目 {n_o}，旅级单位 {n_b}，编制需求条目 {n_d}；国别估算 {n_w}")
     return eq, toe

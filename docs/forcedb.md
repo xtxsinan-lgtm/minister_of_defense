@@ -30,8 +30,9 @@ python3 -m forcedb coverage         # 各国各类别的数据覆盖率与缺口
 python3 -m forcedb crawl            # 列出爬取连接器；crawl <名字> [--apply]
 python3 -m forcedb crosscheck       # 不同来源之间库存数量的差异
 python3 -m forcedb macro            # 全球军费/兵力排名（来自世界银行连接器）
+python3 -m forcedb world            # 俄日韩朝伊土英法德希波以 十二国估算（中/低/高）
 python3 -m forcedb score --carrier-model airwing   # 航母改用作者的空中联队复合模型
-python3 -m pytest -q                # 48 个测试
+python3 -m pytest -q                # 57 个测试
 ```
 
 ## 两个库
@@ -139,6 +140,12 @@ python3 -m pytest -q                # 48 个测试
 两者的出入用 `python3 -m forcedb crosscheck` 查看（目前 11 项差异 ≥15%，如 F-35A：表格 557 vs Wikipedia 302）。
 
 ## 推广到其他国家
+
+已经用同一套方法估算了十二个国家：见 [十二国估算报告](forcedb_world_estimates.md) 与 [调研计划](forcedb_world_plan.md)。做法（“类比法”）：
+数量取工作簿/公开清单，单位战力借库内已有装备类比并缩放，陆军按装备组成折算；每条记录带来源、置信度和类比理由，结果给出低/中/高区间。
+新增国家只需在 `data/forcedb/countries/<ISO3>.yaml` 里写装备清单（格式见同目录已有文件与 `forcedb/ingest/world.py` 的文件头注释）。
+
+通用步骤：
 
 1. 在 `data/forcedb/countries.csv` 里已有 164 个国家/地区；新国家的装备写进 `data/forcedb/equipment/*.yaml`（同仓库 `models:` 格式），库存写进 CSV 或交给连接器。
 2. `Engine(...).run(["CHN","USA","JPN"])` 对任意国家对工作；基准国默认美国（`--ref` 可换）。

@@ -1,0 +1,87 @@
+# 俄罗斯（RUS）。空中数量来自作者工作簿（战斗机!AO 列、轰炸加油机表）；海军为工作簿 驱护舰/海军表（生成文件 generated/RUS_navy.yaml）；
+# 陆军/炮兵/防空/直升机为公开常识量级（IISS/开源对乌战争损耗后的在用估计），不确定性大，全部 estimated/uncertain。核力量不计。
+country: RUS
+as_of: "2025-08-31"
+default_source: research_2026
+meta:
+  summary: "空天军：苏-34/35/30SM 与米格-31 等；战略轰炸机 122 架；海军水面舰艇与潜艇总量约美国海军的 16%（工作簿）；陆军受乌克兰战争损耗，现役装备数量大但信息化/后勤打折。"
+  caveat: "乌克兰战争的损耗、产能恢复与封存装备翻新速度极不确定；陆军分项区间最宽。"
+inventory:
+  # ---- 战斗机 / 攻击机 / 轰炸机（工作簿 战斗机!AO 列、轰炸加油机表）----
+  - {eq: su35, service: airforce, qty: 123, src: sheet_cn_us_live, confidence: estimated}
+  - {eq: su30mk2, service: airforce, qty: 17, src: sheet_cn_us_live, confidence: estimated}
+  - {eq: su27, service: airforce, qty: 115, src: sheet_cn_us_live, confidence: estimated}
+  - {eq: j15, service: navy, qty: 17, src: sheet_cn_us_live, confidence: estimated, note: "苏-33（工作簿“歼15/苏33”行）"}
+  - {eq: mig35, service: airforce, qty: 14, src: sheet_cn_us_live, confidence: estimated}
+  - {eq: mig29_ru, service: airforce, qty: 114, src: sheet_cn_us_live, confidence: estimated}
+  - {eq: su57, service: airforce, qty: 24, src: sheet_cn_us_live, confidence: estimated}
+  - {eq: su34, service: airforce, qty: 122, src: sheet_cn_us_live, confidence: estimated}
+  - {eq: su30sm, service: airforce, qty: 103, src: sheet_cn_us_live, confidence: estimated}
+  - {eq: su30sm2, service: airforce, qty: 42, src: sheet_cn_us_live, confidence: estimated}
+  - {eq: mig31, service: airforce, qty: 114, src: sheet_cn_us_live, confidence: estimated}
+  - {eq: su24, service: airforce, qty: 106, src: sheet_cn_us_live, confidence: estimated}
+  - {eq: su25_ru, service: airforce, qty: 186, src: sheet_cn_us_live, confidence: estimated}
+  - {eq: tu22m3, service: airforce, qty: 51, src: sheet_cn_us_live, confidence: estimated}
+  - {eq: tu160, service: airforce, qty: 22, src: sheet_cn_us_live, confidence: estimated}
+  - {eq: tu95ms, service: airforce, qty: 49, src: sheet_cn_us_live, confidence: estimated}
+  # ---- 支援机队 ----
+  - {eq: il78, service: airforce, qty: 19, confidence: estimated, note: "伊尔-78/78M；工作簿 战斗机!AO88 加油机 74.6"}
+  - {eq: a50_ru, service: airforce, qty: 4, confidence: estimated}
+  - {eq: a50u_ru, service: airforce, qty: 5, confidence: estimated}
+  - {eq: il38_asw, service: navy, qty: 22, src: sheet_cn_us_live, confidence: estimated}
+  - {eq: tu142_asw, service: navy, qty: 24, src: sheet_cn_us_live, confidence: estimated}
+  - {eq: airlift_il76, service: airforce, qty: 100, confidence: estimated, note: "军用运输航空兵伊尔-76 系"}
+  - {eq: airlift_an124, service: airforce, qty: 9, confidence: estimated}
+  - {eq: airlift_an12, service: airforce, qty: 25, confidence: estimated}
+  # ---- 陆军炮兵 / 火箭炮 / 战术导弹 ----
+  - {eq: art_msta, service: army, qty: 500, confidence: uncertain, note: "2S19；含战争损耗后的在用估计"}
+  - {eq: art_2s3, service: army, qty: 300, confidence: uncertain}
+  - {eq: art_2s1, service: army, qty: 500, confidence: uncertain}
+  - {eq: art_d30_ru, service: army, qty: 1300, confidence: uncertain, note: "D-30/2A65 牵引炮"}
+  - {eq: art_bm21, service: army, qty: 1000, confidence: uncertain}
+  - {eq: art_bm30, service: army, qty: 180, confidence: uncertain, note: "BM-27 Uragan + BM-30 Smerch"}
+  - {eq: art_tos1, service: army, qty: 30, confidence: uncertain}
+  - {eq: iskander_ru, service: rocket, qty: 140, confidence: uncertain, note: "伊斯坎德尔-M 发射车"}
+  # ---- 防空 ----
+  - {eq: ad_s400, service: airforce, qty: 55, confidence: uncertain, note: "S-400 营"}
+  - {eq: ad_s300ps, service: airforce, qty: 40, confidence: uncertain, note: "S-300PS/PM 营（战争损耗后在用）"}
+  - {eq: ad_s300v4, service: army, qty: 8, confidence: uncertain}
+  - {eq: ad_buk, service: army, qty: 40, confidence: uncertain, note: "山毛榉营"}
+  - {eq: ad_tor_ru, service: army, qty: 15, confidence: uncertain}
+  - {eq: ad_pantsir, service: airforce, qty: 60, confidence: uncertain, note: "铠甲-S1 连（每连 6 车）"}
+  - {eq: ad_stinger_spg, service: army, qty: 60, confidence: uncertain, note: "通古斯卡/箭-10/石勒喀河等点防空约 700 车 / 12"}
+  # ---- 直升机 ----
+  - {eq: ka52, service: army, qty: 130, confidence: uncertain}
+  - {eq: mi28, service: army, qty: 110, confidence: uncertain}
+  - {eq: mi24_ru, service: army, qty: 150, confidence: uncertain}
+  - {eq: mi8_ru, service: army, qty: 600, confidence: uncertain}
+  - {eq: mi26, service: army, qty: 40, confidence: uncertain}
+  - {eq: ka27, service: navy, qty: 80, confidence: uncertain}
+  # ---- 海军两栖运力 ----
+  - {eq: sealift_ru_ropucha, service: navy, qty: 14, confidence: estimated}
+  - {eq: sealift_ru_gren, service: navy, qty: 2, confidence: estimated}
+equipment:
+  - {id: iskander_ru, name: 伊斯坎德尔-M, category: srbm, origin: RUS, analog: {of: df15b, scale: 1.0, why: "500km，弹头 480-700kg，CEP 5-7m，机动，与东风-15B 同档"}}
+  - {id: sealift_ru_ropucha, name: 鳄鱼/蟾蜍级登陆舰（Ropucha）, category: amphibious_dock, origin: RUS, analog: {of: sealift_whidbey_island, scale: 0.45, why: "约 4000t，载货约 450t"}}
+  - {id: sealift_ru_gren, name: 伊万·格伦级登陆舰, category: amphibious_dock, origin: RUS, analog: {of: sealift_whidbey_island, scale: 0.9, why: "6600t，载货约 800t"}}
+special_forces: {army: 3.0, navy: 0.5, airforce: 0.2}
+special_forces_note: "空降兵 + 特种作战司令部 + GRU 特种旅 + 海军陆战/反蛙人"
+brigades:
+  - id: rus_force_modern
+    label: 俄陆军较新装甲机械化（T-90M/T-80BVM/T-72B3 + BMP-3/BMD-4M + BTR-82A）
+    service: army
+    force: {tank3: 2300, veh3: 3000, veh2: 4000}
+    quality: {equip: 1.9, mech: 1.1, info: 0.8, log: 0.9, ready: 1.0}
+    why: "对标工作簿中国 96A/04A 档（2.3/1.0）略低；信息化(0.8)与后勤(0.9)反映战争中暴露的短板"
+  - id: rus_force_older
+    label: 俄陆军老式装甲机械化（T-72B/T-62M/T-55 翻新 + BMP-1/2 + MT-LB）
+    service: army
+    force: {tank3: 1500, veh3: 1500, veh2: 2500}
+    quality: {equip: 1.3, mech: 1.0, info: 0.65, log: 0.9, ready: 0.95}
+    why: "封存翻新重返前线的装备"
+  - id: rus_force_infantry
+    label: 俄陆军步兵 / 空降兵 / 海军陆战队
+    service: army
+    force: {squads: 3520}
+    quality: {equip: 1.0, mech: 1.0, info: 0.7, log: 0.9, ready: 0.95}
+    why: "陆军约 55 万 × 0.0064 班/人；有实战经验但训练/士气参差"

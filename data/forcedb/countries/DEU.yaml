@@ -1,0 +1,54 @@
+# 德国（DEU）。战斗机来自作者工作簿；陆军/舰艇/航空为公开常识量级（待 Wikipedia 清单交叉核对），均标 estimated。
+country: DEU
+as_of: "2025-08-31"
+default_source: research_2026
+meta:
+  summary: "空军台风 138 + 狂风 65（过渡期，F-35A 订购中）；陆军 6.2 万，豹 2 约 300 + 美洲狮 + 拳击手；海军以 124 型防空护卫舰与 212A 潜艇为主。"
+equipment:
+  - {id: ship_deu_f124, name: F124 萨克森级防空护卫舰, category: destroyer, origin: DEU, unit: {value: 75.0},
+     unit_source: "估算：Mk41×32(32.0)+SeaRAM×21(14.9)+反舰×8+鱼雷×6×0.25(9.5)=56.4 + APAR/SMART-L 雷达折算 VLS≈18.6（对照工作簿 日本秋月级 55.0、韩国世宗 149.5）"}
+  - {id: ship_deu_f125, name: F125 巴登-符腾堡级护卫舰, category: frigate, origin: DEU, unit: {value: 20.0},
+     unit_source: "估算：无垂发，2×RAM(14.9)+反舰×8+鱼雷，雷达折算约 4"}
+  - {id: ship_deu_f123, name: F123 勃兰登堡级护卫舰, category: frigate, origin: DEU, unit: {value: 38.0},
+     unit_source: "估算：Mk41×16+RAM×21(14.9)+反舰×8+鱼雷，雷达折算约 5"}
+  - {id: ship_deu_k130, name: K130 不伦瑞克级轻护, category: corvette, origin: DEU, unit: {value: 22.0},
+     unit_source: "估算：RBS-15×4+RAM×21(14.9)+雷达折算约 3"}
+  - {id: sub_deu_212a, name: 212A 型潜艇, category: ssk, origin: DEU, unit: {vls: 15.81},
+     unit_source: "工作簿 海军!T46/J46（意大利 212A：63.24/4 艘），德国同型"}
+  - {id: art_pzh2000_mars, name: 德陆军 MARS II 火箭炮, category: mrl_long_range, origin: DEU, analog: {of: art_m270_227mm, scale: 0.8, why: "M270 衍生，数字化"}}
+inventory:
+  - {eq: eurofighter, service: airforce, qty: 138, src: sheet_cn_us_live, confidence: stated}
+  - {eq: tornado_ids, service: airforce, qty: 65, src: sheet_cn_us_live, confidence: stated, note: "过渡期，F-35A 订购 35 架尚未交付"}
+  - {eq: a330mrtt, service: airforce, qty: 4, confidence: stated, note: "A310 MRTT/A400M 空中加油型，按 A330 MRTT 级别折算（偏高估）"}
+  - {eq: p3c_asw, service: navy, qty: 8, confidence: stated, note: "P-3C 余存；P-8A 订购 8 架（2025-26 起交付）"}
+  - {eq: airlift_a400m, service: airforce, qty: 40, confidence: estimated}
+  - {eq: airlift_c_130, service: airforce, qty: 0, confidence: estimated, note: "C-160 已退役；C-130J 联合机队（法德）尚未成军"}
+  - {eq: ship_deu_f124, service: navy, qty: 3, confidence: stated}
+  - {eq: ship_deu_f125, service: navy, qty: 4, confidence: stated}
+  - {eq: ship_deu_f123, service: navy, qty: 2, confidence: estimated, note: "勃兰登堡级剩余 2 艘（其余已退役）"}
+  - {eq: ship_deu_k130, service: navy, qty: 5, confidence: stated}
+  - {eq: sub_deu_212a, service: navy, qty: 6, confidence: stated}
+  - {eq: art_pzh2000, service: army, qty: 100, confidence: estimated}
+  - {eq: art_pzh2000_mars, service: army, qty: 38, confidence: estimated}
+  - {eq: ad_patriot_pac3, service: airforce, qty: 12, confidence: estimated, note: "空军防空导弹联队；Patriot 营数估计"}
+  - {eq: ad_iris_t, service: airforce, qty: 4, confidence: estimated, note: "IRIS-T SLM 首批"}
+  - {eq: ad_gepard_skyranger, service: army, qty: 6, confidence: estimated}
+  - {eq: tiger_hap, service: army, qty: 51, confidence: stated}
+  - {eq: nh90, service: army, qty: 80, confidence: estimated}
+  - {eq: ch47f, service: airforce, qty: 70, confidence: estimated, note: "CH-53G/GS，类比 CH-47F"}
+  - {eq: lynx_wildcat, service: navy, qty: 22, confidence: estimated, note: "Sea Lynx 22 架 + Sea King"}
+special_forces: {army: 0.8}
+special_forces_note: "KSK 等"
+brigades:
+  - id: deu_force_armoured
+    label: 德国陆军装甲/机械化（豹 2 + 美洲狮 + 拳击手）
+    service: army
+    force: {tank3: 300, veh3: 480, veh2: 400}
+    quality: {equip: 2.5, mech: 1.21, info: 1.05, log: 1.0, ready: 1.0}
+    why: "豹 2 约 300（A6/A7）；美洲狮约 350 + 黄鼠狼约 130（半折）；拳击手约 400"
+  - id: deu_force_infantry
+    label: 德国陆军步兵
+    service: army
+    force: {squads: 420}
+    quality: {equip: 1.2, mech: 1.1, info: 1.05, log: 1.0, ready: 0.9}
+    why: "现役 6.2 万 + 预备役 10% ≈ 6.6 万 × 0.0064 班/人；战备度折 0.9（装备可用率问题）"

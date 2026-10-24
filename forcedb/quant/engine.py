@@ -28,7 +28,8 @@ def _num(v):
 
 class Engine:
     def __init__(self, eq=None, toe=None, mode: str = "snapshot", preset: str = "article_2025_08",
-                 reference: str = "USA", article_compat: Optional[bool] = None, carrier_model: str = "article"):
+                 reference: str = "USA", article_compat: Optional[bool] = None, carrier_model: str = "article",
+                 scenario: str = "mid"):
         if mode not in ("snapshot", "recompute"):
             raise ValueError("mode 应为 snapshot 或 recompute")
         self.eq = eq or connect(DB_DIR / "equipment.sqlite")
@@ -41,6 +42,10 @@ class Engine:
         if carrier_model not in ("article", "airwing"):
             raise ValueError("carrier_model 应为 article 或 airwing")
         self.carrier_model = carrier_model
+        # 不确定性情景：low/high 把“基准国以外”各国的数量按置信度整体下调/上调（stated ±5%，estimated ±20%，uncertain ±40%）
+        if scenario not in ("mid", "low", "high"):
+            raise ValueError("scenario 应为 mid / low / high")
+        self.scenario = scenario
         self.preset = load_yaml(PRESET_DIR / f"{preset}.yaml")
         self.sf_snapshot = load_yaml(DATA / "forcedb" / "special_forces_snapshot.yaml")
         self._specs: Dict[str, Dict[str, object]] = {}
@@ -52,6 +57,15 @@ class Engine:
         self.notes: List[str] = []          # 每次运行产生的口径提示（例如哪些项没能重算）
         self.deviations: List[dict] = []    # recompute 模式下：重算 vs 快照 的偏差
 
+    # ------------------------------------------------------------------ 不确定性
+    SPREAD = {"stated": 0.05, "estimated": 0.20, "uncertain": 0.40, None: 0.20}
+
+    def _factor(self, country: str, confidence) -> float:
+        if self.scenario == "mid" or country == self.ref:
+            return 1.0
+        u = self.SPREAD.get(confidence, 0.20)
+        return 1.0 - u if self.scenario == "low" else 1.0 + u
+
     # ------------------------------------------------------------------ 读库
     def spec(self, eid: str, key: str, default=None):
         return self._specs.get(eid, {}).get(key, default)
@@ -59,10 +73,12 @@ class Engine:
     def inventory(self, country: str, categories: Optional[Iterable[str]] = None, role: str = "all",
                   kinds: Iterable[str] = ("active",)) -> List[dict]:
         kinds = tuple(kinds)
-        q = ("SELECT i.equipment_id, i.service, i.role, i.kind, i.quantity, e.category FROM v_inventory_latest i "
+        q = ("SELECT i.equipment_id, i.service, i.role, i.kind, i.quantity, i.confidence, e.category FROM v_inventory_latest i "
              "JOIN equipment e ON e.id=i.equipment_id WHERE i.country=? AND i.role=? AND i.kind IN (%s)"
              % ",".join("?" * len(kinds)))
         rows = [dict(r) for r in self.eq.execute(q, (country, role) + kinds)]
+        for r in rows:
+            r["quantity"] *= self._factor(country, r["confidence"])
         if categories is not None:
             cs = set(categories)
             rows = [r for r in rows if r["category"] in cs]
@@ -158,7 +174,7 @@ class Engine:
                 unit = p
             else:
                 unit = r["snapshot_total"] / r["count"] if r["count"] else 0.0
-            out[r["service"]] += unit * r["count"]
+            out[r["service"]] += unit * r["count"] * self._factor(country, "estimated" if r["source_id"] == "research_2026" else "stated")
         return dict(out)
 
     def artillery_power(self, country: str) -> float:
@@ -206,8 +222,15 @@ class Engine:
         return total
 
     def special_forces(self, country: str) -> Dict[str, float]:
-        d = self.sf_snapshot.get(country) or {}
-        return {k: float(v) for k, v in d.items() if k != "total"}
+        d = self.sf_snapshot.get(country)
+        if d:
+            return {k: float(v) for k, v in d.items() if k != "total"}
+        # 估算国家：特战力量以 orbat 条目（special_forces.<军种>）给出
+        out = {}
+        for r in self.toe.execute("SELECT path, num, confidence FROM orbat_entry WHERE country=? AND path LIKE "
+                                  "'special_forces.%' AND num IS NOT NULL", (country,)):
+            out[r["path"].split(".", 1)[1]] = r["num"] * self._factor(country, r["confidence"])
+        return out
 
     def ground(self, country: str) -> Dict[str, object]:
         br, ad, he, sf = self.brigades(country), self.air_defense(country), self.helicopters(country), self.special_forces(country)

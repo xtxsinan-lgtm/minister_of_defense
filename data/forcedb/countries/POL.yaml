@@ -1,0 +1,68 @@
+# 波兰（POL）。数量取自 Wikipedia：Polish Air Force、List of equipment of the Polish Land Forces、List of ships of the Polish Navy（2026 年页面）。
+# 波兰处于快速扩军期（K2/K9/Chunmoo/F-35/Apache 订单巨大），本估算反映 2026 年中已交付部分，订单未计。
+country: POL
+as_of: "2026-10-24"
+default_source: research_2026
+meta:
+  summary: "陆军以 K2（208）+ M1A2 SEPv3（217）+ M1A1（116）+ 豹 2（约 250）快速现代化，K9 218 门、Chunmoo 156 台；空军 F-16 47 + F-35A 20 + FA-50 12；海军很小。"
+equipment:
+  - {id: ship_pol_perry, name: 佩里级护卫舰（波兰）, category: frigate, origin: USA, unit: {value: 22.0}, unit_source: "估算：Mk13 SM-1×40(0.4)+鱼叉×4+鱼雷，雷达≈3"}
+  - {id: ship_pol_gawron, name: 盖夫龙号（MEKO A100PL）, category: corvette, origin: POL, unit: {value: 30.0}, unit_source: "估算：RAM×21(14.9)+NSM×8+雷达≈5"}
+  - {id: ship_pol_small, name: 卡舒布/奥尔坎等小型舰艇, category: corvette, origin: POL, unit: {value: 6.0}, unit_source: "估算"}
+  - {id: sealift_pol_lublin, name: 卢布林级布雷/登陆舰, category: amphibious_dock, origin: POL, analog: {of: sealift_whidbey_island, scale: 0.15, why: "1745t，载货约 135t"}}
+inventory:
+  - {eq: f_16c_d, service: airforce, qty: 47, confidence: stated}
+  - {eq: f_35a, service: airforce, qty: 20, confidence: stated, note: "Wikipedia：20/32 已交付（工作簿为 8）"}
+  - {eq: fa50, service: airforce, qty: 12, confidence: stated}
+  - {eq: mig29_ru, service: airforce, qty: 10, confidence: stated, note: "2027 前退役"}
+  - {eq: emb145_aewc, service: airforce, qty: 2, confidence: stated, note: "萨博 340 AEW&C（Erieye）"}
+  - {eq: tb2, service: army, qty: 24, confidence: stated}
+  - {eq: airlift_c_130, service: airforce, qty: 6, confidence: stated}
+  - {eq: airlift_c295, service: airforce, qty: 16, confidence: estimated}
+  - {eq: ship_pol_perry, service: navy, qty: 2, confidence: stated}
+  - {eq: ship_pol_gawron, service: navy, qty: 1, confidence: stated}
+  - {eq: ship_pol_small, service: navy, qty: 4, confidence: stated}
+  - {eq: sub_kilo_export, service: navy, qty: 1, confidence: stated}
+  - {eq: sealift_pol_lublin, service: navy, qty: 5, confidence: stated}
+  - {eq: art_k9, service: army, qty: 218, confidence: stated}
+  - {eq: art_2s1, service: army, qty: 206, confidence: stated}
+  - {eq: art_krab, service: army, qty: 120, confidence: estimated}
+  - {eq: art_chunmoo, service: army, qty: 156, confidence: stated, note: "Homar-K"}
+  - {eq: art_himars_227mm, service: army, qty: 20, confidence: stated, note: "Homar-A"}
+  - {eq: art_wr40, service: army, qty: 75, confidence: estimated}
+  - {eq: ad_stinger_spg, service: army, qty: 10, confidence: stated, note: "Poprad 77 套 / 每连 8"}
+  - {eq: ad_osa, service: army, qty: 16, confidence: stated, note: "Osa 64 套 / 4"}
+  - {eq: ad_kub, service: army, qty: 5, confidence: stated, note: "Kub 20 TEL"}
+  - {eq: ad_patriot_pac3, service: airforce, qty: 4, confidence: estimated, note: "Wisła 一期 2 个连 + 二期首批"}
+  - {eq: ah64e, service: army, qty: 8, confidence: stated}
+  - {eq: ah1s_cobra, service: army, qty: 18, confidence: stated, note: "Mi-24D/W"}
+  - {eq: nh90, service: army, qty: 12, confidence: stated, note: "AW149"}
+  - {eq: mi8_ru, service: army, qty: 27, confidence: stated}
+  - {eq: bell412_209, service: army, qty: 70, confidence: estimated, note: "W-3 索科尔"}
+special_forces: {army: 0.4}
+special_forces_note: "GROM / FORMOZA / 特种兵司令部"
+brigades:
+  - id: pol_force_modern
+    label: 波兰陆军新型装甲部队（K2 + M1A2 SEPv3 + M1A1）
+    service: army
+    force: {tank3: 541, veh3: 360, veh2: 200}
+    quality: {equip: 2.8, mech: 1.15, info: 1.05, log: 1.0, ready: 1.0}
+    why: "K2 208 + M1A2 SEPv3 217 + M1A1 FEP 116；Rosomak IFV 360；Rosomak APC/其他约 400（半折）"
+  - id: pol_force_leo
+    label: 波兰陆军豹 2PL/A5
+    service: army
+    force: {tank3: 245, veh3: 200}
+    quality: {equip: 2.2, mech: 1.1, info: 1.0, log: 1.0, ready: 1.0}
+    why: "豹 2A4(PL) 约 140 + 2A5 105；BWP-1 部分"
+  - id: pol_force_pt91
+    label: 波兰陆军 PT-91 / T-72 / BWP-1
+    service: army
+    force: {tank3: 330, veh3: 425}
+    quality: {equip: 1.5, mech: 1.0, info: 0.8, log: 1.0, ready: 0.9}
+    why: "PT-91 约 152 + T-72M1 约 180；BWP-1 约 850 半折"
+  - id: pol_force_infantry
+    label: 波兰陆军步兵（含国土防卫部队）
+    service: army
+    force: {squads: 832}
+    quality: {equip: 1.3, mech: 1.1, info: 1.0, log: 1.0, ready: 0.9}
+    why: "现役 11 万 + 国土防卫部队/预备役 10% ≈ 13 万 × 0.0064 班/人"

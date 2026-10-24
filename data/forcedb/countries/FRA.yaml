@@ -1,0 +1,55 @@
+# 法国（FRA）。战斗机/舰艇/潜艇来自作者工作簿；其余公开常识量级。核威慑（弹道导弹潜艇、空基核力量）不计入。
+country: FRA
+as_of: "2025-08-31"
+default_source: research_2026
+meta:
+  summary: "空军/海军航空队阵风约 136 架为核心；戴高乐号航母 + 西北风级 + FREMM/地平线 + 梭鱼级核潜艇；陆军 7.7 万，勒克莱尔 + VBCI。"
+annotations:
+  - {eq: cv_charles_de_gaulle, src: sheet_cn_us_live, specs: {article.power_vls: 561.43, article.qty: 1.0}}
+equipment:
+  - {id: fra_mistral, name: 西北风级两栖攻击舰（航空运作口径）, category: amphibious_carrier, origin: FRA, unit: {value: 121.39},
+     unit_source: "工作簿 海军!H43/E43（1 艘）"}
+  - {id: sealift_mistral, name: 西北风级（运输口径）, category: amphibious_dock, origin: FRA, analog: {of: sealift_san_antonio, scale: 0.9, why: "21500t，载货约 1100t"}}
+  - {id: cougar_puma, name: 美洲狮/超级美洲狮/美洲豹, category: utility_helicopter, origin: FRA, analog: {of: uh60, scale: 0.9, why: "中型多用途直升机"}}
+inventory:
+  - {eq: rafale, service: airforce, qty: 136, src: sheet_cn_us_live, confidence: estimated, note: "空军 + 海军航空兵；工作簿 战斗机!AY54"}
+  - {eq: mirage2000, service: airforce, qty: 73, src: sheet_cn_us_live, confidence: stated}
+  - {eq: e_3, service: airforce, qty: 4, confidence: stated, note: "E-3F"}
+  - {eq: e_2c, service: navy, qty: 3, confidence: stated}
+  - {eq: a330mrtt, service: airforce, qty: 15, confidence: stated, note: "A330 MRTT Phénix"}
+  - {eq: kc_135, service: airforce, qty: 10, confidence: estimated, note: "KC-135RG 余存"}
+  - {eq: atlantique2, service: navy, qty: 18, confidence: estimated}
+  - {eq: mq_9, service: airforce, qty: 12, confidence: stated, note: "Reaper"}
+  - {eq: airlift_a400m, service: airforce, qty: 25, confidence: stated}
+  - {eq: airlift_c_130, service: airforce, qty: 18, confidence: stated, note: "C-130H/J"}
+  - {eq: airlift_c295, service: airforce, qty: 20, confidence: estimated, note: "CN-235/C-295"}
+  - {eq: airlift_a310_tr, service: airforce, qty: 5, confidence: estimated}
+  - {eq: fra_mistral, service: navy, qty: 1, src: sheet_cn_us_live, confidence: estimated}
+  - {eq: sealift_mistral, service: navy, qty: 3, confidence: stated}
+  - {eq: cv_charles_de_gaulle, service: navy, qty: 1, confidence: stated}
+  - {eq: art_caesar, service: army, qty: 77, confidence: stated}
+  - {eq: art_m109a6, service: army, qty: 32, confidence: estimated, note: "AUF2"}
+  - {eq: art_kmlrs, service: army, qty: 13, confidence: stated, note: "LRU（M270 衍生）"}
+  - {eq: art_fh70, service: army, qty: 80, confidence: estimated, note: "TRF1"}
+  - {eq: ad_samp_t, service: airforce, qty: 8, confidence: estimated, note: "SAMP/T 系统"}
+  - {eq: ad_crotale_vl, service: airforce, qty: 12, confidence: estimated, note: "响尾蛇 NG / VL MICA"}
+  - {eq: tiger_hap, service: army, qty: 67, confidence: stated}
+  - {eq: nh90, service: army, qty: 30, confidence: estimated}
+  - {eq: cougar_puma, service: army, qty: 120, confidence: estimated}
+  - {eq: mh6m, service: army, qty: 100, confidence: estimated, note: "Gazelle"}
+  - {eq: nh90, service: navy, qty: 27, confidence: estimated, note: "NFH"}
+special_forces: {army: 1.0, navy: 0.4}
+special_forces_note: "COS：第 1 海军陆战伞兵团、突击队等"
+brigades:
+  - id: fra_force_armoured
+    label: 法军装甲/机械化（勒克莱尔 + VBCI）
+    service: army
+    force: {tank3: 222, veh3: 630, veh2: 1200}
+    quality: {equip: 2.4, mech: 1.21, info: 1.1, log: 1.0, ready: 1.0}
+    why: "勒克莱尔约 222（改进后）；VBCI 约 630；VAB/VBMR 约 1200（半折）"
+  - id: fra_force_infantry
+    label: 法军步兵
+    service: army
+    force: {squads: 512}
+    quality: {equip: 1.2, mech: 1.1, info: 1.1, log: 1.0, ready: 1.0}
+    why: "现役 7.7 万 + 预备役 3 万的 10% ≈ 8 万 × 0.0064 班/人"

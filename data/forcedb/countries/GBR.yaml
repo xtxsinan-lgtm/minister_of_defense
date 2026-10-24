@@ -1,0 +1,50 @@
+# 英国（GBR）。战斗机/舰艇/潜艇来自作者工作簿；其余为公开常识量级。核威慑（三叉戟潜艇）不计入。
+country: GBR
+as_of: "2025-08-31"
+default_source: research_2026
+meta:
+  summary: "空军以台风 110 + F-35B 47 为核心；海军 2 艘女王级航母 + 6 艘 45 型 + 6 艘机敏级核潜艇，质量高但数量有限；陆军规模小（约 7.3 万），装甲部队以挑战者 2/勇士为主。"
+annotations:
+  - {eq: cv_queen_elizabeth, src: sheet_cn_us_live, specs: {article.power_vls: 696.98, article.qty: 1.0}}
+equipment:
+  - {id: sealift_albion, name: 阿尔比恩级船坞登陆舰, category: amphibious_dock, origin: GBR, analog: {of: sealift_san_antonio, scale: 0.9, why: "19500t，载货约 1100t"}}
+  - {id: sealift_bay, name: 湾级船坞登陆舰, category: amphibious_dock, origin: GBR, analog: {of: sealift_whidbey_island, scale: 0.75, why: "16000t，载货约 800t"}}
+  - {id: art_as90, name: AS-90 155mm 自行榴弹炮, category: howitzer_heavy_sp, origin: GBR, analog: {of: art_m109a6, scale: 0.9, why: "39 倍径，射程 24-30km"}}
+  - {id: art_l118, name: L118 105mm 轻型榴弹炮, category: howitzer_heavy_towed, origin: GBR, analog: {of: art_m777, scale: 0.35, why: "轻型牵引炮"}}
+inventory:
+  - {eq: f_35b, service: airforce, qty: 47, src: sheet_cn_us_live, confidence: estimated, note: "工作簿 战斗机!AT45；含皇家海军航空兵"}
+  - {eq: eurofighter, service: airforce, qty: 110, src: sheet_cn_us_live, confidence: stated}
+  - {eq: crownest, service: navy, qty: 10, confidence: estimated, note: "梅林 HM2 Crownest 预警直升机"}
+  - {eq: a330mrtt, service: airforce, qty: 14, confidence: stated, note: "航星 KC2/KC3"}
+  - {eq: p_8, service: airforce, qty: 9, confidence: stated, note: "P-8A 波塞冬"}
+  - {eq: airlift_c_17, service: airforce, qty: 8, confidence: stated}
+  - {eq: airlift_a400m, service: airforce, qty: 22, confidence: stated}
+  - {eq: airlift_c_130, service: airforce, qty: 14, confidence: stated, note: "C-130J"}
+  - {eq: cv_queen_elizabeth, service: navy, qty: 2, confidence: stated, note: "数量沿用库内常识录入"}
+  - {eq: sealift_albion, service: navy, qty: 2, confidence: stated}
+  - {eq: sealift_bay, service: navy, qty: 3, confidence: stated}
+  - {eq: art_as90, service: army, qty: 89, confidence: estimated}
+  - {eq: art_l118, service: army, qty: 126, confidence: estimated}
+  - {eq: art_kmlrs, service: army, qty: 44, confidence: stated, note: "M270B1/A2"}
+  - {eq: ad_nasams, service: army, qty: 5, confidence: estimated, note: "天空军刀（CAMM）营，类比 NASAMS"}
+  - {eq: ad_stinger_spg, service: army, qty: 6, confidence: estimated, note: "星光 HVM 等"}
+  - {eq: ah64e, service: army, qty: 50, confidence: stated}
+  - {eq: lynx_wildcat, service: army, qty: 34, confidence: estimated, note: "野猫 AH1"}
+  - {eq: ch47f, service: airforce, qty: 60, confidence: stated}
+  - {eq: sh60_navy, service: navy, qty: 30, confidence: estimated, note: "梅林 HM2 反潜"}
+  - {eq: lynx_wildcat, service: navy, qty: 28, confidence: estimated, note: "野猫 HMA2"}
+special_forces: {army: 0.6, navy: 0.2}
+special_forces_note: "SAS/SRR/SBS 等"
+brigades:
+  - id: gbr_force_armoured
+    label: 英国陆军装甲部队（挑战者 2 + 勇士 + 阿贾克斯 + 拳击手）
+    service: army
+    force: {tank3: 213, veh3: 440, veh2: 100}
+    quality: {equip: 2.4, mech: 1.21, info: 1.1, log: 1.0, ready: 1.0}
+    why: "挑战者 2 约 213；勇士约 380 + 阿贾克斯约 60；拳击手已交付约 100"
+  - id: gbr_force_infantry
+    label: 英国陆军步兵
+    service: army
+    force: {squads: 487}
+    quality: {equip: 1.1, mech: 1.0, info: 1.1, log: 1.0, ready: 1.0}
+    why: "现役 7.3 万 + 预备役 3 万的 10% ≈ 7.6 万 × 0.0064 班/人"

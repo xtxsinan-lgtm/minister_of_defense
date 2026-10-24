@@ -50,3 +50,8 @@ sources:
     title: 助手依据公开常识录入的数量（待核实）
     reliability: low
     notes: 仅用于让跨国对比能跑起来的占位；任何高可靠度来源（表格、爬虫 high）都会覆盖它。
+  - id: research_2026
+    kind: manual
+    title: 2026 年十二国军力估算调研（类比法）
+    reliability: low
+    notes: 数量取自作者工作簿与公开来源，单位战力借库内已有装备类比并缩放；每条记录写明类比与理由。可靠度低于作者表格，会被高可靠度来源覆盖。

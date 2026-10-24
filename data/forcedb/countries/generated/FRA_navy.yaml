@@ -1,0 +1,110 @@
+# 由 tools/import_world_navy.py 从作者工作簿生成（FRA 水面舰艇与潜艇）。
+country: FRA
+as_of: '2025-08-31'
+default_source: sheet_cn_us_live
+equipment:
+- id: ship_fra_r96
+  name: horizon
+  category: destroyer
+  origin: FRA
+  unit:
+    value: 55.86
+  unit_source: 工作簿 驱护舰!Z96（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A96；火力 39.6 + 雷达折算 VLS
+- id: ship_fra_r97
+  name: Aquitaine一批次
+  category: destroyer
+  origin: FRA
+  unit:
+    value: 35.812
+  unit_source: 工作簿 驱护舰!Z97（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A97；火力 29 + 雷达折算 VLS
+- id: ship_fra_r98
+  name: Aquitaine二批次
+  category: destroyer
+  origin: FRA
+  unit:
+    value: 42.171
+  unit_source: 工作簿 驱护舰!Z98（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A98；火力 35.4 + 雷达折算 VLS
+- id: ship_fra_r99
+  name: Aquitaine三批次
+  category: destroyer
+  origin: FRA
+  unit:
+    value: 36.529
+  unit_source: 工作簿 驱护舰!Z99（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A99；火力 29.7 + 雷达折算 VLS
+- id: ship_fra_r100
+  name: Amiral Ronarc'h
+  category: destroyer
+  origin: FRA
+  unit:
+    value: 38.239
+  unit_source: 工作簿 驱护舰!Z100（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A100；火力 19.4 + 雷达折算 VLS
+- id: ship_fra_r101
+  name: La Fayette
+  category: frigate
+  origin: FRA
+  unit:
+    value: 15.312
+  unit_source: 工作簿 驱护舰!Z101（每舰总战力，等效 VLS）
+  notes: 工作簿 驱护舰!A101；火力 8 + 雷达折算 VLS
+- id: sub_fra_r42
+  name: Suffren（潜艇）
+  category: ssn
+  origin: FRA
+  unit:
+    vls: 110.189
+  unit_source: 工作簿 海军!T42/J42（成本×4.0×折算系数，等效 VLS）
+  notes: 工作簿 海军!I42；单艇造价 2.3 十亿美元
+- id: sub_fra_r43
+  name: 红宝石（潜艇）
+  category: ssk
+  origin: FRA
+  unit:
+    vls: 9.582
+  unit_source: 工作簿 海军!T43/J43（成本×2.0×折算系数，等效 VLS）
+  notes: 工作簿 海军!I43；单艇造价 0.2 十亿美元
+inventory:
+- eq: ship_fra_r96
+  service: navy
+  qty: 2
+  confidence: estimated
+  note: 工作簿 驱护舰!B96
+- eq: ship_fra_r97
+  service: navy
+  qty: 2
+  confidence: estimated
+  note: 工作簿 驱护舰!B97
+- eq: ship_fra_r98
+  service: navy
+  qty: 4
+  confidence: estimated
+  note: 工作簿 驱护舰!B98
+- eq: ship_fra_r99
+  service: navy
+  qty: 2
+  confidence: estimated
+  note: 工作簿 驱护舰!B99
+- eq: ship_fra_r100
+  service: navy
+  qty: 1
+  confidence: estimated
+  note: 工作簿 驱护舰!B100
+- eq: ship_fra_r101
+  service: navy
+  qty: 5
+  confidence: estimated
+  note: 工作簿 驱护舰!B101
+- eq: sub_fra_r42
+  service: navy
+  qty: 4
+  confidence: estimated
+  note: 工作簿 海军!J42
+- eq: sub_fra_r43
+  service: navy
+  qty: 2
+  confidence: estimated
+  note: 工作簿 海军!J43

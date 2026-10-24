@@ -1,0 +1,73 @@
+# 希腊（GRC）。战斗机数量取自作者工作簿并以 Wikipedia “Hellenic Air Force”（2026）更新；陆军取自 “List of equipment of the Hellenic Army”；
+# 舰艇/潜艇取自 “List of active Hellenic Navy ships”。
+country: GRC
+as_of: "2026-10-24"
+default_source: research_2026
+meta:
+  summary: "F-16 约 152 架 + 阵风 24 + 幻影 2000-5 24（F-4 将退役，F-35A 订购尚未交付）；陆军装备数量大但新旧混杂（豹 2 约 350、豹 1 约 500、M48 约 390）；海军护卫舰 13 艘、潜艇 8 艘。"
+equipment:
+  - {id: ship_grc_kimon, name: 基蒙级（FDI 护卫舰）, category: destroyer, origin: GRC, unit: {value: 55.0},
+     unit_source: "估算：Aster VLS×32(32)+飞鱼×8+鱼雷(1.5)+SeaFire AESA 雷达折算≈14"}
+  - {id: ship_grc_hydra, name: 海德拉级（MEKO 200HN）, category: frigate, origin: GRC, unit: {value: 35.0},
+     unit_source: "估算：Mk41×16+鱼叉×8+RAM×21(14.9)... 雷达折算≈4"}
+  - {id: ship_grc_elli, name: 埃利级（Kortenaer）, category: frigate, origin: GRC, unit: {value: 22.0},
+     unit_source: "估算：海麻雀×8(8)+鱼叉×8+鱼雷(1.5)+雷达≈4"}
+  - {id: ship_grc_roussen, name: 鲁森级（Super Vita）导弹艇, category: corvette, origin: GRC, unit: {value: 22.0},
+     unit_source: "估算：飞鱼×8+RAM×21(14.9)"}
+  - {id: ship_grc_fac, name: 旧式导弹艇（La Combattante/Osprey）, category: corvette, origin: GRC, unit: {value: 5.0}, unit_source: "估算"}
+  - {id: sub_grc_209_old, name: 209/1100-1200 潜艇, category: ssk, origin: GRC, unit: {vls: 8.6}, unit_source: "对照工作簿 海军 209 型"}
+  - {id: sub_grc_209_aip, name: 209/1500 AIP（Okeanos）, category: ssk, origin: GRC, unit: {vls: 12.0}, unit_source: "估算"}
+  - {id: sub_grc_214, name: 帕帕尼古利斯级（214 型 AIP）, category: ssk, origin: GRC, unit: {vls: 15.8}, unit_source: "工作簿 海军!T50/J50"}
+  - {id: sealift_grc_lst, name: 杰森级登陆舰, category: amphibious_dock, origin: GRC, analog: {of: sealift_whidbey_island, scale: 0.35, why: "约 4500t，载货约 350t"}}
+inventory:
+  - {eq: f_16c_d, service: airforce, qty: 152, confidence: stated, note: "Wikipedia：F-16C 113 + F-16D 39"}
+  - {eq: rafale, service: airforce, qty: 24, confidence: stated}
+  - {eq: mirage2000, service: airforce, qty: 24, confidence: stated}
+  - {eq: f4_phantom, service: airforce, qty: 16, confidence: stated, note: "F-4E PI2000，将退役"}
+  - {eq: emb145_aewc, service: airforce, qty: 4, confidence: stated}
+  - {eq: airlift_c_130, service: airforce, qty: 15, confidence: stated}
+  - {eq: airlift_c295, service: airforce, qty: 10, confidence: stated, note: "C-27J 8 + 小型运输机"}
+  - {eq: ship_grc_kimon, service: navy, qty: 1, confidence: stated, note: "另 3 艘在建"}
+  - {eq: ship_grc_hydra, service: navy, qty: 4, confidence: stated}
+  - {eq: ship_grc_elli, service: navy, qty: 6, confidence: estimated, note: "名单 8 艘，部分在预备役，取 6"}
+  - {eq: ship_grc_roussen, service: navy, qty: 7, confidence: stated}
+  - {eq: ship_grc_fac, service: navy, qty: 6, confidence: stated}
+  - {eq: sub_grc_209_old, service: navy, qty: 3, confidence: stated}
+  - {eq: sub_grc_209_aip, service: navy, qty: 1, confidence: stated}
+  - {eq: sub_grc_214, service: navy, qty: 4, confidence: stated}
+  - {eq: sealift_grc_lst, service: navy, qty: 5, confidence: stated}
+  - {eq: art_pzh2000, service: army, qty: 24, confidence: stated}
+  - {eq: art_k55, service: army, qty: 420, confidence: stated, note: "M109 A1-A5 系"}
+  - {eq: art_m110, service: army, qty: 85, confidence: estimated, note: "M110A2 145 减去已转让"}
+  - {eq: art_kmlrs, service: army, qty: 36, confidence: stated}
+  - {eq: ad_hawk, service: army, qty: 7, confidence: stated, note: "Hawk 7 个连"}
+  - {eq: ad_osa, service: army, qty: 10, confidence: stated, note: "Osa 39 套 / 4 车一连"}
+  - {eq: ad_tor_m1, service: army, qty: 5, confidence: stated, note: "Tor-M1 21 套"}
+  - {eq: ad_patriot_pac2, service: airforce, qty: 6, confidence: estimated, note: "空军 Patriot 3-6 个连"}
+  - {eq: ad_s300pmu1, service: airforce, qty: 4, confidence: estimated, note: "S-300PMU1（克里特）"}
+  - {eq: ah64e, service: army, qty: 29, confidence: estimated, note: "AH-64A/D；Wikipedia 数字被注脚污染，取 29"}
+  - {eq: ch47f, service: army, qty: 10, confidence: estimated}
+  - {eq: uh60, service: army, qty: 20, confidence: estimated}
+  - {eq: bell412_209, service: army, qty: 60, confidence: estimated}
+  - {eq: sh60_navy, service: navy, qty: 16, confidence: estimated}
+special_forces: {army: 0.6}
+special_forces_note: "突击旅 + 海军 UDC"
+brigades:
+  - id: grc_force_leo2
+    label: 希腊陆军豹 2 部队
+    service: army
+    force: {tank3: 353, veh3: 100, veh2: 700}
+    quality: {equip: 2.1, mech: 1.15, info: 0.95, log: 1.0, ready: 1.0}
+    why: "豹 2A6 HEL 170 + 2A4/GR 183；Marder 40 + 部分 BMP-1A1；Leonidas II 491 半折"
+  - id: grc_force_leo1
+    label: 希腊陆军豹 1 / M48 / M60 老式部队
+    service: army
+    force: {tank3: 700, veh3: 100, veh2: 1000}
+    quality: {equip: 1.35, mech: 1.0, info: 0.78, log: 1.0, ready: 0.9}
+    why: "豹 1A5 501×0.5 + M48A5 390×0.5 + M60A3 100；BMP-1A1 141 + M113 近 2000 的一半"
+  - id: grc_force_infantry
+    label: 希腊陆军步兵
+    service: army
+    force: {squads: 723}
+    quality: {equip: 1.0, mech: 1.0, info: 0.9, log: 1.0, ready: 0.9}
+    why: "现役 9.3 万 + 预备役 10% ≈ 11.3 万 × 0.0064 班/人"
