@@ -1,0 +1,292 @@
+# 由 tools/import_sheets.py 从作者的 Google Sheets 导出生成（来源 sheet_cn_us）。
+# 物理/技术参数在 specs；article.* 为表格中已算好的文章结果（快照）。
+models:
+- id: cv_004
+  name: 004 型核动力航母
+  category: aircraft_carrier
+  family: cv004
+  origin: CHN
+  specs:
+    airwing.composite_nonstealth: 11.513102
+    airwing.cap_search: 2.04464
+    airwing.cap_counter: 1.323552
+    airwing.intercept: 1.133068
+    airwing.air_combat: 2.16129
+    airwing.anti_ship: 2.73164
+    airwing.strike_land: 2.118912
+    airwing.composite_stealth: 11.001056
+    airwing.stealth_eval: 11.585859
+    airwing.total: 22.514158
+    airwing.in.launch_points_light_sorties: 62
+    airwing.in.launch_points_heavy_sorties: 62
+    airwing.in.recovery_sorties: 67
+    airwing.in.aircraft_light: 67.0
+    airwing.in.aircraft_heavy: 67.0
+    airwing.in.range_internal_km: 3502.233194
+    airwing.in.range_tank_heavy_km: 4633.159647
+    airwing.in.range_tank_light_km: 4633.159647
+    airwing.in.cap_stations_fixed: 3.85
+  status: planned
+  notes: 航母空中联队复合模型（作者“航母战力”sheet）：以尼米兹非隐身空联 = 10 为尺度。
+- id: cv_queen_elizabeth
+  name: 伊丽莎白女王级
+  category: aircraft_carrier
+  family: cv
+  origin: GBR
+  specs:
+    airwing.composite_nonstealth: 6.796027
+    airwing.cap_search: 1.033787
+    airwing.cap_counter: 0.525615
+    airwing.intercept: 0.861902
+    airwing.air_combat: 1.451613
+    airwing.anti_ship: 1.767196
+    airwing.strike_land: 1.155914
+    airwing.composite_stealth: 5.323425
+    airwing.stealth_eval: 5.931318
+    airwing.total: 12.119452
+    airwing.in.launch_points_light_sorties: 45.0
+    airwing.in.launch_points_heavy_sorties: 43.0
+    airwing.in.recovery_sorties: 53.0
+    airwing.in.aircraft_light: 45
+    airwing.in.aircraft_heavy: 43
+    airwing.in.range_internal_km: 1904.653256
+    airwing.in.range_tank_heavy_km: 2605.157508
+    airwing.in.range_tank_light_km: 1904.653256
+    airwing.in.cap_stations_fixed: 4.0
+  notes: 航母空中联队复合模型（作者“航母战力”sheet）：以尼米兹非隐身空联 = 10 为尺度。
+- id: cv_charles_de_gaulle
+  name: 戴高乐号
+  category: aircraft_carrier
+  family: cv
+  origin: FRA
+  specs:
+    airwing.composite_nonstealth: 5.648997
+    airwing.cap_search: 1.237788
+    airwing.cap_counter: 0.509648
+    airwing.intercept: 0.405151
+    airwing.air_combat: 0.866025
+    airwing.anti_ship: 1.466169
+    airwing.strike_land: 1.164216
+    airwing.composite_stealth: 0
+    airwing.stealth_eval: 1.315192
+    airwing.total: 5.648997
+    airwing.in.launch_points_light_sorties: 36.0
+    airwing.in.launch_points_heavy_sorties: 36.0
+    airwing.in.recovery_sorties: 31
+    airwing.in.aircraft_light: 31
+    airwing.in.aircraft_heavy: 31
+    airwing.in.range_internal_km: 1790.563465
+    airwing.in.range_tank_heavy_km: 3491.751833
+    airwing.in.range_tank_light_km: 3491.751833
+    airwing.in.cap_stations_fixed: 4.0
+  notes: 航母空中联队复合模型（作者“航母战力”sheet）：以尼米兹非隐身空联 = 10 为尺度。
+- id: cv_vikrant
+  name: 维克兰特号
+  category: aircraft_carrier
+  family: cv
+  origin: IND
+  specs:
+    airwing.composite_nonstealth: 4.407539
+    airwing.cap_search: 1.080315
+    airwing.cap_counter: 0.468154
+    airwing.intercept: 0.447844
+    airwing.air_combat: 0.949834
+    airwing.anti_ship: 0.874343
+    airwing.strike_land: 0.587049
+    airwing.composite_stealth: 0
+    airwing.stealth_eval: 0.730696
+    airwing.total: 4.407539
+    airwing.in.launch_points_light_sorties: 35.0
+    airwing.in.launch_points_heavy_sorties: 33
+    airwing.in.recovery_sorties: 34
+    airwing.in.aircraft_light: 34
+    airwing.in.aircraft_heavy: 33
+    airwing.in.range_internal_km: 1653.289997
+    airwing.in.range_tank_heavy_km: 2964.330276
+    airwing.in.range_tank_light_km: 2770.078022
+    airwing.in.cap_stations_fixed: 4.0
+  notes: 航母空中联队复合模型（作者“航母战力”sheet）：以尼米兹非隐身空联 = 10 为尺度。
+- id: cv_america_lha8
+  name: 美国级 LHA-8 布干维尔（无坞舱改型）
+  category: amphibious_carrier
+  family: cv
+  origin: USA
+  specs:
+    airwing.composite_nonstealth: 3.559551
+    airwing.cap_search: 0.734369
+    airwing.cap_counter: 0.195578
+    airwing.intercept: 0.747827
+    airwing.air_combat: 0.709677
+    airwing.anti_ship: 0.741992
+    airwing.strike_land: 0.430108
+    airwing.composite_stealth: 3.021014
+    airwing.stealth_eval: 3.23472
+    airwing.total: 6.580565
+    airwing.in.launch_points_light_sorties: 22.0
+    airwing.in.launch_points_heavy_sorties: 16
+    airwing.in.recovery_sorties: 28.0
+    airwing.in.aircraft_light: 22
+    airwing.in.aircraft_heavy: 16
+    airwing.in.range_internal_km: 1904.653256
+    airwing.in.range_tank_heavy_km: 2605.157508
+    airwing.in.range_tank_light_km: 1904.653256
+    airwing.in.cap_stations_fixed: 4.0
+  status: building
+  notes: 航母空中联队复合模型（作者“航母战力”sheet）：以尼米兹非隐身空联 = 10 为尺度。
+- id: cv_076
+  name: 076 型两栖攻击舰
+  category: amphibious_carrier
+  family: cv076
+  origin: CHN
+  specs:
+    airwing.composite_nonstealth: 4.036176
+    airwing.cap_search: 1.208998
+    airwing.cap_counter: 0.360379
+    airwing.intercept: 0.326024
+    airwing.air_combat: 0.580645
+    airwing.anti_ship: 1.02645
+    airwing.strike_land: 0.533681
+    airwing.composite_stealth: 3.78852
+    airwing.stealth_eval: 3.947885
+    airwing.total: 7.824696
+    airwing.in.launch_points_light_sorties: 28
+    airwing.in.launch_points_heavy_sorties: 28
+    airwing.in.recovery_sorties: 18
+    airwing.in.aircraft_light: 18
+    airwing.in.aircraft_heavy: 18
+    airwing.in.range_internal_km: 3502.233194
+    airwing.in.range_tank_heavy_km: 4753.436628
+    airwing.in.range_tank_light_km: 4753.436628
+    airwing.in.cap_stations_fixed: 4.0
+  status: sea_trials
+  notes: 航母空中联队复合模型（作者“航母战力”sheet）：以尼米兹非隐身空联 = 10 为尺度。
+- id: cv_izumo
+  name: 出云级（F-35B 改装）
+  category: amphibious_carrier
+  family: cv
+  origin: JPN
+  specs:
+    airwing.composite_nonstealth: 3.403784
+    airwing.cap_search: 0.734369
+    airwing.cap_counter: 0.171131
+    airwing.intercept: 0.747827
+    airwing.air_combat: 0.709677
+    airwing.anti_ship: 0.664436
+    airwing.strike_land: 0.376344
+    airwing.composite_stealth: 2.921549
+    airwing.stealth_eval: 3.119328
+    airwing.total: 6.325333
+    airwing.in.launch_points_light_sorties: 22.0
+    airwing.in.launch_points_heavy_sorties: 14
+    airwing.in.recovery_sorties: 27.0
+    airwing.in.aircraft_light: 22
+    airwing.in.aircraft_heavy: 14
+    airwing.in.range_internal_km: 1904.653256
+    airwing.in.range_tank_heavy_km: 2605.157508
+    airwing.in.range_tank_light_km: 1904.653256
+    airwing.in.cap_stations_fixed: 4.0
+  notes: 航母空中联队复合模型（作者“航母战力”sheet）：以尼米兹非隐身空联 = 10 为尺度。
+- id: cv_trieste
+  name: 第里雅斯特号
+  category: amphibious_carrier
+  family: cv
+  origin: ITA
+  specs:
+    airwing.composite_nonstealth: 3.34363
+    airwing.cap_search: 0.706473
+    airwing.cap_counter: 0.171131
+    airwing.intercept: 0.747827
+    airwing.air_combat: 0.677419
+    airwing.anti_ship: 0.664436
+    airwing.strike_land: 0.376344
+    airwing.composite_stealth: 2.777226
+    airwing.stealth_eval: 3.013279
+    airwing.total: 6.120856
+    airwing.in.launch_points_light_sorties: 21.0
+    airwing.in.launch_points_heavy_sorties: 14
+    airwing.in.recovery_sorties: 21.0
+    airwing.in.aircraft_light: 21
+    airwing.in.aircraft_heavy: 14
+    airwing.in.range_internal_km: 1904.653256
+    airwing.in.range_tank_heavy_km: 2605.157508
+    airwing.in.range_tank_light_km: 1904.653256
+    airwing.in.cap_stations_fixed: 4.0
+  notes: 航母空中联队复合模型（作者“航母战力”sheet）：以尼米兹非隐身空联 = 10 为尺度。
+- id: cv_cavour
+  name: 加富尔号
+  category: aircraft_carrier
+  family: cv
+  origin: ITA
+  specs:
+    airwing.composite_nonstealth: 3.34363
+    airwing.cap_search: 0.706473
+    airwing.cap_counter: 0.171131
+    airwing.intercept: 0.747827
+    airwing.air_combat: 0.677419
+    airwing.anti_ship: 0.664436
+    airwing.strike_land: 0.376344
+    airwing.composite_stealth: 2.777226
+    airwing.stealth_eval: 3.013279
+    airwing.total: 6.120856
+    airwing.in.launch_points_light_sorties: 21.0
+    airwing.in.launch_points_heavy_sorties: 14
+    airwing.in.recovery_sorties: 24.0
+    airwing.in.aircraft_light: 21
+    airwing.in.aircraft_heavy: 14
+    airwing.in.range_internal_km: 1904.653256
+    airwing.in.range_tank_heavy_km: 2605.157508
+    airwing.in.range_tank_light_km: 1904.653256
+    airwing.in.cap_stations_fixed: 4.0
+  notes: 航母空中联队复合模型（作者“航母战力”sheet）：以尼米兹非隐身空联 = 10 为尺度。
+- id: cv_vikramaditya
+  name: 超日王号（前戈尔什科夫海军上将）
+  category: aircraft_carrier
+  family: cv
+  origin: IND
+  specs:
+    airwing.composite_nonstealth: 3.316302
+    airwing.cap_search: 0.850196
+    airwing.cap_counter: 0.312102
+    airwing.intercept: 0.447844
+    airwing.air_combat: 0.614599
+    airwing.anti_ship: 0.700195
+    airwing.strike_land: 0.391366
+    airwing.composite_stealth: 0
+    airwing.stealth_eval: 0.545781
+    airwing.total: 3.316302
+    airwing.in.launch_points_light_sorties: 30.0
+    airwing.in.launch_points_heavy_sorties: 29
+    airwing.in.recovery_sorties: 22
+    airwing.in.aircraft_light: 22
+    airwing.in.aircraft_heavy: 22
+    airwing.in.range_internal_km: 1653.289997
+    airwing.in.range_tank_heavy_km: 2964.330276
+    airwing.in.range_tank_light_km: 2387.039621
+    airwing.in.cap_stations_fixed: 4.0
+  notes: 航母空中联队复合模型（作者“航母战力”sheet）：以尼米兹非隐身空联 = 10 为尺度。
+- id: cv_juan_carlos_i
+  name: 胡安·卡洛斯一世号
+  category: amphibious_carrier
+  family: cv
+  origin: ESP
+  specs:
+    airwing.composite_nonstealth: 2.135116
+    airwing.cap_search: 0.396322
+    airwing.cap_counter: 0.100962
+    airwing.intercept: 0.541941
+    airwing.air_combat: 0.433388
+    airwing.anti_ship: 0.389195
+    airwing.strike_land: 0.273308
+    airwing.composite_stealth: 0
+    airwing.stealth_eval: 0.331252
+    airwing.total: 2.135116
+    airwing.in.launch_points_light_sorties: 23.0
+    airwing.in.launch_points_heavy_sorties: 17.0
+    airwing.in.recovery_sorties: 19
+    airwing.in.aircraft_light: 19
+    airwing.in.aircraft_heavy: 17
+    airwing.in.range_internal_km: 1768.20828
+    airwing.in.range_tank_heavy_km: 1540.704529
+    airwing.in.range_tank_light_km: 1768.20828
+    airwing.in.cap_stations_fixed: 4.0
+  notes: 航母空中联队复合模型（作者“航母战力”sheet）：以尼米兹非隐身空联 = 10 为尺度。

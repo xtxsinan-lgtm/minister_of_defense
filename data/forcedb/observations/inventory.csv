@@ -1,0 +1,28 @@
+country,service,equipment_id,kind,role,quantity,as_of,source_id,confidence,notes,observed_at,connector
+USA,airforce,b_2,active,all,20.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Air Force）：B-2 Spirit,2026-10-24,wikipedia:us_aircraft
+USA,airforce,ac_130j,active,all,31.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Air Force）：AC-130J Ghostrider,2026-10-24,wikipedia:us_aircraft
+USA,airforce,e_4b,active,all,4.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Air Force）：E-4B (NAOC),2026-10-24,wikipedia:us_aircraft
+USA,airforce,e_9a,active,all,2.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Air Force）：E-9A Widget,2026-10-24,wikipedia:us_aircraft
+USA,airforce,e_11a,active,all,5.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Air Force）：E-11A (BACN),2026-10-24,wikipedia:us_aircraft
+USA,airforce,f_15c_d,active,all,108.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Air Force）：F-15C/D Eagle,2026-10-24,wikipedia:us_aircraft
+USA,airforce,f_15e,active,all,218.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Air Force）：F-15E Strike Eagle,2026-10-24,wikipedia:us_aircraft
+USA,airforce,f_16c_d,active,all,762.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Air Force）：F-16C/D Fighting Falcon,2026-10-24,wikipedia:us_aircraft
+USA,airforce,f_35a,active,all,302.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Air Force）：F-35A Lightning II,2026-10-24,wikipedia:us_aircraft
+USA,airforce,rq_4b,active,all,9.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Air Force）：RQ-4B Global Hawk,2026-10-24,wikipedia:us_aircraft
+USA,airforce,mq9a,active,all,55.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Air Force）：MQ-9A Reaper,2026-10-24,wikipedia:us_aircraft
+USA,airforce,u_2s,active,all,27.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Air Force）：U-2S Dragon Lady,2026-10-24,wikipedia:us_aircraft
+USA,airforce,cv22b,active,all,52.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Air Force）：CV-22B Osprey,2026-10-24,wikipedia:us_aircraft
+USA,marines,kc_130j,active,all,69.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Marine Corps）：KC-130J Super Hercules,2026-10-24,wikipedia:us_aircraft
+USA,marines,f_35b,active,all,112.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Marine Corps）：F-35B Lightning II,2026-10-24,wikipedia:us_aircraft
+USA,marines,uh1y,active,all,160.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Marine Corps）：UH-1Y Venom,2026-10-24,wikipedia:us_aircraft
+USA,marines,ah1z,active,all,189.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Marine Corps）：AH-1Z Viper,2026-10-24,wikipedia:us_aircraft
+USA,marines,ch53e,active,all,133.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Marine Corps）：CH-53E Super Stallion,2026-10-24,wikipedia:us_aircraft
+USA,marines,ch53k,active,all,11.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Marine Corps）：CH-53K King Stallion,2026-10-24,wikipedia:us_aircraft
+USA,marines,mq9a,active,all,20.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Marine Corps）：MQ-9A Reaper,2026-10-24,wikipedia:us_aircraft
+USA,marines,av_8b,active,all,0.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Marine Corps）：AV-8B Harrier II,2026-10-24,wikipedia:us_aircraft
+USA,navy,f_a_18e_f,active,all,549.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Navy）：F/A-18E/F Super Hornet,2026-10-24,wikipedia:us_aircraft
+USA,navy,ea_18g,active,all,153.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Navy）：EA-18G Growler,2026-10-24,wikipedia:us_aircraft
+USA,navy,kc_130t,active,all,16.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Navy）：KC-130T Hercules,2026-10-24,wikipedia:us_aircraft
+USA,navy,e_6b,active,all,16.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Navy）：E-6B Mercury,2026-10-24,wikipedia:us_aircraft
+USA,navy,mq_4c,active,all,20.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Navy）：MQ-4C Triton,2026-10-24,wikipedia:us_aircraft
+USA,navy,mq_8c,active,all,10.0,2026-10-24,wikipedia_lists,estimated,Wikipedia/List_of_active_United_States_military_aircraft（Navy）：MQ-8C Fire Scout,2026-10-24,wikipedia:us_aircraft

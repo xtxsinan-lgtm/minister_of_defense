@@ -1,0 +1,4 @@
+pyyaml>=6
+pytest>=7
+# 仅 tools/import_sheets.py（从 Google Sheets 导出的 xlsx 重新生成数据）需要：
+openpyxl>=3.1

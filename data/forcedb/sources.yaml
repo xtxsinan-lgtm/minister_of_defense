@@ -1,0 +1,52 @@
+# 来源注册表。每条数据通过 source_id 追溯到这里。kind: spreadsheet/yaml/article/web/crawler/manual
+sources:
+  - id: repo_yaml
+    kind: yaml
+    title: minister_of_defense 仓库 data/ 既有 YAML（作者知乎长文整理）
+    url: https://github.com/xtxsinan-lgtm/minister_of_defense
+    reliability: medium
+    notes: 编制与地面装备模型化数据；confidence 字段沿用 stated/estimated/uncertain。
+  - id: zhihu_2025_cn_us
+    kind: article
+    title: 2025 中美军事实力对比分析（知乎专栏）
+    url: https://zhuanlan.zhihu.com/p/1954380263485321349
+    reliability: medium
+    notes: 量化方法原文；本地存档只含前三分之一。
+  - id: sheet_cn_us
+    kind: spreadsheet
+    title: 中美军力对比（Google Sheets，作者本人）
+    url: https://docs.google.com/spreadsheets/d/1zfaXXlie2DFcHcYeuRPkdS6rktUY93Z89YqJ4eNoQF0
+    reliability: medium
+    notes: 分层级火力 —— 文章结果快照（含总计）。
+  - id: sheet_cn_us_live
+    kind: spreadsheet
+    title: 中美军力对比（带实时公式的工作簿，作者本人）
+    url: https://docs.google.com/spreadsheets/d/1EIlNzvnOE-VKX3zjz4pg4zoc8yTxRy2nOpn12_T5KgE
+    reliability: medium
+  - id: sheet_carrier_fighter
+    kind: spreadsheet
+    title: 航母战斗机（Google Sheets，作者本人）
+    url: https://docs.google.com/spreadsheets/d/1o052elW0kvQhnLHClpxJ0gOI2KHhd_Nrgccbr8P4v8A
+    reliability: medium
+  - id: sheet_military_planning
+    kind: spreadsheet
+    title: 军事规划（Google Sheets，作者本人）
+    url: https://docs.google.com/spreadsheets/d/1sV3r1W4eU1AfPVbcyJ1QD2tFXfOCZaLHtnqczddCvqQ
+    reliability: medium
+  - id: worldbank_wdi
+    kind: crawler
+    title: World Bank World Development Indicators（军费、武装力量人数）
+    url: https://api.worldbank.org/v2/
+    reliability: high
+    notes: 指标 MS.MIL.XPND.CD / MS.MIL.XPND.GD.ZS / MS.MIL.TOTL.P1 / MS.MIL.XPND.ZS，数据来自 SIPRI 与 IISS，按年发布。
+  - id: wikipedia_lists
+    kind: crawler
+    title: Wikipedia 现役装备清单（List of active ... 系列页面）
+    url: https://en.wikipedia.org/
+    reliability: low
+    notes: 众包、引用质量参差，只用于交叉验证与发现新增条目；写库时置信度记 estimated，并保留页面版本号。
+  - id: manual_general_knowledge
+    kind: manual
+    title: 助手依据公开常识录入的数量（待核实）
+    reliability: low
+    notes: 仅用于让跨国对比能跑起来的占位；任何高可靠度来源（表格、爬虫 high）都会覆盖它。
