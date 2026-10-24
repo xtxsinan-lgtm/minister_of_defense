@@ -1,0 +1,35 @@
+# 来源注册表。每条数据通过 source_id 追溯到这里。kind: spreadsheet/yaml/article/web/crawler/manual
+sources:
+  - id: repo_yaml
+    kind: yaml
+    title: minister_of_defense 仓库 data/ 既有 YAML（作者知乎长文整理）
+    url: https://github.com/xtxsinan-lgtm/minister_of_defense
+    reliability: medium
+    notes: 编制与地面装备模型化数据；confidence 字段沿用 stated/estimated/uncertain。
+  - id: zhihu_2025_cn_us
+    kind: article
+    title: 2025 中美军事实力对比分析（知乎专栏）
+    url: https://zhuanlan.zhihu.com/p/1954380263485321349
+    reliability: medium
+    notes: 量化方法原文；本地存档只含前三分之一。
+  - id: sheet_cn_us
+    kind: spreadsheet
+    title: 中美军力对比（Google Sheets，作者本人）
+    url: https://docs.google.com/spreadsheets/d/1zfaXXlie2DFcHcYeuRPkdS6rktUY93Z89YqJ4eNoQF0
+    reliability: medium
+    notes: 分层级火力 —— 文章结果快照（含总计）。
+  - id: sheet_cn_us_live
+    kind: spreadsheet
+    title: 中美军力对比（带实时公式的工作簿，作者本人）
+    url: https://docs.google.com/spreadsheets/d/1EIlNzvnOE-VKX3zjz4pg4zoc8yTxRy2nOpn12_T5KgE
+    reliability: medium
+  - id: sheet_carrier_fighter
+    kind: spreadsheet
+    title: 航母战斗机（Google Sheets，作者本人）
+    url: https://docs.google.com/spreadsheets/d/1o052elW0kvQhnLHClpxJ0gOI2KHhd_Nrgccbr8P4v8A
+    reliability: medium
+  - id: sheet_military_planning
+    kind: spreadsheet
+    title: 军事规划（Google Sheets，作者本人）
+    url: https://docs.google.com/spreadsheets/d/1sV3r1W4eU1AfPVbcyJ1QD2tFXfOCZaLHtnqczddCvqQ
+    reliability: medium

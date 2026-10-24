@@ -1,0 +1,37 @@
+# 在仓库 data/schema/categories.yaml（陆军为主）之外，为空/海/导弹/太空补充的装备类别。
+# domain 取值见 forcedb/ingest/seed.py 的 DOMAINS。
+categories:
+  # ---- 固定翼 ----
+  - {id: bomber,              name: 轰炸机/攻击机,           group: aircraft_fw,  domain: air}
+  - {id: awacs,               name: 预警机,                 group: aircraft_fw,  domain: air}
+  - {id: ew_aircraft,         name: 电子战/指挥/侦察特种机,  group: aircraft_fw,  domain: air}
+  - {id: asw_aircraft,        name: 反潜机,                 group: aircraft_fw,  domain: air}
+  - {id: transport_aircraft,  name: 运输机,                 group: aircraft_fw,  domain: air}
+  - {id: trainer_aircraft,    name: 教练机/轻攻,             group: aircraft_fw,  domain: air}
+  - {id: large_uav,           name: 大型无人机,              group: uav,          domain: air}
+  # ---- 水面/水下 ----
+  - {id: aircraft_carrier,    name: 航空母舰,                group: ship,         domain: sea}
+  - {id: amphibious_carrier,  name: 两栖攻击舰/准航母,        group: ship,         domain: sea}
+  - {id: amphibious_dock,     name: 船坞登陆舰/运输舰,        group: ship,         domain: sea}
+  - {id: cruiser,             name: 巡洋舰/大型驱逐舰,        group: ship,         domain: sea}
+  - {id: destroyer,           name: 驱逐舰,                  group: ship,         domain: sea}
+  - {id: frigate,             name: 护卫舰,                  group: ship,         domain: sea}
+  - {id: corvette,            name: 轻护/导弹艇,              group: ship,         domain: sea}
+  - {id: logistics_ship,      name: 补给/辅助舰船,            group: ship,         domain: sea}
+  - {id: ssbn,                name: 战略核潜艇,               group: submarine,    domain: sea}
+  - {id: ssn,                 name: 攻击型核潜艇,             group: submarine,    domain: sea}
+  - {id: ssg_n,               name: 巡航导弹核潜艇,           group: submarine,    domain: sea}
+  - {id: ssk,                 name: 常规潜艇,                 group: submarine,    domain: sea}
+  # ---- 导弹/火箭军 ----
+  - {id: icbm,                name: 洲际弹道导弹,             group: ballistic,    domain: missile}
+  - {id: irbm,                name: 中远程弹道导弹,           group: ballistic,    domain: missile}
+  - {id: mrbm,                name: 中程弹道导弹,             group: ballistic,    domain: missile}
+  - {id: srbm,                name: 近程/战术弹道导弹,         group: ballistic,    domain: missile}
+  - {id: cruise_missile_land, name: 对陆巡航导弹,             group: cruise,       domain: missile}
+  - {id: ashm,                name: 反舰导弹,                 group: cruise,       domain: missile}
+  # ---- 防空/反导（舰载与陆基系统，补充 air_defense 组） ----
+  - {id: abm_system,          name: 反导系统,                 group: air_defense,  domain: air_defense}
+  - {id: naval_sam,           name: 舰载防空导弹系统,          group: air_defense,  domain: air_defense}
+  # ---- 太空 ----
+  - {id: satellite,           name: 军用卫星,                 group: space,        domain: space}
+  - {id: launcher,            name: 运载火箭,                 group: space,        domain: space}
