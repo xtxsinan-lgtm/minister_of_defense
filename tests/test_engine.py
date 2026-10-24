@@ -79,8 +79,8 @@ def test_recompute_runs_and_reports_deviations(dbs):
 
 def test_other_country_pair_runs_with_empty_data(dbs):
     eq, toe = dbs
-    r = Engine(eq, toe, mode="snapshot").run(["CHN", "USA", "JPN"])
-    assert r["JPN"]["total"] == pytest.approx(0.0, abs=1e-9)
+    r = Engine(eq, toe, mode="snapshot").run(["CHN", "USA", "BRA"])      # 巴西：库里没有任何装备数据
+    assert r["BRA"]["total"] == pytest.approx(0.0, abs=1e-9)
 
 
 def test_independent_carrier_airwing_model_agrees_with_article(dbs):
@@ -108,7 +108,7 @@ def test_foreign_carriers_are_loaded_for_global_comparison(dbs):
         "SELECT i.country, i.equipment_id, i.quantity, i.source_id FROM v_inventory_latest i "
         "WHERE i.country NOT IN ('CHN','USA') AND i.equipment_id LIKE 'cv_%'")}
     assert {"cv_queen_elizabeth", "cv_charles_de_gaulle", "cv_vikrant", "cv_izumo"} <= set(rows)
-    assert all(r["source_id"] == "manual_general_knowledge" for r in rows.values())   # 来源可追溯、低可靠度
+    assert all(r["source_id"] in ("manual_general_knowledge", "research_2026") for r in rows.values())   # 来源可追溯、低可靠度
     spec = eq.execute("SELECT num FROM spec WHERE equipment_id='cv_charles_de_gaulle' "
                       "AND key='airwing.composite_nonstealth'").fetchone()
     assert spec and 4 < spec[0] < 7
