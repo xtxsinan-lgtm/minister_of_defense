@@ -48,4 +48,4 @@
 - 设计、方法对照、局限：[`docs/forcedb.md`](docs/forcedb.md)
 - 代码：[`forcedb/`](forcedb/)；构建产物：[`db/equipment.sqlite`](db/)、[`db/toe.sqlite`](db/)
 - `python3 -m forcedb build && python3 -m forcedb score`：复现文章（中国 418.8 / 美国 522.2 = 80.2%）
-
+- 十二国估算（俄日韩朝伊土英法德希波以）：[`docs/forcedb_world_estimates.md`](docs/forcedb_world_estimates.md)；`python3 -m forcedb world`
